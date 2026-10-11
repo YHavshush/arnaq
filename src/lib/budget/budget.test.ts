@@ -155,7 +155,12 @@ describe("sumTransactions", () => {
     const item = addItem();
     const [o] = db
       .insert(schema.recurringOccurrences)
-      .values({ recurringItemId: item.id, month: "2026-09", expectedDate: "2026-09-10", expectedAmount: 999 })
+      .values({
+        recurringItemId: item.id,
+        month: "2026-09",
+        expectedDate: "2026-09-10",
+        expectedAmount: 999,
+      })
       .returning()
       .all();
     tx("2026-09-10", -999, { categoryId: cat("Abonnementen"), matchedOccurrenceId: o.id });

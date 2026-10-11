@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, between, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { MAX_CENTS } from "@/lib/money";
 
@@ -61,4 +61,50 @@ export function copyBudgets(db: Db, fromMonth: string, toMonth: string): number 
     .get();
   if (total) setTotalBudget(db, toMonth, total.amount);
   return rows.length;
+}
+
+export interface MonthBudgets {
+  /** Category id -> budget in cents, only for categories with a budget that month. */
+  byCategory: Map<number, number>;
+  /** The explicit monthly total, or null when none is set. */
+  total: number | null;
+}
+
+/** Budgets for every month in fromMonth..toMonth (inclusive) that has any. Two queries. */
+export function getBudgetsByMonth(
+  db: Db,
+  fromMonth: string,
+  toMonth: string,
+): Map<string, MonthBudgets> {
+  assertMonth(fromMonth);
+  assertMonth(toMonth);
+  const out = new Map<string, MonthBudgets>();
+  const at = (month: string) => {
+    let b = out.get(month);
+    if (!b) out.set(month, (b = { byCategory: new Map(), total: null }));
+    return b;
+  };
+  for (const r of db
+    .select()
+    .from(schema.budgets)
+    .where(between(schema.budgets.month, fromMonth, toMonth))
+    .all())
+    at(r.month).byCategory.set(r.categoryId, r.amount);
+  for (const r of db
+    .select()
+    .from(schema.monthlyTotalBudget)
+    .where(between(schema.monthlyTotalBudget.month, fromMonth, toMonth))
+    .all())
+    at(r.month).total = r.amount;
+  return out;
+}
+
+/**
+ * The total budget of a month: the explicit total when set, else the sum of the category
+ * budgets, or null when there are none.
+ */
+export function resolveTotalBudget(explicit: number | null, categoryBudgets: (number | null)[]) {
+  if (explicit !== null) return explicit;
+  const set = categoryBudgets.filter((b): b is number => b !== null);
+  return set.length > 0 ? set.reduce((s, b) => s + b, 0) : null;
 }
