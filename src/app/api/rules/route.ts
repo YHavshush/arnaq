@@ -12,8 +12,11 @@ export async function POST(request: Request) {
   return handle(async () => {
     const body = await request.json();
     const pattern = typeof body?.pattern === "string" ? body.pattern.trim() : "";
-    if (!pattern || !isInt(body?.categoryId)) {
-      return Response.json({ error: "pattern and categoryId are required." }, { status: 400 });
+    if (pattern.length < 2 || pattern.length > 100 || !isInt(body?.categoryId)) {
+      return Response.json(
+        { error: "pattern (2 to 100 chars) and categoryId are required." },
+        { status: 400 },
+      );
     }
     const db = getDb();
     const [rule] = db

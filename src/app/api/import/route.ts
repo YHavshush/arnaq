@@ -2,10 +2,15 @@ import { getDb } from "@/db";
 import { todayIso } from "@/lib/api";
 import { ImportError, importCsv } from "@/lib/import/service";
 
-const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_BYTES = 2 * 1024 * 1024;
 
 /** POST multipart/form-data: file (required), accountId (optional), month=YYYY-MM (optional). */
 export async function POST(request: Request) {
+  // Refuse before buffering the body. (A reverse proxy should enforce the same cap, see deploy notes.)
+  const declared = Number(request.headers.get("content-length") ?? "0");
+  if (declared > MAX_BYTES + 64 * 1024)
+    return Response.json({ error: "File too large (max 2 MB)." }, { status: 413 });
+
   let form: FormData;
   try {
     form = await request.formData();
@@ -16,12 +21,12 @@ export async function POST(request: Request) {
   const file = form.get("file");
   if (!(file instanceof File)) return Response.json({ error: "Missing file." }, { status: 400 });
   if (file.size > MAX_BYTES)
-    return Response.json({ error: "File too large (max 5 MB)." }, { status: 413 });
+    return Response.json({ error: "File too large (max 2 MB)." }, { status: 413 });
 
   const accountRaw = form.get("accountId");
   const monthRaw = form.get("month");
   const accountId = accountRaw ? Number(accountRaw) : undefined;
-  if (accountId !== undefined && !Number.isInteger(accountId)) {
+  if (accountId !== undefined && !(Number.isSafeInteger(accountId) && accountId > 0)) {
     return Response.json({ error: "Invalid accountId." }, { status: 400 });
   }
 

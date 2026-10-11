@@ -41,6 +41,11 @@ export interface ImportSummary {
 
 export class ImportError extends Error {}
 
+/** A bank export for one month is far below this; more rows means the wrong file. */
+export const MAX_IMPORT_ROWS = 20_000;
+/** Detail for at most this many skipped rows goes back to the client (the count is always exact). */
+const MAX_SKIPPED_DETAIL = 50;
+
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /** Hash that identifies a transaction across re-uploads. Identical rows in one file get a counter. */
@@ -124,6 +129,8 @@ export function importCsv(db: Db, input: ImportInput): ImportSummary {
   } catch (e) {
     throw new ImportError(e instanceof Error ? e.message : String(e));
   }
+  if (parsed.rows.length + parsed.skipped.length > MAX_IMPORT_ROWS)
+    throw new ImportError(`Too many rows (max ${MAX_IMPORT_ROWS} per file).`);
   if (parsed.rows.length === 0 && parsed.skipped.length === 0)
     throw new ImportError("The file contains no transactions.");
 
@@ -210,7 +217,7 @@ export function importCsv(db: Db, input: ImportInput): ImportSummary {
       rowsImported: imported,
       rowsDuplicate: duplicate,
       rowsSkipped: parsed.skipped.length,
-      skipped: parsed.skipped,
+      skipped: parsed.skipped.slice(0, MAX_SKIPPED_DETAIL),
       foreignCurrencyRows: foreign,
       warnings,
       recurring,

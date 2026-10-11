@@ -1,4 +1,5 @@
 import { parseAmountToCents } from "@/lib/money";
+import { isDate } from "@/lib/recurring/dates";
 import { readCsv } from "../csv";
 import type { BankParser, ParsedRow, SkippedRow } from "../types";
 
@@ -34,7 +35,7 @@ export const rabobankParser: BankParser = {
         const iban = clean(r["IBAN/BBAN"]);
         accountIdentifier ??= iban;
         const date = clean(r["Datum"]);
-        if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error(`Invalid date "${date}"`);
+        if (!isDate(date)) throw new Error(`Invalid date "${date}"`);
         const amount = parseAmountToCents(r["Bedrag"] ?? "", ",");
         const description =
           [r["Omschrijving-1"], r["Omschrijving-2"], r["Omschrijving-3"]]
