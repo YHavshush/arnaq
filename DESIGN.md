@@ -52,6 +52,8 @@ Contrast results are enforced by tests, not by this table. Two real findings fro
 
 ## Status wash
 
+**Decision (owner): off in light, on in dark and Dark +.** It is one flag per theme: `statusWash` in `tokens.ts`, then `npm run tokens`. Everything below explains how it works if it is turned on again, and why it is off in light.
+
 The top of the page is lightly tinted by the **active screen's** tone (set `data-mood="neutral|good|warn|bad"` on `<html>` per screen). Amber on Overzicht when the month is tight, green on a healthy Prognose, blue (neutral) on Vaste lasten and Upload.
 
 Findings from testing it, which are rules:
@@ -61,7 +63,8 @@ Findings from testing it, which are rules:
 - **Never red.** `bad` is a soft rose wash.
 - **Cap the strength.** The strength per theme is capped so muted text keeps 4.5:1 on the strongest part (see `tokens.ts`).
 - It is a third signal next to ring colour and glow, so keep it quiet. Cross-fade between screens (about 300 ms, off under `prefers-reduced-motion`) so changing tabs does not flash.
-- To turn it off: always set `data-mood="neutral"`.
+- Why off in light: it is a third signal next to the ring colour and the glow, and the colour of the page changing between tabs adds motion nobody asked for. In dark the glow at the top is part of the approved look, so it stays.
+- Even with the wash off, keep setting `data-mood` per screen; dark and any future theme with the wash on use it.
 
 ## Glow (decided for now, easy to change)
 
@@ -92,7 +95,7 @@ Findings from testing it, which are rules:
 
 ## Open decisions and known limits
 
-- Status wash is adopted tentatively (see above). Easy to switch off.
+- Status wash: off in light (owner decision), on in dark and Dark + (unconfirmed, say if it should go there too).
 - Dark vs Dark +: both ship; the owner has not chosen a default.
 - Loading, empty and error states are not designed yet (milestone 7).
 - The balance chart assumes the CSV parsers store the running balance (Rabobank "Saldo na trn", Revolut "Balance"). They do not yet; that comes with the database port.
