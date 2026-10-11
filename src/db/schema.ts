@@ -79,7 +79,24 @@ export const recurringOccurrences = sqliteTable(
     status: text("status", { enum: OCCURRENCE_STATUSES }).notNull().default("expected"),
     transactionId: integer("transaction_id").references((): AnySQLiteColumn => transactions.id),
   },
-  (t) => [uniqueIndex("occurrence_item_month_idx").on(t.recurringItemId, t.month)],
+  (t) => [
+    uniqueIndex("occurrence_item_month_idx").on(t.recurringItemId, t.month),
+    index("occurrence_status_idx").on(t.status),
+  ],
+);
+
+/** Suggestions the user said no to, so detection never offers them again. */
+export const recurringSuggestionRejections = sqliteTable(
+  "recurring_suggestion_rejections",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    key: text("key").notNull(), // normalised counterparty
+    type: text("type", { enum: RECURRING_TYPES }).notNull(),
+    rejectedAt: text("rejected_at")
+      .notNull()
+      .default(sql`(datetime('now'))`),
+  },
+  (t) => [uniqueIndex("suggestion_rejection_key_type_idx").on(t.key, t.type)],
 );
 
 export const transactions = sqliteTable(

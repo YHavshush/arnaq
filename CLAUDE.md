@@ -16,3 +16,9 @@ Model table:
 - Opus 5.5: milestones 4 and 5 (matching engine, suggestion detection, forecast logic), hard debugging that Sonnet is stuck on, architecture decisions, and a final security review before hosting.
 
 - Go-ahead given on 2026-10-11 to run milestones 2 to 9 in sequence without pausing between them. Still summarise each milestone when done.
+
+## Orchestration (ECC)
+
+- Vendored ECC subset lives in `.claude/` (see `.claude/ecc/README.md`). Pipeline per milestone: size it, plan (planner), TDD (tdd-guide), review (code-reviewer, plus security-reviewer when auth, input handling, DB queries, file paths or secrets are touched), then conventional commits. Details: `.claude/skills/orch-pipeline/SKILL.md`.
+- The two human gates (plan, commit) are self-checked and logged in the milestone summary while the go-ahead above is active. CRITICAL/HIGH review findings must be fixed before merging.
+- Hard logic (milestones 4 and 5, final security review) runs on Opus subagents; the agent definitions in `.claude/agents/` are the briefs.
