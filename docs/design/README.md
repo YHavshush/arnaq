@@ -14,6 +14,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `ontwerp-v8.html` | Eighth round: light mode gets the dark-mode blue/violet ring on Vaste lasten and a soft glow centred on the ring, tinted by the state | https://claude.ai/artifact/1ahKsUCG7sA9LQiigfLGW6 |
 | `ontwerp-v9.html` | Ninth round: light glow redone as depth (two finals: tinted shadow, or frosted lens), a new theme option "Donker +" (lighter, bluer dark), contrast fix for green, themed selection and scrollbars | https://claude.ai/artifact/LU6xS6hjV17yNc2p5krqPo |
 | `glow-lab.html` | Glow lab: six light-mode treatments (A to F) of the hero ring side by side, no SVG filters (Safari-safe), plus the approved dark ring as reference | https://claude.ai/artifact/FCrfti5uab3CpQB5PMPnXy |
+| `ontwerp-v10.html` | Tenth round: one number weight across themes (medium in light, one step lighter in dark), light glow narrowed to A (none), D (same ring as dark, default) and F (shadow underneath); no SVG filters | https://claude.ai/artifact/RfH11NG65aCAQsqMotiymy |
 
 Older versions are never overwritten: new rounds are new files.
 
