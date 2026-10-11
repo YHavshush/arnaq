@@ -13,6 +13,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `ontwerp-v7.html` | Seventh round: lighter dark atmosphere, halo centred on the ring (no smudge), pace card with daily bars on Overzicht, saldo ribbon with monthly growth on Prognose (switchable to monthly bars) | https://claude.ai/artifact/LTFUxhtZS6Z7xjGdyo9Ypc |
 | `ontwerp-v8.html` | Eighth round: light mode gets the dark-mode blue/violet ring on Vaste lasten and a soft glow centred on the ring, tinted by the state | https://claude.ai/artifact/1ahKsUCG7sA9LQiigfLGW6 |
 | `ontwerp-v9.html` | Ninth round: light glow redone as depth (two finals: tinted shadow, or frosted lens), a new theme option "Donker +" (lighter, bluer dark), contrast fix for green, themed selection and scrollbars | https://claude.ai/artifact/LU6xS6hjV17yNc2p5krqPo |
+| `glow-lab.html` | Glow lab: six light-mode treatments (A to F) of the hero ring side by side, no SVG filters (Safari-safe), plus the approved dark ring as reference | https://claude.ai/artifact/FCrfti5uab3CpQB5PMPnXy |
 
 Older versions are never overwritten: new rounds are new files.
 
