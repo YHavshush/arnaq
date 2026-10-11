@@ -101,8 +101,8 @@ export function generateOccurrences(db: Db, opts: { throughMonth: string }): num
   return created;
 }
 
-/** Months with at least one upload (any account). */
-function coveredMonths(db: Db): Set<string> {
+/** Months with at least one upload (any account). Two uploads of one month count once. */
+export function coveredMonths(db: Db): Set<string> {
   return new Set(
     db
       .selectDistinct({ month: schema.imports.month })
