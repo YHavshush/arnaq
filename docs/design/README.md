@@ -18,6 +18,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `ontwerp-v11.html` | Eleventh round: the light glow follows the colour (warm and green use the lit ring D, blue uses the shadow underneath F); dark unchanged | https://claude.ai/artifact/VBbXnYgoR2TkKSMzHNVMuz |
 | `ontwerp-v12.html` | Base design with light glow fixed to F (shadow underneath), as decided | (not published separately) |
 | `ontwerp-v13.html` | Status-wash test: in light mode the top of the page is tinted by the screen's status (amber, green, blue) on a neutral base; compare off / month / per screen | https://claude.ai/artifact/TR3GLfJJ3q7kHTjNipWdmr |
+| **`ontwerp-v14.html`** | **Latest state, as decided.** Light: fixed soft blue-to-peach gradient, no wash, glow F. Dark and Dark +: glow at the top following the screen tone. Medium number weight. Same values as the app tokens (`src/design/tokens.ts`) | https://claude.ai/artifact/M3HnnMZJJ8LWMxyYYig6gx |
 
 Older versions are never overwritten: new rounds are new files.
 
