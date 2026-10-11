@@ -4,3 +4,5 @@ drizzle/meta
 package-lock.json
 data
 .claude
+src/app/tokens.generated.css
+docs/design
