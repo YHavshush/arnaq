@@ -119,6 +119,33 @@ describe("getForecast: recurring items", () => {
     expect(oct.expenses).toBe(80000); // the real payment, once
   });
 
+  it("does not project this month's occurrence when it was already paid last month", () => {
+    const { db, addItem, tx, cover } = setup();
+    addItem({ ...rent, startDate: "2026-10-01" });
+    generateOccurrences(db, { throughMonth: "2026-10" });
+    cover("2026-09");
+    tx("2026-09-28", -80000, { counterparty: "Verhuurder" });
+    expect(matchOccurrences(db).matched).toBe(1);
+    const [sep, oct] = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 }).months;
+    expect(lines(oct, "Huur")[0]).toMatchObject({ status: "matched", counted: "none" });
+    expect(oct).toMatchObject({ expenses: 0, recurring: { expenses: 0 } });
+    expect(sep).toMatchObject({ kind: "actual", expenses: 80000 });
+  });
+
+  it("projects an item on the 31st when today is the 31st, clamped in short months", () => {
+    const { db, addItem } = setup();
+    addItem({ dayOfMonth: 31, startDate: "2026-12-31" });
+    const f = getForecast(db, { today: "2027-01-31", months: 2, pastMonths: 1 });
+    expect(
+      f.months.map((m) => lines(m, "Spotify").map((o) => [o.expectedDate, o.counted])),
+    ).toEqual([
+      [], // December is past: no stored history, nothing invented
+      [["2027-01-31", "projected"]],
+      [["2027-02-28", "projected"]],
+      [["2027-03-31", "projected"]],
+    ]);
+  });
+
   it("treats a planned occurrence that is already paid as matched, in memory only", () => {
     const { db, addItem, tx, cover, cat } = setup();
     addItem({ ...rent, startDate: "2026-10-01", categoryId: cat("Huur") });

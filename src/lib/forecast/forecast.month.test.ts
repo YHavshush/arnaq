@@ -43,7 +43,7 @@ function scenario() {
   return s;
 }
 
-/** October uploaded so far: rent paid (matched), groceries 120, eating out 70. */
+/** October uploaded so far: rent paid (matched), groceries 120, eating out 70, plus noise. */
 function uploadOctober(s: ReturnType<typeof scenario>) {
   const { db, tx, cover, cat } = s;
   cover("2026-10");
@@ -51,6 +51,9 @@ function uploadOctober(s: ReturnType<typeof scenario>) {
   tx("2026-10-01", -80000, { counterparty: "Verhuurder", categoryId: cat("Huur") });
   tx("2026-10-05", -12000, { categoryId: cat("Boodschappen") });
   tx("2026-10-06", -7000, { categoryId: cat("Eten & drinken") });
+  // Neither changes a number: a foreign-currency row and an internal transfer.
+  tx("2026-10-07", -50000, { categoryId: cat("Boodschappen"), currency: "USD" });
+  tx("2026-10-08", -30000, { categoryId: cat("Boodschappen"), isInternalTransfer: true });
   expect(matchOccurrences(db).matched).toBe(1);
 }
 
