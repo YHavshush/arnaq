@@ -12,6 +12,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `ontwerp-v6.html` | Sixth round: v5 with a softer apricot gradient for the warning state in light mode and a hero ring that sits directly on the glow (no block), with a switch to compare against the block version | https://claude.ai/artifact/TChQFigCtxwSkDhzTpAJDJ |
 | `ontwerp-v7.html` | Seventh round: lighter dark atmosphere, halo centred on the ring (no smudge), pace card with daily bars on Overzicht, saldo ribbon with monthly growth on Prognose (switchable to monthly bars) | https://claude.ai/artifact/LTFUxhtZS6Z7xjGdyo9Ypc |
 | `ontwerp-v8.html` | Eighth round: light mode gets the dark-mode blue/violet ring on Vaste lasten and a soft glow centred on the ring, tinted by the state | https://claude.ai/artifact/1ahKsUCG7sA9LQiigfLGW6 |
+| `ontwerp-v9.html` | Ninth round: light glow redone as depth (two finals: tinted shadow, or frosted lens), a new theme option "Donker +" (lighter, bluer dark), contrast fix for green, themed selection and scrollbars | https://claude.ai/artifact/LU6xS6hjV17yNc2p5krqPo |
 
 Older versions are never overwritten: new rounds are new files.
 
