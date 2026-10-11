@@ -106,13 +106,30 @@ export function matchOccurrences(db: Db): MatchResult {
     dateDiff: number;
     amountDiff: number;
   };
+  // Transactions sorted by day, so each occurrence only looks at its +-window slice
+  // (binary search) instead of every transaction. Day numbers are computed once.
+  const byDay = txs
+    .map((t) => ({ t, day: dayNumber(t.date) }))
+    .sort((a, b) => a.day - b.day || a.t.id - b.t.id);
+  const firstFrom = (day: number) => {
+    let lo = 0;
+    let hi = byDay.length;
+    while (lo < hi) {
+      const mid = (lo + hi) >> 1;
+      if (byDay[mid].day < day) lo = mid + 1;
+      else hi = mid;
+    }
+    return lo;
+  };
+
   const pairs: Pair[] = [];
   for (const { o, item } of open) {
     const expectedDay = dayNumber(o.expectedDate);
-    for (const t of txs) {
+    for (let i = firstFrom(expectedDay - MATCH_WINDOW_DAYS); i < byDay.length; i++) {
+      const { t, day } = byDay[i];
+      if (day > expectedDay + MATCH_WINDOW_DAYS) break;
       if (item.type === "expense" ? t.amount >= 0 : t.amount <= 0) continue;
-      const dateDiff = Math.abs(dayNumber(t.date) - expectedDay);
-      if (dateDiff > MATCH_WINDOW_DAYS) continue;
+      const dateDiff = Math.abs(day - expectedDay);
       const amountDiff = Math.abs(Math.abs(t.amount) - o.expectedAmount);
       if (amountDiff > item.tolerance) continue;
       if (!identityMatches(item, t)) continue;

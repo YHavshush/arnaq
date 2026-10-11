@@ -6,6 +6,10 @@
 const DATE_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
+/** Earliest and latest start/end dates accepted for recurring items. */
+export const MIN_ITEM_DATE = "2000-01-01";
+export const MAX_ITEM_DATE = "2100-12-31";
+
 export const isMonth = (s: unknown): s is string => typeof s === "string" && MONTH_RE.test(s);
 
 /** A real calendar day (rejects 2026-02-30 and friends). */

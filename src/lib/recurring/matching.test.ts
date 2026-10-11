@@ -97,7 +97,7 @@ describe("matchOccurrences", () => {
 
   it("never matches the wrong sign", () => {
     const { db, tx, march, addItem, occ } = spotify();
-    tx("2026-03-10", 999, { counterparty: "Spotify" }); // a refund
+    const refund = tx("2026-03-10", 999, { counterparty: "Spotify" }); // a refund
     const income = addItem({
       name: "Spotify payout",
       type: "income",
@@ -105,12 +105,16 @@ describe("matchOccurrences", () => {
       dayOfMonth: 12,
     });
     generateOccurrences(db, { throughMonth: "2026-03" });
-    tx("2026-03-12", -999, { counterparty: "Spotify" });
+    const payment = tx("2026-03-12", -999, { counterparty: "Spotify" });
     matchOccurrences(db);
     // The refund went to the income item (same sign), the outgoing payment to the expense.
-    expect(march().status).toBe("matched");
-    expect(occ(income.id, "2026-03").status).toBe("matched");
-    expect(march().transactionId).not.toBe(occ(income.id, "2026-03").transactionId);
+    // Exact ids: both transactions are 0 days from an occurrence, so only the sign check
+    // keeps them apart.
+    expect(march()).toMatchObject({ status: "matched", transactionId: payment.id });
+    expect(occ(income.id, "2026-03")).toMatchObject({
+      status: "matched",
+      transactionId: refund.id,
+    });
   });
 
   it("an income item ignores outgoing payments", () => {

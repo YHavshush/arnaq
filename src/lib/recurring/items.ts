@@ -1,10 +1,11 @@
 import { and, asc, desc, eq, gte, inArray, ne } from "drizzle-orm";
 import { schema, type Db } from "@/db";
+import { MAX_CENTS } from "@/lib/money";
 import { FREQUENCIES, RECURRING_TYPES } from "@/db/schema";
-import { clampDay, isDate, monthOf } from "./dates";
+import { MAX_ITEM_DATE, MIN_ITEM_DATE, clampDay, isDate, monthOf } from "./dates";
 import { RecurringError } from "./errors";
 import { normaliseIban } from "./normalise";
-import { isScheduled, type Frequency, type RecurringType } from "./occurrences";
+import { isScheduled, isScheduledMonth, type Frequency, type RecurringType } from "./occurrences";
 import { planThroughMonth, syncRecurring } from "./sync";
 
 export { RecurringError };
@@ -30,6 +31,9 @@ export type RecurringItemPatch = Partial<RecurringItemInput>;
 
 type ItemValues = Omit<RecurringItem, "id">;
 
+export const MAX_ITEMS = 500;
+const MAX_TEXT = 200;
+
 function assertToday(today: string): void {
   if (!isDate(today)) throw new RecurringError(`Invalid date "${today}", use YYYY-MM-DD.`);
 }
@@ -38,6 +42,7 @@ function assertToday(today: string): void {
 function clean(db: Db, input: RecurringItemInput): ItemValues {
   const name = typeof input.name === "string" ? input.name.trim() : "";
   if (!name) throw new RecurringError("Name is required.");
+  if (name.length > MAX_TEXT) throw new RecurringError(`Name is too long (max ${MAX_TEXT}).`);
   if (!RECURRING_TYPES.includes(input.type))
     throw new RecurringError('Type must be "expense" or "income".');
 
@@ -46,11 +51,17 @@ function clean(db: Db, input: RecurringItemInput): ItemValues {
   const matchIban = normaliseIban(input.matchIban) || null;
   if (!matchCounterparty && !matchIban)
     throw new RecurringError("Give a counterparty name or an IBAN to match on.");
+  if ((matchCounterparty?.length ?? 0) > MAX_TEXT || (matchIban?.length ?? 0) > 34)
+    throw new RecurringError("Counterparty or IBAN is too long.");
 
-  if (!Number.isInteger(input.expectedAmount) || input.expectedAmount <= 0)
+  if (
+    !Number.isSafeInteger(input.expectedAmount) ||
+    input.expectedAmount <= 0 ||
+    input.expectedAmount > MAX_CENTS
+  )
     throw new RecurringError("Expected amount must be a positive integer number of cents.");
   const tolerance = input.tolerance ?? 0;
-  if (!Number.isInteger(tolerance) || tolerance < 0)
+  if (!Number.isSafeInteger(tolerance) || tolerance < 0 || tolerance > MAX_CENTS)
     throw new RecurringError("Tolerance must be a non-negative integer number of cents.");
   if (!Number.isInteger(input.dayOfMonth) || input.dayOfMonth < 1 || input.dayOfMonth > 31)
     throw new RecurringError("Day of month must be between 1 and 31.");
@@ -63,6 +74,15 @@ function clean(db: Db, input: RecurringItemInput): ItemValues {
   const endDate = input.endDate ?? null;
   if (endDate !== null && !isDate(endDate))
     throw new RecurringError(`Invalid end date "${endDate}", use YYYY-MM-DD.`);
+  for (const [label, d] of [
+    ["Start", input.startDate],
+    ["End", endDate],
+  ] as const) {
+    if (d !== null && (d < MIN_ITEM_DATE || d > MAX_ITEM_DATE))
+      throw new RecurringError(
+        `${label} date must be between ${MIN_ITEM_DATE} and ${MAX_ITEM_DATE}.`,
+      );
+  }
   if (endDate !== null && endDate < input.startDate)
     throw new RecurringError("End date must not be before the start date.");
 
@@ -123,6 +143,8 @@ export function createRecurringItem(
   assertToday(opts.today);
   return db.transaction((tx) => {
     const txDb = tx as unknown as Db;
+    if (listRecurringItems(txDb).length >= MAX_ITEMS)
+      throw new RecurringError(`At most ${MAX_ITEMS} recurring items are supported.`);
     const [item] = tx.insert(schema.recurringItems).values(clean(txDb, input)).returning().all();
     syncRecurring(txDb, { throughMonth: planThroughMonth(txDb, opts.today), today: opts.today });
     return item;
@@ -188,7 +210,12 @@ export function updateRecurringItem(
       dropUnmatched(txDb, id, () => false);
       return item;
     }
-    dropUnmatched(txDb, id, (month) => isScheduled(item, month));
+    // Past months only fall away when the start, end or frequency excludes them; changing the
+    // day of month must never delete history. From this month on the exact day applies.
+    const thisMonth = monthOf(opts.today);
+    dropUnmatched(txDb, id, (month) =>
+      month < thisMonth ? isScheduledMonth(item, month) : isScheduled(item, month),
+    );
 
     const future = tx
       .select()
