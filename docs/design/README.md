@@ -11,6 +11,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `ontwerp-v5.html` | Fifth round, the best mix: every screen opens with a ring, one big number and one serif sentence; one adaptive layout (phone pill nav, laptop sidebar); theme (light / dark / system) is the only user setting; forecast bars carry their numbers and are tappable | https://claude.ai/artifact/MPvNqWy4xMbjkiZsfQQFNY |
 | `ontwerp-v6.html` | Sixth round: v5 with a softer apricot gradient for the warning state in light mode and a hero ring that sits directly on the glow (no block), with a switch to compare against the block version | https://claude.ai/artifact/TChQFigCtxwSkDhzTpAJDJ |
 | `ontwerp-v7.html` | Seventh round: lighter dark atmosphere, halo centred on the ring (no smudge), pace card with daily bars on Overzicht, saldo ribbon with monthly growth on Prognose (switchable to monthly bars) | https://claude.ai/artifact/LTFUxhtZS6Z7xjGdyo9Ypc |
+| `ontwerp-v8.html` | Eighth round: light mode gets the dark-mode blue/violet ring on Vaste lasten and a soft glow centred on the ring, tinted by the state | https://claude.ai/artifact/1ahKsUCG7sA9LQiigfLGW6 |
 
 Older versions are never overwritten: new rounds are new files.
 
