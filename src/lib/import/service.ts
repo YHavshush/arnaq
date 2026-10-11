@@ -3,6 +3,8 @@ import { and, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { applyRules } from "@/lib/categories/categorise";
 import { detectInternalTransfers } from "@/lib/categories/transfers";
+import { isDate } from "@/lib/recurring/dates";
+import { latestTransactionMonth, syncRecurring, type SyncResult } from "@/lib/recurring/sync";
 import { detectBank, getParser } from "./parsers";
 import type { Bank, ParsedRow, SkippedRow } from "./types";
 
@@ -13,6 +15,11 @@ export interface ImportInput {
   accountId?: number;
   /** YYYY-MM label for the import. If omitted, the dominant month in the file is used. */
   month?: string;
+  /**
+   * Today (YYYY-MM-DD), used to decide which recurring occurrences are overdue (missed).
+   * Without it, occurrences are still generated and matched but nothing is marked missed.
+   */
+  today?: string;
 }
 
 export interface ImportSummary {
@@ -28,6 +35,8 @@ export interface ImportSummary {
   /** Rows imported in a currency other than the account currency; kept out of EUR totals. */
   foreignCurrencyRows: number;
   warnings: string[];
+  /** What the upload did to recurring items: occurrences planned, matched, missed. */
+  recurring: SyncResult;
 }
 
 export class ImportError extends Error {}
@@ -84,6 +93,8 @@ function resolveAccount(db: Db, bank: Bank, identifier: string | null): number {
 export function importCsv(db: Db, input: ImportInput): ImportSummary {
   if (input.month && !MONTH_RE.test(input.month))
     throw new ImportError(`Invalid month "${input.month}", use YYYY-MM.`);
+  if (input.today !== undefined && !isDate(input.today))
+    throw new ImportError(`Invalid date "${input.today}", use YYYY-MM-DD.`);
 
   const detected = detectBank(input.content);
   let bank: Bank;
@@ -180,6 +191,12 @@ export function importCsv(db: Db, input: ImportInput): ImportSummary {
     // New rows get categorised and own-account transfers are flagged straight away.
     detectInternalTransfers(txDb);
     applyRules(txDb, { importId: imp.id });
+    // Then recurring items: plan through the newest data, match, and flag what is overdue.
+    // Rules ran first, so an item's category only fills in what the rules left open.
+    const recurring = syncRecurring(txDb, {
+      throughMonth: latestTransactionMonth(txDb),
+      today: input.today,
+    });
 
     if (foreign > 0)
       warnings.push(`${foreign} row(s) are not in ${account.currency}; review them manually.`);
@@ -196,6 +213,7 @@ export function importCsv(db: Db, input: ImportInput): ImportSummary {
       skipped: parsed.skipped,
       foreignCurrencyRows: foreign,
       warnings,
+      recurring,
     };
   });
 }

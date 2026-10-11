@@ -1,4 +1,5 @@
 import { getDb } from "@/db";
+import { todayIso } from "@/lib/api";
 import { ImportError, importCsv } from "@/lib/import/service";
 
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
       filename: file.name,
       accountId,
       month: typeof monthRaw === "string" && monthRaw ? monthRaw : undefined,
+      today: todayIso(),
     });
     return Response.json(summary);
   } catch (e) {
