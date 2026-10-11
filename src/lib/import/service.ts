@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
+import { applyRules } from "@/lib/categories/categorise";
+import { detectInternalTransfers } from "@/lib/categories/transfers";
 import { detectBank, getParser } from "./parsers";
 import type { Bank, ParsedRow, SkippedRow } from "./types";
 
@@ -174,6 +176,10 @@ export function importCsv(db: Db, input: ImportInput): ImportSummary {
       })
       .where(and(eq(schema.imports.id, imp.id)))
       .run();
+
+    // New rows get categorised and own-account transfers are flagged straight away.
+    detectInternalTransfers(txDb);
+    applyRules(txDb, { importId: imp.id });
 
     if (foreign > 0)
       warnings.push(`${foreign} row(s) are not in ${account.currency}; review them manually.`);

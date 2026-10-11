@@ -1,7 +1,9 @@
+import { requestTime } from "@/lib/api";
 import { getDb, schema } from "@/db";
 import { BANKS } from "@/db/schema";
 
 export async function GET() {
+  await requestTime();
   return Response.json(getDb().select().from(schema.accounts).all());
 }
 

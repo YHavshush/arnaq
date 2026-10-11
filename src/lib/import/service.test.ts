@@ -146,3 +146,33 @@ describe("importCsv", () => {
     expect(s.rowsImported).toBe(6);
   });
 });
+
+describe("importCsv categorisation", () => {
+  it("applies rules and flags the Rabobank to Revolut transfer once both sides are in", () => {
+    const db = createDb(":memory:");
+    importCsv(db, { content: fixture("rabobank-sample.csv"), filename: "rabo.csv" });
+    const catOf = (cp: string) => {
+      const t = db
+        .select()
+        .from(schema.transactions)
+        .where(eq(schema.transactions.counterparty, cp))
+        .get()!;
+      return t.categoryId
+        ? db.select().from(schema.categories).where(eq(schema.categories.id, t.categoryId)).get()!
+            .name
+        : null;
+    };
+    expect(catOf("Spotify AB")).toBe("Abonnementen");
+    expect(catOf("Albert Heijn 1234 Amsterdam")).toBe("Boodschappen");
+    expect(catOf("Verhuurder Voorbeeld BV")).toBe("Huur");
+    expect(catOf("Koffie Voorbeeld")).toBeNull();
+
+    importCsv(db, { content: fixture("revolut-sample.csv"), filename: "rev.csv" });
+    const transfers = db
+      .select()
+      .from(schema.transactions)
+      .where(eq(schema.transactions.isInternalTransfer, true))
+      .all();
+    expect(transfers.map((t) => t.amount).sort()).toEqual([-20000, 20000]);
+  });
+});
