@@ -1,0 +1,8 @@
+node_modules
+.next
+data/
+*.csv
+!tests/fixtures/*.csv
+*.db
+*.sqlite
+.env*
