@@ -8,6 +8,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `ontwerp-v2.html` | Second round: clean Apple/Notion/Dyme direction, **Helder** and **Titanium** skins, phone and laptop | https://claude.ai/artifact/FwNuDz3mhHvRuqTWguYUhN |
 | `ontwerp-v3.html` | Third round: v2 plus headline sentence, state tiles, ribbon trend, one-or-three rings, and a **Verhaal** (story-first) skin | https://claude.ai/artifact/JjuTUaYZzA8925tJJaFMwL |
 | `ontwerp-v4.html` | Fourth round: one merged design. Theme (light / dark / system) and start screen (Verhaal / Dashboard / auto) are user settings. Light = Helder / Verhaal, dark = Titanium | https://claude.ai/artifact/A6KVU6eLAVHDAx8BQsj4Lc |
+| `ontwerp-v5.html` | Fifth round, the best mix: every screen opens with a ring, one big number and one serif sentence; one adaptive layout (phone pill nav, laptop sidebar); theme (light / dark / system) is the only user setting; forecast bars carry their numbers and are tappable | https://claude.ai/artifact/MPvNqWy4xMbjkiZsfQQFNY |
 
 Older versions are never overwritten: new rounds are new files.
 
