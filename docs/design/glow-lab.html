@@ -1,0 +1,86 @@
+<title>Kasboek Glow Lab</title>
+<style>
+/* Layout: six treatments (A to F) of the same hero ring on the real light background, two states each (apricot = bijna op, blue = vaste lasten),
+   plus the approved dark ring as a reference. No CSS filters on SVG anywhere, so iPhone Safari cannot clip anything. */
+:root { color-scheme: light; --ink: #17202e; --muted: #566275; --card: rgba(255,255,255,.6); }
+* { box-sizing: border-box; }
+body { margin: 0; background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; color: var(--ink); font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 18px 16px 60px; overflow-x: clip; }
+html, body { overflow-x: hidden; }
+h1 { font: 500 34px/1.1 "Newsreader", Georgia, serif; margin: 6px 0 6px; letter-spacing: -.02em; }
+p.lead { color: var(--muted); margin: 0 0 18px; max-width: 56ch; }
+.ctl { display: inline-flex; background: rgba(23,32,46,.07); border-radius: 10px; padding: 2px; margin-bottom: 18px; }
+.ctl button { border: 0; background: none; padding: 7px 14px; border-radius: 8px; font: inherit; font-weight: 600; font-size: 14px; color: var(--muted); }
+.ctl button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+.opt { margin: 0 0 26px; }
+.opt h2 { margin: 0 0 2px; font-size: 19px; display: flex; gap: 10px; align-items: baseline; }
+.opt h2 b { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: #243b73; color: #fff; font-size: 16px; }
+.opt p { margin: 0 0 6px; color: var(--muted); font-size: 14px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; justify-items: center; padding: 18px 0 8px; }
+.ring { --s: 150px; --c: rgba(233,136,89,.6); position: relative; width: var(--s); height: var(--s); isolation: isolate; }
+.big .ring { --s: 216px; }
+.big .pair { grid-template-columns: 1fr; gap: 18px; }
+.ring.blue { --c: rgba(96,150,255,.6); }
+.ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ring .num { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; z-index: 2; }
+.ring .num b { font-size: calc(var(--s) * .24); letter-spacing: -.03em; line-height: 1; }
+.ring .num span { font-size: calc(var(--s) * .075); color: var(--muted); margin-top: 4px; }
+.ring i { position: absolute; border-radius: 50%; pointer-events: none; z-index: -1; }
+/* B: one big, very soft bloom that fades out completely (no visible edge) */
+.b i { inset: -70%; background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 70%, transparent) 0%, color-mix(in srgb, var(--c) 28%, transparent) 45%, transparent 100%); }
+/* C: the inside of the ring is a lit well */
+.c i { inset: 14%; background: radial-gradient(circle at 50% 36%, rgba(255,255,255,.96), color-mix(in srgb, var(--c) 30%, rgba(255,255,255,.5)) 100%); }
+/* E: frosted lens inside the ring with a small shadow */
+.e i { inset: 12%; background: radial-gradient(circle at 50% 24%, rgba(255,255,255,.96), rgba(255,255,255,.62) 60%, rgba(255,255,255,.42)); box-shadow: inset 0 1px 0 #fff, 0 14px 22px -14px color-mix(in srgb, var(--c) 90%, transparent); }
+/* F: tinted shadow straight below the ring, drawn with a box-shadow (no filter) */
+.f i { inset: 0; box-shadow: 0 16px 22px -8px var(--c); }
+/* D: the same conic ring as dark mode, with a lit head and a small, tight glow */
+.d .tr { position: absolute; inset: 0; border-radius: 50%; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11.4px)); mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11.4px)); }
+.d .trk { background: rgba(23,32,46,.1); }
+.d .arc { background: conic-gradient(from 0deg, var(--a), var(--b) calc(var(--p) * 1%), transparent calc(var(--p) * 1%)); }
+.d .wrap2 { position: absolute; inset: 0; z-index: 1; filter: drop-shadow(0 0 6px color-mix(in srgb, var(--b) 55%, transparent)); }
+.d .head { position: absolute; inset: 0; transform: rotate(calc(var(--p) * 3.6deg)); }
+.d .head u { position: absolute; left: 50%; top: 0; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--b); box-shadow: 0 0 8px var(--b); }
+.d .cap0 { position: absolute; left: 50%; top: 0; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--a); }
+/* dark reference (approved) */
+.dark { background: radial-gradient(520px 300px at 50% 20%, rgba(242,184,75,.30), transparent 70%), linear-gradient(180deg, #1b2434, #141b28); border-radius: 24px; padding: 18px 0 8px; color: #eef1f5; margin-bottom: 26px; }
+.dark .ring { --s: 150px; filter: none; }
+.dark .ring .num span { color: #8e97a5; }
+.dark .tr { position: absolute; inset: 0; border-radius: 50%; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11.4px)); mask: radial-gradient(farthest-side, transparent calc(100% - 12px), #000 calc(100% - 11.4px)); }
+.dark .trk { background: rgba(255,255,255,.075); }
+.dark .arc { background: conic-gradient(from 0deg, var(--a), var(--b) calc(var(--p) * 1%), transparent calc(var(--p) * 1%)); }
+.dark .wrap2 { position: absolute; inset: 0; z-index: 1; filter: drop-shadow(0 0 14px color-mix(in srgb, var(--b) 45%, transparent)); }
+.dark .head { position: absolute; inset: 0; transform: rotate(calc(var(--p) * 3.6deg)); }
+.dark .head u { position: absolute; left: 50%; top: 0; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--b); box-shadow: 0 0 10px var(--b); }
+.dark .cap0 { position: absolute; left: 50%; top: 0; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: var(--a); }
+.dark .num b { color: #eef1f5; font-weight: 300; }
+.note { color: var(--muted); font-size: 14px; margin-top: 8px; }
+</style>
+<div class="wrap" id="app"></div>
+<script>
+const G = { warn: ["#f9d39e", "#e98859"], blue: ["#33c6ff", "#7f8cff"] };
+let big = false;
+const svgRing = (tone, pct) => {
+  const s = 100, r = 44, c = 2 * Math.PI * r, d = (pct / 100) * c, [a, b] = G[tone];
+  return `<svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="g-${tone}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><circle cx="50" cy="50" r="${r}" fill="none" stroke="rgba(23,32,46,.1)" stroke-width="8"/><circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#g-${tone})" stroke-width="8" stroke-linecap="round" stroke-dasharray="${d} ${c}" transform="rotate(-90 50 50)"/></svg>`;
+};
+const conic = (tone, pct) => { const [a, b] = G[tone]; return `<div class="wrap2" style="--a:${a};--b:${b};--p:${pct}"><div class="tr trk"></div><div class="tr arc" style="--a:${a};--b:${b};--p:${pct}"></div><div class="cap0"></div><div class="head" style="--p:${pct}"><u style="--b:${b}"></u></div></div>`; };
+const num = (t) => (t === "warn" ? `<div class="num"><b>€ 83</b><span>vrij te besteden</span></div>` : `<div class="num"><b>6/8</b><span>betaald</span></div>`);
+const ring = (cls, tone, pct) => `<div class="ring ${cls} ${tone === "warn" ? "" : "blue"}">${cls === "d" ? conic(tone, pct) : svgRing(tone, pct)}${cls === "d" ? "" : `<i></i>`}${num(tone)}</div>`;
+const OPT = [
+  ["a", "A", "Geen glow", "Gewoon een scherpe ring, zoals Apple Fitness. Alle sfeer zit in de achtergrond."],
+  ["b", "B", "Zachte bloom", "Eén grote, heel zachte kleurwolk achter de ring die helemaal uitdooft, zonder rand."],
+  ["c", "C", "Verlichte binnenkant", "De binnenkant van de ring gloeit zacht in de kleur van de status. Niets buiten de ring."],
+  ["d", "D", "Zelfde ring als donker", "Dezelfde ring als in donker, met een verlichte kop en een kleine, strakke gloed."],
+  ["e", "E", "Matte lens", "Een matte, lichte schijf in de ring met een kleine schaduw."],
+  ["f", "F", "Schaduw eronder", "Een zachte schaduw in de kleur van de status recht onder de ring."],
+];
+function render() {
+  document.getElementById("app").innerHTML = `<h1>Glow in licht</h1><p class="lead">Zes manieren om dezelfde ring te laten leven op de lichte achtergrond. Links abrikoos (bijna op), rechts blauw (vaste lasten). Kies een letter, of zeg wat je liever anders ziet.</p>
+  <div class="ctl" role="group" aria-label="Grootte"><button data-big="0" aria-pressed="${!big}">Klein, naast elkaar</button><button data-big="1" aria-pressed="${big}">Ware grootte</button></div>
+  <div class="dark"><div class="pair">${ring("d", "warn", 86).replace('class="ring d ', 'class="ring ')}${ring("d", "blue", 75).replace('class="ring d ', 'class="ring ')}</div><p class="note" style="padding:0 16px;color:#8e97a5">Referentie: zo ziet de goedgekeurde glow in donker eruit.</p></div>
+  ${OPT.map(([cls, L, t, d]) => `<section class="opt ${big ? "big" : ""}"><h2><b>${L}</b>${t}</h2><p>${d}</p><div class="pair">${ring(cls, "warn", 86)}${ring(cls, "blue", 75)}</div></section>`).join("")}`;
+}
+document.addEventListener("click", (e) => { const b = e.target.closest("[data-big]"); if (b) { big = b.dataset.big === "1"; render(); } });
+render();
+</script>

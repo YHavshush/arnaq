@@ -60,3 +60,7 @@ Real bank CSVs and the database are never committed. Only anonymised samples go 
 | `GET /api/forecast?months=6&history=3&pastMonths=3`      | Prognose: actual, current (mixed) and forecast months; read-only              |
 
 Forecast semantics (month kinds, no double counting, variable-spend averages and rounding) are documented in [docs/plans/m5-forecast.md](docs/plans/m5-forecast.md).
+
+## Design
+
+See [DESIGN.md](DESIGN.md). Prototypes and their private links are listed in [docs/design/README.md](docs/design/README.md).

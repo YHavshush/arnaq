@@ -22,3 +22,14 @@ Model table:
 - Vendored ECC subset lives in `.claude/` (see `.claude/ecc/README.md`). Pipeline per milestone: size it, plan (planner), TDD (tdd-guide), review (code-reviewer, plus security-reviewer when auth, input handling, DB queries, file paths or secrets are touched), then conventional commits. Details: `.claude/skills/orch-pipeline/SKILL.md`.
 - The two human gates (plan, commit) are self-checked and logged in the milestone summary while the go-ahead above is active. CRITICAL/HIGH review findings must be fixed before merging.
 - Hard logic (milestones 4 and 5, final security review) runs on Opus subagents; the agent definitions in `.claude/agents/` are the briefs.
+
+## Decisions added 2026-10-11
+
+- **Database target is Supabase (Postgres).** The user sets up the Supabase project later. Until then keep everything Postgres-portable: no new SQLite-only SQL, money as integers (bigint in Postgres), no reliance on synchronous DB calls in new code. A `feat/postgres-port` milestone converts the code to async Drizzle on Postgres (PGlite locally and in tests, postgres-js for Supabase). Milestone 9 becomes Supabase + app hosting + Supabase Auth; enable RLS (deny all) on every table because Supabase exposes `public` over its REST API.
+- **The user has final say on the look of the app.** Milestone 6 produces vastly different design variants (UI UX Pro Max to generate, Impeccable principles to critique and iterate), shown as mock screens with demo data. Present one final, or 2-3 only when they are genuinely different. Do not build the dashboard (milestone 7) before the user picks.
+
+## Design system (milestone 6, done)
+
+- The design is in `DESIGN.md`; colour tokens are generated from `src/design/tokens.ts` (`npm run tokens`). Do not invent new colours or styles in components: use the tokens and shadcn variables.
+- UI UX Pro Max is vendored in `.claude/skills/ui-ux-pro-max/` as an idea bank. Impeccable is installed at milestone 8, not before.
+- Hard rule: never put a CSS `filter` on an SVG element (iPhone Safari clips it).

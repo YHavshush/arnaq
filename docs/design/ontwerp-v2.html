@@ -1,0 +1,413 @@
+<title>Kasboek Ontwerp</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@500&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+<style>
+/* Layout: a calm app shell. Phone = large title + ring glance + grouped lists + bottom tabs.
+   Laptop = sidebar + glance card + list with a right rail. The shell switches on the app's own width
+   (container query), so the same markup serves phone and laptop. */
+:root {
+  --canvas: #f5f5f7; --card: #ffffff; --ink: #1d1d1f; --muted: #6e6e73; --hair: #e5e5ea; --track: #ececf0;
+  --accent: #0066cc; --accent-ink: #ffffff; --soft: #f0f4fa;
+  --good: #1f8a4c; --warn: #b45309; --bad: #d92d20; --warn-ring: #f08c00; --good-ring: #2fb067;
+  --sky: #dcecfa; --sky-i: #1a4e86; --mint: #d9f3e1; --mint-i: #14683a; --peach: #ffe8d4; --peach-i: #8a4300;
+  --rose: #fde0ec; --rose-i: #9c2b63; --lav: #e6e0f5; --lav-i: #4b3a99; --yel: #fef7d6; --yel-i: #7a5e00; --gry: #efeff2; --gry-i: #55555c;
+  --t-accent-a: #2ac9ff; --t-accent-b: #7d8bff; --t-good-a: #1fc98f; --t-good-b: #9af2c4; --t-warn-a: #e8891a; --t-warn-b: #ffd36b; --t-bad-a: #e5484d; --t-bad-b: #ff9b8f;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --canvas: #0b0b0f; --card: #16161a; --ink: #f5f5f7; --muted: #9a9aa3; --hair: #2a2a30; --track: #26262c; --accent: #4da3ff; --accent-ink: #04121f; --soft: #1b2230;
+  --good: #4cd28a; --warn: #f5a524; --bad: #ff6b60; --warn-ring: #f5a524; --good-ring: #4cd28a;
+  --sky: #16314d; --sky-i: #8ec3ff; --mint: #14392a; --mint-i: #7fdca6; --peach: #4a2a12; --peach-i: #ffbe8a;
+  --rose: #4a1b33; --rose-i: #ff9dc8; --lav: #2d2750; --lav-i: #b9a9ff; --yel: #3e3408; --yel-i: #f3d866; --gry: #2a2a30; --gry-i: #b0b0ba; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --canvas: #0b0b0f; --card: #16161a; --ink: #f5f5f7; --muted: #9a9aa3; --hair: #2a2a30; --track: #26262c; --accent: #4da3ff; --accent-ink: #04121f; --soft: #1b2230;
+  --good: #4cd28a; --warn: #f5a524; --bad: #ff6b60; --warn-ring: #f5a524; --good-ring: #4cd28a;
+  --sky: #16314d; --sky-i: #8ec3ff; --mint: #14392a; --mint-i: #7fdca6; --peach: #4a2a12; --peach-i: #ffbe8a;
+  --rose: #4a1b33; --rose-i: #ff9dc8; --lav: #2d2750; --lav-i: #b9a9ff; --yel: #3e3408; --yel-i: #f3d866; --gry: #2a2a30; --gry-i: #b0b0ba; color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.4; -webkit-font-smoothing: antialiased; }
+button, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---- comparison frame (not part of the app) ---- */
+.frame { background: var(--card); border-bottom: 1px solid var(--hair); padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+.frame b { font-size: 14px; margin-right: auto; }
+.sg { display: inline-flex; background: var(--track); border-radius: 9px; padding: 2px; }
+.sg button { border: 0; background: none; padding: 5px 11px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--muted); }
+.sg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.frame details { flex-basis: 100%; font-size: 13px; color: var(--muted); }
+.frame summary { cursor: pointer; font-weight: 600; color: var(--ink); }
+.frame ul { margin: 6px 0 0; padding-left: 18px; max-width: 80ch; }
+.shell { overflow: hidden; }
+.stage { transform-origin: top left; margin: 0 auto; background: var(--canvas); }
+.stage.phone { width: 390px; max-width: 100%; border-inline: 1px solid var(--hair); }
+.stage.laptop { width: 1200px; }
+.stage.auto { width: 100%; }
+
+/* ---- the app ---- */
+.app { container: app / inline-size; background: var(--canvas); }
+.layout { display: block; min-height: 760px; }
+.side { display: none; }
+.main { padding: 14px 16px 96px; max-width: 760px; margin: 0 auto; }
+.top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 8px 0 14px; }
+.top .sub { color: var(--muted); font-size: 14px; }
+.top h1 { font-size: 34px; line-height: 1.1; margin: 0; letter-spacing: -0.02em; font-weight: 700; }
+.step { display: inline-flex; gap: 6px; }
+.icon-btn { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--hair); background: var(--card); display: inline-grid; place-items: center; padding: 0; color: var(--ink); }
+.icon-btn:disabled { opacity: .4; cursor: default; }
+svg.lucide { width: 18px; height: 18px; stroke-width: 2; }
+.cols { margin-top: 12px; }
+.card { background: var(--card); border: 1px solid var(--hair); border-radius: 18px; }
+.sec { margin: 26px 0 8px; display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.sec h2 { margin: 0; font-size: 20px; letter-spacing: -0.01em; font-weight: 650; font-weight: 700; }
+.sec span { color: var(--muted); font-size: 14px; }
+.link { background: none; border: 0; color: var(--accent); font-weight: 600; padding: 4px 0; }
+
+/* glance */
+.glance { padding: 20px 16px 16px; display: grid; gap: 16px; justify-items: center; }
+.hero { position: relative; width: 224px; height: 224px; }
+.hero .in { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.hero .big { font-size: 46px; font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.hero .cap { color: var(--muted); font-size: 14px; margin-top: 6px; }
+.minis { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; }
+.mini svg { flex: none; }
+.mini { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--canvas); border-radius: 14px; }
+.mini .t { font-weight: 650; font-size: 15px; line-height: 1.2; }
+.mini .s { color: var(--muted); font-size: 13px; }
+.insight { margin: 0; text-align: center; color: var(--muted); font-size: 15px; max-width: 46ch; }
+.insight b { color: var(--ink); font-weight: 600; }
+
+/* notes (attention) */
+.note { display: flex; gap: 12px; align-items: center; padding: 12px 14px; }
+.note + .note { border-top: 1px solid var(--hair); }
+.note .txt { flex: 1; min-width: 0; font-size: 15px; }
+.note .txt small { display: block; color: var(--muted); font-size: 13px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.btn { border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 600; border-radius: 999px; padding: 8px 14px; font-size: 14px; }
+.btn.ghost { background: var(--soft); color: var(--accent); }
+
+/* grouped list rows */
+.rows { overflow: hidden; }
+.row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 14px; }
+.row + .row { border-top: 1px solid var(--hair); }
+.chip { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--c, var(--gry)); color: var(--ci, var(--gry-i)); }
+.chip svg.lucide { width: 20px; height: 20px; }
+.row .nm { font-weight: 600; font-size: 16px; line-height: 1.25; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.row .nm small { font-weight: 500; color: var(--muted); font-size: 12px; }
+.row .meta { color: var(--muted); font-size: 13px; margin-top: 1px; }
+.row .amt { text-align: right; font-weight: 650; font-size: 16px; letter-spacing: -0.01em; }
+.row .amt small { display: block; color: var(--muted); font-weight: 500; font-size: 13px; }
+.row .amt.bad small { color: var(--bad); font-weight: 600; }
+.bar { height: 4px; background: var(--track); border-radius: 2px; margin-top: 7px; overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 2px; background: var(--accent); }
+.bar.warn i { background: var(--warn-ring); } .bar.bad i { background: var(--bad); } .bar.done i { background: var(--good-ring); }
+.pill { display: inline-block; font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--gry); color: var(--gry-i); white-space: nowrap; }
+.pill.good { background: var(--mint); color: var(--mint-i); } .pill.warn { background: var(--yel); color: var(--yel-i); } .pill.bad { background: var(--rose); color: var(--rose-i); } .pill.info { background: var(--sky); color: var(--sky-i); }
+.more { display: block; width: 100%; padding: 12px; border: 0; border-top: 1px solid var(--hair); background: none; color: var(--accent); font-weight: 600; }
+
+/* segmented */
+.seg { display: inline-flex; background: var(--track); border-radius: 10px; padding: 2px; }
+.seg button { border: 0; background: none; padding: 6px 14px; border-radius: 8px; font-weight: 600; font-size: 14px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.14); }
+
+/* forecast */
+.fhead { padding: 18px 16px 6px; }
+.fhead .k { color: var(--muted); font-size: 14px; }
+.fhead .v { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.1; }
+.chartbox { padding: 4px 8px 12px; } .chartbox svg { width: 100%; height: auto; display: block; }
+.legend { display: flex; gap: 16px; flex-wrap: wrap; padding: 0 16px 14px; color: var(--muted); font-size: 13px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+
+/* upload */
+.drop { border: 1.5px dashed var(--hair); border-radius: 18px; padding: 28px 16px; text-align: center; background: var(--card); }
+.drop .ic { width: 48px; height: 48px; border-radius: 14px; display: inline-grid; place-items: center; background: var(--soft); color: var(--accent); margin-bottom: 8px; }
+.drop b { display: block; font-size: 17px; } .drop span { color: var(--muted); font-size: 14px; }
+.stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+.stat { padding: 12px 14px; } .stat b { font-size: 28px; letter-spacing: -0.02em; display: block; line-height: 1.1; } .stat span { color: var(--muted); font-size: 13px; }
+.rv { padding: 12px 14px; } .rv + .rv { border-top: 1px solid var(--hair); }
+.rv .t { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; } .rv .m { color: var(--muted); font-size: 13px; margin: 1px 0 8px; }
+.opts { display: flex; gap: 6px; flex-wrap: wrap; }
+.opts button { border: 1px solid var(--hair); background: var(--card); border-radius: 999px; padding: 6px 12px; font-size: 14px; font-weight: 600; }
+.opts button:hover { background: var(--soft); }
+.opts select { border: 1px solid var(--hair); background: var(--card); border-radius: 999px; padding: 6px 10px; font-size: 14px; }
+.rv.is-done .t { color: var(--muted); }
+
+/* bottom tabs (phone) */
+.tabs { position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--card); border-top: 1px solid var(--hair); padding: 6px 4px calc(6px + env(safe-area-inset-bottom, 0px)); z-index: 10; }
+.tabs button { background: none; border: 0; display: grid; justify-items: center; gap: 2px; padding: 4px; color: var(--muted); font-size: 11.5px; font-weight: 600; position: relative; }
+.tabs button[aria-current="page"] { color: var(--accent); }
+.tabs .badge { position: absolute; top: 0; left: calc(50% + 6px); background: var(--bad); color: #fff; font-size: 10.5px; border-radius: 9px; padding: 0 5px; line-height: 16px; }
+
+/* ---- laptop layout ---- */
+@container app (min-width: 900px) {
+  .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); }
+  .side { display: flex; flex-direction: column; gap: 2px; background: var(--card); border-right: 1px solid var(--hair); padding: 20px 12px; position: sticky; top: 0; align-self: start; min-height: 100%; }
+  .logo { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; padding: 4px 10px 16px; display: flex; gap: 8px; align-items: center; }
+  .logo i { width: 22px; height: 22px; border-radius: 7px; background: var(--accent); display: inline-block; }
+  .side button { display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 8px; color: var(--muted); font-weight: 550; font-size: 15px; }
+  .side button:hover { background: var(--canvas); }
+  .side button[aria-current="page"] { background: var(--soft); color: var(--accent); }
+  .side button:disabled { opacity: .5; cursor: default; }
+  .side .badge { margin-left: auto; background: var(--bad); color: #fff; font-size: 11px; border-radius: 9px; padding: 0 6px; }
+  .side .acc { margin-top: auto; padding: 10px; color: var(--muted); font-size: 13px; border-top: 1px solid var(--hair); }
+  .tabs { display: none; }
+  .main { max-width: 1040px; padding: 28px 32px 56px; }
+  .top h1 { font-size: 36px; }
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+  .glance { grid-template-columns: auto 1fr; justify-items: stretch; align-items: center; gap: 28px; padding: 24px 28px; }
+  .glance .hero { justify-self: center; }
+  .glance .right { display: grid; gap: 14px; }
+  .minis { grid-template-columns: repeat(2, 1fr); }
+  .insight { text-align: left; max-width: none; }
+  .stats { grid-template-columns: repeat(4, 1fr); }
+}
+@container app (max-width: 520px) { .bud { display: none; } }
+@container app (max-width: 899px) { .cols > * + * { margin-top: 0; } .glance .right { display: contents; } }
+
+/* ---- Titanium skin: graphite, silver, gradient rings with a lit head. Dark only. ---- */
+html:root[data-skin="titanium"] {
+  --canvas: #06070a; --card: #11141a; --ink: #eef1f5; --muted: #8e97a5; --hair: rgba(255,255,255,.08); --track: rgba(255,255,255,.075);
+  --accent: #8fd0ff; --accent-ink: #06121c; --soft: rgba(143,208,255,.10);
+  --good: #5ee0a0; --warn: #f2b84b; --bad: #ff7b6e; --warn-ring: #f2b84b; --good-ring: #5ee0a0;
+  --sky: #16314d; --sky-i: #8ec3ff; --mint: #14392a; --mint-i: #7fdca6; --peach: #4a2a12; --peach-i: #ffbe8a;
+  --rose: #4a1b33; --rose-i: #ff9dc8; --lav: #2d2750; --lav-i: #b9a9ff; --yel: #3e3408; --yel-i: #f3d866; --gry: #2a2a30; --gry-i: #b0b0ba;
+  color-scheme: dark;
+}
+html[data-skin="titanium"] body { background: radial-gradient(1100px 520px at 18% -8%, #151c28 0%, transparent 62%), radial-gradient(900px 480px at 100% 30%, #0f1620 0%, transparent 60%), var(--canvas); background-attachment: fixed; }
+html[data-skin="titanium"] .stage, html[data-skin="titanium"] .app { background: transparent; }
+html[data-skin="titanium"] .card { background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.012) 55%), var(--card); border-color: rgba(255,255,255,.075); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 32px -16px rgba(0,0,0,.7); }
+html[data-skin="titanium"] .glance { background: radial-gradient(420px 220px at 50% 0%, rgba(125,139,255,.10), transparent 70%), linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.01) 42%), var(--card); }
+html[data-skin="titanium"] .hero .big { font-weight: 300; font-size: 54px; letter-spacing: -0.045em; }
+html[data-skin="titanium"] .top h1 { font-weight: 600; }
+html[data-skin="titanium"] .mini { background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
+html[data-skin="titanium"] .btn { background: linear-gradient(180deg, #f6f8fb, #aeb8c6); color: #0b0d11; box-shadow: inset 0 1px 0 #fff, 0 2px 10px rgba(0,0,0,.5); }
+html[data-skin="titanium"] .btn.ghost { background: rgba(255,255,255,.07); color: var(--ink); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+html[data-skin="titanium"] .icon-btn { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.09); }
+html[data-skin="titanium"] .seg, html[data-skin="titanium"] .sg { background: rgba(255,255,255,.06); }
+html[data-skin="titanium"] .seg button[aria-pressed="true"], html[data-skin="titanium"] .sg button[aria-pressed="true"] { background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.08)); color: var(--ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.18); }
+html[data-skin="titanium"] .frame { background: rgba(17,20,26,.9); }
+html[data-skin="titanium"] .side, html[data-skin="titanium"] .tabs { background: rgba(14,17,22,.92); }
+html[data-skin="titanium"] .side button[aria-current="page"] { background: rgba(255,255,255,.07); color: var(--ink); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); }
+html[data-skin="titanium"] .tabs button[aria-current="page"] { color: #fff; }
+html[data-skin="titanium"] .logo i { background: linear-gradient(135deg, #f6f8fb, #7e8998); }
+html[data-skin="titanium"] .chip { box-shadow: inset 0 1px 0 rgba(255,255,255,.1); }
+html[data-skin="titanium"] .bar { background: rgba(255,255,255,.07); }
+html[data-skin="titanium"] .bar i { --a: var(--t-accent-a); --b: var(--t-accent-b); background: linear-gradient(90deg, var(--a), var(--b)); box-shadow: 0 0 8px color-mix(in srgb, var(--b) 45%, transparent); }
+html[data-skin="titanium"] .bar.warn i { --a: var(--t-warn-a); --b: var(--t-warn-b); }
+html[data-skin="titanium"] .bar.bad i { --a: var(--t-bad-a); --b: var(--t-bad-b); }
+html[data-skin="titanium"] .bar.done i { --a: var(--t-good-a); --b: var(--t-good-b); }
+html[data-skin="titanium"] .drop { background: rgba(255,255,255,.025); border-color: rgba(255,255,255,.14); }
+html[data-skin="titanium"] .opts button, html[data-skin="titanium"] .opts select { background: rgba(255,255,255,.05); border-color: rgba(255,255,255,.1); color: var(--ink); }
+.tring { flex: none; position: relative; width: var(--s); height: var(--s); filter: drop-shadow(0 0 calc(var(--w) * 1.2) color-mix(in srgb, var(--b) 40%, transparent)); }
+.tring .trk, .tring .arc { position: absolute; inset: 0; border-radius: 50%; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--w)), #000 calc(100% - var(--w) + .6px)); mask: radial-gradient(farthest-side, transparent calc(100% - var(--w)), #000 calc(100% - var(--w) + .6px)); }
+.tring .trk { background: var(--track); }
+.tring .arc { background: conic-gradient(from 0deg, var(--a), var(--b) calc(var(--p) * 1%), transparent calc(var(--p) * 1%)); }
+.tring .c0 { position: absolute; left: 50%; top: 0; width: var(--w); height: var(--w); margin-left: calc(var(--w) / -2); border-radius: 50%; background: var(--a); }
+.tring .hd { position: absolute; inset: 0; transform: rotate(calc(var(--p) * 3.6deg)); }
+.tring .hd u { position: absolute; left: 50%; top: 0; width: var(--w); height: var(--w); margin-left: calc(var(--w) / -2); border-radius: 50%; background: var(--b); box-shadow: 0 0 10px var(--b); }
+@media (prefers-reduced-motion: no-preference) { .bar i, .row, .opts button { transition: width .25s ease-out, background .15s ease-out; } }
+</style>
+
+<div class="frame">
+  <b>Kasboek, ontwerp v2</b>
+  <span class="sg" role="group" aria-label="Weergave" id="g-mode"></span>
+  <span class="sg" role="group" aria-label="Stijl" id="g-skin"></span>
+  <span class="sg" role="group" aria-label="Thema" id="g-theme"></span>
+  <details><summary>Wat ik uit de voorbeelden heb gehaald</summary><ul>
+    <li><b>Apple:</b> lichtgrijze ondergrond met witte vlakken, haarlijntjes, één blauwe actiekleur, het systeemlettertype (SF op jouw iPhone).</li>
+    <li><b>Notion:</b> pastelkleurige categorie-iconen, rustige lijsten, zijbalk op laptop.</li>
+    <li><b>Dyme:</b> gegroepeerde lijsten voor vaste lasten en uitgaven, duidelijke status per regel.</li>
+    <li><b>Whoop en Oura:</b> één rustige glance met ringen. Het grote getal is wat je nog kunt besteden.</li>
+  </ul></details>
+</div>
+<div class="shell" id="shell"><div class="stage auto" id="stage"><div class="app" id="app"></div></div></div>
+
+<script>
+/* ---------- demo data (cents) ---------- */
+const C = (x) => Math.round(x * 100);
+const eur = (c, d = 2) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: d, maximumFractionDigits: d }).format(c / 100);
+const e0 = (c) => eur(c, 0);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const CAT = { // icon, tint
+  "Huur": ["house", "sky"], "Gas, water, licht": ["zap", "yel"], "Internet & telefoon": ["wifi", "lav"], "Zorgverzekering": ["heart-pulse", "rose"],
+  "Boodschappen": ["shopping-basket", "mint"], "Eten & drinken": ["utensils", "peach"], "Uitgaan & social": ["party-popper", "rose"], "Vervoer": ["train-front", "sky"],
+  "Sport": ["dumbbell", "mint"], "Abonnementen": ["repeat", "lav"], "Studie": ["graduation-cap", "yel"], "Kleding & verzorging": ["shirt", "peach"],
+  "Gezondheid": ["stethoscope", "rose"], "Cadeaus & donaties": ["gift", "peach"], "Sparen & beleggen": ["piggy-bank", "mint"], "Overig": ["ellipsis", "gry"],
+  "Salaris bijbaan": ["briefcase", "mint"], "Studiefinanciering (DUO)": ["landmark", "sky"], "Zorgtoeslag": ["heart-pulse", "rose"], "Familie / gift": ["gift", "peach"],
+};
+const EXP = [
+  ["Huur", 650, 650, 1], ["Gas, water, licht", 85, 79.5, 1], ["Internet & telefoon", 42, 41.99, 1], ["Zorgverzekering", 148, 146.3, 1],
+  ["Boodschappen", 240, 188.4, 0], ["Eten & drinken", 80, 99.6, 0], ["Uitgaan & social", 60, 41, 0], ["Vervoer", 45, 31.2, 0],
+  ["Sport", 30, 29.99, 1], ["Abonnementen", 35, 32.97, 1], ["Studie", 10, 0, 0], ["Kleding & verzorging", 40, 62.5, 0],
+  ["Gezondheid", 10, 0, 0], ["Cadeaus & donaties", 15, 15, 0], ["Sparen & beleggen", 100, 100, 1], ["Overig", 20, 8.75, 0],
+].map(([n, b, a, v]) => ({ n, b: C(b), a: C(a), v }));
+const INC = [["Salaris bijbaan", 1120, 1120, "binnen 5 okt"], ["Studiefinanciering (DUO)", 310, 310, "binnen 1 okt"], ["Zorgtoeslag", 154, 0, "verwacht 20 okt"], ["Familie / gift", 50, 50, "binnen 12 okt"]].map(([n, e, r, d]) => ({ n, e: C(e), r: C(r), d }));
+const totB = EXP.reduce((s, x) => s + x.b, 0), totA = EXP.reduce((s, x) => s + x.a, 0), left = totB - totA, incRec = INC.reduce((s, x) => s + x.r, 0);
+const usedPct = Math.round((totA / totB) * 100), DAYS_LEFT = 9;
+const FC = [
+  ["jul", "werkelijk", 1580, 1571, 1610], ["aug", "werkelijk", 1590, 1604, 1610], ["sep", "werkelijk", 1600, 1583, 1610],
+  ["okt", "deels", 1634, 1590, 1610], ["nov", "prognose", 1634, 1572, 1610], ["dec", "prognose", 1634, 1688, 1610],
+  ["jan", "prognose", 1634, 1560, 1610], ["feb", "prognose", 1634, 1548, null], ["mrt", "prognose", 1634, 1556, null], ["apr", "prognose", 1634, 1563, null],
+].map(([m, k, i, e, b]) => ({ m, k, i: C(i), e: C(e), b: b === null ? null : C(b), net: C(i) - C(e) }));
+const MONTHNAMES = { jul: "Juli", aug: "Augustus", sep: "September", okt: "Oktober", nov: "November", dec: "December", jan: "Januari", feb: "Februari", mrt: "Maart", apr: "April" };
+const VASTE = [
+  { n: "Zorgverzekering", c: "Zorgverzekering", d: "25 okt", a: 14630, s: "komt" }, { n: "Vattenfall", c: "Gas, water, licht", d: "28 okt", a: 7950, s: "komt" },
+  { n: "Huur", c: "Huur", d: "1 okt", a: 65000, s: "betaald" }, { n: "Ziggo", c: "Internet & telefoon", d: "3 okt", a: 4199, s: "betaald" },
+  { n: "Spotify", c: "Abonnementen", d: "10 okt", a: 1099, s: "betaald" }, { n: "Basic-Fit", c: "Sport", d: "12 okt", a: 2999, s: "betaald" },
+  { n: "Netflix", c: "Abonnementen", d: "15 okt", a: 1099, s: "betaald" }, { n: "Disney+", c: "Abonnementen", d: "18 okt", a: 1099, s: "betaald" },
+  { n: "Zorgtoeslag (inkomen)", c: "Zorgtoeslag", d: "20 okt", a: 15400, s: "gemist" },
+];
+const REVIEW = [
+  ["Koffie Voorbeeld", -450, "15 okt", ["Eten & drinken", "Boodschappen", "Uitgaan & social"]],
+  ["Bol.com", -3995, "12 okt", ["Overig", "Kleding & verzorging", "Cadeaus & donaties"]],
+  ["Decathlon", -3499, "9 okt", ["Sport", "Kleding & verzorging", "Overig"]],
+  ["Tikkie J. de Vries", -1250, "7 okt", ["Uitgaan & social", "Cadeaus & donaties", "Overig"]],
+];
+const ALLCATS = EXP.map((x) => x.n);
+
+const S = { skin: "flat", screen: "overzicht", horizon: 6, all: false, done: {}, suggest: "open", mode: "auto", theme: "system" };
+const vPaid = () => VASTE.filter((v) => v.s === "betaald").length, vTotal = () => VASTE.filter((v) => v.c !== "Zorgtoeslag").length;
+const reviewOpen = () => REVIEW.filter((_, i) => !S.done[i]).length;
+
+/* ---------- small pieces ---------- */
+const icon = (n) => `<i data-lucide="${n}"></i>`;
+const chip = (cat) => { const [ic, t] = CAT[cat] || ["circle", "gry"]; return `<span class="chip" style="--c:var(--${t === "yellow" ? "yel" : t === "lavender" ? "lav" : t});--ci:var(--${t === "yellow" ? "yel" : t === "lavender" ? "lav" : t}-i)">${icon(ic)}</span>`; };
+const TONEFLAT = { accent: "var(--accent)", good: "var(--good-ring)", warn: "var(--warn-ring)", bad: "var(--bad)" };
+function ring(pct, { size = 120, stroke = 10, tone = "accent" } = {}) {
+  if (S.skin === "titanium") {
+    const p = Math.min(100, Math.max(0, pct));
+    return `<div class="tring" aria-hidden="true" style="--s:${size}px;--w:${stroke}px;--p:${p};--a:var(--t-${tone}-a);--b:var(--t-${tone}-b)"><i class="trk"></i><i class="arc"></i><i class="c0"></i><i class="hd"><u></u></i></div>`;
+  }
+  const r = (size - stroke) / 2, c = 2 * Math.PI * r, d = (Math.min(100, Math.max(0, pct)) / 100) * c, color = TONEFLAT[tone];
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" aria-hidden="true"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="var(--track)" stroke-width="${stroke}"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}" stroke-linecap="round" stroke-dasharray="${d} ${c}" transform="rotate(-90 ${size / 2} ${size / 2})"/></svg>`;
+}
+const stateTone = (r) => (r > 1 ? "bad" : r >= 0.85 ? "warn" : "good");
+const stateCls = (r, v) => (r > 1 ? "bad" : !v && r >= 0.85 ? "warn" : r >= 1 ? "done" : "");
+
+/* ---------- shell ---------- */
+const NAV = [["overzicht", "Overzicht", "layout-dashboard"], ["prognose", "Prognose", "trending-up"], ["vast", "Vaste lasten", "repeat"], ["upload", "Upload", "upload"]];
+function side() {
+  return `<aside class="side"><div class="logo"><i></i>Kasboek</div>${NAV.map(([k, t, ic]) => `<button data-screen="${k}" ${S.screen === k ? 'aria-current="page"' : ""}>${icon(ic)}${t}${k === "upload" && reviewOpen() ? `<span class="badge">${reviewOpen()}</span>` : ""}</button>`).join("")}<button disabled>${icon("settings")}Instellingen</button><div class="acc">Rabobank ···0001 · Revolut<br>bijgewerkt vandaag 09:14</div></aside>`;
+}
+function tabs() {
+  return `<nav class="tabs" aria-label="Hoofdmenu">${NAV.map(([k, t, ic]) => `<button data-screen="${k}" ${S.screen === k ? 'aria-current="page"' : ""}>${icon(ic)}${t === "Vaste lasten" ? "Vast" : t}${k === "upload" && reviewOpen() ? `<span class="badge">${reviewOpen()}</span>` : ""}</button>`).join("")}</nav>`;
+}
+const pageTop = (title, sub) => `<div class="top"><div><div class="sub">${sub}</div><h1>${title}</h1></div><span class="step"><button class="icon-btn" aria-label="Vorige maand">${icon("chevron-left")}</button><button class="icon-btn" aria-label="Volgende maand" disabled>${icon("chevron-right")}</button></span></div>`;
+
+/* ---------- Overzicht ---------- */
+function expRow(x) {
+  const r = x.a / x.b, cls = stateCls(r, x.v), ov = x.a > x.b;
+  return `<div class="row">${chip(x.n)}<div><div class="nm">${x.n}${x.v ? "<small>vast</small>" : ""}</div><div class="bar ${cls}" aria-hidden="true"><i style="width:${Math.min(100, Math.round(r * 100))}%"></i></div></div><div class="amt num ${ov ? "bad" : ""}">${e0(x.a)}<small>${ov ? e0(x.a - x.b) + " te veel" : "van " + e0(x.b)}</small></div></div>`;
+}
+function glance() {
+  const paid = vPaid(), total = vTotal();
+  return `<div class="card glance"><div class="hero">${ring(usedPct, { size: 224, stroke: 14, tone: stateTone(totA / totB) })}<div class="in"><div class="big num">${e0(left)}</div><div class="cap">nog te besteden</div></div></div>
+  <div class="right"><p class="insight"><b>${usedPct}% van je budget</b> is op, met ${DAYS_LEFT} dagen te gaan (${e0(Math.round(left / DAYS_LEFT))} per dag). <b>Eten &amp; drinken</b> en <b>Kleding</b> zitten boven budget.</p>
+  <div class="minis"><div class="mini">${ring(Math.round((paid / total) * 100), { size: 52, stroke: 6 })}<div><div class="t">${paid} van ${total}</div><div class="s">vaste lasten betaald</div></div></div><div class="mini">${ring(100, { size: 52, stroke: 6, tone: "good" })}<div><div class="t">${e0(10000)}</div><div class="s">gespaard, doel gehaald</div></div></div></div></div></div>`;
+}
+function attention() {
+  return `<div class="card rows">${reviewOpen() ? `<div class="note"><span class="dot" style="background:var(--bad)"></span><div class="txt">${reviewOpen()} transacties zonder categorie<small>Sorteer ze en Kasboek onthoudt je keuze</small></div><button class="btn" data-screen="upload">Sorteren</button></div>` : ""}<div class="note"><span class="dot" style="background:var(--warn)"></span><div class="txt">Zorgtoeslag nog niet binnen<small>Verwacht op 20 oktober, wordt niet meegeteld</small></div><button class="btn ghost" data-screen="vast">Bekijk</button></div></div>`;
+}
+function screenOverzicht() {
+  const list = S.all ? EXP : EXP.slice(0, 8);
+  return `${pageTop("Oktober", "Donderdag 22 oktober")}${glance()}<div class="cols"><div>${attention()}
+  <div class="sec"><h2>Uitgaven</h2><span class="num">${e0(totA)} van ${e0(totB)}</span></div>
+  <div class="card rows">${list.map(expRow).join("")}${EXP.length > 8 ? `<button class="more" data-all="1">${S.all ? "Toon minder" : `Toon alle ${EXP.length} categorieën`}</button>` : ""}</div></div>
+  <div><div class="sec" style="margin-top:0"><h2>Inkomsten</h2><span class="num">${e0(incRec)} binnen</span></div>
+  <div class="card rows">${INC.map((x) => `<div class="row">${chip(x.n)}<div><div class="nm">${x.n}</div><div class="meta">${x.d}</div></div><div class="amt num">${x.r ? e0(x.r) : `<span class="pill bad">niet gezien</span>`}</div></div>`).join("")}</div>
+  <div class="sec"><h2>Binnenkort</h2><button class="link" data-screen="vast">Alles</button></div>
+  <div class="card rows">${VASTE.filter((v) => v.s === "komt").map(vRow).join("")}</div></div></div>
+  <p style="color:var(--muted);font-size:13px;margin-top:20px">Gebaseerd op 84 transacties uit Rabobank en Revolut. Overboekingen tussen je eigen rekeningen zijn niet meegeteld.</p>`;
+}
+
+/* ---------- Prognose ---------- */
+function screenPrognose() {
+  const d = FC.slice(0, 4 + S.horizon), cur = 3, W = Math.round(Math.min(760, Math.max(300, document.getElementById("app").clientWidth - (document.getElementById("app").clientWidth >= 900 ? 330 : 56)))), H = 230, L = 6, R = 6, T = 22, B = 28;
+  const mx = Math.max(...d.map((p) => Math.abs(p.net))), sc = Math.ceil(mx / 5000) * 5000;
+  const slot = (W - L - R) / d.length, bw = Math.min(34, Math.max(12, slot * 0.62)), y0 = T + (H - T - B) / 2, k = (H - T - B) / 2 / sc;
+  const bars = d.map((p, i) => {
+    const cx = L + slot * i + slot / 2, h = Math.max(3, Math.abs(p.net) * k), up = p.net >= 0, fc = i > cur;
+    const col = up ? "var(--good)" : "var(--bad)", ti = S.skin === "titanium", fillv = ti ? (up ? "url(#gUp)" : "url(#gDn)") : col;
+    return `<rect x="${cx - bw / 2}" y="${up ? y0 - h : y0}" width="${bw}" height="${h}" rx="6" fill="${fillv}" ${fc ? 'fill-opacity=".35" stroke="' + col + '" stroke-width="1.5" stroke-dasharray="4 3"' : ""}/>
+    <text x="${cx}" y="${up ? y0 - h - 6 : y0 + h + 14}" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">${(p.net < 0 ? "−" : "+") + Math.abs(Math.round(p.net / 100))}</text>
+    <text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="12" fill="${i === cur ? "var(--ink)" : "var(--muted)"}" font-weight="${i === cur ? 700 : 500}">${p.m}</text>`;
+  }).join("");
+  const cum = d.slice(cur).reduce((s, p) => s + p.net, 0);
+  const rows = d.map((p) => `<div class="row"><span class="chip" style="--c:var(--${p.net >= 0 ? "mint" : "rose"});--ci:var(--${p.net >= 0 ? "mint" : "rose"}-i)">${icon(p.net >= 0 ? "trending-up" : "trending-down")}</span><div><div class="nm">${MONTHNAMES[p.m]}<small>${p.k}</small></div><div class="meta num">in ${e0(p.i)} · uit ${e0(p.e)}${p.b ? `<span class="bud"> · budget ${e0(p.b)}</span>` : ""}</div></div><div class="amt num" style="color:var(--${p.net >= 0 ? "good" : "bad"})">${(p.net < 0 ? "−" : "+") + e0(Math.abs(p.net))}</div></div>`).join("");
+  return `${pageTop("Prognose", "Komende maanden")}<div class="card"><div class="fhead"><div class="k">Verwacht overhouden tot ${d[d.length - 1].m}</div><div class="v num">${cum < 0 ? "−" : "+"}${e0(Math.abs(cum))}</div></div>
+  <div class="chartbox"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Netto per maand"><defs><linearGradient id="gUp" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#1fc98f"/><stop offset="1" stop-color="#9af2c4"/></linearGradient><linearGradient id="gDn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9b8f"/><stop offset="1" stop-color="#e5484d"/></linearGradient></defs><line x1="${L}" x2="${W - R}" y1="${y0}" y2="${y0}" stroke="var(--hair)"/>${bars}</svg></div>
+  <div class="legend"><span><i style="background:var(--good)"></i>over</span><span><i style="background:var(--bad)"></i>tekort</span><span>gestreept = prognose, op basis van je vaste lasten en je gemiddelde van 3 maanden</span></div></div>
+  <div class="sec"><h2>Per maand</h2><span class="seg" role="group" aria-label="Horizon">${[3, 6].map((h) => `<button data-h="${h}" aria-pressed="${S.horizon === h}">${h} mnd</button>`).join("")}</span></div>
+  <div class="card rows">${rows}</div>
+  <p style="color:var(--muted);font-size:13px;margin-top:14px">Zorgtoeslag (verwacht 20 oktober) is niet gezien en telt nog niet mee.</p>`;
+}
+
+/* ---------- Vaste lasten ---------- */
+function vRow(v) {
+  const st = { komt: ["info", "komt " + v.d], betaald: ["good", "betaald " + v.d], gemist: ["bad", "niet gezien"] }[v.s];
+  return `<div class="row">${chip(v.c)}<div><div class="nm">${v.n}</div><div class="meta"><span class="pill ${st[0]}">${st[1]}</span></div></div><div class="amt num">${eur(v.a)}</div></div>`;
+}
+function screenVast() {
+  const g = (s) => VASTE.filter((v) => v.s === s);
+  const sug = S.suggest === "open" ? `<div class="sec"><h2>Nieuw ontdekt</h2></div><div class="card"><div class="note"><span class="chip" style="--c:var(--lav);--ci:var(--lav-i)">${icon("sparkles")}</span><div class="txt"><b>Simyo</b>, €9,95 rond de 3e<small>6 maanden achter elkaar gezien</small></div></div><div class="note" style="padding-top:0;border:0;justify-content:flex-end"><button class="btn ghost" data-sug="no">Negeren</button><button class="btn" data-sug="yes">Toevoegen</button></div></div>` : S.suggest === "yes" ? `<div class="card note" style="margin-top:20px"><span class="dot" style="background:var(--good)"></span><div class="txt">Simyo toegevoegd als vaste last<small>Eerdere betalingen zijn gekoppeld</small></div></div>` : "";
+  return `${pageTop("Vaste lasten", `${vTotal()} lasten en 1 inkomen`)}<div class="card glance" style="padding:16px"><div style="display:flex;gap:16px;align-items:center;width:100%">${ring(Math.round((vPaid() / vTotal()) * 100), { size: 72, stroke: 8 })}<div><div style="font-size:22px;font-weight:700;letter-spacing:-.02em">${vPaid()} van ${vTotal()} betaald</div><div style="color:var(--muted);font-size:14px">${e0(14630 + 7950)} komt nog deze maand</div></div></div></div>
+  ${sug}<div class="cols"><div><div class="sec"><h2>Nog te betalen</h2></div><div class="card rows">${g("komt").map(vRow).join("")}</div><div class="sec"><h2>Niet gezien</h2></div><div class="card rows">${g("gemist").map(vRow).join("")}</div></div>
+  <div><div class="sec" style="margin-top:0"><h2>Betaald</h2></div><div class="card rows">${g("betaald").map(vRow).join("")}</div></div></div>`;
+}
+
+/* ---------- Upload ---------- */
+function screenUpload() {
+  const rv = REVIEW.map((r, i) => S.done[i]
+    ? `<div class="rv is-done"><div class="t"><span>${esc(r[0])}</span><span class="num">${eur(r[1])}</span></div><div class="m">${r[2]} · <span class="pill good">${esc(S.done[i])}</span> regel opgeslagen</div></div>`
+    : `<div class="rv"><div class="t"><span>${esc(r[0])}</span><span class="num">${eur(r[1])}</span></div><div class="m">${r[2]}</div><div class="opts">${r[3].map((c) => `<button data-review="${i}" data-cat="${esc(c)}">${c}</button>`).join("")}<select data-review="${i}" aria-label="Andere categorie voor ${esc(r[0])}"><option value="">Andere…</option>${ALLCATS.map((c) => `<option>${c}</option>`).join("")}</select></div></div>`).join("");
+  return `${pageTop("Upload", "Eén bestand per bank per maand")}<div class="drop"><span class="ic">${icon("file-up")}</span><b>Sleep je CSV hierheen</b><span>of kies een bestand van Rabobank of Revolut. Rekening en maand worden herkend.</span></div>
+  <div class="sec"><h2>Laatste import</h2><span>Rabobank_oktober.csv</span></div>
+  <div class="stats"><div class="card stat"><b class="num">61</b><span>nieuw</span></div><div class="card stat"><b class="num">14</b><span>al bekend, overgeslagen</span></div><div class="card stat"><b class="num">2</b><span>niet ingelezen</span></div><div class="card stat"><b class="num">1</b><span>andere valuta, ter controle</span></div></div>
+  <p style="color:var(--muted);font-size:14px;margin:12px 0 0">Huur, Spotify en Basic-Fit zijn herkend en afgevinkt. Opnieuw uploaden telt nooit dubbel.</p>
+  <div class="sec"><h2>${reviewOpen() ? `Nog ${reviewOpen()} te sorteren` : "Alles gesorteerd"}</h2></div><div class="card rows">${rv}</div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  const screens = { overzicht: screenOverzicht, prognose: screenPrognose, vast: screenVast, upload: screenUpload };
+  document.getElementById("app").innerHTML = `<div class="layout">${side()}<main class="main">${screens[S.screen]()}</main></div>${tabs()}`;
+  if (window.lucide) lucide.createIcons();
+  document.getElementById("g-mode").innerHTML = [["auto", "Auto"], ["phone", "Telefoon"], ["laptop", "Laptop"]].map(([k, t]) => `<button data-mode="${k}" aria-pressed="${S.mode === k}">${t}</button>`).join("");
+  document.getElementById("g-skin").innerHTML = [["flat", "Helder"], ["titanium", "Titanium"]].map(([k, t]) => `<button data-skin="${k}" aria-pressed="${S.skin === k}">${t}</button>`).join("");
+  document.getElementById("g-theme").hidden = S.skin === "titanium";
+  if (S.skin === "titanium") document.documentElement.dataset.skin = "titanium"; else document.documentElement.removeAttribute("data-skin");
+  document.getElementById("g-theme").innerHTML = [["system", "Systeem"], ["light", "Licht"], ["dark", "Donker"]].map(([k, t]) => `<button data-theme="${k}" aria-pressed="${S.theme === k}">${t}</button>`).join("");
+  fit();
+}
+function fit() {
+  const stage = document.getElementById("stage"), shell = document.getElementById("shell");
+  stage.className = "stage " + S.mode; stage.style.transform = ""; shell.style.height = "";
+  if (S.mode === "laptop") {
+    const k = Math.min(1, innerWidth / 1200);
+    stage.style.transform = `scale(${k})`; stage.style.marginLeft = k < 1 ? "0" : "auto";
+    shell.style.height = stage.offsetHeight * k + "px";
+  }
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button");
+  if (!t || t.disabled) return;
+  const d = t.dataset;
+  if (d.screen) { S.screen = d.screen; window.scrollTo(0, 0); }
+  else if (d.h) S.horizon = +d.h;
+  else if (d.all) S.all = !S.all;
+  else if (d.sug) S.suggest = d.sug;
+  else if (d.mode) S.mode = d.mode;
+  else if (d.skin) S.skin = d.skin;
+  else if (d.theme) { S.theme = d.theme; if (d.theme === "system") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = d.theme; }
+  else if (d.review !== undefined && d.cat) S.done[d.review] = d.cat;
+  else return;
+  render();
+});
+document.addEventListener("change", (e) => { const s = e.target.closest("select[data-review]"); if (s && s.value) { S.done[s.dataset.review] = s.value; render(); } });
+let rz; addEventListener("resize", () => { clearTimeout(rz); rz = setTimeout(render, 120); });
+render();
+</script>

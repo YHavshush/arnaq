@@ -11,3 +11,9 @@ migration, Docker and deploy skills. Nothing here installs hooks or edits global
 - Postgres-specific, multi-model (`multi-*`) and design skills are intentionally left out:
   the design direction comes from UI UX Pro Max (milestone 6) and Impeccable (milestone 8).
 - To refresh: re-copy from a new upstream clone and review the diff before committing.
+
+## UI UX Pro Max (milestone 6)
+
+`.claude/skills/ui-ux-pro-max/` is a project-local copy of the skill from https://github.com/nextlevelbuilder/ui-ux-pro-max-skill (MIT).
+Local data and Python scripts only (standard library, no network). Used as an idea bank for styles, palettes, type pairings and chart guidance.
+Its generated design systems were generic, so the actual design came from the owner's references and rounds of review (see `docs/design/`).
