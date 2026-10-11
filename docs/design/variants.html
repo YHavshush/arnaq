@@ -1,0 +1,493 @@
+<title>Budget Tracker Ontwerprichtingen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Geist:wght@400;500;600&family=Hanken+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,500&display=swap">
+<style>
+/* Layout: a neutral comparison frame (tabs for 3 variants x 3 screens) around three
+   self-contained app skins. Each skin commits to its own look; the frame follows the viewer theme. */
+:root {
+  --bg: #f4f4f1; --fg: #1b1d21; --muted: #5b6068; --line: #d9dbd6; --panel: #ffffff; --accent: #2a4bd7;
+  --f-ui: "Hanken Grotesk", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #14161a; --fg: #eceef1; --muted: #9aa1ab; --line: #2b2f36; --panel: #1b1e23; --accent: #8aa2ff; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #14161a; --fg: #eceef1; --muted: #9aa1ab; --line: #2b2f36; --panel: #1b1e23; --accent: #8aa2ff; color-scheme: dark; }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 15px; line-height: 1.5; }
+button, select, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.frame { padding: 14px 16px 10px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; }
+.frame h1 { font-size: 15px; margin: 0 0 8px; font-weight: 700; letter-spacing: .01em; }
+.frame .rows { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--bg); }
+.seg button { border: 0; background: none; padding: 7px 12px; font-size: 14px; color: var(--muted); font-weight: 600; }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+.frame .note { margin: 8px 0 0; color: var(--muted); font-size: 13px; max-width: 80ch; }
+.frame .demo { margin-left: auto; font-size: 12px; color: var(--muted); }
+
+.stage { min-height: 70vh; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.row-scroll { overflow-x: auto; }
+.ctrl { border: 0; background: none; padding: 0; }
+
+/* ============ V1: Grootboek (ledger) ============ */
+.v1 {
+  --paper: #f2f5f3; --paper2: #e8eeea; --ink: #14213d; --ink2: #5a6578; --rule: #c9d6cf; --green: #0b6e4f; --red: #b3261e; --tint: #dfe9e3;
+  background: var(--paper); color: var(--ink); font-family: "Hanken Grotesk", system-ui, sans-serif; font-size: 16px;
+  background-image: linear-gradient(var(--rule) 1px, transparent 1px); background-size: 100% 32px; background-position: 0 -1px;
+}
+.v1 .wrap { max-width: 920px; margin: 0 auto; padding: 22px 16px 64px; background: var(--paper); box-shadow: 0 0 0 100vmax var(--paper); clip-path: inset(0 -100vmax); }
+.v1 .bar { display: flex; align-items: baseline; gap: 22px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 10px; }
+.v1 .brand { font: italic 500 26px/1 "Newsreader", Georgia, serif; letter-spacing: -.01em; margin-right: auto; }
+.v1 nav { display: flex; gap: 18px; flex-wrap: wrap; font-weight: 600; font-size: 15px; }
+.v1 nav button { background: none; border: 0; padding: 4px 0; color: var(--ink2); border-bottom: 2px solid transparent; }
+.v1 nav button[aria-current="page"] { color: var(--ink); border-color: var(--ink); }
+.v1 nav button:disabled { opacity: .55; cursor: default; }
+.v1 h1 { font: 500 clamp(34px, 6vw, 52px)/1.05 "Newsreader", Georgia, serif; letter-spacing: -.02em; margin: 30px 0 6px; text-wrap: balance; }
+.v1 h2 { font: 600 13px/1 "Hanken Grotesk", system-ui, sans-serif; letter-spacing: .1em; text-transform: uppercase; color: var(--ink2); margin: 38px 0 10px; }
+.v1 .lede { font: 400 21px/1.45 "Newsreader", Georgia, serif; max-width: 62ch; margin: 0; text-wrap: pretty; }
+.v1 .lede b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.v1 .neg { color: var(--red); } .v1 .pos { color: var(--green); }
+.v1 .monthnav { display: inline-flex; gap: 6px; vertical-align: middle; margin-left: 10px; }
+.v1 .monthnav button { border: 1px solid var(--rule); background: var(--paper); color: var(--ink); width: 34px; height: 34px; border-radius: 4px; font-size: 16px; }
+.v1 .attn { margin: 18px 0 0; padding: 10px 14px; background: var(--paper); border: 1px solid var(--ink); display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 15px; }
+.v1 .attn button { background: none; border: 0; padding: 0; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; color: var(--ink); }
+.v1 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; background: var(--paper); }
+.v1 th { text-align: right; font: 600 12px/1 "Hanken Grotesk", system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; color: var(--ink2); padding: 8px 8px 8px 0; border-bottom: 1px solid var(--ink); }
+.v1 th:first-child, .v1 td:first-child { text-align: left; }
+.v1 td { padding: 9px 8px 9px 0; text-align: right; border-bottom: 1px solid var(--rule); vertical-align: middle; }
+.v1 td.cat { font-weight: 500; }
+.v1 .vast { font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink2); border: 1px solid var(--rule); padding: 1px 5px; margin-left: 8px; }
+.v1 .track { height: 3px; background: var(--rule); position: relative; min-width: 80px; }
+.v1 .track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--ink); }
+.v1 .track.over i { background: var(--red); }
+.v1 tfoot td { border-top: 1px solid var(--ink); border-bottom: 3px double var(--ink); font-weight: 700; padding-top: 10px; padding-bottom: 10px; }
+.v1 .foot { font-size: 13px; color: var(--ink2); margin-top: 14px; max-width: 70ch; }
+.v1 .seg2 { display: inline-flex; gap: 0; border: 1px solid var(--ink); }
+.v1 .seg2 button { border: 0; background: var(--paper); padding: 6px 14px; font-weight: 700; }
+.v1 .seg2 button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.v1 .chart { background: var(--paper); border: 1px solid var(--rule); padding: 8px; }
+.v1 .chart svg { width: 100%; height: auto; display: block; }
+.v1 .drop { border: 2px dashed var(--ink); background: var(--paper); padding: 34px 18px; text-align: center; }
+.v1 .drop b { font: italic 500 24px "Newsreader", serif; display: block; margin-bottom: 4px; }
+.v1 .receipt { background: var(--paper); border: 1px solid var(--ink); padding: 16px 20px; max-width: 520px; font-variant-numeric: tabular-nums; }
+.v1 .receipt div { display: flex; justify-content: space-between; gap: 18px; padding: 5px 0; border-bottom: 1px dotted var(--ink2); }
+.v1 .receipt div:last-child { border: 0; font-weight: 700; }
+.v1 select { background: var(--paper); border: 1px solid var(--ink); border-radius: 0; padding: 6px 8px; max-width: 100%; }
+.v1 .done { color: var(--green); font-weight: 600; }
+.v1 label.chk { font-size: 13px; color: var(--ink2); display: inline-flex; gap: 6px; align-items: center; }
+.v1 .fields { display: flex; flex-wrap: wrap; gap: 14px 24px; margin: 0 0 16px; }
+.v1 .fields label { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink2); }
+
+/* ============ V2: Kleurblok (bold, color-blocked) ============ */
+.v2 {
+  --bg2: #f6f6fb; --ink: #14141f; --ink2: #4b4b63; --cobalt: #2f3cff; --lemon: #ffe14d; --coral: #ff5a4e; --mint: #12b886; --soft: #e9e9f6;
+  background: var(--bg2); color: var(--ink); font-family: "Figtree", system-ui, sans-serif; font-size: 16px;
+}
+.v2 .wrap { max-width: 1040px; margin: 0 auto; padding: 18px 16px 110px; }
+.v2 .bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.v2 .brand { font: 800 30px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.04em; margin-right: auto; }
+.v2 .brand span { color: var(--cobalt); }
+.v2 .pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.v2 .pill { border: 2px solid var(--ink); background: transparent; border-radius: 999px; padding: 7px 16px; font-weight: 700; font-size: 15px; }
+.v2 .pill[aria-pressed="true"], .v2 .pill[aria-current="page"] { background: var(--ink); color: #fff; }
+.v2 h1 { font: 800 clamp(40px, 8.6vw, 92px)/.95 "Bricolage Grotesque", sans-serif; letter-spacing: -.045em; margin: 26px 0 10px; text-wrap: balance; max-width: 16ch; }
+.v2 h1 mark { background: var(--lemon); color: var(--ink); padding: 0 .12em; border-radius: .12em; }
+.v2 .sub { font-size: 19px; color: var(--ink2); margin: 0 0 22px; max-width: 52ch; font-weight: 500; }
+.v2 .grid { display: grid; grid-template-columns: repeat(12, 1fr); grid-auto-flow: dense; gap: 10px; }
+.v2 .tile { border-radius: 22px; padding: 14px 16px; display: flex; flex-direction: column; justify-content: space-between; min-height: 118px; position: relative; overflow: hidden; }
+.v2 .tile b { font: 700 17px/1.15 "Bricolage Grotesque", sans-serif; letter-spacing: -.01em; }
+.v2 .tile .amt { font: 800 26px/1 "Bricolage Grotesque", sans-serif; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.v2 .tile small { font-size: 13px; font-weight: 600; opacity: .9; font-variant-numeric: tabular-nums; }
+.v2 .t-ok { background: var(--cobalt); color: #fff; }
+.v2 .t-warn { background: var(--lemon); color: var(--ink); }
+.v2 .t-over { background: var(--coral); color: var(--ink); }
+.v2 .t-zero { background: var(--soft); color: var(--ink); }
+.v2 .tile .meter { height: 7px; border-radius: 4px; background: rgba(255,255,255,.35); overflow: hidden; margin-top: 8px; }
+.v2 .t-warn .meter, .v2 .t-over .meter, .v2 .t-zero .meter { background: rgba(20,20,31,.18); }
+.v2 .tile .meter i { display: block; height: 100%; background: currentColor; border-radius: 4px; }
+.v2 .nm { display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: baseline; }
+.v2 .vast2 { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; opacity: .85; }
+.v2 .strip { display: flex; gap: 10px; flex-wrap: wrap; margin: 26px 0 0; }
+.v2 .chip { border: 2px solid var(--ink); border-radius: 18px; padding: 10px 14px; font-weight: 600; background: #fff; }
+.v2 .chip b { font: 800 20px "Bricolage Grotesque", system-ui, sans-serif; display: block; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.v2 .chip.bad { background: var(--coral); }
+.v2 .sort { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: #fff; border: 0; border-radius: 999px; padding: 14px 22px; font-weight: 800; font-size: 16px; z-index: 5; box-shadow: 0 8px 24px rgba(20,20,31,.28); }
+.v2 .sort b { background: var(--coral); color: var(--ink); border-radius: 999px; padding: 1px 9px; margin-right: 8px; }
+.v2 .card { background: #fff; border-radius: 26px; padding: 18px; border: 2px solid var(--ink); }
+.v2 .barchart svg { width: 100%; height: auto; display: block; }
+.v2 .list { display: grid; gap: 8px; margin-top: 12px; }
+.v2 .li { display: flex; align-items: center; gap: 12px; background: #fff; border: 2px solid var(--ink); border-radius: 16px; padding: 10px 14px; font-weight: 600; flex-wrap: wrap; }
+.v2 .li .d { font: 800 15px "Bricolage Grotesque", system-ui, sans-serif; background: var(--lemon); border-radius: 10px; padding: 4px 9px; min-width: 52px; text-align: center; }
+.v2 .li .a { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 700; }
+.v2 .li.miss { background: var(--coral); }
+.v2 .dz { border: 3px dashed var(--ink); border-radius: 28px; padding: 34px 18px; text-align: center; background: #fff; }
+.v2 .dz b { font: 800 clamp(26px, 5vw, 40px)/1.05 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: -.03em; display: block; margin-bottom: 8px; }
+.v2 .dz span { color: var(--ink2); font-weight: 500; }
+.v2 .big { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0 0; }
+.v2 .big div { flex: 1 1 140px; border-radius: 20px; padding: 14px 16px; font-weight: 600; }
+.v2 .big b { display: block; font: 800 40px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.v2 .rv { background: #fff; border: 2px solid var(--ink); border-radius: 22px; padding: 14px 16px; margin-top: 10px; }
+.v2 .rv .top { display: flex; justify-content: space-between; gap: 10px; font-weight: 700; font-size: 18px; flex-wrap: wrap; }
+.v2 .rv .top span { font-variant-numeric: tabular-nums; }
+.v2 .rv .meta { color: var(--ink2); font-size: 14px; margin: 2px 0 10px; font-weight: 500; }
+.v2 .opts { display: flex; gap: 8px; flex-wrap: wrap; }
+.v2 .opts button { border: 2px solid var(--ink); background: #fff; border-radius: 999px; padding: 7px 14px; font-weight: 700; font-size: 15px; }
+.v2 .opts button:hover { background: var(--lemon); }
+.v2 .rv.is-done { background: var(--soft); border-color: transparent; }
+.v2 .rv.is-done .top { color: var(--ink2); }
+.v2 h2 { font: 800 28px/1 "Bricolage Grotesque", system-ui, sans-serif; letter-spacing: -.03em; margin: 34px 0 8px; }
+.v2 select { border: 2px solid var(--ink); border-radius: 12px; padding: 8px 10px; background: #fff; font-weight: 600; }
+
+/* ============ V3: Cockpit (dark, dense) ============ */
+.v3 {
+  --b0: #0c131b; --b1: #131c27; --b2: #19232f; --ln: #243242; --tx: #e4eaf1; --mu: #8fa0b3; --cy: #4cc9f0; --te: #35d0a5; --am: #f2b84b; --rd: #ff6b6b; --vi: #a78bfa;
+  background: var(--b0); color: var(--tx); font-family: "Geist", system-ui, sans-serif; font-size: 13.5px; line-height: 1.4;
+}
+.v3 .shell { display: grid; grid-template-columns: 208px minmax(0, 1fr); min-height: 70vh; }
+.v3 aside { background: var(--b1); border-right: 1px solid var(--ln); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+.v3 .logo { font: 600 15px "Geist", system-ui, sans-serif; padding: 4px 10px 14px; letter-spacing: .01em; }
+.v3 .logo i { font-style: normal; color: var(--te); }
+.v3 aside button { display: flex; justify-content: space-between; align-items: center; background: none; border: 0; text-align: left; color: var(--mu); padding: 7px 10px; border-radius: 6px; font-weight: 500; }
+.v3 aside button[aria-current="page"] { background: var(--b2); color: var(--tx); }
+.v3 aside button:disabled { opacity: .5; cursor: default; }
+.v3 aside .cnt { font: 500 11.5px "Geist Mono", ui-monospace, monospace; background: var(--rd); color: #1b0d0d; border-radius: 9px; padding: 0 6px; }
+.v3 aside .sec { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mu); padding: 14px 10px 4px; }
+.v3 main { padding: 0; min-width: 0; }
+.v3 .top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--ln); background: var(--b1); flex-wrap: wrap; }
+.v3 .top h1 { font: 600 15px "Geist", system-ui, sans-serif; margin: 0; }
+.v3 .step { display: inline-flex; border: 1px solid var(--ln); border-radius: 6px; overflow: hidden; }
+.v3 .step button { background: var(--b2); border: 0; padding: 4px 10px; color: var(--tx); }
+.v3 .kbd { margin-left: auto; font: 500 11.5px "Geist Mono", ui-monospace, monospace; color: var(--mu); border: 1px solid var(--ln); border-radius: 5px; padding: 2px 6px; }
+.v3 .btn { background: var(--te); color: #04251d; border: 0; border-radius: 6px; padding: 6px 12px; font-weight: 600; }
+.v3 .content { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; padding: 14px 16px 40px; align-items: start; }
+.v3 .content.one { grid-template-columns: minmax(0, 1fr); }
+.v3 .panel { background: var(--b1); border: 1px solid var(--ln); border-radius: 8px; min-width: 0; }
+.v3 .panel > h3 { margin: 0; padding: 9px 12px; font: 600 12px "Geist", system-ui, sans-serif; letter-spacing: .06em; text-transform: uppercase; color: var(--mu); border-bottom: 1px solid var(--ln); display: flex; justify-content: space-between; gap: 10px; }
+.v3 .sumrow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; border: 1px solid var(--ln); border-radius: 8px; background: var(--b1); margin-bottom: 14px; }
+.v3 .sumrow div { padding: 9px 12px; border-right: 1px solid var(--ln); }
+.v3 .sumrow div:last-child { border: 0; }
+.v3 .sumrow span { display: block; color: var(--mu); font-size: 11.5px; }
+.v3 .sumrow b { font: 500 17px "Geist Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+.v3 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.v3 th { text-align: right; font: 500 11.5px "Geist", system-ui, sans-serif; color: var(--mu); padding: 7px 10px; border-bottom: 1px solid var(--ln); white-space: nowrap; }
+.v3 td { padding: 5px 10px; text-align: right; border-bottom: 1px solid var(--ln); font-family: "Geist Mono", monospace; font-size: 12.5px; white-space: nowrap; }
+.v3 th:first-child, .v3 td:first-child { text-align: left; font-family: "Geist", sans-serif; font-size: 13.5px; }
+.v3 tr:hover td { background: var(--b2); }
+.v3 .bar { width: 110px; height: 8px; background: var(--b2); border-radius: 2px; position: relative; display: inline-block; vertical-align: middle; }
+.v3 .bar i { position: absolute; inset: 0 auto 0 0; background: var(--cy); border-radius: 2px; }
+.v3 .bar.warn i { background: var(--am); } .v3 .bar.over i { background: var(--rd); }
+.v3 .bar::after { content: ""; position: absolute; right: 0; top: -2px; bottom: -2px; width: 1px; background: var(--tx); opacity: .6; }
+.v3 .tag { font: 600 10.5px "Geist", system-ui, sans-serif; letter-spacing: .05em; text-transform: uppercase; color: var(--mu); border: 1px solid var(--ln); border-radius: 4px; padding: 0 5px; margin-left: 8px; }
+.v3 .neg { color: var(--rd); } .v3 .pos { color: var(--te); }
+.v3 .list { list-style: none; margin: 0; padding: 0; }
+.v3 .list li { display: flex; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--ln); align-items: baseline; }
+.v3 .list li:last-child { border: 0; }
+.v3 .list .k { font: 500 11px "Geist Mono", ui-monospace, monospace; color: var(--mu); min-width: 44px; }
+.v3 .list .v { margin-left: auto; font: 500 12.5px "Geist Mono", ui-monospace, monospace; }
+.v3 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.v3 .chart { padding: 10px 12px 4px; } .v3 .chart svg { width: 100%; height: auto; display: block; }
+.v3 select { background: var(--b2); color: var(--tx); border: 1px solid var(--ln); border-radius: 5px; padding: 3px 6px; max-width: 100%; }
+.v3 .drop { margin: 12px; border: 1px dashed var(--mu); border-radius: 8px; padding: 18px; text-align: center; color: var(--mu); }
+.v3 .scroll { overflow-x: auto; }
+.v3 .done { color: var(--te); font-weight: 600; }
+.v3 .seg3 { display: inline-flex; border: 1px solid var(--ln); border-radius: 6px; overflow: hidden; }
+.v3 .seg3 button { background: var(--b2); border: 0; padding: 3px 11px; color: var(--mu); font-weight: 600; }
+.v3 .seg3 button[aria-pressed="true"] { background: var(--tx); color: var(--b0); }
+
+@media (max-width: 760px) {
+  .frame { position: static; }
+  .v1 .hide-s, .v3 .hide-s { display: none; }
+  .v1 .track { display: none; }
+  .v2 .grid { grid-template-columns: repeat(6, 1fr); }
+  .v2 .tile { grid-column: span 3 !important; }
+  .v2 .tile.wide { grid-column: span 6 !important; }
+  .v3 .shell { grid-template-columns: minmax(0, 1fr); }
+  .v3 aside { flex-direction: row; flex-wrap: wrap; border-right: 0; border-bottom: 1px solid var(--ln); padding: 8px; gap: 4px; }
+  .v3 aside .sec, .v3 aside .logo { display: none; }
+  .v3 .content { grid-template-columns: minmax(0, 1fr); }
+  .v3 .sumrow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v3 .sumrow div:nth-child(2) { border-right: 0; }
+  .v3 .sumrow div:nth-child(-n+2) { border-bottom: 1px solid var(--ln); }
+  .v3 .kbd { display: none; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .v2 .tile, .v2 .opts button, .v2 .sort { transition: transform .15s ease-out, background .15s ease-out; }
+  .v2 .tile:hover { transform: translateY(-2px); }
+}
+</style>
+
+<div class="frame">
+  <h1>Budget Tracker: three directions</h1>
+  <div class="rows">
+    <div class="seg" role="group" aria-label="Direction" id="seg-variant"></div>
+    <div class="seg" role="group" aria-label="Screen" id="seg-screen"></div>
+    <span class="demo">Demo data, not real figures</span>
+  </div>
+  <p class="note" id="note"></p>
+</div>
+<div class="stage" id="stage"></div>
+
+<script>
+/* ---------- demo data (cents) ---------- */
+const C = (x) => Math.round(x * 100);
+const eur = (c, d = 2) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", minimumFractionDigits: d, maximumFractionDigits: d }).format(c / 100);
+const e0 = (c) => eur(c, 0);
+const sgn = (c) => (c < 0 ? "−" : "+") + eur(Math.abs(c));
+
+const EXP = [
+  ["Huur", 650, 650, 1], ["Gas, water, licht", 85, 79.5, 1], ["Internet & telefoon", 42, 41.99, 1], ["Zorgverzekering", 148, 146.3, 1],
+  ["Boodschappen", 240, 188.4, 0], ["Eten & drinken", 80, 99.6, 0], ["Uitgaan & social", 60, 41, 0], ["Vervoer", 45, 31.2, 0],
+  ["Sport", 30, 29.99, 1], ["Abonnementen", 35, 32.97, 1], ["Studie", 10, 0, 0], ["Kleding & verzorging", 40, 62.5, 0],
+  ["Gezondheid", 10, 0, 0], ["Cadeaus & donaties", 15, 15, 0], ["Sparen & beleggen", 100, 100, 1], ["Overig", 20, 8.75, 0],
+].map(([n, b, a, v]) => ({ n, b: C(b), a: C(a), v }));
+const INC = [["Salaris bijbaan", 1120, 1120, "in"], ["Studiefinanciering (DUO)", 310, 310, "in"], ["Zorgtoeslag", 154, 0, "miss"], ["Familie / gift", 50, 50, "in"]].map(([n, e, r, s]) => ({ n, e: C(e), r: C(r), s }));
+const totB = EXP.reduce((s, x) => s + x.b, 0), totA = EXP.reduce((s, x) => s + x.a, 0), left = totB - totA;
+const incRec = INC.reduce((s, x) => s + x.r, 0);
+const over = EXP.filter((x) => x.a > x.b);
+const DAYS_LEFT = 9;
+
+const FC = [ // month, kind, income, expenses, budget (EUR)
+  ["jul", "actual", 1580, 1571, 1600], ["aug", "actual", 1590, 1604, 1600], ["sep", "actual", 1600, 1583, 1600],
+  ["okt", "mixed", 1634, 1590, 1600], ["nov", "forecast", 1634, 1572, 1600], ["dec", "forecast", 1634, 1688, 1600],
+  ["jan", "forecast", 1634, 1560, 1600], ["feb", "forecast", 1634, 1548, null], ["mrt", "forecast", 1634, 1556, null], ["apr", "forecast", 1634, 1563, null],
+].map(([m, k, i, e, b]) => ({ m, k, i: C(i), e: C(e), b: b === null ? null : C(b) }));
+const fcView = () => FC.slice(0, 4 + S.horizon);
+const KIND = { actual: "werkelijk", mixed: "deels", forecast: "prognose" };
+
+const UPCOMING = [["25 okt", "Zorgverzekering", 14630], ["1 nov", "Huur", 65000], ["3 nov", "Internet & telefoon", 4199], ["10 nov", "Spotify", 1099], ["20 nov", "Zorgtoeslag", 15400]];
+const MISSED = [["Zorgtoeslag", "verwacht 20 okt", 15400]];
+const IMPORTS = [["Rabobank_oktober.csv", "Rabobank", "okt", 61, 14, 2, "vandaag 09:12"], ["Revolut_oktober.csv", "Revolut", "okt", 23, 0, 2, "vandaag 09:14"], ["Rabobank_september.csv", "Rabobank", "sep", 58, 0, 0, "1 okt 08:40"]];
+const REVIEW = [
+  ["Koffie Voorbeeld", -450, "15 okt", ["Eten & drinken", "Boodschappen", "Uitgaan & social"]],
+  ["Bol.com", -3995, "12 okt", ["Overig", "Kleding & verzorging", "Cadeaus & donaties"]],
+  ["Decathlon", -3499, "9 okt", ["Sport", "Kleding & verzorging", "Overig"]],
+  ["Tikkie J. de Vries", -1250, "7 okt", ["Uitgaan & social", "Cadeaus & donaties", "Overig"]],
+];
+const ALLCATS = EXP.map((x) => x.n);
+
+const S = { variant: 1, screen: "overzicht", horizon: 6, done: {} };
+const reviewOpen = () => REVIEW.filter((_, i) => !S.done[i]).length;
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+const VARIANTS = {
+  1: { name: "1 Grootboek", note: "A ledger on cool green-grey paper: serif headlines, thin rules, red and black like real bookkeeping, a double line under totals. Calm and printable. Best if you want the app to feel like a trustworthy record." },
+  2: { name: "2 Kleurblok", note: "Loud and friendly: huge type, solid colour blocks, categories as tiles sized by budget and coloured by status. Easy to read at a glance on a phone. Best if you want it to feel like yours, not like a bank." },
+  3: { name: "3 Cockpit", note: "Dark, dense instrument panel: table first, tabular figures, an attention rail for what needs you. Most data per screen. Best if you like to dig into numbers and use it mostly on a laptop." },
+};
+const SCREENS = { overzicht: "Overzicht", prognose: "Prognose", upload: "Upload" };
+
+/* ---------- shared pieces ---------- */
+function nice(lo, hi, step) { return { lo: Math.floor(lo / step) * step, hi: Math.ceil(hi / step) * step, step }; }
+const heading = () => `Oktober 2026`;
+const lede = () => `${left >= 0 ? "Nog" : "Je zit"} <b>${e0(Math.abs(left))}</b> ${left >= 0 ? "te besteden" : "boven budget"}, ${DAYS_LEFT} dagen te gaan.`;
+
+/* ---------- V1 ---------- */
+function v1Nav() {
+  const a = (k, t) => `<button data-screen="${k}" ${S.screen === k ? 'aria-current="page"' : ""}>${t}</button>`;
+  return `<div class="bar"><span class="brand">Grootboek</span><nav>${a("overzicht", "Overzicht")}${a("prognose", "Prognose")}${a("upload", "Upload")}<button class="hide-s" disabled>Vaste lasten</button><button class="hide-s" disabled>Instellingen</button></nav></div>`;
+}
+function v1Overzicht() {
+  const rows = EXP.map((x) => {
+    const pct = Math.min(100, Math.round((x.a / x.b) * 100)), ov = x.a > x.b;
+    return `<tr><td class="cat">${x.n}${x.v ? '<span class="vast">vast</span>' : ""}</td><td class="hide-s"><div class="track ${ov ? "over" : ""}" aria-hidden="true"><i style="width:${pct}%"></i></div></td><td class="hide-s">${eur(x.b)}</td><td>${eur(x.a)}</td><td class="${ov ? "neg" : ""}">${ov ? "−" : ""}${eur(Math.abs(x.b - x.a))}</td></tr>`;
+  }).join("");
+  const inc = INC.map((x) => `<tr><td class="cat">${x.n}</td><td>${eur(x.e)}</td><td>${x.s === "miss" ? "–" : eur(x.r)}</td><td class="${x.s === "miss" ? "neg" : "pos"}">${x.s === "miss" ? "niet gezien" : "binnen"}</td></tr>`).join("");
+  return `<h1>${heading()}<span class="monthnav"><button aria-label="Vorige maand">‹</button><button aria-label="Volgende maand">›</button></span></h1>
+  <p class="lede">${lede()} <span class="neg">Eten &amp; drinken</span> en <span class="neg">Kleding &amp; verzorging</span> zitten boven hun budget.</p>
+  <div class="attn"><span><button data-screen="upload">${reviewOpen()} transacties</button> wachten op een categorie</span><span>1 verwachte betaling niet gezien: <b>Zorgtoeslag</b></span></div>
+  <h2>Uitgaven</h2>
+  <div class="row-scroll"><table><thead><tr><th>Categorie</th><th class="hide-s"></th><th class="hide-s">Budget</th><th>Besteed</th><th>Verschil</th></tr></thead><tbody>${rows}</tbody>
+  <tfoot><tr><td>Totaal</td><td class="hide-s"></td><td class="hide-s">${eur(totB)}</td><td>${eur(totA)}</td><td class="${left < 0 ? "neg" : ""}">${eur(left)}</td></tr></tfoot></table></div>
+  <h2>Inkomsten</h2>
+  <div class="row-scroll"><table><thead><tr><th>Bron</th><th>Verwacht</th><th>Ontvangen</th><th>Status</th></tr></thead><tbody>${inc}</tbody>
+  <tfoot><tr><td>Totaal</td><td>${eur(INC.reduce((s, x) => s + x.e, 0))}</td><td>${eur(incRec)}</td><td></td></tr></tfoot></table></div>
+  <p class="foot">Gebaseerd op 84 transacties uit Rabobank en Revolut. Overboekingen tussen je eigen rekeningen zijn niet meegeteld. Eén buitenlandse transactie (GBP) staat apart ter controle.</p>`;
+}
+function v1Chart() {
+  const d = fcView(), W = 820, H = 300, L = 52, R = 74, T = 16, B = 30, cur = 3;
+  const all = d.flatMap((x) => [x.i, x.e, x.b].filter((v) => v != null));
+  const sc = nice(Math.min(...all) / 100, Math.max(...all) / 100, 100);
+  const x = (i) => L + (i * (W - L - R)) / (d.length - 1), y = (v) => T + (1 - (v / 100 - sc.lo) / (sc.hi - sc.lo)) * (H - T - B);
+  const path = (k, a, b) => d.slice(a, b + 1).map((p, j) => `${j ? "L" : "M"}${x(a + j).toFixed(1)} ${y(p[k]).toFixed(1)}`).join(" ");
+  let g = "";
+  for (let v = sc.lo; v <= sc.hi; v += sc.step) g += `<line x1="${L}" x2="${W - R}" y1="${y(v * 100)}" y2="${y(v * 100)}" stroke="#c9d6cf"/><text x="${L - 8}" y="${y(v * 100) + 4}" text-anchor="end" font-size="12" fill="#5a6578">${v}</text>`;
+  const labels = d.map((p, i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="12" fill="#5a6578">${p.m}</text>`).join("");
+  const bud = d.map((p, i) => (p.b != null ? { i, v: p.b } : null)).filter(Boolean);
+  const budPath = bud.map((p, j) => `${j ? "L" : "M"}${x(p.i)} ${y(p.v)}`).join(" ");
+  const end = (k, col, t) => `<text x="${x(d.length - 1) + 8}" y="${y(d[d.length - 1][k]) + 4}" font-size="13" font-weight="700" fill="${col}">${t}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Inkomsten en uitgaven per maand, werkelijk tot oktober en daarna prognose">${g}${labels}
+  <line x1="${x(cur)}" x2="${x(cur)}" y1="${T}" y2="${H - B}" stroke="#14213d" stroke-width="1"/><text x="${x(cur) + 6}" y="${T + 12}" font-size="12" fill="#14213d" font-weight="700">vandaag</text>
+  <path d="${budPath}" fill="none" stroke="#14213d" stroke-width="1.5" stroke-dasharray="1 4" stroke-linecap="round"/>
+  <path d="${path("e", 0, cur)}" fill="none" stroke="#b3261e" stroke-width="2.5"/><path d="${path("e", cur, d.length - 1)}" fill="none" stroke="#b3261e" stroke-width="2.5" stroke-dasharray="7 5"/>
+  <path d="${path("i", 0, cur)}" fill="none" stroke="#0b6e4f" stroke-width="2.5"/><path d="${path("i", cur, d.length - 1)}" fill="none" stroke="#0b6e4f" stroke-width="2.5" stroke-dasharray="7 5"/>
+  ${end("i", "#0b6e4f", "inkomsten")}${end("e", "#b3261e", "uitgaven")}</svg>`;
+}
+function v1Prognose() {
+  const d = fcView();
+  const rows = d.map((p) => `<tr><td class="cat">${p.m} ${p.m === "jan" ? "2027" : ""}</td><td>${eur(p.i, 0)}</td><td>${eur(p.e, 0)}</td><td class="${p.i - p.e < 0 ? "neg" : "pos"}">${sgn(p.i - p.e).replace(",00", "")}</td><td class="hide-s">${p.b == null ? "–" : eur(p.b, 0)}</td><td class="hide-s">${KIND[p.k]}</td></tr>`).join("");
+  return `<h1>Prognose</h1>
+  <p class="lede">Bekende inkomsten en vaste lasten, plus wat je de afgelopen 3 maanden gemiddeld uitgaf aan de rest. December valt hoger uit door cadeaus en reizen.</p>
+  <h2>Horizon</h2><div class="seg2" role="group" aria-label="Horizon">${[3, 6].map((h) => `<button data-h="${h}" aria-pressed="${S.horizon === h}">${h} maanden</button>`).join("")}</div>
+  <h2>Per maand</h2><div class="chart">${v1Chart()}</div>
+  <p class="foot">Doorgetrokken lijn is werkelijk, gestreept is prognose, gestippeld is je budget. Een betaling die al binnen is telt nooit nog eens als prognose.</p>
+  <h2>Overzicht</h2><div class="row-scroll"><table><thead><tr><th>Maand</th><th>Inkomsten</th><th>Uitgaven</th><th>Netto</th><th class="hide-s">Budget</th><th class="hide-s">Basis</th></tr></thead><tbody>${rows}</tbody></table></div>
+  <p class="foot"><b class="neg">Niet gezien:</b> Zorgtoeslag (verwacht 20 oktober). Wordt niet meegeteld tot er een betaling binnenkomt.</p>`;
+}
+function v1Review() {
+  return REVIEW.map((r, i) => S.done[i]
+    ? `<tr><td class="cat">${esc(r[0])}</td><td>${r[2]}</td><td>${eur(r[1])}</td><td class="done">${esc(S.done[i])}, regel opgeslagen</td></tr>`
+    : `<tr><td class="cat">${esc(r[0])}</td><td>${r[2]}</td><td>${eur(r[1])}</td><td><select data-review="${i}" aria-label="Categorie voor ${esc(r[0])}"><option value="">Kies categorie</option>${r[3].map((c) => `<option>${c}</option>`).join("")}</select></td></tr>`).join("");
+}
+function v1Upload() {
+  return `<h1>CSV uploaden</h1><p class="lede">Eén bestand per bank per maand. Opnieuw uploaden telt nooit dubbel.</p>
+  <h2>Bestand</h2><div class="fields"><label>Rekening<select id="v1acc"><option>Rabobank NL00 RABO 0000 0000 01</option><option>Revolut (EUR)</option></select></label><label>Maand<select id="v1mon"><option>Automatisch herkend: oktober 2026</option></select></label></div>
+  <div class="drop"><b>Sleep je bestand hierheen</b>of kies een .csv van Rabobank of Revolut</div>
+  <h2>Laatste import</h2><div class="receipt"><div><span>Rabobank_oktober.csv</span><span>okt 2026</span></div><div><span>Nieuw</span><span>61</span></div><div><span>Al bekend (overgeslagen)</span><span>14</span></div><div><span>Niet ingelezen (Revolut: in behandeling, teruggedraaid)</span><span>2</span></div><div><span>Andere valuta, ter controle</span><span>1</span></div><div><span>Vaste last herkend en afgevinkt</span><span>Huur, Spotify, Basic-Fit</span></div></div>
+  <h2>Nog te categoriseren (${reviewOpen()})</h2>
+  <div class="row-scroll"><table><thead><tr><th>Omschrijving</th><th>Datum</th><th>Bedrag</th><th style="text-align:left">Categorie</th></tr></thead><tbody>${v1Review()}</tbody></table></div>
+  <p class="foot"><label class="chk"><input type="checkbox" checked disabled> Onthoud mijn keuze als regel voor volgende maanden</label></p>`;
+}
+function v1(screen) {
+  return `<div class="wrap">${v1Nav()}${{ overzicht: v1Overzicht, prognose: v1Prognose, upload: v1Upload }[screen]()}</div>`;
+}
+
+/* ---------- V2 ---------- */
+function v2Nav() {
+  const a = (k, t) => `<button class="pill" data-screen="${k}" ${S.screen === k ? 'aria-current="page"' : ""}>${t}</button>`;
+  return `<div class="bar"><span class="brand">kas<span>boek</span></span><div class="pills">${a("overzicht", "Maand")}${a("prognose", "Prognose")}${a("upload", "Upload")}</div></div>`;
+}
+function v2Overzicht() {
+  const span = (b) => (b >= C(250) ? 6 : b >= C(100) ? 4 : b >= C(40) ? 3 : 2);
+  const tiles = EXP.map((x) => {
+    const r = x.a / x.b, cls = x.a === 0 ? "t-zero" : r > 1 ? "t-over" : !x.v && r >= 0.85 ? "t-warn" : "t-ok";
+    return `<div class="tile ${cls} ${span(x.b) >= 6 ? "wide" : ""}" style="grid-column: span ${span(x.b)}"><div class="nm"><b>${x.n}</b>${x.v ? '<span class="vast2">vast</span>' : ""}</div><div><div class="amt">${e0(x.a)}</div><small>${r > 1 ? `${e0(x.a - x.b)} te veel` : `van ${e0(x.b)}`}</small><div class="meter" aria-hidden="true"><i style="width:${Math.min(100, Math.round(r * 100))}%"></i></div></div></div>`;
+  }).join("");
+  return `<h1>Nog <mark>${e0(left)}</mark> over in oktober</h1><p class="sub">${DAYS_LEFT} dagen te gaan, dat is ${e0(Math.round(left / DAYS_LEFT))} per dag. Eten &amp; drinken en kleding zitten boven budget.</p>
+  <div class="grid">${tiles}</div>
+  <div class="strip"><div class="chip"><b>${e0(incRec)}</b>binnen</div><div class="chip"><b>${e0(totA)}</b>uitgegeven</div><div class="chip bad"><b>${e0(15400)}</b>Zorgtoeslag nog niet binnen</div></div>
+  ${reviewOpen() ? `<button class="sort" data-screen="upload"><b>${reviewOpen()}</b>transacties sorteren</button>` : ""}`;
+}
+function v2Chart() {
+  const d = fcView(), W = 760, H = 300, L = 44, T = 14, B = 28, cur = 3;
+  const hi = Math.ceil(Math.max(...d.flatMap((x) => [x.i, x.e])) / 20000) * 200, y = (v) => T + (1 - v / 100 / hi) * (H - T - B);
+  const slot = (W - L) / d.length, bw = Math.min(26, slot / 2.5);
+  let g = "";
+  for (let v = 0; v <= hi; v += 500) g += `<line x1="${L}" x2="${W}" y1="${y(v * 100)}" y2="${y(v * 100)}" stroke="#14141f" stroke-opacity=".12"/><text x="${L - 8}" y="${y(v * 100) + 4}" text-anchor="end" font-size="12" fill="#4b4b63">${v}</text>`;
+  const bars = d.map((p, i) => {
+    const cx = L + slot * i + slot / 2, fc = p.k === "forecast", yi = y(p.i), ye = y(p.e);
+    const st = (fill) => (fc ? `fill="${fill}" fill-opacity=".35" stroke="#14141f" stroke-width="2" stroke-dasharray="4 3"` : `fill="${fill}" stroke="#14141f" stroke-width="2"`);
+    return `<rect x="${cx - bw - 2}" y="${yi}" width="${bw}" height="${y(0) - yi}" rx="6" ${st("#2f3cff")}/><rect x="${cx + 2}" y="${ye}" width="${bw}" height="${y(0) - ye}" rx="6" ${st("#ffe14d")}/>
+    ${p.b ? `<line x1="${cx + 2}" x2="${cx + 2 + bw}" y1="${y(p.b)}" y2="${y(p.b)}" stroke="#ff5a4e" stroke-width="4" stroke-linecap="round"/>` : ""}<text x="${cx}" y="${H - 8}" text-anchor="middle" font-size="13" font-weight="700" fill="#14141f">${p.m}</text>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Inkomsten en uitgaven per maand">${g}${bars}</svg>`;
+}
+function v2Prognose() {
+  const f = fcView().filter((p) => p.k === "forecast"), avg = Math.round(f.reduce((s, p) => s + (p.i - p.e), 0) / f.length);
+  return `<h1>Je houdt <mark>${e0(avg)}</mark> per maand over</h1><p class="sub">Gemiddeld over de komende ${S.horizon} maanden, op basis van je vaste lasten en je gewone uitgaven van de laatste 3 maanden.</p>
+  <div class="pills" role="group" aria-label="Horizon">${[3, 6].map((h) => `<button class="pill" data-h="${h}" aria-pressed="${S.horizon === h}">${h} maanden</button>`).join("")}</div>
+  <div class="card barchart" style="margin-top:16px">${v2Chart()}<p class="sub" style="margin:8px 0 0;font-size:14px"><b style="color:#2f3cff">■</b> inkomsten &nbsp;<b style="background:#ffe14d;color:#ffe14d;border:1px solid #14141f">■</b> uitgaven &nbsp;<b style="color:#ff5a4e">▬</b> budget &nbsp;· gestreept = prognose</p></div>
+  <h2>Eerstvolgende vaste lasten</h2><div class="list">${UPCOMING.map((u) => `<div class="li"><span class="d">${u[0]}</span>${u[1]}<span class="a">${eur(u[2])}</span></div>`).join("")}</div>
+  <h2>Niet gezien</h2><div class="list">${MISSED.map((u) => `<div class="li miss"><span class="d" style="background:#fff">!</span>${u[0]}, ${u[1]}<span class="a">${eur(u[2])}</span></div>`).join("")}</div>`;
+}
+function v2Upload() {
+  const cards = REVIEW.map((r, i) => `<div class="rv ${S.done[i] ? "is-done" : ""}"><div class="top"><div>${esc(r[0])}</div><span>${eur(r[1])}</span></div><div class="meta">${r[2]}${S.done[i] ? ` · ${esc(S.done[i])}, regel opgeslagen` : ""}</div>${S.done[i] ? "" : `<div class="opts">${r[3].map((c) => `<button data-review="${i}" data-cat="${esc(c)}">${c}</button>`).join("")}<select data-review="${i}" aria-label="Andere categorie voor ${esc(r[0])}"><option value="">Andere…</option>${ALLCATS.map((c) => `<option>${c}</option>`).join("")}</select></div>`}</div>`).join("");
+  return `<h1>Upload je <mark>maand</mark></h1><p class="sub">Eén bestand per bank. Dubbel uploaden kan geen kwaad.</p>
+  <div class="dz"><b>Sleep je Rabobank- of Revolut-bestand hierheen</b><span>of tik om een .csv te kiezen</span></div>
+  <div class="big"><div style="background:#2f3cff;color:#fff"><b>61</b>nieuw</div><div style="background:#ffe14d"><b>14</b>al bekend</div><div style="background:#e9e9f6"><b>2</b>overgeslagen</div><div style="background:#ff5a4e"><b>1</b>andere valuta</div></div>
+  <p class="sub" style="margin-top:12px">Huur, Spotify en Basic-Fit zijn herkend en afgevinkt.</p>
+  <h2>${reviewOpen() ? `Nog ${reviewOpen()} te sorteren` : "Alles gesorteerd"}</h2>${cards}`;
+}
+function v2(screen) {
+  return `<div class="wrap">${v2Nav()}${{ overzicht: v2Overzicht, prognose: v2Prognose, upload: v2Upload }[screen]()}</div>`;
+}
+
+/* ---------- V3 ---------- */
+function v3Side() {
+  const a = (k, t, extra = "") => `<button data-screen="${k}" ${S.screen === k ? 'aria-current="page"' : ""}>${t}${extra}</button>`;
+  return `<aside><div class="logo"><i>▍</i>kasboek</div><div class="sec">Maand</div>${a("overzicht", "Overzicht")}${a("prognose", "Prognose")}${a("upload", "Upload &amp; review", reviewOpen() ? `<span class="cnt">${reviewOpen()}</span>` : "")}<div class="sec">Beheer</div><button disabled>Vaste lasten</button><button disabled>Regels</button><button disabled>Budgetten</button></aside>`;
+}
+function v3Top(title) {
+  return `<div class="top"><h1>${title}</h1><span class="step"><button aria-label="Vorige maand">‹</button><button aria-label="Volgende maand" disabled>›</button></span><span class="kbd">⌘K</span><button class="btn" data-screen="upload">Upload CSV</button></div>`;
+}
+function v3Overzicht() {
+  const rows = EXP.map((x) => {
+    const r = x.a / x.b, cls = x.a > x.b ? "over" : r >= 0.85 ? "warn" : "", rest = x.b - x.a;
+    return `<tr><td>${x.n}${x.v ? '<span class="tag">vast</span>' : ""}</td><td>${eur(x.b)}</td><td>${eur(x.a)}</td><td class="${rest < 0 ? "neg" : ""}">${rest < 0 ? "−" : ""}${eur(Math.abs(rest))}</td><td class="hide-s"><span class="bar ${cls}"><i style="width:${Math.min(100, Math.round(r * 100))}%"></i></span> <span style="color:var(--mu)">${Math.round(r * 100)}%</span></td></tr>`;
+  }).join("");
+  return `${v3Top("Oktober 2026")}<div class="content"><div>
+  <div class="sumrow"><div><span>Inkomsten</span><b class="pos">${eur(incRec)}</b></div><div><span>Uitgaven</span><b>${eur(totA)}</b></div><div><span>Netto tot nu toe</span><b class="${incRec - totA < 0 ? "neg" : "pos"}">${sgn(incRec - totA)}</b></div><div><span>Budget over</span><b>${eur(left)}</b></div></div>
+  <div class="panel"><h3><span>Uitgaven t.o.v. budget</span><span>${DAYS_LEFT} dagen te gaan</span></h3><div class="scroll"><table><thead><tr><th>Categorie</th><th>Budget</th><th>Besteed</th><th>Rest</th><th class="hide-s" style="text-align:left">Verbruik</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>
+  <div style="display:grid;gap:14px">
+  <div class="panel"><h3><span>Aandacht</span></h3><ul class="list"><li><span class="dot" style="background:var(--rd)"></span>Te categoriseren<span class="v">${reviewOpen()}</span></li><li><span class="dot" style="background:var(--am)"></span>Niet gezien<span class="v">Zorgtoeslag</span></li><li><span class="dot" style="background:var(--rd)"></span>Boven budget<span class="v">${over.length} cat.</span></li><li><span class="dot" style="background:var(--cy)"></span>Andere valuta<span class="v">1 rij</span></li></ul></div>
+  <div class="panel"><h3><span>Binnenkort</span></h3><ul class="list">${UPCOMING.slice(0, 4).map((u) => `<li><span class="k">${u[0]}</span>${u[1]}<span class="v">${eur(u[2])}</span></li>`).join("")}</ul></div></div></div>`;
+}
+function v3Chart() {
+  const d = fcView(), W = 820, H = 280, L = 50, R = 70, T = 14, B = 28, cur = 3;
+  const all = d.flatMap((x) => [x.i, x.e, x.b].filter((v) => v != null)), sc = nice(Math.min(...all) / 100, Math.max(...all) / 100, 100);
+  const x = (i) => L + (i * (W - L - R)) / (d.length - 1), y = (v) => T + (1 - (v / 100 - sc.lo) / (sc.hi - sc.lo)) * (H - T - B);
+  const path = (k, a, b) => d.slice(a, b + 1).map((p, j) => `${j ? "L" : "M"}${x(a + j).toFixed(1)} ${y(p[k]).toFixed(1)}`).join(" ");
+  let g = "";
+  for (let v = sc.lo; v <= sc.hi; v += sc.step) g += `<line x1="${L}" x2="${W - R}" y1="${y(v * 100)}" y2="${y(v * 100)}" stroke="#243242"/><text x="${L - 8}" y="${y(v * 100) + 4}" text-anchor="end" font-size="11" fill="#8fa0b3" font-family="Geist Mono">${v}</text>`;
+  const labels = d.map((p, i) => `<text x="${x(i)}" y="${H - 8}" text-anchor="middle" font-size="11" fill="#8fa0b3" font-family="Geist Mono">${p.m}</text>`).join("");
+  const bud = d.map((p, i) => (p.b != null ? { i, v: p.b } : null)).filter(Boolean);
+  let bp = ""; bud.forEach((p, j) => { bp += j ? `H${x(p.i)}V${y(p.v)}` : `M${x(p.i)} ${y(p.v)}`; });
+  const dots = (k, c) => d.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[k])}" r="${i === cur ? 4.5 : 2.5}" fill="${c}"/>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Prognose per maand">${g}${labels}
+  <rect x="${x(cur)}" y="${T}" width="${W - R - x(cur)}" height="${H - T - B}" fill="#a78bfa" fill-opacity=".07"/><text x="${x(cur) + 6}" y="${T + 12}" font-size="11" fill="#a78bfa" font-family="Geist Mono">PROGNOSE</text>
+  <path d="${bp}" fill="none" stroke="#f2b84b" stroke-width="1.5"/>
+  <path d="${path("e", 0, cur)}" fill="none" stroke="#4cc9f0" stroke-width="2"/><path d="${path("e", cur, d.length - 1)}" fill="none" stroke="#4cc9f0" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="${path("i", 0, cur)}" fill="none" stroke="#35d0a5" stroke-width="2"/><path d="${path("i", cur, d.length - 1)}" fill="none" stroke="#35d0a5" stroke-width="2" stroke-dasharray="5 4"/>
+  ${dots("e", "#4cc9f0")}${dots("i", "#35d0a5")}
+  <text x="${W - R + 8}" y="${y(d[d.length - 1].i) + 4}" font-size="12" fill="#35d0a5">inkomsten</text><text x="${W - R + 8}" y="${y(d[d.length - 1].e) + 4}" font-size="12" fill="#4cc9f0">uitgaven</text></svg>`;
+}
+function v3Prognose() {
+  const d = fcView(); let cum = 0;
+  const rows = d.filter((p) => p.k !== "actual").map((p) => { cum += p.i - p.e; return `<tr><td>${p.m}<span class="tag">${KIND[p.k]}</span></td><td>${eur(p.i, 0)}</td><td>${eur(p.e, 0)}</td><td class="${p.i - p.e < 0 ? "neg" : "pos"}">${sgn(p.i - p.e).replace(",00", "")}</td><td class="hide-s">${p.b == null ? "–" : eur(p.b, 0)}</td><td>${eur(cum, 0)}</td></tr>`; }).join("");
+  return `${v3Top("Prognose")}<div class="content"><div style="display:grid;gap:14px">
+  <div class="panel"><h3><span>Inkomsten, uitgaven en budget</span><span class="seg3" role="group" aria-label="Horizon">${[3, 6].map((h) => `<button data-h="${h}" aria-pressed="${S.horizon === h}">${h} mnd</button>`).join("")}</span></h3><div class="chart">${v3Chart()}</div></div>
+  <div class="panel"><h3><span>Per maand</span><span>cumulatief netto vanaf okt</span></h3><div class="scroll"><table><thead><tr><th>Maand</th><th>Inkomsten</th><th>Uitgaven</th><th>Netto</th><th class="hide-s">Budget</th><th>Cumulatief</th></tr></thead><tbody>${rows}</tbody></table></div></div></div>
+  <div style="display:grid;gap:14px"><div class="panel"><h3><span>Aannames</span></h3><ul class="list"><li>Variabel gemiddelde<span class="v">3 mnd</span></li><li>Horizon<span class="v">${S.horizon} mnd</span></li><li>Vaste lasten<span class="v">11 actief</span></li><li>Zekerheid<span class="v pos">hoog</span></li></ul></div>
+  <div class="panel"><h3><span>Niet gezien</span></h3><ul class="list">${MISSED.map((u) => `<li><span class="dot" style="background:var(--am)"></span>${u[0]}<span class="v">${u[1]}</span></li>`).join("")}</ul></div></div></div>`;
+}
+function v3Upload() {
+  const imp = IMPORTS.map((r) => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="pos">${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td class="hide-s">${r[6]}</td></tr>`).join("");
+  const rev = REVIEW.map((r, i) => S.done[i]
+    ? `<tr><td>${esc(r[0])}</td><td>${r[2]}</td><td>${eur(r[1])}</td><td class="done" style="text-align:left;font-family:Geist">${esc(S.done[i])} · regel opgeslagen</td></tr>`
+    : `<tr><td>${esc(r[0])}</td><td>${r[2]}</td><td>${eur(r[1])}</td><td style="text-align:left"><select data-review="${i}" aria-label="Categorie voor ${esc(r[0])}"><option value="">Categorie…</option>${r[3].concat(ALLCATS.filter((c) => !r[3].includes(c))).map((c) => `<option>${c}</option>`).join("")}</select></td></tr>`).join("");
+  return `${v3Top("Upload &amp; review")}<div class="content one"><div class="panel"><div class="drop">Sleep een Rabobank- of Revolut-CSV hierheen · rekening en maand worden herkend</div></div>
+  <div class="panel"><h3><span>Importlog</span><span>dubbele rijen worden overgeslagen</span></h3><div class="scroll"><table><thead><tr><th>Bestand</th><th>Bank</th><th>Maand</th><th>Nieuw</th><th>Bekend</th><th>Overgeslagen</th><th class="hide-s">Tijd</th></tr></thead><tbody>${imp}</tbody></table></div></div>
+  <div class="panel"><h3><span>Te categoriseren (${reviewOpen()})</span><span>keuze wordt een regel</span></h3><div class="scroll"><table><thead><tr><th>Omschrijving</th><th>Datum</th><th>Bedrag</th><th style="text-align:left">Categorie</th></tr></thead><tbody>${rev}</tbody></table></div></div></div>`;
+}
+function v3(screen) {
+  return `<div class="shell">${v3Side()}<main>${{ overzicht: v3Overzicht, prognose: v3Prognose, upload: v3Upload }[screen]()}</main></div>`;
+}
+
+/* ---------- frame ---------- */
+const RENDER = { 1: v1, 2: v2, 3: v3 };
+function render() {
+  document.getElementById("seg-variant").innerHTML = Object.entries(VARIANTS).map(([k, v]) => `<button data-variant="${k}" aria-pressed="${S.variant == k}">${v.name}</button>`).join("");
+  document.getElementById("seg-screen").innerHTML = Object.entries(SCREENS).map(([k, v]) => `<button data-frame-screen="${k}" aria-pressed="${S.screen === k}">${v}</button>`).join("");
+  document.getElementById("note").textContent = VARIANTS[S.variant].note;
+  const stage = document.getElementById("stage");
+  stage.className = "stage v" + S.variant;
+  stage.innerHTML = RENDER[S.variant](S.screen);
+}
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button");
+  if (!t || t.disabled) return;
+  const d = t.dataset;
+  if (d.variant) S.variant = +d.variant;
+  else if (d.frameScreen) S.screen = d.frameScreen;
+  else if (d.screen) S.screen = d.screen;
+  else if (d.h) S.horizon = +d.h;
+  else if (d.review !== undefined && d.cat) S.done[d.review] = d.cat;
+  else return;
+  render();
+});
+document.addEventListener("change", (e) => {
+  const s = e.target.closest("select[data-review]");
+  if (s && s.value) { S.done[s.dataset.review] = s.value; render(); }
+});
+render();
+</script>
