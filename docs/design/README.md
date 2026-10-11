@@ -15,6 +15,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `ontwerp-v9.html` | Ninth round: light glow redone as depth (two finals: tinted shadow, or frosted lens), a new theme option "Donker +" (lighter, bluer dark), contrast fix for green, themed selection and scrollbars | https://claude.ai/artifact/LU6xS6hjV17yNc2p5krqPo |
 | `glow-lab.html` | Glow lab: six light-mode treatments (A to F) of the hero ring side by side, no SVG filters (Safari-safe), plus the approved dark ring as reference | https://claude.ai/artifact/FCrfti5uab3CpQB5PMPnXy |
 | `ontwerp-v10.html` | Tenth round: one number weight across themes (medium in light, one step lighter in dark), light glow narrowed to A (none), D (same ring as dark, default) and F (shadow underneath); no SVG filters | https://claude.ai/artifact/RfH11NG65aCAQsqMotiymy |
+| `ontwerp-v11.html` | Eleventh round: the light glow follows the colour (warm and green use the lit ring D, blue uses the shadow underneath F); dark unchanged | https://claude.ai/artifact/VBbXnYgoR2TkKSMzHNVMuz |
 
 Older versions are never overwritten: new rounds are new files.
 
