@@ -16,6 +16,8 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `glow-lab.html` | Glow lab: six light-mode treatments (A to F) of the hero ring side by side, no SVG filters (Safari-safe), plus the approved dark ring as reference | https://claude.ai/artifact/FCrfti5uab3CpQB5PMPnXy |
 | `ontwerp-v10.html` | Tenth round: one number weight across themes (medium in light, one step lighter in dark), light glow narrowed to A (none), D (same ring as dark, default) and F (shadow underneath); no SVG filters | https://claude.ai/artifact/RfH11NG65aCAQsqMotiymy |
 | `ontwerp-v11.html` | Eleventh round: the light glow follows the colour (warm and green use the lit ring D, blue uses the shadow underneath F); dark unchanged | https://claude.ai/artifact/VBbXnYgoR2TkKSMzHNVMuz |
+| `ontwerp-v12.html` | Base design with light glow fixed to F (shadow underneath), as decided | (not published separately) |
+| `ontwerp-v13.html` | Status-wash test: in light mode the top of the page is tinted by the screen's status (amber, green, blue) on a neutral base; compare off / month / per screen | https://claude.ai/artifact/TR3GLfJJ3q7kHTjNipWdmr |
 
 Older versions are never overwritten: new rounds are new files.
 
