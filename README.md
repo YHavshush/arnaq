@@ -37,3 +37,17 @@ Schema is in [src/db/schema.ts](src/db/schema.ts); migrations are in `drizzle/`.
 ## Data safety
 
 Real bank CSVs and the database are never committed. Only anonymised samples go in [tests/fixtures/](tests/fixtures/).
+
+## API (so far)
+
+| Endpoint                                           | Purpose                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| `POST /api/import`                                 | Upload a CSV (`file`, optional `accountId`, `month`). Re-uploads are safe |
+| `GET/POST /api/accounts`                           | List or create accounts                                                   |
+| `GET /api/categories`                              | Categories                                                                |
+| `GET/POST /api/rules`, `DELETE /api/rules/:id`     | Categorisation rules                                                      |
+| `GET /api/review`                                  | Transactions needing a category (or in a foreign currency)                |
+| `PUT /api/transactions/:id/category`               | Set a category, optionally learning a rule                                |
+| `GET /api/overview?month=YYYY-MM`                  | Budget vs actual for a month                                              |
+| `GET/PUT /api/budgets`                             | Budgets per category per month                                            |
+| `PUT /api/budgets/total`, `POST /api/budgets/copy` | Optional total budget, copy a month's budgets                             |
