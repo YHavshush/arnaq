@@ -349,7 +349,7 @@ describe("pairOccurrences (pure, shared with the forecast)", () => {
     const { db, tx, addItem } = setup();
     addItem();
     generateOccurrences(db, { throughMonth: "2026-03" });
-    const ok = tx("2026-03-10", -999, { counterparty: "Spotify" });
+    const ok = tx("2026-03-10", -450, { counterparty: "Bakker" });
     tx("2026-03-11", -999, { counterparty: "Spotify", isInternalTransfer: true });
     tx("2026-03-12", -999, { counterparty: "Spotify", currency: "USD" });
     tx("2026-04-01", -999, { counterparty: "Spotify" });
