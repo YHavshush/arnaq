@@ -35,24 +35,34 @@ export function detectInternalTransfers(db: Db, opts: { maxDays?: number } = {})
   }
 
   const free = (t: (typeof open)[number]) => !flagged.has(t.id);
+  // Index inflows by currency + amount, so each outflow only inspects real candidates
+  // instead of every transaction (this runs on every import).
+  const inflowsByKey = new Map<string, (typeof open)[number][]>();
+  for (const t of open) {
+    if (t.amount <= 0 || !free(t)) continue;
+    const key = `${t.currency}|${t.amount}`;
+    const list = inflowsByKey.get(key);
+    if (list) list.push(t);
+    else inflowsByKey.set(key, [t]);
+  }
+
   const outflows = open
     .filter((t) => t.amount < 0 && free(t))
     .sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
   for (const out of outflows) {
     if (!free(out)) continue;
-    const match = open
+    const outDay = dayNumber(out.date);
+    const match = (inflowsByKey.get(`${out.currency}|${-out.amount}`) ?? [])
       .filter(
         (t) =>
           free(t) &&
-          t.amount === -out.amount &&
-          t.currency === out.currency &&
           t.accountId !== out.accountId &&
-          Math.abs(dayNumber(t.date) - dayNumber(out.date)) <= maxDays,
+          Math.abs(dayNumber(t.date) - outDay) <= maxDays,
       )
       .sort(
         (a, b) =>
-          Math.abs(dayNumber(a.date) - dayNumber(out.date)) -
-            Math.abs(dayNumber(b.date) - dayNumber(out.date)) || a.id - b.id,
+          Math.abs(dayNumber(a.date) - outDay) - Math.abs(dayNumber(b.date) - outDay) ||
+          a.id - b.id,
       )[0];
     if (match) {
       flagged.add(out.id);
@@ -61,9 +71,12 @@ export function detectInternalTransfers(db: Db, opts: { maxDays?: number } = {})
   }
 
   if (flagged.size === 0) return 0;
-  db.update(schema.transactions)
-    .set({ isInternalTransfer: true, categoryId: category.id })
-    .where(inArray(schema.transactions.id, [...flagged]))
-    .run();
+  const ids = [...flagged];
+  for (let i = 0; i < ids.length; i += 500) {
+    db.update(schema.transactions)
+      .set({ isInternalTransfer: true, categoryId: category.id })
+      .where(inArray(schema.transactions.id, ids.slice(i, i + 500)))
+      .run();
+  }
   return flagged.size;
 }

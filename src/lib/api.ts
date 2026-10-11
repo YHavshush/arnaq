@@ -1,4 +1,5 @@
 import { connection } from "next/server";
+import { MAX_CENTS } from "@/lib/money";
 import { BudgetError } from "@/lib/budget/budgets";
 import { CategoriseError } from "@/lib/categories/categorise";
 import { ImportError } from "@/lib/import/service";
@@ -16,11 +17,22 @@ export async function handle(fn: () => Response | Promise<Response>): Promise<Re
     if (DOMAIN_ERRORS.some((C) => e instanceof C)) {
       return Response.json({ error: (e as Error).message }, { status: 422 });
     }
+    // A foreign key or unique constraint hit: the request referenced something that is not there
+    // (or already exists). Never leak the SQL, just say so.
+    const code = (e as { code?: unknown } | null)?.code;
+    if (typeof code === "string" && code.startsWith("SQLITE_CONSTRAINT")) {
+      return Response.json(
+        { error: "The request conflicts with existing data (unknown reference or duplicate)." },
+        { status: 422 },
+      );
+    }
     throw e;
   }
 }
 
-export const isInt = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v);
+/** A safe integer within the accepted money range (also used for ids). */
+export const isInt = (v: unknown): v is number =>
+  typeof v === "number" && Number.isSafeInteger(v) && Math.abs(v) <= MAX_CENTS;
 
 /**
  * Call at the top of GET handlers that do not read the request. With Cache Components,

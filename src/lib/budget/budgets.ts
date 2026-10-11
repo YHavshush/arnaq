@@ -1,5 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
+import { MAX_CENTS } from "@/lib/money";
 
 export class BudgetError extends Error {}
 
@@ -10,7 +11,7 @@ export function assertMonth(month: string): void {
 }
 
 function assertCents(amount: number): void {
-  if (!Number.isInteger(amount) || amount < 0) {
+  if (!Number.isSafeInteger(amount) || amount < 0 || amount > MAX_CENTS) {
     throw new BudgetError("Budget amount must be a non-negative integer number of cents.");
   }
 }

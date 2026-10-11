@@ -1,0 +1,168 @@
+// Regression tests for the security review findings (validation, caps, CSRF guard).
+import { readFileSync } from "node:fs";
+import path from "node:path";
+import { NextRequest } from "next/server";
+import { beforeAll, describe, expect, it } from "vitest";
+import { createDb, schema } from "@/db";
+import { detectInternalTransfers } from "@/lib/categories/transfers";
+import { parseAmountToCents } from "@/lib/money";
+import { MAX_IMPORT_ROWS, importCsv } from "@/lib/import/service";
+import { rabobankParser } from "@/lib/import/parsers/rabobank";
+import { proxy } from "@/proxy";
+
+type Routes = {
+  accounts: typeof import("./accounts/route");
+  budgets: typeof import("./budgets/route");
+  rules: typeof import("./rules/route");
+  upload: typeof import("./import/route");
+};
+let r: Routes;
+
+beforeAll(async () => {
+  process.env.DATABASE_URL = ":memory:";
+  r = {
+    accounts: await import("./accounts/route"),
+    budgets: await import("./budgets/route"),
+    rules: await import("./rules/route"),
+    upload: await import("./import/route"),
+  };
+});
+
+const json = (method: string, body: unknown) =>
+  new Request("http://localhost/x", { method, body: JSON.stringify(body) });
+const fixture = (name: string) =>
+  readFileSync(path.join(process.cwd(), "tests/fixtures", name), "utf8");
+
+describe("constraint errors are 422, not 500", () => {
+  it("unknown category on a budget and on a rule", async () => {
+    const b = await r.budgets.PUT(json("PUT", { month: "2026-09", categoryId: 9999, amount: 100 }));
+    expect(b.status).toBe(422);
+    expect(JSON.stringify(await b.json())).not.toMatch(/SQLITE|FOREIGN KEY/i);
+    const rule = await r.rules.POST(json("POST", { pattern: "abc", categoryId: 9999 }));
+    expect(rule.status).toBe(422);
+  });
+});
+
+describe("accounts validation", () => {
+  it("rejects bad currency, bad IBAN and a duplicate IBAN", async () => {
+    const post = (body: unknown) => r.accounts.POST(json("POST", body));
+    expect((await post({ name: "A", bank: "revolut", currency: "euro" })).status).toBe(400);
+    expect((await post({ name: "A", bank: "revolut", iban: "not an iban" })).status).toBe(400);
+    expect(
+      (await post({ name: "A", bank: "rabobank", iban: "NL00 RABO 0000 0000 77" })).status,
+    ).toBe(201);
+    expect((await post({ name: "B", bank: "rabobank", iban: "nl00rabo0000000077" })).status).toBe(
+      422,
+    );
+    expect((await post({ name: "x".repeat(101), bank: "rabobank" })).status).toBe(400);
+  });
+});
+
+describe("rules validation", () => {
+  it("needs a pattern of at least two characters", async () => {
+    expect((await r.rules.POST(json("POST", { pattern: "a", categoryId: 1 }))).status).toBe(400);
+  });
+});
+
+describe("upload caps", () => {
+  it("refuses an oversized body before parsing it", async () => {
+    const res = await r.upload.POST(
+      new Request("http://localhost/api/import", {
+        method: "POST",
+        headers: { "content-length": String(50 * 1024 * 1024) },
+        body: new FormData(),
+      }),
+    );
+    expect(res.status).toBe(413);
+  });
+
+  it("rejects files with too many rows and caps the skipped detail", () => {
+    const db = createDb(":memory:");
+    const header = fixture("revolut-sample.csv").split("\n")[0];
+    const many = [header, ...Array.from({ length: MAX_IMPORT_ROWS + 1 }, () => "x,y,z")].join("\n");
+    expect(() =>
+      importCsv(db, { content: many, filename: "big.csv", accountId: undefined }),
+    ).toThrow();
+
+    const bad = [
+      header,
+      ...Array.from({ length: 500 }, () => "CARD,Current,nope,,Shop,1.00,0,EUR,COMPLETED,1"),
+    ];
+    const s = importCsv(db, { content: bad.join("\n"), filename: "bad.csv", month: "2026-09" });
+    expect(s.rowsSkipped).toBe(500);
+    expect(s.skipped).toHaveLength(50);
+  });
+});
+
+describe("CSV robustness", () => {
+  it("skips a row with an impossible date instead of failing the file", () => {
+    const csv = fixture("rabobank-sample.csv").replace('"2026-09-02"', '"2026-13-45"');
+    const res = rabobankParser.parse(csv);
+    expect(res.rows).toHaveLength(6);
+    expect(res.skipped[0].reason).toMatch(/Invalid date/);
+  });
+
+  it("rejects absurd amounts", () => {
+    expect(() => parseAmountToCents("1".repeat(40), ".")).toThrow();
+    expect(() => parseAmountToCents("9999999999.99", ".")).not.toThrow();
+    expect(() => parseAmountToCents("10000000000.01", ".")).toThrow();
+  });
+});
+
+describe("transfer detection scales", () => {
+  it("handles 6000 transactions fast and still pairs correctly", () => {
+    const db = createDb(":memory:");
+    const [a] = db
+      .insert(schema.accounts)
+      .values({ name: "A", bank: "rabobank" })
+      .returning()
+      .all();
+    const [b] = db.insert(schema.accounts).values({ name: "B", bank: "revolut" }).returning().all();
+    const rows = [];
+    for (let i = 0; i < 3000; i++) {
+      const day = String((i % 28) + 1).padStart(2, "0");
+      rows.push({
+        accountId: a.id,
+        date: `2026-09-${day}`,
+        amount: -(100 + i),
+        importHash: `a${i}`,
+      });
+      rows.push({ accountId: b.id, date: `2026-09-${day}`, amount: 100 + i, importHash: `b${i}` });
+    }
+    for (let i = 0; i < rows.length; i += 500)
+      db.insert(schema.transactions)
+        .values(rows.slice(i, i + 500))
+        .run();
+    const started = Date.now();
+    expect(detectInternalTransfers(db)).toBe(6000);
+    expect(Date.now() - started).toBeLessThan(3000);
+  });
+});
+
+describe("cross-site guard", () => {
+  const req = (method: string, headers: Record<string, string>) =>
+    new NextRequest("http://localhost:3000/api/rules", { method, headers });
+
+  it("blocks cross-site and foreign-origin state changes", async () => {
+    expect(proxy(req("POST", { "sec-fetch-site": "cross-site" })).status).toBe(403);
+    expect(
+      proxy(req("POST", { origin: "https://evil.example", host: "localhost:3000" })).status,
+    ).toBe(403);
+    expect(proxy(req("DELETE", { origin: "not a url", host: "localhost:3000" })).status).toBe(403);
+  });
+
+  it("lets same-origin, header-less and read requests through", () => {
+    expect(
+      proxy(req("POST", { "sec-fetch-site": "same-origin" })).headers.get("x-middleware-next"),
+    ).toBe("1");
+    expect(
+      proxy(req("POST", { origin: "http://localhost:3000", host: "localhost:3000" })).headers.get(
+        "x-middleware-next",
+      ),
+    ).toBe("1");
+    expect(proxy(req("POST", {})).headers.get("x-middleware-next")).toBe("1");
+    expect(
+      proxy(req("GET", { "sec-fetch-site": "cross-site" })).headers.get("x-middleware-next"),
+    ).toBe("1");
+  });
+});

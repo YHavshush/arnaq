@@ -1,4 +1,5 @@
 import { parseAmountToCents } from "@/lib/money";
+import { isDate } from "@/lib/recurring/dates";
 import { readCsv } from "../csv";
 import type { BankParser, ParsedRow, SkippedRow } from "../types";
 
@@ -36,7 +37,7 @@ export const revolutParser: BankParser = {
         }
         const started = (r["Started Date"] ?? "").trim();
         const date = /^(\d{4}-\d{2}-\d{2})/.exec(started)?.[1];
-        if (!date) throw new Error(`Invalid date "${started}"`);
+        if (!isDate(date)) throw new Error(`Invalid date "${started}"`);
         const feeRaw = (r["Fee"] ?? "").trim();
         const fee = feeRaw === "" ? 0 : parseAmountToCents(feeRaw, ".");
         const amount = parseAmountToCents(r["Amount"] ?? "", ".") - fee;

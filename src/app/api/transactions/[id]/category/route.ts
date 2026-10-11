@@ -1,13 +1,13 @@
 import { getDb } from "@/db";
-import { handle, isInt } from "@/lib/api";
+import { handle, isInt, parseId } from "@/lib/api";
 import { assignCategory } from "@/lib/categories/categorise";
 
 /** PUT JSON: { categoryId, createRule?, pattern?, priority? } */
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   return handle(async () => {
-    const id = Number((await params).id);
+    const id = parseId((await params).id);
     const body = await request.json();
-    if (!Number.isInteger(id) || !isInt(body?.categoryId)) {
+    if (id === null || !isInt(body?.categoryId)) {
       return Response.json({ error: "Valid id and categoryId are required." }, { status: 400 });
     }
     return Response.json(

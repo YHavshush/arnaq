@@ -31,6 +31,17 @@ export function isScheduled(item: Schedule, month: string): boolean {
   return date >= item.startDate && (item.endDate === null || date <= item.endDate);
 }
 
+/**
+ * Like isScheduled, but only at month granularity: ignores the day of month, so a start date
+ * in the middle of a month does not exclude that month. Used to decide whether past, unmatched
+ * history still belongs to the item after an edit.
+ */
+export function isScheduledMonth(item: Schedule, month: string): boolean {
+  const diff = monthDiff(monthOf(item.startDate), month);
+  if (diff < 0 || diff % STEP[item.frequency] !== 0) return false;
+  return item.endDate === null || month <= monthOf(item.endDate);
+}
+
 export interface PlannedOccurrence {
   month: string;
   expectedDate: string;
@@ -103,15 +114,19 @@ function coveredMonths(db: Db): Set<string> {
 
 /**
  * Flip `expected` occurrences to `missed` once their match window has fully passed
- * (expectedDate + MATCH_WINDOW_DAYS is before `today`) and every month the window touches
- * has been uploaded. Without an upload for that month we simply do not know yet, so we do
- * not cry wolf. A late payment can still match a missed occurrence (see matchOccurrences).
+ * (expectedDate + MATCH_WINDOW_DAYS is before `today`) and we hold the data to judge it:
+ * the occurrence's own month must be uploaded, and so must the month the window reaches into
+ * after it. A window reaching back into a month before the very first upload counts as
+ * covered (there is nothing earlier to upload), so rent on the 1st is judged normally for the
+ * first uploaded month. Without an upload for the months that matter we simply do not know
+ * yet, so we do not cry wolf. A late payment can still match a missed occurrence (see matchOccurrences).
  * Returns the number of occurrences marked missed.
  */
 export function markMissed(db: Db, opts: { today: string }): number {
   if (!isDate(opts.today))
     throw new RecurringError(`Invalid date "${opts.today}", use YYYY-MM-DD.`);
   const covered = coveredMonths(db);
+  const firstUpload = [...covered].sort()[0] ?? "";
   const open = db
     .select()
     .from(schema.recurringOccurrences)
@@ -122,7 +137,12 @@ export function markMissed(db: Db, opts: { today: string }): number {
     const windowStart = addDays(o.expectedDate, -MATCH_WINDOW_DAYS);
     const windowEnd = addDays(o.expectedDate, MATCH_WINDOW_DAYS);
     if (windowEnd >= opts.today) continue;
-    if (!covered.has(monthOf(windowStart)) || !covered.has(monthOf(windowEnd))) continue;
+    const own = monthOf(o.expectedDate);
+    const before = monthOf(windowStart);
+    const after = monthOf(windowEnd);
+    if (!covered.has(own)) continue;
+    if (before !== own && !covered.has(before) && before >= firstUpload) continue;
+    if (after !== own && !covered.has(after)) continue;
     db.update(schema.recurringOccurrences)
       .set({ status: "missed" })
       .where(eq(schema.recurringOccurrences.id, o.id))
