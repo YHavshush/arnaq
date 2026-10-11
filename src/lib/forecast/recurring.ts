@@ -110,6 +110,31 @@ export function projectRecurring(
   }
 
   const storedKeys = new Set(stored.map((o) => key(o.recurringItemId, o.month)));
+  const { lines, inMemoryMatched } = plannedLines(db, items, storedKeys, w);
+  for (const line of lines) add(line.month, line);
+
+  for (const list of byMonth.values())
+    list.sort(
+      (a, b) =>
+        a.expectedDate.localeCompare(b.expectedDate) ||
+        a.recurringItemId - b.recurringItemId ||
+        a.month.localeCompare(b.month),
+    );
+  return { byMonth, inMemoryMatched };
+}
+
+type Item = typeof schema.recurringItems.$inferSelect;
+
+/**
+ * Lines for every (active item, month) from the current month on that is scheduled but not
+ * stored yet, with the ones already paid matched in memory.
+ */
+function plannedLines(
+  db: Db,
+  items: Item[],
+  storedKeys: Set<string>,
+  w: { current: string; last: string },
+): { lines: Line[]; inMemoryMatched: Set<number> } {
   const planned = items
     .filter((i) => i.active)
     .flatMap((item) =>
@@ -117,43 +142,33 @@ export function projectRecurring(
         .filter((p) => !storedKeys.has(key(item.id, p.month)))
         .map((p) => ({ item, ...p })),
     );
-  const inMemoryMatched = new Set<number>();
   const paid = matchInMemory(db, planned);
-  planned.forEach((p, i) => {
+  const inMemoryMatched = new Set([...paid.values()].map((t) => t.id));
+  const lines = planned.map(({ item, month, expectedDate }, i): Line => {
     const t = paid.get(i);
-    if (t) inMemoryMatched.add(t.id);
-    const amount = t ? Math.abs(t.amount) : p.item.expectedAmount;
-    add(p.month, {
+    return {
       occurrenceId: null,
       source: "planned",
-      recurringItemId: p.item.id,
-      name: p.item.name,
-      type: p.item.type,
-      categoryId: p.item.categoryId,
-      month: p.month,
-      expectedDate: p.expectedDate,
-      expectedAmount: p.item.expectedAmount,
+      recurringItemId: item.id,
+      name: item.name,
+      type: item.type,
+      categoryId: item.categoryId,
+      month,
+      expectedDate,
+      expectedAmount: item.expectedAmount,
       status: t ? "matched" : "expected",
       transactionId: t?.id ?? null,
       actualDate: t?.date ?? null,
-      amount,
+      // Matching only pairs same-sign transactions, so this is the positive real amount.
+      amount: t ? Math.abs(t.amount) : item.expectedAmount,
       carriedOver: false,
-    });
+    };
   });
-
-  for (const list of byMonth.values())
-    list.sort(
-      (a, b) =>
-        a.expectedDate.localeCompare(b.expectedDate) || a.recurringItemId - b.recurringItemId,
-    );
-  return { byMonth, inMemoryMatched };
+  return { lines, inMemoryMatched };
 }
 
 /** Planned index -> the unmatched transaction that already pays it (nothing is written). */
-function matchInMemory(
-  db: Db,
-  planned: { item: typeof schema.recurringItems.$inferSelect; expectedDate: string }[],
-) {
+function matchInMemory(db: Db, planned: { item: Item; expectedDate: string }[]) {
   const paid = new Map<number, { id: number; amount: number; date: string }>();
   if (planned.length === 0) return paid;
   const dates = planned.map((p) => p.expectedDate).sort();

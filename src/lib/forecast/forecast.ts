@@ -228,7 +228,7 @@ function buildMonth(db: Db, ctx: Context, month: string): Omit<ForecastMonth, "c
     categories,
     budget: {
       total: totalBudget,
-      isExplicit: b?.total != null,
+      isExplicit: (b?.total ?? null) !== null,
       difference: totalBudget === null || kind === "no-data" ? null : totalBudget - expenses,
     },
   };
