@@ -2,10 +2,11 @@ import { connection } from "next/server";
 import { MAX_CENTS } from "@/lib/money";
 import { BudgetError } from "@/lib/budget/budgets";
 import { CategoriseError } from "@/lib/categories/categorise";
+import { ForecastError } from "@/lib/forecast/errors";
 import { ImportError } from "@/lib/import/service";
 import { RecurringError } from "@/lib/recurring/errors";
 
-const DOMAIN_ERRORS = [BudgetError, CategoriseError, ImportError, RecurringError];
+const DOMAIN_ERRORS = [BudgetError, CategoriseError, ForecastError, ImportError, RecurringError];
 
 /** Run a handler; turn expected domain errors into 422 JSON, bad JSON into 400. */
 export async function handle(fn: () => Response | Promise<Response>): Promise<Response> {
@@ -56,4 +57,14 @@ export function todayIso(now: Date = new Date()): string {
 export function parseId(raw: string): number | null {
   const id = Number(raw);
   return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+/**
+ * An optional whole-number query parameter: undefined when absent, NaN when it is not plain
+ * digits (so "1e1", " 6", "-1" or "1.5" never sneak through Number()); the domain validates the range.
+ */
+export function intParam(params: URLSearchParams, name: string): number | undefined {
+  const raw = params.get(name);
+  if (raw === null) return undefined;
+  return /^\d{1,4}$/.test(raw) ? Number(raw) : Number.NaN;
 }

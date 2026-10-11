@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { schema } from "@/db";
-import { matchOccurrences } from "./matching";
+import { matchOccurrences, pairOccurrences, unmatchedCandidates } from "./matching";
 import { generateOccurrences, markMissed } from "./occurrences";
 import { setup, snapshot } from "./test-utils";
 
@@ -308,5 +308,57 @@ describe("matchOccurrences", () => {
     const { db, tx } = setup();
     tx("2026-03-10", -999, { counterparty: "Spotify" });
     expect(matchOccurrences(db)).toEqual({ matched: 0, unlinked: 0 });
+  });
+});
+
+describe("pairOccurrences (pure, shared with the forecast)", () => {
+  const item = {
+    type: "expense" as const,
+    tolerance: 100,
+    matchCounterparty: "Verhuurder",
+    matchIban: null,
+  };
+  const open = (key: number, expectedDate: string) => ({
+    key,
+    expectedDate,
+    expectedAmount: 80000,
+    item,
+  });
+
+  it("pairs one-to-one by date distance, within window, tolerance, sign and identity", () => {
+    const { db, tx } = setup();
+    const early = tx("2026-10-28", -80000, { counterparty: "Verhuurder BV" });
+    tx("2026-10-29", -80000, { counterparty: "Someone else" });
+    tx("2026-10-30", 80000, { counterparty: "Verhuurder BV" }); // wrong sign
+    tx("2026-10-31", -80101, { counterparty: "Verhuurder BV" }); // beyond tolerance
+    tx("2026-11-07", -80000, { counterparty: "Verhuurder BV" }); // 6 days late
+    const txs = unmatchedCandidates(db, "2026-10-01", "2026-12-31");
+    const pairs = pairOccurrences([open(1, "2026-11-01"), open(2, "2026-12-01")], txs);
+    expect(pairs.map((p) => [p.o.key, p.t.id])).toEqual([[1, early.id]]);
+  });
+
+  it("gives a contested transaction to the closest occurrence", () => {
+    const { db, tx } = setup();
+    const t = tx("2026-11-03", -80000, { counterparty: "Verhuurder" });
+    const txs = unmatchedCandidates(db, "2026-10-01", "2026-12-31");
+    const pairs = pairOccurrences([open(1, "2026-10-30"), open(2, "2026-11-01")], txs);
+    expect(pairs.map((p) => [p.o.key, p.t.id])).toEqual([[2, t.id]]);
+  });
+
+  it("only offers unmatched, non-transfer rows in the account currency within the dates", () => {
+    const { db, tx, addItem } = setup();
+    addItem();
+    generateOccurrences(db, { throughMonth: "2026-03" });
+    const ok = tx("2026-03-10", -450, { counterparty: "Bakker" });
+    tx("2026-03-11", -999, { counterparty: "Spotify", isInternalTransfer: true });
+    tx("2026-03-12", -999, { counterparty: "Spotify", currency: "USD" });
+    tx("2026-04-01", -999, { counterparty: "Spotify" });
+    const matched = tx("2026-02-10", -999, { counterparty: "Spotify" });
+    matchOccurrences(db);
+    expect(
+      db.select().from(schema.transactions).where(eq(schema.transactions.id, matched.id)).get()!
+        .matchedOccurrenceId,
+    ).not.toBeNull();
+    expect(unmatchedCandidates(db, "2026-02-01", "2026-03-31").map((t) => t.id)).toEqual([ok.id]);
   });
 });

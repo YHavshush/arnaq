@@ -1,8 +1,16 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createDb, schema } from "@/db";
-import { BudgetError, copyBudgets, setBudget, setTotalBudget, clearBudget } from "./budgets";
-import { getMonthOverview } from "./overview";
+import { setup as recurringSetup } from "@/lib/recurring/test-utils";
+import {
+  BudgetError,
+  copyBudgets,
+  getBudgetsByMonth,
+  setBudget,
+  setTotalBudget,
+  clearBudget,
+} from "./budgets";
+import { getMonthOverview, sumTransactions } from "./overview";
 
 function setup() {
   const db = createDb(":memory:");
@@ -119,5 +127,70 @@ describe("getMonthOverview", () => {
     });
     setTotalBudget(db, "2026-09", null);
     expect(getMonthOverview(db, "2026-09").totals.totalBudgetIsExplicit).toBe(false);
+  });
+});
+
+describe("sumTransactions", () => {
+  it("sums signed cents per month and category on the overview basis", () => {
+    const { db, cat, tx } = setup();
+    tx("2026-08-31", -1000, { categoryId: cat("Overig") });
+    tx("2026-09-01", -2000, { categoryId: cat("Overig") });
+    tx("2026-09-02", 500, { categoryId: cat("Overig") }); // refund
+    tx("2026-09-03", -700);
+    tx("2026-09-04", 300);
+    tx("2026-09-05", -9999, { isInternalTransfer: true });
+    tx("2026-09-06", -1200, { currency: "GBP", categoryId: cat("Overig") });
+    tx("2026-10-01", -4000, { categoryId: cat("Overig") });
+    const sums = sumTransactions(db, { fromMonth: "2026-09", toMonth: "2026-10" });
+    expect([...sums.keys()]).toEqual(["2026-09", "2026-10"]);
+    const sep = sums.get("2026-09")!;
+    expect(sep.byCategory.get(cat("Overig"))).toBe(-1500);
+    expect(sep.uncategorised).toEqual({ expense: 700, income: 300, count: 2 });
+    expect(sep.foreignCurrencyCount).toBe(1);
+    expect(sums.get("2026-10")!.byCategory.get(cat("Overig"))).toBe(-4000);
+  });
+
+  it("can leave out transactions matched to a recurring occurrence, or given ids", () => {
+    const { db, tx, addItem, cat } = recurringSetup();
+    const item = addItem();
+    const [o] = db
+      .insert(schema.recurringOccurrences)
+      .values({
+        recurringItemId: item.id,
+        month: "2026-09",
+        expectedDate: "2026-09-10",
+        expectedAmount: 999,
+      })
+      .returning()
+      .all();
+    tx("2026-09-10", -999, { categoryId: cat("Abonnementen"), matchedOccurrenceId: o.id });
+    const other = tx("2026-09-11", -100, { categoryId: cat("Abonnementen") });
+    tx("2026-09-12", -50, { categoryId: cat("Abonnementen") });
+    const range = { fromMonth: "2026-09", toMonth: "2026-09" };
+    const all = sumTransactions(db, range).get("2026-09")!;
+    expect(all.byCategory.get(cat("Abonnementen"))).toBe(-1149);
+    const variable = sumTransactions(db, { ...range, excludeMatched: true }).get("2026-09")!;
+    expect(variable.byCategory.get(cat("Abonnementen"))).toBe(-150);
+    const without = sumTransactions(db, {
+      ...range,
+      excludeMatched: true,
+      excludeIds: new Set([other.id]),
+    }).get("2026-09")!;
+    expect(without.byCategory.get(cat("Abonnementen"))).toBe(-50);
+  });
+});
+
+describe("getBudgetsByMonth", () => {
+  it("returns category budgets and the explicit total per month in a range", () => {
+    const { db, cat } = setup();
+    setBudget(db, cat("Huur"), "2026-09", 65000);
+    setBudget(db, cat("Huur"), "2026-11", 66000);
+    setBudget(db, cat("Huur"), "2027-01", 1);
+    setTotalBudget(db, "2026-10", 90000);
+    const b = getBudgetsByMonth(db, "2026-09", "2026-12");
+    expect([...b.keys()].sort()).toEqual(["2026-09", "2026-10", "2026-11"]);
+    expect(b.get("2026-09")).toEqual({ byCategory: new Map([[cat("Huur"), 65000]]), total: null });
+    expect(b.get("2026-10")).toEqual({ byCategory: new Map(), total: 90000 });
+    expect(b.get("2026-11")!.byCategory.get(cat("Huur"))).toBe(66000);
   });
 });
