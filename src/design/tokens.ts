@@ -188,3 +188,14 @@ export const textPairs: [fg: keyof ThemeTokens, bg: keyof ThemeTokens][] = [
   ["warn", "canvas"],
   ["bad", "canvas"],
 ];
+
+/**
+ * Whether the page background carries a status wash (a soft tint at the top that follows the screen's tone).
+ * Light: off, decided by the owner (the wash was tested and judged not worth a third status signal next to ring colour and glow).
+ * Dark and Dark +: on, it is part of the dark look the owner approved. Flip a value and run `npm run tokens`.
+ */
+export const statusWash: Record<ThemeName, boolean> = {
+  light: false,
+  dark: true,
+  darkplus: true,
+};
