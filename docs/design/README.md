@@ -7,6 +7,7 @@ Each file is a standalone page with demo data (no real figures). Open it in a br
 | `variants.html` | First round: three very different directions (Grootboek, Kleurblok, Cockpit) | https://claude.ai/artifact/QnjFUkejUadv7WwQ4p1MFU |
 | `ontwerp-v2.html` | Second round: clean Apple/Notion/Dyme direction, **Helder** and **Titanium** skins, phone and laptop | https://claude.ai/artifact/FwNuDz3mhHvRuqTWguYUhN |
 | `ontwerp-v3.html` | Third round: v2 plus headline sentence, state tiles, ribbon trend, one-or-three rings, and a **Verhaal** (story-first) skin | https://claude.ai/artifact/JjuTUaYZzA8925tJJaFMwL |
+| `ontwerp-v4.html` | Fourth round: one merged design. Theme (light / dark / system) and start screen (Verhaal / Dashboard / auto) are user settings. Light = Helder / Verhaal, dark = Titanium | https://claude.ai/artifact/A6KVU6eLAVHDAx8BQsj4Lc |
 
 Older versions are never overwritten: new rounds are new files.
 
