@@ -104,6 +104,39 @@ as a comparison line and a running cumulative net for the chart.
 
 ## Success criteria
 
-- [ ] All semantics above covered by tests; `npm test`, lint, typecheck, format:check, build pass.
-- [ ] Forecast leaves the database untouched.
-- [ ] README API table complete.
+- [x] All semantics above covered by tests; `npm test`, lint, typecheck, format:check, build pass.
+- [x] Forecast leaves the database untouched (snapshot test, 60 random worlds, HTTP test).
+- [x] README API table complete.
+
+## TDD evidence
+
+| Slice                    | RED commit (failure seen)                             | GREEN commit | Guarantees                                                                                    |
+| ------------------------ | ----------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------- |
+| Shared sums and budgets  | `2cc9a4f` (`sumTransactions is not a function`)       | `026af5e`    | Overview and forecast count money identically; matched rows can be excluded                   |
+| Shared pairing           | `403af28` (`unmatchedCandidates is not a function`)   | `4758ffb`    | Matching rules live in one pure function; existing matching suite unchanged and green         |
+| Variable averages        | `0442a38` (module missing)                            | `fe1db09`    | Window, dedupe of uploads, exclusions, refunds, clamp, rounding, low confidence               |
+| Engine                   | `2314ff2` (modules missing)                           | `fe1c751`    | Kinds, timeline, recurring sources and statuses, carry-over, mixed month, budgets, cumulative |
+| API                      | `e87e68b` (route missing)                             | `5066324`    | Defaults, params, 422 on invalid input, read-only over HTTP                                   |
+| Invariants (guard tests) | written after the engine; mutation-checked (see body) | `6a5356b`    | No double counting over random histories, read-only, deterministic, 5 years in ~25 ms         |
+
+Commands: `npx vitest run <file>` for each RED/GREEN step, `npm test` for the full suite
+(190 tests before the milestone, 235 after).
+
+## Review log
+
+- code-reviewer checklist: one function above 50 lines with logic (`projectRecurring`) split;
+  sort given a final tie-breaker; loose `!=` replaced. Remaining long functions are object
+  literals. No CRITICAL/HIGH findings.
+- security-reviewer (API route): input is three query parameters, accepted only as 1-4 plain
+  digits and range-checked (bounded work: at most 49 months); Drizzle parameterised queries only
+  (the overview's `LIKE` became a date range); domain errors map to 422 without internals; GET
+  is read-only and passes the cross-site guard as a safe method; no secrets, no new dependencies.
+  Authentication is milestone 9.
+
+## Known limitations
+
+- A recurring payment that never matches (amount drifted beyond the tolerance) counts as
+  variable spend in its category while the item is still projected; the occurrence turns
+  `missed` and is surfaced so the user can fix the item.
+- Occurrences are booked in their scheduled month; a payment expected on the 31st that lands on
+  the 2nd shows up in the next month's actuals once uploaded.
