@@ -38,16 +38,25 @@ Schema is in [src/db/schema.ts](src/db/schema.ts); migrations are in `drizzle/`.
 
 Real bank CSVs and the database are never committed. Only anonymised samples go in [tests/fixtures/](tests/fixtures/).
 
-## API (so far)
+## API
 
-| Endpoint                                           | Purpose                                                                   |
-| -------------------------------------------------- | ------------------------------------------------------------------------- |
-| `POST /api/import`                                 | Upload a CSV (`file`, optional `accountId`, `month`). Re-uploads are safe |
-| `GET/POST /api/accounts`                           | List or create accounts                                                   |
-| `GET /api/categories`                              | Categories                                                                |
-| `GET/POST /api/rules`, `DELETE /api/rules/:id`     | Categorisation rules                                                      |
-| `GET /api/review`                                  | Transactions needing a category (or in a foreign currency)                |
-| `PUT /api/transactions/:id/category`               | Set a category, optionally learning a rule                                |
-| `GET /api/overview?month=YYYY-MM`                  | Budget vs actual for a month                                              |
-| `GET/PUT /api/budgets`                             | Budgets per category per month                                            |
-| `PUT /api/budgets/total`, `POST /api/budgets/copy` | Optional total budget, copy a month's budgets                             |
+| Endpoint                                                 | Purpose                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `POST /api/import`                                       | Upload a CSV (`file`, optional `accountId`, `month`). Re-uploads are safe     |
+| `GET/POST /api/accounts`                                 | List or create accounts                                                       |
+| `GET /api/categories`                                    | Categories                                                                    |
+| `GET/POST /api/rules`, `DELETE /api/rules/:id`           | Categorisation rules                                                          |
+| `GET /api/review`                                        | Transactions needing a category (or in a foreign currency)                    |
+| `PUT /api/transactions/:id/category`                     | Set a category, optionally learning a rule                                    |
+| `GET /api/overview?month=YYYY-MM`                        | Budget vs actual for a month                                                  |
+| `GET/PUT /api/budgets`                                   | Budgets per category per month                                                |
+| `PUT /api/budgets/total`, `POST /api/budgets/copy`       | Optional total budget, copy a month's budgets                                 |
+| `GET/POST /api/recurring`                                | List or create vaste lasten / inkomen (amounts in cents)                      |
+| `GET/PATCH/DELETE /api/recurring/:id`                    | One item with its occurrences; update (`active: false` stops it); hard delete |
+| `GET /api/recurring/occurrences?from=YYYY-MM&to=YYYY-MM` | Occurrences with status and, when matched, the real amount                    |
+| `GET /api/recurring/missed`                              | Missed occurrences for review, most recent first                              |
+| `GET /api/recurring/suggestions`                         | Suggested recurring items from past transactions                              |
+| `POST /api/recurring/suggestions/accept`, `.../reject`   | Accept (creates the item) or reject (never offered again)                     |
+| `GET /api/forecast?months=6&history=3&pastMonths=3`      | Prognose: actual, current (mixed) and forecast months; read-only              |
+
+Forecast semantics (month kinds, no double counting, variable-spend averages and rounding) are documented in [docs/plans/m5-forecast.md](docs/plans/m5-forecast.md).
