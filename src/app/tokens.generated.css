@@ -39,10 +39,10 @@
   --ring-bad-from: #f4aaa2;
   --ring-bad-to: #d6493f;
   --glow-bad: rgba(255,130,120,.5);
-  --page-bg-neutral: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
-  --page-bg-good: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
-  --page-bg-warn: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
-  --page-bg-bad: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
+  --page-bg-neutral: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg-good: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg-warn: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg-bad: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -133,10 +133,10 @@
   --ring-bad-from: #f4aaa2;
   --ring-bad-to: #d6493f;
   --glow-bad: rgba(255,130,120,.5);
-  --page-bg-neutral: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
-  --page-bg-good: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
-  --page-bg-warn: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
-  --page-bg-bad: linear-gradient(180deg, #edf0f6 0%, #f3efea 100%);
+  --page-bg-neutral: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg-good: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg-warn: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg-bad: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
 }
 
 :root[data-theme="dark"] {

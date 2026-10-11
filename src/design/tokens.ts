@@ -116,7 +116,7 @@ export const themes: Record<ThemeName, ThemeTokens> = {
       bad: "rgba(255,130,120,.5)",
     },
     page: {
-      stops: ["#edf0f6", "#f3efea"],
+      stops: ["#d9e5f5", "#f1e6dd", "#f6e8d8"], // the soft blue-to-peach dawn the owner approved in the prototypes
       wash: {
         neutral: [110, 160, 255, 0.36],
         good: [60, 200, 150, 0.36],
