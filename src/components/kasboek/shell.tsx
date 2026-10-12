@@ -1,7 +1,7 @@
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { getNeedsReview } from "@/lib/categories/categorise";
@@ -15,7 +15,7 @@ async function ReviewBadge() {
   const { t } = await getI18n();
   let count = 0;
   try {
-    count = (await getNeedsReview(await getDb())).length;
+    count = (await userDb((db) => getNeedsReview(db))).length;
   } catch {
     return null; // a failing badge must not take the whole shell down
   }

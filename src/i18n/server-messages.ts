@@ -11,6 +11,7 @@ type Rule = [RegExp, (m: RegExpExecArray) => string];
 const bank = (b: string) => (b === "rabobank" ? "Rabobank" : b === "revolut" ? "Revolut" : b);
 
 const NL: Rule[] = [
+  [/^Not signed in\.$/, () => "Je bent niet ingelogd."],
   // import
   [
     /^Several (\w+) accounts exist, pick one with accountId\.$/,

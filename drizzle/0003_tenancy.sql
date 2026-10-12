@@ -144,6 +144,29 @@ CREATE UNIQUE INDEX "transactions_import_hash_idx" ON "transactions" USING btree
 CREATE INDEX "transactions_date_idx" ON "transactions" USING btree ("user_id","date");
 --> statement-breakpoint
 
+-- The composite foreign keys can be deferred, so `db:claim` can move all rows to a new owner in one
+-- transaction (SET CONSTRAINTS ALL DEFERRED). They stay immediate everywhere else.
+ALTER TABLE "imports" ALTER CONSTRAINT "imports_account_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "recurring_items" ALTER CONSTRAINT "recurring_items_category_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "recurring_occurrences" ALTER CONSTRAINT "occurrences_item_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "recurring_occurrences" ALTER CONSTRAINT "occurrences_transaction_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "transactions" ALTER CONSTRAINT "transactions_account_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "transactions" ALTER CONSTRAINT "transactions_import_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "transactions" ALTER CONSTRAINT "transactions_category_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "transactions" ALTER CONSTRAINT "transactions_matched_occurrence_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "budgets" ALTER CONSTRAINT "budgets_category_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+ALTER TABLE "categorisation_rules" ALTER CONSTRAINT "rules_category_fk" DEFERRABLE INITIALLY IMMEDIATE;
+--> statement-breakpoint
+
 -- The app's role: not the owner, no BYPASSRLS, so the policies below apply to it. Created without a
 -- login; set the password by hand (ALTER ROLE kasboek_app LOGIN PASSWORD '...') where it is used.
 DO $$

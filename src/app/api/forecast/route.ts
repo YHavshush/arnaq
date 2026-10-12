@@ -1,4 +1,4 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle, intParam, requestTime, todayIso } from "@/lib/api";
 import { getForecast } from "@/lib/forecast/forecast";
 
@@ -14,12 +14,14 @@ export async function GET(request: Request) {
   return await handle(async () => {
     const params = new URL(request.url).searchParams;
     return Response.json(
-      await getForecast(await getDb(), {
-        today: todayIso(),
-        months: intParam(params, "months"),
-        history: intParam(params, "history"),
-        pastMonths: intParam(params, "pastMonths"),
-      }),
+      await userDb((db) =>
+        getForecast(db, {
+          today: todayIso(),
+          months: intParam(params, "months"),
+          history: intParam(params, "history"),
+          pastMonths: intParam(params, "pastMonths"),
+        }),
+      ),
     );
   });
 }

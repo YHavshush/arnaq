@@ -1,10 +1,13 @@
-import { getDb, schema } from "@/db";
+import { schema } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle, isInt, requestTime } from "@/lib/api";
 import { applyRules, sortRules } from "@/lib/categories/categorise";
 
 export async function GET() {
   await requestTime();
-  return Response.json(sortRules(await (await getDb()).select().from(schema.categorisationRules)));
+  return await handle(async () =>
+    Response.json(sortRules(await userDb((db) => db.select().from(schema.categorisationRules)))),
+  );
 }
 
 /** POST JSON: { pattern, categoryId, priority? }. Also categorises existing uncategorised rows. */
@@ -18,15 +21,16 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const db = await getDb();
-    const [rule] = await db
-      .insert(schema.categorisationRules)
-      .values({
-        pattern,
-        categoryId: body.categoryId,
-        priority: isInt(body.priority) ? body.priority : 10,
-      })
-      .returning();
-    return Response.json({ rule, alsoCategorised: await applyRules(db) }, { status: 201 });
+    return await userDb(async (db) => {
+      const [rule] = await db
+        .insert(schema.categorisationRules)
+        .values({
+          pattern,
+          categoryId: body.categoryId,
+          priority: isInt(body.priority) ? body.priority : 10,
+        })
+        .returning();
+      return Response.json({ rule, alsoCategorised: await applyRules(db) }, { status: 201 });
+    });
   });
 }

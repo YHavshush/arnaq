@@ -1,4 +1,5 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
+import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { localizeMessage } from "@/i18n/server-messages";
 import { MAX_ID, errorResponse, requestLocale, todayIso } from "@/lib/api";
 import { isPdf } from "@/lib/import/pdf";
@@ -8,6 +9,13 @@ const MAX_BYTES = 2 * 1024 * 1024;
 
 /** POST multipart/form-data: file (required), accountId (optional), month=YYYY-MM (optional). */
 export async function POST(request: Request) {
+  // Who is asking, before any of the body is read.
+  try {
+    await currentUserId();
+  } catch (e) {
+    if (e instanceof UnauthenticatedError) return errorResponse("Not signed in.", 401);
+    throw e;
+  }
   // Refuse before buffering the body. (A reverse proxy should enforce the same cap, see deploy notes.)
   const declared = Number(request.headers.get("content-length") ?? "0");
   if (declared > MAX_BYTES + 64 * 1024) return errorResponse("File too large (max 2 MB).", 413);
@@ -35,14 +43,16 @@ export async function POST(request: Request) {
 
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const summary = await importStatement(await getDb(), {
-      // A PDF goes in as bytes. Text must not hold NUL characters (Postgres cannot store them).
-      content: isPdf(bytes) ? bytes : new TextDecoder().decode(bytes).replaceAll("\u0000", ""),
-      filename: file.name,
-      accountId,
-      month: typeof monthRaw === "string" && monthRaw ? monthRaw : undefined,
-      today: todayIso(),
-    });
+    const summary = await userDb((db) =>
+      importStatement(db, {
+        // A PDF goes in as bytes. Text must not hold NUL characters (Postgres cannot store them).
+        content: isPdf(bytes) ? bytes : new TextDecoder().decode(bytes).replaceAll("\u0000", ""),
+        filename: file.name,
+        accountId,
+        month: typeof monthRaw === "string" && monthRaw ? monthRaw : undefined,
+        today: todayIso(),
+      }),
+    );
     // The service speaks English; what the person reads is translated here.
     const locale = await requestLocale();
     return Response.json({
@@ -51,6 +61,7 @@ export async function POST(request: Request) {
       skipped: summary.skipped.map((r) => ({ ...r, reason: localizeMessage(r.reason, locale) })),
     });
   } catch (e) {
+    if (e instanceof UnauthenticatedError) return errorResponse("Not signed in.", 401);
     if (e instanceof ImportError) return errorResponse(e.message, 422);
     throw e;
   }

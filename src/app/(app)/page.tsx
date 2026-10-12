@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { getDb } from "@/db";
+import { pageDb } from "@/lib/auth/request";
 import { Hero } from "@/components/kasboek/hero";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
@@ -61,7 +61,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const f = formatter(locale);
   const today = todayIso();
   const month = parseMonth((await searchParams).month, today.slice(0, 7));
-  const o = await loadOverzicht(await getDb(), month, today, locale);
+  const o = await pageDb((db) => loadOverzicht(db, month, today, locale));
   const step = {
     prev: `/?month=${o.prev}`,
     next: `/?month=${o.next}`,

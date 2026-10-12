@@ -3,7 +3,9 @@
 //   npm run seed:demo        (uses ./data/pglite, or DATABASE_URL if set to a local server)
 import { createHash } from "node:crypto";
 import { count } from "drizzle-orm";
-import { createDb, schema } from "../src/db";
+import { createDb, schema, type Db } from "../src/db";
+import { withUser } from "../src/db/scoped";
+import { DEV_USER_ID } from "../src/lib/auth/session";
 import { setBudget, setTotalBudget } from "../src/lib/budget/budgets";
 import { applyRules } from "../src/lib/categories/categorise";
 import { detectInternalTransfers } from "../src/lib/categories/transfers";
@@ -24,7 +26,14 @@ async function main() {
     console.error("Refusing to seed demo data into a non-local DATABASE_URL.");
     process.exit(1);
   }
-  const db = await createDb(url || "./data/pglite");
+  const root = await createDb(url || "./data/pglite", { user: null });
+  // The demo data belongs to the local development user (see src/lib/auth/session.ts).
+  const added = await withUser(root, DEV_USER_ID, (db) => seed(db));
+  console.log(`Demo data added: ${added} transactions.`);
+  process.exit(0);
+}
+
+async function seed(db: Db): Promise<number> {
   const [{ n }] = await db.select({ n: count() }).from(schema.transactions);
   if (n > 0 && process.env.FORCE !== "1") {
     console.error("The database already has transactions. Set FORCE=1 to add demo data anyway.");
@@ -147,8 +156,7 @@ async function main() {
   for (let back = 4; back >= -3; back--)
     await setTotalBudget(db, addMonths(thisMonth, -back), 175000);
   await syncRecurring(db, { throughMonth: addMonths(thisMonth, 6), today });
-  console.log(`Demo data added: ${rows.length} transactions.`);
-  process.exit(0);
+  return rows.length;
 }
 
 main().catch((e) => {

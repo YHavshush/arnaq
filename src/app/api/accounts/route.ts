@@ -1,11 +1,14 @@
 import { eq } from "drizzle-orm";
-import { first, getDb, schema } from "@/db";
+import { first, schema } from "@/db";
 import { BANKS } from "@/db/schema";
 import { handle, requestTime } from "@/lib/api";
+import { userDb } from "@/lib/auth/request";
 
 export async function GET() {
   await requestTime();
-  return Response.json(await (await getDb()).select().from(schema.accounts));
+  return await handle(async () =>
+    Response.json(await userDb((db) => db.select().from(schema.accounts))),
+  );
 }
 
 const CURRENCY_RE = /^[A-Z]{3}$/;
@@ -36,18 +39,22 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = await getDb();
-    // An IBAN identifies one account: duplicates would confuse import and transfer detection.
-    if (
-      iban &&
-      (await first(db.select().from(schema.accounts).where(eq(schema.accounts.iban, iban))))
-    ) {
-      return Response.json({ error: "An account with this IBAN already exists." }, { status: 422 });
-    }
-    const [account] = await db
-      .insert(schema.accounts)
-      .values({ name, bank: body.bank, iban, currency })
-      .returning();
-    return Response.json(account, { status: 201 });
+    return await userDb(async (db) => {
+      // An IBAN identifies one account: duplicates would confuse import and transfer detection.
+      if (
+        iban &&
+        (await first(db.select().from(schema.accounts).where(eq(schema.accounts.iban, iban))))
+      ) {
+        return Response.json(
+          { error: "An account with this IBAN already exists." },
+          { status: 422 },
+        );
+      }
+      const [account] = await db
+        .insert(schema.accounts)
+        .values({ name, bank: body.bank, iban, currency })
+        .returning();
+      return Response.json(account, { status: 201 });
+    });
   });
 }

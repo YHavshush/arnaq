@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getDb } from "@/db";
+import { pageDb } from "@/lib/auth/request";
 import { Hero } from "@/components/kasboek/hero";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
@@ -30,7 +30,7 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
   const { euro, dayLabel, monthName } = formatter(locale);
   const today = todayIso();
   const month = parseMonth((await searchParams).month, today.slice(0, 7));
-  const v = await loadVasteLasten(await getDb(), month, today, locale);
+  const v = await pageDb((db) => loadVasteLasten(db, month, today, locale));
   const catName = new Map(v.categories.map((c) => [c.id, c.name]));
   // The stored (Dutch) name picks the icon; the label is what the person reads.
   const nameOf = (id: number | null) => (id === null ? null : (catName.get(id) ?? null));

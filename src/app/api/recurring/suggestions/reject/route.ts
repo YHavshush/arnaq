@@ -1,4 +1,4 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle } from "@/lib/api";
 import { isObject } from "@/lib/recurring/input";
 import type { RecurringType } from "@/lib/recurring/occurrences";
@@ -11,7 +11,8 @@ export async function POST(request: Request) {
     if (!isObject(body) || typeof body.key !== "string" || typeof body.type !== "string") {
       return Response.json({ error: "key and type are required." }, { status: 400 });
     }
-    await rejectSuggestion(await getDb(), { key: body.key, type: body.type as RecurringType });
+    const { key } = body;
+    await userDb((db) => rejectSuggestion(db, { key, type: body.type as RecurringType }));
     return Response.json({ ok: true });
   });
 }

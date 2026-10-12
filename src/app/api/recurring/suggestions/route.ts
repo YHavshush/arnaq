@@ -1,8 +1,10 @@
-import { getDb } from "@/db";
-import { requestTime, todayIso } from "@/lib/api";
+import { userDb } from "@/lib/auth/request";
+import { handle, requestTime, todayIso } from "@/lib/api";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
 
 export async function GET() {
   await requestTime();
-  return Response.json(await detectSuggestions(await getDb(), { today: todayIso() }));
+  return await handle(async () =>
+    Response.json(await userDb((db) => detectSuggestions(db, { today: todayIso() }))),
+  );
 }

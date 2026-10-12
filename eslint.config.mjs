@@ -19,6 +19,29 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-misused-promises": "error",
     },
   },
+  // App code reaches the database only as the signed-in user (userDb / pageDb in src/lib/auth/request.ts).
+  // The unscoped root handle is for that file, scripts and tests.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/db/admin", "**/db/admin"],
+              message:
+                "Use userDb()/pageDb() from @/lib/auth/request: the root database handle is not scoped to a user.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/lib/auth/request.ts", "src/**/*.test.{ts,tsx}", "src/db/**"],
+    rules: { "no-restricted-imports": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:

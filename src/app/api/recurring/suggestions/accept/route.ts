@@ -1,4 +1,4 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle, isInt, todayIso } from "@/lib/api";
 import { isObject } from "@/lib/recurring/input";
 import type { RecurringType } from "@/lib/recurring/occurrences";
@@ -28,18 +28,20 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const { item, created } = await acceptSuggestion(
-      await getDb(),
-      {
-        key: body.key,
-        type: body.type as RecurringType,
-        name: body.name as string | undefined,
-        expectedAmount: body.expectedAmount as number | undefined,
-        tolerance: body.tolerance as number | undefined,
-        dayOfMonth: body.dayOfMonth as number | undefined,
-        categoryId: body.categoryId as number | null | undefined,
-      },
-      { today: todayIso() },
+    const { item, created } = await userDb((db) =>
+      acceptSuggestion(
+        db,
+        {
+          key: body.key as string,
+          type: body.type as RecurringType,
+          name: body.name as string | undefined,
+          expectedAmount: body.expectedAmount as number | undefined,
+          tolerance: body.tolerance as number | undefined,
+          dayOfMonth: body.dayOfMonth as number | undefined,
+          categoryId: body.categoryId as number | null | undefined,
+        },
+        { today: todayIso() },
+      ),
     );
     return Response.json({ item, created }, { status: created ? 201 : 200 });
   });

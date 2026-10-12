@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 import { Suspense } from "react";
-import { getDb } from "@/db";
+import { pageDb } from "@/lib/auth/request";
 import { Hero } from "@/components/kasboek/hero";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
@@ -25,7 +25,7 @@ async function Content() {
   const { locale, t } = await getI18n();
   const { dayLabel, monthName } = formatter(locale);
   const m = t.ui.upload;
-  const u = await loadUpload(await getDb());
+  const u = await pageDb((db) => loadUpload(db));
   const done = u.reviewCount === 0;
   return (
     <div className="fade-in">

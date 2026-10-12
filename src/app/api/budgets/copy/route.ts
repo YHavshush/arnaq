@@ -1,4 +1,4 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle } from "@/lib/api";
 import { copyBudgets } from "@/lib/budget/budgets";
 
@@ -9,6 +9,6 @@ export async function POST(request: Request) {
     if (typeof body?.from !== "string" || typeof body?.to !== "string") {
       return Response.json({ error: "from and to are required." }, { status: 400 });
     }
-    return Response.json({ copied: await copyBudgets(await getDb(), body.from, body.to) });
+    return Response.json({ copied: await userDb((db) => copyBudgets(db, body.from, body.to)) });
   });
 }

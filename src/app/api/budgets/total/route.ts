@@ -1,4 +1,4 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle, isInt } from "@/lib/api";
 import { setTotalBudget } from "@/lib/budget/budgets";
 
@@ -12,7 +12,7 @@ export async function PUT(request: Request) {
         { status: 400 },
       );
     }
-    await setTotalBudget(await getDb(), body.month, body.amount);
+    await userDb((db) => setTotalBudget(db, body.month, body.amount));
     return Response.json({ ok: true });
   });
 }
