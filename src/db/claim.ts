@@ -15,12 +15,16 @@ const TABLES = [
   "transactions",
   "budgets",
   "monthly_total_budget",
+  "merchant_labels",
+  "user_settings",
+  "ai_usage",
 ] as const;
 
-// A user's first request creates default categories and rules for them. If that happened before the
-// claim, those defaults would clash with the old ones (same names), so they are replaced, but only
-// while the user has nothing else of their own.
-const OWN_DATA_TABLES = TABLES.filter((t) => t !== "categories" && t !== "categorisation_rules");
+// A user's first request creates default categories, rules and settings for them. If that happened
+// before the claim, those defaults would clash with the old ones (same names), so they are replaced,
+// but only while the user has nothing else of their own.
+const DEFAULT_TABLES = ["categories", "categorisation_rules", "user_settings"];
+const OWN_DATA_TABLES = TABLES.filter((t) => !DEFAULT_TABLES.includes(t));
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -47,6 +51,7 @@ export async function claimSentinelRows(
       if ((Array.isArray(own) ? own.length : (own.rows?.length ?? 0)) > 0)
         throw new Error(`That user already has data (${table}); nothing was moved.`);
     }
+    await tx.execute(sql`delete from user_settings where user_id = ${userId}`);
     await tx.execute(sql`delete from categorisation_rules where user_id = ${userId}`);
     await tx.execute(sql`delete from categories where user_id = ${userId}`);
     const moved: Record<string, number> = {};

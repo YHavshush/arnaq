@@ -2,7 +2,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 
 /** Bump when the shape of the export changes, so a future restore knows what it is reading. */
-export const EXPORT_VERSION = 1;
+export const EXPORT_VERSION = 2; // 2: category slugs and sources, merchantLabels, userSettings
 
 const TABLES = {
   accounts: schema.accounts,
@@ -15,6 +15,9 @@ const TABLES = {
   recurringSuggestionRejections: schema.recurringSuggestionRejections,
   budgets: schema.budgets,
   monthlyTotalBudget: schema.monthlyTotalBudget,
+  merchantLabels: schema.merchantLabels,
+  userSettings: schema.userSettings,
+  // ai_usage is bookkeeping for the caps, not the person's data: it stays out.
 } as const;
 
 export interface FullExport {

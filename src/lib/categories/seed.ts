@@ -7,7 +7,14 @@ import { DEFAULT_CATEGORIES, DEFAULT_RULES } from "./defaults";
 export async function seedDefaults(db: Db): Promise<void> {
   await db
     .insert(schema.categories)
-    .values(DEFAULT_CATEGORIES.map((c, i) => ({ name: c.name, type: c.type, sortOrder: i })))
+    .values(
+      DEFAULT_CATEGORIES.map((c, i) => ({
+        slug: c.slug,
+        name: c.name,
+        type: c.type,
+        sortOrder: i,
+      })),
+    )
     .onConflictDoNothing({ target: [schema.categories.userId, schema.categories.name] });
 
   // Starter rules only when the user has none, so deleting a rule sticks.
