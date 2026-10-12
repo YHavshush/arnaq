@@ -15,7 +15,7 @@ export function readCsv(content: string): CsvTable {
     transformHeader: (h) => h.trim(),
   });
   const fatal = result.errors.find((e) => e.type === "Delimiter" || e.type === "Quotes");
-  if (fatal) throw new Error(`Het CSV-bestand kan niet gelezen worden (${fatal.message}).`);
+  if (fatal) throw new Error(`Cannot read CSV: ${fatal.message}`);
   return { headers: result.meta.fields ?? [], records: result.data };
 }
 

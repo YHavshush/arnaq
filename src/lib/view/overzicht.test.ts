@@ -65,6 +65,7 @@ describe("buildOverzicht", () => {
       overview: overview(),
       occurrences: [occ(1, "matched", 90000), occ(2, "expected", 30000, { categoryId: null })],
       today: "2026-10-15",
+      locale: "nl" as const,
     });
     expect(o.spent).toBe(90000);
     expect(o.planned).toBe(30000);
@@ -80,6 +81,7 @@ describe("buildOverzicht", () => {
         overview: overview({}, [line(1, "Huur", spent, null)]),
         occurrences: [],
         today: "2026-10-15",
+        locale: "nl" as const,
       }).tone;
     expect(at(169999)).toBe("good");
     expect(at(170000)).toBe("warn");
@@ -92,6 +94,7 @@ describe("buildOverzicht", () => {
       overview: overview({ totalBudget: null, totalRemaining: null }),
       occurrences: [],
       today: "2026-10-15",
+      locale: "nl" as const,
     });
     expect([o.used, o.free, o.tone, o.mood]).toEqual([null, null, "accent", "neutral"]);
     expect(text(o.sentence)).toMatch(/Stel een budget in/);
@@ -100,7 +103,8 @@ describe("buildOverzicht", () => {
   it("describes the pace of the normal (non-fixed) spending", () => {
     const base = {
       occurrences: [occ(1, "matched", 90000)],
-      today: "2026-10-16", // about half way
+      today: "2026-10-16",
+      locale: "nl" as const, // about half way
     };
     const sentence = (spent: number) =>
       text(
@@ -115,7 +119,14 @@ describe("buildOverzicht", () => {
 
   it("past months summarise under/over budget; future months mention fixed costs", () => {
     expect(
-      text(buildOverzicht({ overview: overview(), occurrences: [], today: "2026-12-01" }).sentence),
+      text(
+        buildOverzicht({
+          overview: overview(),
+          occurrences: [],
+          today: "2026-12-01",
+          locale: "nl" as const,
+        }).sentence,
+      ),
     ).toMatch(/onder je budget/);
     expect(
       text(
@@ -123,6 +134,7 @@ describe("buildOverzicht", () => {
           overview: overview({}, [line(1, "Huur", 250000, null)]),
           occurrences: [],
           today: "2026-12-01",
+          locale: "nl" as const,
         }).sentence,
       ),
     ).toMatch(/over je budget/);
@@ -132,6 +144,7 @@ describe("buildOverzicht", () => {
           overview: overview(),
           occurrences: [occ(1, "expected", 90000)],
           today: "2026-09-01",
+          locale: "nl" as const,
         }).sentence,
       ),
     ).toMatch(/nog niet begonnen/);
@@ -142,6 +155,7 @@ describe("buildOverzicht", () => {
       overview: overview({ totalBudget: 100000 }),
       occurrences: [occ(1, "matched", 90000), occ(2, "expected", 20000)],
       today: "2026-10-16",
+      locale: "nl" as const,
     });
     expect(text(o.sentence)).toMatch(/hele budget/);
   });
@@ -151,6 +165,7 @@ describe("buildOverzicht", () => {
       overview: overview({}, [line(1, "Huur", 0, 90000), line(2, "Boodschappen", 15000, 30000)]),
       occurrences: [occ(1, "expected", 90000)],
       today: "2026-10-15",
+      locale: "nl" as const,
     });
     expect(o.rows.map((r) => r.name)).toEqual(["Huur", "Boodschappen"]);
     expect(o.rows[0]).toMatchObject({ planned: 90000, nextDate: "2026-10-25", state: "warn" });
@@ -161,6 +176,7 @@ describe("buildOverzicht", () => {
       overview: { ...overview(), uncategorised: { expense: 500, income: 0, count: 3 } },
       occurrences: [occ(1, "matched", 90000), occ(2, "expected", 30000)],
       today: "2026-10-15",
+      locale: "nl" as const,
     });
     expect(o.tiles.find((t) => t.key === "vast")?.word).toBe("1/2 betaald");
     expect(o.tiles.find((t) => t.key === "sorteren")).toMatchObject({
@@ -175,7 +191,12 @@ describe("buildOverzicht", () => {
   it("an empty month has no activity", () => {
     const empty = overview({ totalBudget: null, totalRemaining: null }, []);
     expect(
-      buildOverzicht({ overview: empty, occurrences: [], today: "2026-10-15" }).hasActivity,
+      buildOverzicht({
+        overview: empty,
+        occurrences: [],
+        today: "2026-10-15",
+        locale: "nl" as const,
+      }).hasActivity,
     ).toBe(false);
   });
 });

@@ -101,9 +101,7 @@ async function resolveAccount(db: Db, bank: Bank, identifier: string | null): Pr
       .returning();
     return created.id;
   }
-  throw new ImportError(
-    `Er zijn meerdere ${bank === "rabobank" ? "Rabobank" : "Revolut"}-rekeningen. Kies onder Opties welke rekening dit is.`,
-  );
+  throw new ImportError(`Several ${bank} accounts exist, pick one with accountId.`);
 }
 
 /** "account-statement_2026-10-01_2026-10-12_en_x.csv": Revolut puts the period in the file name. */
@@ -131,16 +129,16 @@ async function readSource(content: string | Uint8Array): Promise<Source> {
 /** Import one bank file (CSV or Rabobank PDF statement) into an account. Re-uploads are safe. */
 export async function importStatement(db: Db, input: ImportInput): Promise<ImportSummary> {
   if (input.month && !MONTH_RE.test(input.month))
-    throw new ImportError(`Ongeldige maand "${input.month}". Gebruik JJJJ-MM.`);
+    throw new ImportError(`Invalid month "${input.month}", use YYYY-MM.`);
   if (input.today !== undefined && !isDate(input.today))
-    throw new ImportError(`Ongeldige datum "${input.today}". Gebruik JJJJ-MM-DD.`);
+    throw new ImportError(`Invalid date "${input.today}", use YYYY-MM-DD.`);
 
   const source = await readSource(input.content);
   let detected: Bank | null;
   if (source.kind === "pdf") {
     if (!looksLikeRabobankStatement(source.pages))
       throw new ImportError(
-        "Dit PDF-bestand is geen Rabobank-afschrift. Alleen Rabobank-afschriften worden gelezen.",
+        "This PDF is not a Rabobank statement. Only Rabobank statements are read.",
       );
     detected = "rabobank";
   } else detected = detectBank(source.text);
@@ -151,16 +149,16 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
     const account = await first(
       db.select().from(schema.accounts).where(eq(schema.accounts.id, accountId)),
     );
-    if (!account) throw new ImportError(`Rekening ${accountId} bestaat niet.`);
+    if (!account) throw new ImportError(`Account ${accountId} does not exist.`);
     bank = account.bank;
     if (detected && detected !== bank) {
       throw new ImportError(
-        `Dit lijkt een ${detected === "rabobank" ? "Rabobank" : "Revolut"}-bestand, maar de gekozen rekening is een ${bank === "rabobank" ? "Rabobank" : "Revolut"}-rekening.`,
+        `This looks like a ${detected} file but account ${accountId} is ${bank}.`,
       );
     }
   } else {
     if (!detected)
-      throw new ImportError("Dit bestand is niet herkend als Revolut-CSV of Rabobank-afschrift.");
+      throw new ImportError("Could not recognise this file as a Rabobank or Revolut export.");
     bank = detected;
   }
 
@@ -179,25 +177,25 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
       db.select().from(schema.accounts).where(eq(schema.accounts.id, accountId)),
     );
     if (chosen?.iban && chosen.iban !== parsed.accountIdentifier)
-      throw new ImportError("Dit afschrift hoort bij een andere rekening dan de gekozen rekening.");
+      throw new ImportError("This statement belongs to a different account than the one chosen.");
   }
   const period =
     parsed.period ?? (bank === "revolut" ? periodFromFilename(input.filename) : undefined);
   if (parsed.rows.length + parsed.skipped.length > MAX_IMPORT_ROWS)
-    throw new ImportError(`Te veel regels (maximaal ${MAX_IMPORT_ROWS} per bestand).`);
+    throw new ImportError(`Too many rows (max ${MAX_IMPORT_ROWS} per file).`);
   // A statement with a declared period and no transactions is a real answer: a quiet period.
   if (parsed.rows.length === 0 && parsed.skipped.length === 0 && !period)
-    throw new ImportError("Het bestand bevat geen transacties.");
+    throw new ImportError("The file contains no transactions.");
 
   const warnings: string[] = [];
   const month = input.month ?? (period ? period.to.slice(0, 7) : dominantMonth(parsed.rows));
   if (!month)
     throw new ImportError(
-      "Er zijn geen regels om te importeren, dus de maand is niet te bepalen. Kies een maand onder Opties.",
+      "No importable rows found, so the month cannot be detected. Pass a month.",
     );
   const outside = period ? 0 : parsed.rows.filter((r) => r.date.slice(0, 7) !== month).length;
   if (outside > 0)
-    warnings.push(`${outside} regel(s) vallen buiten ${month}; ze zijn toch geïmporteerd.`);
+    warnings.push(`${outside} row(s) fall outside ${month}; they were imported anyway.`);
 
   return await db.transaction(async (tx) => {
     accountId ??= await resolveAccount(tx, bank, parsed.accountIdentifier);
@@ -212,7 +210,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
         month,
         periodFrom: period?.from ?? null,
         periodTo: period?.to ?? null,
-        filename: cleanText(input.filename, 255) || "bestand",
+        filename: cleanText(input.filename, 255) || "statement",
       })
       .returning();
 
@@ -274,7 +272,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
     });
 
     if (foreign > 0)
-      warnings.push(`${foreign} regel(s) staan niet in ${account.currency}; kijk ze zelf na.`);
+      warnings.push(`${foreign} row(s) are not in ${account.currency}; review them manually.`);
 
     return {
       importId: imp.id,

@@ -1,8 +1,10 @@
 import type { Mood, Tone } from "@/design/tokens";
 import type { Forecast, MonthKind } from "@/lib/forecast/forecast";
-import { euroSigned, monthName, monthShort } from "./format";
+import type { Locale } from "@/i18n/config";
+import { messages } from "@/i18n/messages";
+import { formatter } from "./format";
 import { moodForTone } from "./status";
-import type { Sentence } from "./overzicht";
+import type { Sentence } from "@/i18n/types";
 
 export interface PrognosePoint {
   month: string;
@@ -33,11 +35,10 @@ export interface Prognose {
   lowConfidence: string | null;
 }
 
-const plain = (text: string) => ({ text });
-const em = (text: string) => ({ text, em: true });
-
 /** Pure view model for the Prognose screen from a Forecast. */
-export function buildPrognose(f: Forecast): Prognose {
+export function buildPrognose(f: Forecast, locale: Locale): Prognose {
+  const t = messages[locale].view.prognose;
+  const { euroSigned, monthName, monthShort } = formatter(locale);
   const points: PrognosePoint[] = f.months.map((m) => ({
     month: m.month,
     label: monthShort(m.month),
@@ -58,21 +59,20 @@ export function buildPrognose(f: Forecast): Prognose {
   const tone: Tone =
     ahead.length === 0 ? "accent" : share === 1 ? "good" : growth >= 0 ? "warn" : "bad";
 
-  let sentence: Sentence = [plain("Er is nog niets om te voorspellen. Upload eerst een maand.")];
+  let sentence: Sentence = [{ text: t.nothing }];
   if (ahead.length > 0) {
     const sorted = [...ahead].sort((a, b) => a.net - b.net);
     const tight = sorted[0];
     const best = sorted[sorted.length - 1];
     sentence =
       tight.month === best.month
-        ? [plain(`${monthName(tight.month)} sluit op `), em(euroSigned(tight.net)), plain(".")]
-        : [
-            plain("De krapste maand is "),
-            em(monthName(tight.month)),
-            plain(` (${euroSigned(tight.net)}), de beste `),
-            em(monthName(best.month)),
-            plain(` (${euroSigned(best.net)}).`),
-          ];
+        ? t.single(monthName(tight.month), euroSigned(tight.net))
+        : t.range(
+            monthName(tight.month),
+            euroSigned(tight.net),
+            monthName(best.month),
+            euroSigned(best.net),
+          );
   }
 
   return {
@@ -85,6 +85,10 @@ export function buildPrognose(f: Forecast): Prognose {
     tone,
     mood: moodForTone(tone),
     sentence,
-    lowConfidence: f.variableBasis.lowConfidence ? f.variableBasis.reason : null,
+    lowConfidence: f.variableBasis.lowConfidence
+      ? f.variableBasis.months.length === 0
+        ? t.noHistory
+        : t.shortHistory(f.variableBasis.months.length, f.variableBasis.history)
+      : null,
   };
 }

@@ -22,8 +22,7 @@ export const revolutParser: BankParser = {
   parse(content) {
     const { headers, records } = readCsv(content);
     const missing = REQUIRED.filter((h) => !headers.includes(h));
-    if (missing.length)
-      throw new Error(`Dit is geen Revolut-export; er ontbreken kolommen: ${missing.join(", ")}`);
+    if (missing.length) throw new Error(`Not a Revolut export, missing: ${missing.join(", ")}`);
 
     const rows: ParsedRow[] = [];
     const skipped: SkippedRow[] = [];
@@ -33,10 +32,7 @@ export const revolutParser: BankParser = {
       try {
         const state = (r["State"] ?? "").trim().toUpperCase();
         if (state !== "COMPLETED") {
-          skipped.push({
-            line,
-            reason: `Status ${state || "(leeg)"}; alleen COMPLETED wordt geïmporteerd`,
-          });
+          skipped.push({ line, reason: `State ${state || "(empty)"}, only COMPLETED is imported` });
           return;
         }
         const started = (r["Started Date"] ?? "").trim();
@@ -44,7 +40,7 @@ export const revolutParser: BankParser = {
         // settled on the 1st belongs to the 1st (the bank's own month).
         const completed = (r["Completed Date"] ?? "").trim();
         const date = /^(\d{4}-\d{2}-\d{2})/.exec(completed || started)?.[1];
-        if (!isDate(date)) throw new Error(`Ongeldige datum "${completed || started}"`);
+        if (!isDate(date)) throw new Error(`Invalid date "${completed || started}"`);
         const feeRaw = (r["Fee"] ?? "").trim();
         const fee = feeRaw === "" ? 0 : parseAmountToCents(feeRaw, ".");
         const amount = parseAmountToCents(r["Amount"] ?? "", ".") - fee;

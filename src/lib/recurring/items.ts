@@ -35,70 +35,68 @@ export const MAX_ITEMS = 500;
 const MAX_TEXT = 200;
 
 function assertToday(today: string): void {
-  if (!isDate(today)) throw new RecurringError(`Ongeldige datum "${today}". Gebruik JJJJ-MM-DD.`);
+  if (!isDate(today)) throw new RecurringError(`Invalid date "${today}", use YYYY-MM-DD.`);
 }
 
 /** Validate and normalise an item. Throws RecurringError with a user-facing message. */
 async function clean(db: Db, input: RecurringItemInput): Promise<ItemValues> {
   const name = typeof input.name === "string" ? input.name.trim() : "";
-  if (!name) throw new RecurringError("Geef de vaste last een naam.");
-  if (name.length > MAX_TEXT)
-    throw new RecurringError(`De naam is te lang (maximaal ${MAX_TEXT} tekens).`);
-  if (!RECURRING_TYPES.includes(input.type)) throw new RecurringError("Kies uitgave of inkomen.");
+  if (!name) throw new RecurringError("Name is required.");
+  if (name.length > MAX_TEXT) throw new RecurringError(`Name is too long (max ${MAX_TEXT}).`);
+  if (!RECURRING_TYPES.includes(input.type))
+    throw new RecurringError('Type must be "expense" or "income".');
 
   const matchCounterparty =
     typeof input.matchCounterparty === "string" ? input.matchCounterparty.trim() || null : null;
   const matchIban = normaliseIban(input.matchIban) || null;
   if (!matchCounterparty && !matchIban)
-    throw new RecurringError(
-      "Geef een naam zoals op je afschrift, of een rekeningnummer, om de betaling te herkennen.",
-    );
+    throw new RecurringError("Give a counterparty name or an IBAN to match on.");
   if ((matchCounterparty?.length ?? 0) > MAX_TEXT || (matchIban?.length ?? 0) > 34)
-    throw new RecurringError("De naam op het afschrift of het rekeningnummer is te lang.");
+    throw new RecurringError("Counterparty or IBAN is too long.");
 
   if (
     !Number.isSafeInteger(input.expectedAmount) ||
     input.expectedAmount <= 0 ||
     input.expectedAmount > MAX_CENTS
   )
-    throw new RecurringError("Het bedrag moet groter dan nul zijn.");
+    throw new RecurringError("Expected amount must be a positive integer number of cents.");
   const tolerance = input.tolerance ?? 0;
   if (!Number.isSafeInteger(tolerance) || tolerance < 0 || tolerance > MAX_CENTS)
-    throw new RecurringError("De marge moet nul of meer zijn.");
+    throw new RecurringError("Tolerance must be a non-negative integer number of cents.");
   if (!Number.isInteger(input.dayOfMonth) || input.dayOfMonth < 1 || input.dayOfMonth > 31)
-    throw new RecurringError("De dag van de maand moet tussen 1 en 31 liggen.");
+    throw new RecurringError("Day of month must be between 1 and 31.");
   const frequency = input.frequency ?? "monthly";
   if (!FREQUENCIES.includes(frequency))
-    throw new RecurringError("Kies per maand, per kwartaal of per jaar.");
+    throw new RecurringError('Frequency must be "monthly", "quarterly" or "yearly".');
 
   if (!isDate(input.startDate))
-    throw new RecurringError(`Ongeldige begindatum "${input.startDate}".`);
+    throw new RecurringError(`Invalid start date "${input.startDate}", use YYYY-MM-DD.`);
   const endDate = input.endDate ?? null;
   if (endDate !== null && !isDate(endDate))
-    throw new RecurringError(`Ongeldige einddatum "${endDate}".`);
+    throw new RecurringError(`Invalid end date "${endDate}", use YYYY-MM-DD.`);
   for (const [label, d] of [
-    ["De begindatum", input.startDate],
-    ["De einddatum", endDate],
+    ["Start", input.startDate],
+    ["End", endDate],
   ] as const) {
     if (d !== null && (d < MIN_ITEM_DATE || d > MAX_ITEM_DATE))
-      throw new RecurringError(`${label} moet tussen ${MIN_ITEM_DATE} en ${MAX_ITEM_DATE} liggen.`);
+      throw new RecurringError(
+        `${label} date must be between ${MIN_ITEM_DATE} and ${MAX_ITEM_DATE}.`,
+      );
   }
   if (endDate !== null && endDate < input.startDate)
-    throw new RecurringError("De einddatum mag niet voor de begindatum liggen.");
+    throw new RecurringError("End date must not be before the start date.");
 
   const categoryId = input.categoryId ?? null;
   if (categoryId !== null) {
     const category = Number.isInteger(categoryId)
       ? await first(db.select().from(schema.categories).where(eq(schema.categories.id, categoryId)))
       : undefined;
-    if (!category) throw new RecurringError(`Categorie ${categoryId} bestaat niet.`);
+    if (!category) throw new RecurringError(`Category ${categoryId} does not exist.`);
     if (category.type !== input.type)
-      throw new RecurringError(
-        `Categorie "${category.name}" hoort niet bij ${input.type === "expense" ? "een uitgave" : "een inkomen"}.`,
-      );
+      throw new RecurringError(`Category "${category.name}" is not an ${input.type} category.`);
   }
   const active = input.active ?? true;
-  if (typeof active !== "boolean") throw new RecurringError("Actief moet aan of uit zijn.");
+  if (typeof active !== "boolean") throw new RecurringError("active must be true or false.");
 
   return {
     name,
@@ -146,7 +144,7 @@ export async function createRecurringItem(
   assertToday(opts.today);
   return await db.transaction(async (tx) => {
     if ((await listRecurringItems(tx)).length >= MAX_ITEMS)
-      throw new RecurringError(`Er kunnen maximaal ${MAX_ITEMS} vaste lasten zijn.`);
+      throw new RecurringError(`At most ${MAX_ITEMS} recurring items are supported.`);
     const [item] = await tx
       .insert(schema.recurringItems)
       .values(await clean(tx, input))
@@ -203,7 +201,7 @@ export async function updateRecurringItem(
   assertToday(opts.today);
   return await db.transaction(async (tx) => {
     const before = await getRecurringItem(tx, id);
-    if (!before) throw new RecurringError(`Vaste last ${id} bestaat niet.`);
+    if (!before) throw new RecurringError(`Recurring item ${id} does not exist.`);
     const defined = Object.fromEntries(
       Object.entries(patch).filter(([, v]) => v !== undefined),
     ) as RecurringItemPatch;

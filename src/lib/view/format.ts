@@ -1,72 +1,60 @@
 // Display formatting. Money is integer cents everywhere else; this is the only place it becomes text.
+import { INTL_LOCALE, type Locale } from "@/i18n/config";
 import { daysInMonth } from "@/lib/recurring/dates";
 
-const NL_MONTHS = [
-  "januari",
-  "februari",
-  "maart",
-  "april",
-  "mei",
-  "juni",
-  "juli",
-  "augustus",
-  "september",
-  "oktober",
-  "november",
-  "december",
-];
-const NL_SHORT = [
-  "jan",
-  "feb",
-  "mrt",
-  "apr",
-  "mei",
-  "jun",
-  "jul",
-  "aug",
-  "sep",
-  "okt",
-  "nov",
-  "dec",
-];
+const NBSP = " ";
 
-const whole = new Intl.NumberFormat("nl-NL", { maximumFractionDigits: 0 });
-const exact = new Intl.NumberFormat("nl-NL", {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-/** Whole euros, e.g. "€ 1.234". Rounds half away from zero on the cents. */
-export function euro(cents: number): string {
-  const rounded = Math.sign(cents) * Math.round(Math.abs(cents) / 100);
-  return `${rounded < 0 ? "-" : ""}€ ${whole.format(Math.abs(rounded))}`;
+export interface Formatter {
+  /** Whole euros, e.g. "€ 1.234" (nl) or "€1,234" (en). Rounds half away from zero on the cents. */
+  euro(cents: number): string;
+  /** Euros with cents. */
+  euroExact(cents: number): string;
+  /** "+ € 120" / "− € 120": for growth and differences. */
+  euroSigned(cents: number): string;
+  /** "2026-10" -> "oktober 2026" / "October 2026" */
+  monthName(month: string): string;
+  /** "2026-10" -> "okt" / "Oct" */
+  monthShort(month: string): string;
+  /** "2026-10-25" -> "25 okt" / "25 Oct" */
+  dayLabel(date: string): string;
 }
 
-/** Euros with cents, e.g. "€ 1.234,56". */
-export function euroExact(cents: number): string {
-  return `${cents < 0 ? "-" : ""}€ ${exact.format(Math.abs(cents) / 100)}`;
-}
+const cache = new Map<Locale, Formatter>();
 
-/** "+ € 120" / "− € 120": for growth and differences. */
-export function euroSigned(cents: number): string {
-  if (cents === 0) return euro(0);
-  return `${cents > 0 ? "+" : "−"} ${euro(Math.abs(cents))}`;
-}
+/** Formatting for one language. Cached: building Intl formatters is not free. */
+export function formatter(locale: Locale): Formatter {
+  const hit = cache.get(locale);
+  if (hit) return hit;
+  const tag = INTL_LOCALE[locale];
+  const whole = new Intl.NumberFormat(tag, { maximumFractionDigits: 0 });
+  const exact = new Intl.NumberFormat(tag, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const long = new Intl.DateTimeFormat(tag, { month: "long", year: "numeric", timeZone: "UTC" });
+  const short = new Intl.DateTimeFormat(tag, { month: "short", timeZone: "UTC" });
+  const at = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(Date.UTC(y, m - 1, d ?? 1));
+  };
+  const trim = (s: string) => s.replace(/\.$/, "");
+  const sep = locale === "nl" ? NBSP : "";
 
-/** "2026-10" -> "oktober 2026" */
-export function monthName(month: string): string {
-  const [y, m] = month.split("-").map(Number);
-  return `${NL_MONTHS[m - 1]} ${y}`;
-}
-
-/** "2026-10" -> "okt" */
-export function monthShort(month: string): string {
-  return NL_SHORT[Number(month.slice(5, 7)) - 1];
-}
-
-/** "2026-10-25" -> "25 okt" */
-export function dayLabel(date: string): string {
-  return `${Number(date.slice(8, 10))} ${NL_SHORT[Number(date.slice(5, 7)) - 1]}`;
+  const f: Formatter = {
+    euro(cents) {
+      const rounded = Math.sign(cents) * Math.round(Math.abs(cents) / 100);
+      return `${rounded < 0 ? "-" : ""}€${sep}${whole.format(Math.abs(rounded))}`;
+    },
+    euroExact(cents) {
+      return `${cents < 0 ? "-" : ""}€${sep}${exact.format(Math.abs(cents) / 100)}`;
+    },
+    euroSigned(cents) {
+      if (cents === 0) return f.euro(0);
+      return `${cents > 0 ? "+" : "−"}${NBSP}${f.euro(Math.abs(cents))}`;
+    },
+    monthName: (month) => long.format(at(`${month}-01`)),
+    monthShort: (month) => trim(short.format(at(`${month}-01`))),
+    dayLabel: (date) => `${Number(date.slice(8, 10))} ${trim(short.format(at(date)))}`,
+  };
+  cache.set(locale, f);
+  return f;
 }
 
 /** Share of the month that has passed on `today`: 0 before it, 1 after it. */

@@ -38,6 +38,7 @@ describe("buildPrognose", () => {
         fm("2026-11", "forecast", -10000, 15000),
         fm("2026-12", "forecast", 40000, 55000),
       ]),
+      "nl",
     );
     expect(p.ahead).toBe(3); // the past month is context, not forecast
     expect(p.inThePlus).toBe(2);
@@ -51,27 +52,43 @@ describe("buildPrognose", () => {
   });
 
   it("all plus is good; negative growth is bad; nothing to forecast is neutral", () => {
-    expect(buildPrognose(forecast([fm("2026-10", "mixed", 100, 100)])).tone).toBe("good");
+    expect(buildPrognose(forecast([fm("2026-10", "mixed", 100, 100)]), "nl").tone).toBe("good");
     expect(
       buildPrognose(
         forecast([fm("2026-10", "mixed", -500, -500), fm("2026-11", "forecast", -100, -600)]),
+        "nl",
       ).tone,
     ).toBe("bad");
-    const none = buildPrognose(forecast([fm("2026-09", "actual", 1, 1)]));
+    const none = buildPrognose(forecast([fm("2026-09", "actual", 1, 1)]), "nl");
     expect([none.hasForecast, none.tone]).toEqual([false, "accent"]);
   });
 
   it("a forecast with no money anywhere has nothing to say (no green ring over an empty database)", () => {
     const p = buildPrognose(
       forecast([fm("2026-10", "mixed", 0, 0), fm("2026-11", "forecast", 0, 0)]),
+      "nl",
     );
     expect([p.hasForecast, p.tone, p.ahead]).toEqual([false, "accent", 0]);
   });
 
-  it("passes the low-confidence reason through", () => {
-    expect(buildPrognose(forecast([fm("2026-10", "mixed", 1, 1)], true)).lowConfidence).toBe(
-      "Maar 1 maand data.",
-    );
+  it("explains low confidence in the chosen language", () => {
+    const low = (n: number, locale: "en" | "nl") =>
+      buildPrognose(
+        {
+          ...forecast([fm("2026-10", "mixed", 1, 1)]),
+          variableBasis: {
+            months: Array(n).fill("2026-09"),
+            history: 3,
+            lowConfidence: true,
+            reason: "x",
+          },
+        },
+        locale,
+      ).lowConfidence;
+    expect(low(0, "en")).toMatch(/No uploaded month/);
+    expect(low(0, "nl")).toMatch(/geen eerdere maand/);
+    expect(low(2, "en")).toBe("Only 2 of the 3 months of history are uploaded.");
+    expect(low(2, "nl")).toBe("Maar 2 van de 3 maanden geschiedenis zijn geüpload.");
   });
 });
 
@@ -100,12 +117,15 @@ const occ = (
 
 describe("buildVasteLasten", () => {
   it("counts paid expenses, lists what is still to come and names the next one", () => {
-    const v = buildVasteLasten([
-      occ(1, "Huur", "matched", 90000, "2026-10-01"),
-      occ(2, "Spotify", "expected", 1099, "2026-10-25"),
-      occ(3, "Internet", "expected", 3500, "2026-10-18"),
-      occ(4, "Salaris", "expected", 150000, "2026-10-27", "income"),
-    ]);
+    const v = buildVasteLasten(
+      [
+        occ(1, "Huur", "matched", 90000, "2026-10-01"),
+        occ(2, "Spotify", "expected", 1099, "2026-10-25"),
+        occ(3, "Internet", "expected", 3500, "2026-10-18"),
+        occ(4, "Salaris", "expected", 150000, "2026-10-27", "income"),
+      ],
+      "nl",
+    );
     expect([v.paid, v.total]).toEqual([1, 3]);
     expect(v.share).toBeCloseTo(1 / 3);
     expect(v.toCome).toBe(4599);
@@ -116,14 +136,14 @@ describe("buildVasteLasten", () => {
 
   it("everything paid, and nothing set up", () => {
     expect(
-      buildVasteLasten([occ(1, "Huur", "matched", 90000, "2026-10-01")]).sentence[1].text,
+      buildVasteLasten([occ(1, "Huur", "matched", 90000, "2026-10-01")], "nl").sentence[1].text,
     ).toBe("betaald");
-    const empty = buildVasteLasten([]);
+    const empty = buildVasteLasten([], "nl");
     expect([empty.total, empty.share]).toEqual([0, 0]);
   });
 
   it("a missed payment still counts as open money", () => {
-    const v = buildVasteLasten([occ(1, "Gym", "missed", 3000, "2026-10-03")]);
+    const v = buildVasteLasten([occ(1, "Gym", "missed", 3000, "2026-10-03")], "nl");
     expect([v.paid, v.toCome]).toEqual([0, 3000]);
     expect(v.expenses[0].label).toBe("gemist, verwacht 3 okt");
   });

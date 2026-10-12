@@ -23,8 +23,7 @@ export const rabobankParser: BankParser = {
   parse(content) {
     const { headers, records } = readCsv(content);
     const missing = REQUIRED.filter((h) => !headers.includes(h));
-    if (missing.length)
-      throw new Error(`Dit is geen Rabobank-export; er ontbreken kolommen: ${missing.join(", ")}`);
+    if (missing.length) throw new Error(`Not a Rabobank export, missing: ${missing.join(", ")}`);
 
     const rows: ParsedRow[] = [];
     const skipped: SkippedRow[] = [];
@@ -36,7 +35,7 @@ export const rabobankParser: BankParser = {
         const iban = clean(r["IBAN/BBAN"]);
         accountIdentifier ??= iban;
         const date = clean(r["Datum"]);
-        if (!isDate(date)) throw new Error(`Ongeldige datum "${date}"`);
+        if (!isDate(date)) throw new Error(`Invalid date "${date}"`);
         const amount = parseAmountToCents(r["Bedrag"] ?? "", ",");
         const description =
           [r["Omschrijving-1"], r["Omschrijving-2"], r["Omschrijving-3"]]

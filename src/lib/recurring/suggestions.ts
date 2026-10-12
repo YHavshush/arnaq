@@ -150,7 +150,7 @@ function mostCommon(values: number[]): number | null {
 }
 
 function assertToday(today: string): void {
-  if (!isDate(today)) throw new RecurringError(`Ongeldige datum "${today}". Gebruik JJJJ-MM-DD.`);
+  if (!isDate(today)) throw new RecurringError(`Invalid date "${today}", use YYYY-MM-DD.`);
 }
 
 /**
@@ -280,8 +280,9 @@ export interface SuggestionRef {
 
 function assertRef(ref: SuggestionRef): SuggestionRef {
   const key = normaliseCounterparty(ref.key);
-  if (!key) throw new RecurringError("De suggestie is onvolledig.");
-  if (!RECURRING_TYPES.includes(ref.type)) throw new RecurringError("Kies uitgave of inkomen.");
+  if (!key) throw new RecurringError("Suggestion key is required.");
+  if (!RECURRING_TYPES.includes(ref.type))
+    throw new RecurringError('Type must be "expense" or "income".');
   return { key, type: ref.type };
 }
 
@@ -312,7 +313,7 @@ export async function acceptSuggestion(
           .where(and(eq(schema.recurringItems.type, type), eq(schema.recurringItems.active, true)))
       ).find((i) => normaliseCounterparty(i.matchCounterparty) === key);
       if (existing) return { item: existing, created: false };
-      throw new RecurringError("Deze suggestie bestaat niet (meer).");
+      throw new RecurringError("There is no such suggestion (any more).");
     }
     const item = await createRecurringItem(
       tx,

@@ -1,12 +1,7 @@
 import { THEME_STORAGE_KEY } from "./theme-script";
 
 export type ThemeChoice = "system" | "light" | "dark" | "darkplus";
-export const THEME_CHOICES: { value: ThemeChoice; label: string }[] = [
-  { value: "system", label: "Systeem" },
-  { value: "light", label: "Licht" },
-  { value: "dark", label: "Donker" },
-  { value: "darkplus", label: "Donker +" },
-];
+export const THEME_CHOICES: ThemeChoice[] = ["system", "light", "dark", "darkplus"];
 
 export function readTheme(): ThemeChoice {
   try {

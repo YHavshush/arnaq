@@ -1,4 +1,7 @@
 import { connection } from "next/server";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
+import { getLocale } from "@/i18n/server";
+import { localizeMessage } from "@/i18n/server-messages";
 import { MAX_CENTS } from "@/lib/money";
 import { BudgetError } from "@/lib/budget/budgets";
 import { CategoriseError } from "@/lib/categories/categorise";
@@ -22,22 +25,33 @@ function isConstraintViolation(e: unknown): boolean {
   return false;
 }
 
+/** The language of this request, English when it cannot be read (tests, calls outside a request). */
+export async function requestLocale(): Promise<Locale> {
+  try {
+    return await getLocale();
+  } catch {
+    return DEFAULT_LOCALE;
+  }
+}
+
+/** A JSON error whose text is in the reader's language. */
+export async function errorResponse(message: string, status: number): Promise<Response> {
+  return Response.json({ error: localizeMessage(message, await requestLocale()) }, { status });
+}
+
 /** Run a handler; turn expected domain errors into 422 JSON, bad JSON into 400. */
 export async function handle(fn: () => Response | Promise<Response>): Promise<Response> {
   try {
     return await fn();
   } catch (e) {
-    if (e instanceof SyntaxError)
-      return Response.json({ error: "Ongeldige invoer." }, { status: 400 });
-    if (DOMAIN_ERRORS.some((C) => e instanceof C)) {
-      return Response.json({ error: (e as Error).message }, { status: 422 });
-    }
+    if (e instanceof SyntaxError) return errorResponse("Invalid JSON body.", 400);
+    if (DOMAIN_ERRORS.some((C) => e instanceof C)) return errorResponse((e as Error).message, 422);
     // A foreign key or unique constraint hit: the request referenced something that is not there
     // (or already exists). Never leak the SQL, just say so.
     if (isConstraintViolation(e)) {
-      return Response.json(
-        { error: "Dit past niet bij wat er al is (onbekende verwijzing of dubbele waarde)." },
-        { status: 422 },
+      return errorResponse(
+        "The request conflicts with existing data (unknown reference or duplicate).",
+        422,
       );
     }
     throw e;

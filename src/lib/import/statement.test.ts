@@ -71,7 +71,7 @@ describe("importing a Rabobank PDF statement", () => {
     const db = await createDb(":memory:");
     const other = toPdfBytes([[{ str: "Factuur", x: 40, right: 80, y: 700 }]]);
     await expect(importStatement(db, { content: other, filename: "x.pdf" })).rejects.toThrow(
-      /geen Rabobank-afschrift/,
+      /not a Rabobank statement/,
     );
     await expect(
       importStatement(db, { content: pdf({ rows, totals: { debit: 1 } }), filename: "x.pdf" }),
@@ -89,7 +89,7 @@ describe("guards on where a statement goes", () => {
       .returning();
     await expect(
       importStatement(db, { content: pdf({ rows }), filename: "x.pdf", accountId: mine.id }),
-    ).rejects.toThrow(/andere rekening/);
+    ).rejects.toThrow(/different account/);
     expect(await db.select().from(schema.transactions)).toEqual([]);
   });
 

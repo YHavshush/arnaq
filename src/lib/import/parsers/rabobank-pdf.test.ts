@@ -105,7 +105,7 @@ describe("parseRabobankStatement", () => {
     // Remove the amount of the second row from the page.
     const amount = pages[0].find((i) => i.str === "12,50")!;
     pages[0].splice(pages[0].indexOf(amount), 1);
-    expect(() => parseRabobankStatement(pages)).toThrow(/niet betrouwbaar/);
+    expect(() => parseRabobankStatement(pages)).toThrow(/not be read reliably/);
   });
 
   it("refuses a page without the header it needs", () => {
@@ -210,7 +210,7 @@ describe("readPdfPages limits", () => {
       right: 15,
       y: 800 - (i % 700) - i / 10000,
     }));
-    await expect(readPdfPages(toPdfBytes([items]))).rejects.toThrow(/te complex/);
+    await expect(readPdfPages(toPdfBytes([items]))).rejects.toThrow(/too complex/);
   });
 
   it("groups lines in linear time (many distinct baselines stay fast)", () => {

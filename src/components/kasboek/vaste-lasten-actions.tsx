@@ -3,8 +3,10 @@
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useI18n } from "@/i18n/client";
 import { api, euroInputToCents } from "@/lib/client/api";
-import { euro } from "@/lib/view/format";
+import { categoryLabel } from "@/lib/view/categories";
+import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, Field, GhostButton, PrimaryButton, inputClass } from "./form";
 
@@ -24,9 +26,11 @@ interface SuggestionView {
   months: number;
 }
 
-/** Detected recurring payments: accept (becomes a vaste last) or reject (never offered again). */
+/** Detected recurring payments: accept (becomes a fixed cost) or reject (never offered again). */
 export function SuggestionList({ suggestions }: { suggestions: SuggestionView[] }) {
   const router = useRouter();
+  const { locale, t } = useI18n();
+  const { euro } = formatter(locale);
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -50,17 +54,17 @@ export function SuggestionList({ suggestions }: { suggestions: SuggestionView[] 
               <div className="min-w-0">
                 <div className="truncate font-semibold">{s.name}</div>
                 <div className="text-ink-muted text-[13px]">
-                  {s.months} maanden achter elkaar, rond de {s.dayOfMonth}e
+                  {t.ui.fixed.suggestion.months(s.months, s.dayOfMonth)}
                 </div>
               </div>
               <div className="num font-semibold">{euro(s.expectedAmount)}</div>
             </div>
             <div className="flex gap-2">
               <PrimaryButton type="button" disabled={busy} onClick={() => act("accept", s)}>
-                Toevoegen
+                {t.ui.fixed.suggestion.add}
               </PrimaryButton>
               <GhostButton type="button" disabled={busy} onClick={() => act("reject", s)}>
-                Niet meer tonen
+                {t.ui.fixed.suggestion.dismiss}
               </GhostButton>
             </div>
           </li>
@@ -86,11 +90,11 @@ interface ItemView {
   categoryName: string | null;
 }
 
-const FREQ = { monthly: "per maand", quarterly: "per kwartaal", yearly: "per jaar" } as const;
-
-/** All vaste lasten with pause/resume and delete. Delete asks twice (it cannot be undone). */
+/** All fixed costs with pause/resume and delete. Delete asks twice (it cannot be undone). */
 export function ItemManager({ items }: { items: ItemView[] }) {
   const router = useRouter();
+  const { locale, t } = useI18n();
+  const { euro } = formatter(locale);
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
@@ -115,11 +119,13 @@ export function ItemManager({ items }: { items: ItemView[] }) {
                 <div className="truncate font-semibold">
                   {it.name}
                   {!it.active && (
-                    <span className="text-ink-muted ml-2 text-[13px] font-medium">gepauzeerd</span>
+                    <span className="text-ink-muted ml-2 text-[13px] font-medium">
+                      {t.ui.fixed.item.paused}
+                    </span>
                   )}
                 </div>
                 <div className="text-ink-muted text-[13px]">
-                  dag {it.dayOfMonth}, {FREQ[it.frequency]}
+                  {t.ui.fixed.item.meta(it.dayOfMonth, t.ui.fixed.freq[it.frequency])}
                 </div>
               </div>
               <div className="num font-semibold">{euro(it.expectedAmount)}</div>
@@ -130,7 +136,7 @@ export function ItemManager({ items }: { items: ItemView[] }) {
                 disabled={busy}
                 onClick={() => run(api("PATCH", `/api/recurring/${it.id}`, { active: !it.active }))}
               >
-                {it.active ? "Pauzeren" : "Hervatten"}
+                {it.active ? t.ui.fixed.item.pause : t.ui.fixed.item.resume}
               </GhostButton>
               {confirming === it.id ? (
                 <>
@@ -139,15 +145,15 @@ export function ItemManager({ items }: { items: ItemView[] }) {
                     disabled={busy}
                     onClick={() => run(api("DELETE", `/api/recurring/${it.id}`))}
                   >
-                    Ja, verwijderen
+                    {t.ui.fixed.item.confirmRemove}
                   </PrimaryButton>
                   <GhostButton type="button" onClick={() => setConfirming(null)}>
-                    Annuleren
+                    {t.ui.common.cancel}
                   </GhostButton>
                 </>
               ) : (
                 <GhostButton type="button" disabled={busy} onClick={() => setConfirming(it.id)}>
-                  Verwijderen
+                  {t.ui.fixed.item.remove}
                 </GhostButton>
               )}
             </div>
@@ -163,9 +169,11 @@ export function ItemManager({ items }: { items: ItemView[] }) {
   );
 }
 
-/** Add a vaste last by hand. */
+/** Add a fixed cost by hand. */
 export function AddItemForm({ categories, today }: { categories: Cat[]; today: string }) {
   const router = useRouter();
+  const { locale, t } = useI18n();
+  const f = t.ui.fixed.form;
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"expense" | "income">("expense");
   const [error, setError] = useState<string | null>(null);
@@ -174,9 +182,9 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
   async function submit(form: FormData) {
     setError(null);
     const cents = euroInputToCents(String(form.get("amount") ?? ""));
-    if (cents === null || cents === 0) return setError("Vul een bedrag in, bijvoorbeeld 12,50.");
+    if (cents === null || cents === 0) return setError(f.errAmount);
     const name = String(form.get("name") ?? "").trim();
-    if (!name) return setError("Geef de vaste last een naam.");
+    if (!name) return setError(f.errName);
     const counterparty = String(form.get("counterparty") ?? "").trim();
     const categoryId = Number(form.get("categoryId"));
     const res = await api("POST", "/api/recurring", {
@@ -199,7 +207,7 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
     return (
       <GhostButton type="button" onClick={() => setOpen(true)}>
         <span className="inline-flex items-center gap-1.5">
-          <Plus className="size-4" /> Vaste last toevoegen
+          <Plus className="size-4" /> {f.open}
         </span>
       </GhostButton>
     );
@@ -214,42 +222,42 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
     >
       <div
         role="radiogroup"
-        aria-label="Soort"
+        aria-label={f.kind}
         className="bg-track inline-flex w-fit rounded-xl p-0.5"
       >
-        {(["expense", "income"] as const).map((t) => (
+        {(["expense", "income"] as const).map((kind) => (
           <button
-            key={t}
+            key={kind}
             type="button"
             role="radio"
-            aria-checked={type === t}
-            onClick={() => setType(t)}
+            aria-checked={type === kind}
+            onClick={() => setType(kind)}
             className="text-ink-muted aria-checked:bg-surface aria-checked:text-ink min-h-10 rounded-[10px] px-4 text-sm font-semibold"
           >
-            {t === "expense" ? "Uitgave" : "Inkomen"}
+            {kind === "expense" ? f.expense : f.income}
           </button>
         ))}
       </div>
-      <Field label="Naam">
+      <Field label={f.name}>
         <input
           name="name"
           required
           maxLength={100}
           className={inputClass}
-          placeholder="Bijvoorbeeld Netflix"
+          placeholder={f.namePlaceholder}
         />
       </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Bedrag (€)">
+        <Field label={f.amount}>
           <input
             name="amount"
             required
             inputMode="decimal"
             className={inputClass}
-            placeholder="12,50"
+            placeholder={f.amountPlaceholder}
           />
         </Field>
-        <Field label="Dag van de maand">
+        <Field label={f.day}>
           <input
             name="day"
             type="number"
@@ -262,33 +270,30 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
         </Field>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Hoe vaak">
+        <Field label={f.frequency}>
           <select name="frequency" className={inputClass} defaultValue="monthly">
-            <option value="monthly">Per maand</option>
-            <option value="quarterly">Per kwartaal</option>
-            <option value="yearly">Per jaar</option>
+            <option value="monthly">{f.monthly}</option>
+            <option value="quarterly">{f.quarterly}</option>
+            <option value="yearly">{f.yearly}</option>
           </select>
         </Field>
-        <Field label="Categorie">
+        <Field label={f.category}>
           <select name="categoryId" className={inputClass} defaultValue="0">
-            <option value="0">Geen</option>
+            <option value="0">{f.none}</option>
             {categories
               .filter((c) => c.type === type)
               .map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.name}
+                  {categoryLabel(c.name, locale)}
                 </option>
               ))}
           </select>
         </Field>
       </div>
-      <Field
-        label="Naam op je afschrift"
-        hint="Waaraan we de betaling herkennen. Leeg laten gebruikt de naam hierboven."
-      >
+      <Field label={f.counterparty} hint={f.counterpartyHint}>
         <input name="counterparty" maxLength={100} className={inputClass} />
       </Field>
-      <Field label="Vanaf">
+      <Field label={f.from}>
         <input
           name="start"
           type="date"
@@ -300,10 +305,10 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
       <ErrorLine message={error} />
       <div className="flex gap-2">
         <PrimaryButton type="submit" disabled={busy}>
-          Opslaan
+          {f.save}
         </PrimaryButton>
         <GhostButton type="button" onClick={() => setOpen(false)}>
-          Annuleren
+          {t.ui.common.cancel}
         </GhostButton>
       </div>
     </form>

@@ -1,11 +1,13 @@
 import type { Mood, Tone } from "@/design/tokens";
+import type { Locale } from "@/i18n/config";
+import { messages } from "@/i18n/messages";
+import type { Sentence } from "@/i18n/types";
 import type { MonthOverview } from "@/lib/budget/overview";
 import type { OccurrenceView } from "@/lib/recurring/occurrences";
-import { euro, monthProgress } from "./format";
+import { formatter, monthProgress } from "./format";
 import { barState, moodForTone, toneForUsage } from "./status";
 
-/** A sentence made of plain and emphasised (italic serif) parts. */
-export type Sentence = { text: string; em?: boolean }[];
+export type { Sentence };
 
 export interface OverzichtRow {
   categoryId: number | null;
@@ -49,10 +51,8 @@ interface Input {
   overview: MonthOverview;
   occurrences: OccurrenceView[];
   today: string;
+  locale: Locale;
 }
-
-const plain = (text: string) => ({ text });
-const em = (text: string) => ({ text, em: true });
 
 function sentenceFor(o: {
   month: string;
@@ -61,58 +61,33 @@ function sentenceFor(o: {
   spent: number;
   fixedTotal: number;
   paidFixed: number;
+  locale: Locale;
 }): Sentence {
   const { budget, spent, fixedTotal, paidFixed } = o;
-  if (budget === null)
-    return [
-      plain("Je hebt deze maand "),
-      em(euro(spent)),
-      plain(" uitgegeven. Stel een budget in om te zien wat er vrij is."),
-    ];
+  const t = messages[o.locale].view.overzicht;
+  const { euro } = formatter(o.locale);
+  if (budget === null) return t.noBudget(euro(spent));
   const progress = monthProgress(o.month, o.today);
-  if (progress === 0)
-    return [
-      plain("Deze maand is nog niet begonnen. Je vaste lasten zijn "),
-      em(euro(fixedTotal)),
-      plain("."),
-    ];
+  if (progress === 0) return t.notStarted(euro(fixedTotal));
   if (progress === 1) {
     const diff = budget - spent;
-    return diff >= 0
-      ? [plain("Je bleef "), em(euro(diff)), plain(" onder je budget.")]
-      : [plain("Je ging "), em(euro(-diff)), plain(" over je budget.")];
+    return diff >= 0 ? t.pastUnder(euro(diff)) : t.pastOver(euro(-diff));
   }
   const variableBudget = budget - fixedTotal;
   // A rent paid just before the month starts is matched here but not counted in this month's spending.
   const variableSpent = Math.max(spent - paidFixed, 0);
-  if (variableBudget <= 0)
-    return [
-      plain("Je vaste lasten ("),
-      em(euro(fixedTotal)),
-      plain(") nemen je hele budget in beslag."),
-    ];
-  if (progress < 0.1)
-    return [
-      plain("De maand is net begonnen: "),
-      em(euro(variableBudget)),
-      plain(" voor gewone uitgaven."),
-    ];
+  if (variableBudget <= 0) return t.fixedTakeAll(euro(fixedTotal));
+  if (progress < 0.1) return t.justStarted(euro(variableBudget));
   const pace = variableSpent / variableBudget / progress;
-  const tail = [plain(": "), em(euro(variableSpent)), plain(` van ${euro(variableBudget)}.`)];
-  if (pace < 0.9) return [plain("Je gewone uitgaven blijven ruim binnen schema"), ...tail];
-  if (pace <= 1.1) return [plain("Je gewone uitgaven lopen precies op schema"), ...tail];
-  return [plain("Je gewone uitgaven lopen sneller dan je budget"), ...tail];
+  if (pace < 0.9) return t.paceUnder(euro(variableSpent), euro(variableBudget));
+  if (pace <= 1.1) return t.paceOn(euro(variableSpent), euro(variableBudget));
+  return t.paceOver(euro(variableSpent), euro(variableBudget));
 }
 
-const WORD: Record<Tone, string> = {
-  good: "Op schema",
-  warn: "Krap",
-  bad: "Over budget",
-  accent: "Geen budget",
-};
-
 /** Pure view model for the Overzicht screen. All money is cents. */
-export function buildOverzicht({ overview, occurrences, today }: Input): Overzicht {
+export function buildOverzicht({ overview, occurrences, today, locale }: Input): Overzicht {
+  const t = messages[locale].view.overzicht;
+  const { euro } = formatter(locale);
   const { month, totals } = overview;
   const budget = totals.totalBudget;
   const spent = totals.expenseActual;
@@ -151,7 +126,7 @@ export function buildOverzicht({ overview, occurrences, today }: Input): Overzic
   if (overview.uncategorised.expense > 0)
     rows.push({
       categoryId: null,
-      name: "Zonder categorie",
+      name: t.uncategorised,
       actual: overview.uncategorised.expense,
       planned: 0,
       nextDate: null,
@@ -168,41 +143,45 @@ export function buildOverzicht({ overview, occurrences, today }: Input): Overzic
   const tiles: Tile[] = [
     {
       key: "budget",
-      label: "Budget",
-      word: WORD[tone],
-      sub: budget === null ? "Nog niet ingesteld" : `${euro(spent + planned)} van ${euro(budget)}`,
+      label: t.tiles.budget.label,
+      word: t.tone[tone],
+      sub:
+        budget === null
+          ? t.tiles.budget.subNone
+          : t.tiles.budget.sub(euro(spent + planned), euro(budget)),
       tone,
     },
     {
       key: "vast",
-      label: "Vaste lasten",
-      word: expenseOcc.length === 0 ? "Geen" : `${paid}/${expenseOcc.length} betaald`,
+      label: t.tiles.vast.label,
+      word:
+        expenseOcc.length === 0 ? t.tiles.vast.none : t.tiles.vast.word(paid, expenseOcc.length),
       sub:
         planned > 0
-          ? `nog ${euro(planned)} te gaan`
+          ? t.tiles.vast.subToGo(euro(planned))
           : expenseOcc.length
-            ? "Alles betaald"
-            : "Nog niets ingesteld",
+            ? t.tiles.vast.subAllPaid
+            : t.tiles.vast.subNone,
       tone: "accent",
     },
     {
       key: "inkomen",
-      label: "Inkomen",
-      word: `${euro(totals.incomeActual)} binnen`,
-      sub: incomeToCome > 0 ? `nog ${euro(incomeToCome)} verwacht` : "Niets meer verwacht",
+      label: t.tiles.inkomen.label,
+      word: t.tiles.inkomen.word(euro(totals.incomeActual)),
+      sub:
+        incomeToCome > 0
+          ? t.tiles.inkomen.subExpected(euro(incomeToCome))
+          : t.tiles.inkomen.subNone,
       tone: "good",
     },
     {
       key: "sorteren",
-      label: "Te sorteren",
+      label: t.tiles.sorteren.label,
       word:
         overview.uncategorised.count === 0
-          ? "Alles gesorteerd"
-          : `${overview.uncategorised.count} open`,
-      sub:
-        overview.uncategorised.count === 0
-          ? "Geen losse transacties"
-          : "transacties zonder categorie",
+          ? t.tiles.sorteren.wordNone
+          : t.tiles.sorteren.word(overview.uncategorised.count),
+      sub: overview.uncategorised.count === 0 ? t.tiles.sorteren.subNone : t.tiles.sorteren.sub,
       tone: overview.uncategorised.count === 0 ? "good" : "warn",
     },
   ];
@@ -220,7 +199,7 @@ export function buildOverzicht({ overview, occurrences, today }: Input): Overzic
     tone,
     mood: moodForTone(tone),
     free,
-    sentence: sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed }),
+    sentence: sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
     tiles,
     rows,
   };
