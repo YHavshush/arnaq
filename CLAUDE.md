@@ -33,3 +33,9 @@ Model table:
 - The design is in `DESIGN.md`; colour tokens are generated from `src/design/tokens.ts` (`npm run tokens`). Do not invent new colours or styles in components: use the tokens and shadcn variables.
 - UI UX Pro Max is vendored in `.claude/skills/ui-ux-pro-max/` as an idea bank. Impeccable is installed at milestone 8, not before.
 - Hard rule: never put a CSS `filter` on an SVG element (iPhone Safari clips it).
+
+## Real bank files (2026-10-12)
+
+- The owner's **Rabobank statements arrive as PDF** (Rekeningafschrift), Revolut as CSV. Both formats were verified against real files (never committed; `*.pdf` and `*.csv` are git-ignored). Tests use invented data only (`tests/helpers/statement-pdf.ts`).
+- The PDF parser accepts a statement only when it adds up to the printed totals and balances. Month coverage comes from the declared period: a month counts as uploaded only when a statement covers all of it.
+- `data/real/` (git-ignored) is a local PGlite database made from the owner's real files for looking at the screens; never commit it or paste its contents anywhere.

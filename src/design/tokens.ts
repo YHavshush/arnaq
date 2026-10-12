@@ -42,6 +42,8 @@ export interface ThemeTokens {
   /** Soft tint behind/under the hero ring per tone. */
   glow: Record<Tone, string>;
   page: PageTokens;
+  /** Frosted card and floating navigation: translucent fill, edge, shadow (any CSS value). */
+  glass: { bg: string; border: string; shadow: string; nav: string };
 }
 
 const lightChips: ThemeTokens["chip"] = {
@@ -115,6 +117,12 @@ export const themes: Record<ThemeName, ThemeTokens> = {
       warn: "rgba(255,170,110,.55)",
       bad: "rgba(255,130,120,.5)",
     },
+    glass: {
+      bg: "rgba(255,255,255,.58)",
+      border: "rgba(255,255,255,.8)",
+      shadow: "0 14px 40px -22px rgba(30,45,80,.45)",
+      nav: "rgba(255,255,255,.76)",
+    },
     page: {
       stops: ["#d9e5f5", "#f1e6dd", "#f6e8d8"], // the soft blue-to-peach dawn the owner approved in the prototypes
       wash: {
@@ -141,6 +149,12 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     chip: darkChips,
     ring: darkRing,
     glow: darkGlow,
+    glass: {
+      bg: "rgba(255,255,255,.055)",
+      border: "rgba(255,255,255,.10)",
+      shadow: "inset 0 1px 0 rgba(255,255,255,.08), 0 18px 44px -24px rgba(0,0,0,.8)",
+      nav: "rgba(18,22,30,.80)",
+    },
     page: { stops: ["#1b2434", "#141b28", "#0f141d"], wash: darkWash },
   },
   /** "Donker +": a lighter, bluer slate. Same tokens as dark except the surface family. */
@@ -160,6 +174,12 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     chip: darkChips,
     ring: darkRing,
     glow: darkGlow,
+    glass: {
+      bg: "rgba(255,255,255,.075)",
+      border: "rgba(255,255,255,.14)",
+      shadow: "inset 0 1px 0 rgba(255,255,255,.10), 0 18px 44px -24px rgba(0,0,0,.6)",
+      nav: "rgba(31,42,64,.82)",
+    },
     page: { stops: ["#2b3a56", "#1f2a40", "#172033"], wash: darkplusWash },
   },
 };

@@ -104,13 +104,48 @@ export async function generateOccurrences(db: Db, opts: { throughMonth: string }
   return created;
 }
 
-/** Months with at least one upload (any account). Two uploads of one month count once. */
+/**
+ * Months we hold complete data for.
+ * - An upload that declares its period (a PDF statement, a Revolut file name) covers every month
+ *   that lies fully inside it. Periods of one account that touch or overlap are joined first, so
+ *   two consecutive statements together cover the month they share. A partly covered month is not
+ *   covered: we would otherwise show a half-empty month as real.
+ * - An upload without a declared period (a plain CSV) covers its `month`.
+ * Any account counts; two uploads of one month count once.
+ */
 export async function coveredMonths(db: Db): Promise<Set<string>> {
-  return new Set(
-    (await db.selectDistinct({ month: schema.imports.month }).from(schema.imports)).map(
-      (r) => r.month,
-    ),
-  );
+  const imports = await db
+    .select({
+      accountId: schema.imports.accountId,
+      month: schema.imports.month,
+      from: schema.imports.periodFrom,
+      to: schema.imports.periodTo,
+    })
+    .from(schema.imports);
+  const covered = new Set<string>();
+  const byAccount = new Map<number, { from: string; to: string }[]>();
+  for (const i of imports) {
+    if (i.from === null || i.to === null) covered.add(i.month);
+    else
+      byAccount.set(i.accountId, [
+        ...(byAccount.get(i.accountId) ?? []),
+        { from: i.from, to: i.to },
+      ]);
+  }
+  for (const periods of byAccount.values()) {
+    const merged: { from: string; to: string }[] = [];
+    for (const p of periods.sort((a, b) => a.from.localeCompare(b.from))) {
+      const last = merged.at(-1);
+      if (last && p.from <= addDays(last.to, 1)) last.to = p.to > last.to ? p.to : last.to;
+      else merged.push({ ...p });
+    }
+    for (const { from, to } of merged) {
+      for (let m = monthOf(from); m <= monthOf(to); m = addMonths(m, 1)) {
+        if (`${m}-01` >= from && clampDay(m, 31) <= to) covered.add(m);
+      }
+    }
+  }
+  return covered;
 }
 
 /**

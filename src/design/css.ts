@@ -47,6 +47,12 @@ function declarations(t: ThemeTokens, withWash: boolean): string[] {
       `--ring-${tone}-to: ${t.ring[tone][1]};`,
       `--glow-${tone}: ${t.glow[tone]};`,
     );
+  d.push(
+    `--glass-bg: ${t.glass.bg};`,
+    `--glass-border: ${t.glass.border};`,
+    `--glass-shadow: ${t.glass.shadow};`,
+    `--glass-nav: ${t.glass.nav};`,
+  );
   for (const m of MOODS) d.push(`--page-bg-${m}: ${pageBg(t, m, withWash)};`);
   return d;
 }

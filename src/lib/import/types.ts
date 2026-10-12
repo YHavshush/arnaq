@@ -24,6 +24,8 @@ export interface ParseResult {
   skipped: SkippedRow[];
   /** Own account identifier found in the file (Rabobank IBAN), if any. */
   accountIdentifier: string | null;
+  /** The period the file says it covers (YYYY-MM-DD, inclusive), when it says so. */
+  period?: { from: string; to: string };
 }
 
 export interface BankParser {

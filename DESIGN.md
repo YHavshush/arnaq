@@ -97,9 +97,25 @@ Findings from testing it, which are rules:
 
 - Status wash: off in light (owner decision), on in dark and Dark + (unconfirmed, say if it should go there too).
 - Dark vs Dark +: both ship; the owner has not chosen a default.
-- Loading, empty and error states are not designed yet (milestone 7).
 - The balance chart assumes the CSV parsers store the running balance (Rabobank "Saldo na trn", Revolut "Balance"). They do not yet; that comes with the database port.
 - All prototypes use demo data. The parsers are unverified against real bank exports.
+
+## Screens as built (milestone 7)
+
+| Route           | Screen       | Notes                                                                                                                                                                              |
+| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`             | Overzicht    | Ring = budget used or planned, centre = free to spend, status tiles, categories with bars. `?maand=YYYY-MM` steps through months                                                   |
+| `/prognose`     | Prognose     | Ring = share of forecast months in the plus. Chart of the running total (dashed = forecast), tap or arrow-key a month for its details. Horizon 3, 6, 12 or 24 months (`?maanden=`) |
+| `/vaste-lasten` | Vaste lasten | Ring = paid fixed costs. Suggestions (accept or never show again), missed payments, add, pause, delete                                                                             |
+| `/upload`       | Upload       | Ring = transactions sorted. Drop a CSV, then sort what is left (a choice can create a rule)                                                                                        |
+| `/budget`       | Budget       | Per category and optional total; a field saves when you leave it; copy the previous month                                                                                          |
+
+- **Loading** is a calm skeleton with the hero's footprint (no spinner). **Empty** says what to do next with one action. **Error** never shows the raw error: "Er is niets kwijt".
+- **Glass** (`--glass-bg`, `--glass-border`, `--glass-shadow`, `--glass-nav`) is part of the tokens, per theme, so cards and the nav follow Light, Dark and Dark +.
+- Server components load data directly (no HTTP hop) inside `<Suspense>`; mutations are client components calling the existing API and then `router.refresh()`.
+- The layout switches on the app's own width (`@container/app`, 900px), not the device.
+- The balance line in Prognose is the running total of income minus expenses, not the bank balance, until the parsers store it.
+- `npm run seed:demo` fills the local database with invented data to look at the screens.
 
 ## What was tried and dropped
 
