@@ -41,6 +41,34 @@ describe("claiming the rows that existed before accounts did", () => {
     expect(seen).toEqual({ tx: 1, acct: ["Oud"] });
   });
 
+  it("replaces the defaults a first login already created, and refuses a user who has real data", async () => {
+    const db = await createDb(":memory:", { user: null });
+    // The user logged in first: their defaults exist (same names as the old ones).
+    await withUser(db, TEST_USER_B, async () => undefined);
+    await db.execute(sql`reset role`);
+    await db.execute(sql`select set_config('app.user_id', ${SENTINEL_OWNER}, false)`);
+    await db.execute(
+      sql`insert into app_users (user_id) values (${SENTINEL_OWNER}) on conflict do nothing`,
+    );
+    await db.insert(schema.categories).values({ name: "Boodschappen", type: "expense" });
+
+    const moved = await claimSentinelRows(db, TEST_USER_B);
+    expect(moved.categories).toBe(1);
+
+    await db.execute(sql`set role kasboek_app`);
+    const names = await withUser(db, TEST_USER_B, async (tx) =>
+      (await tx.select().from(schema.categories)).map((c) => c.name),
+    );
+    expect(names).toEqual(["Boodschappen"]);
+
+    // Now the user has own data: a second claim must not touch it.
+    await withUser(db, TEST_USER_B, async (tx) => {
+      await tx.insert(schema.accounts).values({ name: "Mijn", bank: "rabobank" });
+    });
+    await db.execute(sql`reset role`);
+    await expect(claimSentinelRows(db, TEST_USER_B)).rejects.toThrow(/already has data/);
+  });
+
   it("refuses the sentinel itself and anything that is not a uuid", async () => {
     const db = await createDb(":memory:", { user: null });
     await expect(claimSentinelRows(db, SENTINEL_OWNER)).rejects.toThrow(/uuid/);

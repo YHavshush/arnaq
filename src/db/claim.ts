@@ -17,6 +17,11 @@ const TABLES = [
   "monthly_total_budget",
 ] as const;
 
+// A user's first request creates default categories and rules for them. If that happened before the
+// claim, those defaults would clash with the old ones (same names), so they are replaced, but only
+// while the user has nothing else of their own.
+const OWN_DATA_TABLES = TABLES.filter((t) => t !== "categories" && t !== "categorisation_rules");
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
@@ -35,6 +40,15 @@ export async function claimSentinelRows(
     await tx.execute(
       sql`insert into app_users (user_id) values (${userId}) on conflict do nothing`,
     );
+    for (const table of OWN_DATA_TABLES) {
+      const own = (await tx.execute(
+        sql`select 1 from ${sql.identifier(table)} where user_id = ${userId} limit 1`,
+      )) as unknown as { rows?: unknown[] } | unknown[];
+      if ((Array.isArray(own) ? own.length : (own.rows?.length ?? 0)) > 0)
+        throw new Error(`That user already has data (${table}); nothing was moved.`);
+    }
+    await tx.execute(sql`delete from categorisation_rules where user_id = ${userId}`);
+    await tx.execute(sql`delete from categories where user_id = ${userId}`);
     const moved: Record<string, number> = {};
     for (const table of TABLES) {
       const res = (await tx.execute(
