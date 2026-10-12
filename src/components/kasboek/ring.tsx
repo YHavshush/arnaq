@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { useId, type CSSProperties, type ReactNode } from "react";
 import type { Tone } from "@/design/tokens";
 
 interface RingProps {
@@ -12,9 +12,16 @@ interface RingProps {
   children?: ReactNode;
 }
 
+const RING_MASK = (w: number) =>
+  `radial-gradient(farthest-side, transparent calc(100% - ${w}px), #000 calc(100% - ${w}px + .6px))`;
+
 /**
- * The hero ring. Gradient stroke with round caps. Light mode gets a tinted shadow under it
- * (glow F), dark modes a lit head cap (glow D). Never an SVG filter: iPhone Safari clips them.
+ * The hero ring, as in docs/design/ontwerp-v14.html.
+ * Light: gradient stroke with round caps and a tinted shadow straight under it (glow F, a box-shadow
+ * on an element the size of the ring, so nothing is painted inside it).
+ * Dark: a conic ring (colour runs along the arc) with a round start cap, a lit head, a soft glow
+ * around it and a halo behind it (glow D).
+ * Never a filter on an SVG element: iPhone Safari clips it. The dark glow is a filter on a div.
  */
 export function Ring({ value, tone, size = 224, label, children }: RingProps) {
   const id = `ring${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
@@ -23,22 +30,47 @@ export function Ring({ value, tone, size = 224, label, children }: RingProps) {
   const v = Math.max(0, Math.min(value, 1));
   const cap = (stroke / size) * 100;
 
+  const dot: CSSProperties = {
+    position: "absolute",
+    left: "50%",
+    top: 0,
+    width: stroke,
+    height: stroke,
+    marginLeft: -stroke / 2,
+    borderRadius: "50%",
+  };
+  const from = `var(--ring-${tone}-from)`;
+  const to = `var(--ring-${tone}-to)`;
+
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
-      {/* Light: an offset, tinted shadow straight under the ring. */}
+    <div className="relative isolate shrink-0" style={{ width: size, height: size }}>
+      {/* Light: a tinted shadow under the ring, offset down. */}
       <div
         aria-hidden
-        className="absolute rounded-full dark:hidden"
+        className="absolute inset-0 rounded-full dark:hidden"
         style={{
-          inset: "14%",
-          boxShadow: `0 ${size * 0.1}px ${size * 0.16}px -${size * 0.04}px var(--glow-${tone})`,
+          boxShadow: `0 ${size * 0.07}px ${size * 0.1}px -${size * 0.035}px var(--glow-${tone})`,
         }}
       />
-      <svg viewBox="0 0 100 100" role="img" aria-label={label} className="absolute inset-0">
+      {/* Dark: a halo behind the ring. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -z-10 hidden rounded-full dark:block"
+        style={{
+          inset: "-32%",
+          background: `radial-gradient(closest-side, var(--glow-${tone}), transparent 72%)`,
+        }}
+      />
+      <svg
+        viewBox="0 0 100 100"
+        role="img"
+        aria-label={label}
+        className="absolute inset-0 dark:hidden"
+      >
         <defs>
           <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" style={{ stopColor: `var(--ring-${tone}-from)` }} />
-            <stop offset="100%" style={{ stopColor: `var(--ring-${tone}-to)` }} />
+            <stop offset="0%" style={{ stopColor: from }} />
+            <stop offset="100%" style={{ stopColor: to }} />
           </linearGradient>
         </defs>
         <circle
@@ -64,26 +96,39 @@ export function Ring({ value, tone, size = 224, label, children }: RingProps) {
           />
         )}
       </svg>
-      {/* Dark: the lit head of the arc. */}
-      {v > 0 && (
-        <div
-          aria-hidden
-          className="absolute inset-0 hidden dark:block"
-          style={{ transform: `rotate(${v * 360}deg)` }}
-        >
-          <div
-            className="absolute left-1/2 rounded-full"
-            style={{
-              top: `${50 - r - cap / 2 + 0.2}%`,
-              width: `${cap}%`,
-              height: `${cap}%`,
-              marginLeft: `-${cap / 2}%`,
-              background: `var(--ring-${tone}-to)`,
-              boxShadow: `0 0 ${size * 0.06}px ${size * 0.015}px var(--glow-${tone})`,
-            }}
-          />
-        </div>
-      )}
+      <div
+        role="img"
+        aria-label={label}
+        className="absolute inset-0 hidden dark:block"
+        style={{
+          filter: `drop-shadow(0 0 ${stroke * 1.2}px color-mix(in srgb, ${to} 40%, transparent))`,
+        }}
+      >
+        <i
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: "var(--track)",
+            WebkitMask: RING_MASK(stroke),
+            mask: RING_MASK(stroke),
+          }}
+        />
+        {v > 0 && (
+          <>
+            <i
+              className="absolute inset-0 rounded-full"
+              style={{
+                background: `conic-gradient(from 0deg, ${from}, ${to} ${v * 100}%, transparent ${v * 100}%)`,
+                WebkitMask: RING_MASK(stroke),
+                mask: RING_MASK(stroke),
+              }}
+            />
+            <i style={{ ...dot, background: from }} />
+            <i className="absolute inset-0" style={{ transform: `rotate(${v * 360}deg)` }}>
+              <u style={{ ...dot, background: to, boxShadow: `0 0 10px ${to}` }} />
+            </i>
+          </>
+        )}
+      </div>
       <div className="absolute inset-0 grid place-content-center text-center">{children}</div>
     </div>
   );
