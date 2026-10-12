@@ -6,6 +6,7 @@ data/
 *.db
 *.sqlite
 .env*
+!.env.example
 
 # misc
 .DS_Store
