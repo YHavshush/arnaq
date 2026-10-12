@@ -10,26 +10,31 @@ import {
   ItemManager,
   SuggestionList,
 } from "@/components/kasboek/vaste-lasten-actions";
+import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
-import { dayLabel, euro, monthName } from "@/lib/view/format";
+import { formatter } from "@/lib/view/format";
 import { loadVasteLasten, parseMonth } from "@/lib/view/load";
 import type { VasteLastRow } from "@/lib/view/vaste-lasten";
 
-export default function VasteLastenPage({ searchParams }: PageProps<"/vaste-lasten">) {
+export default function FixedCostsPage({ searchParams }: PageProps<"/fixed-costs">) {
   return (
-    <Suspense fallback={<HeroSkeleton label="Vaste lasten worden geladen" />}>
+    <Suspense fallback={<HeroSkeleton screen="fixedCosts" />}>
       <Content searchParams={searchParams} />
     </Suspense>
   );
 }
 
-async function Content({ searchParams }: Pick<PageProps<"/vaste-lasten">, "searchParams">) {
+async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "searchParams">) {
   await requestTime();
+  const { locale, t } = await getI18n();
+  const { euro, dayLabel, monthName } = formatter(locale);
   const today = todayIso();
-  const month = parseMonth((await searchParams).maand, today.slice(0, 7));
-  const v = await loadVasteLasten(await getDb(), month, today);
+  const month = parseMonth((await searchParams).month, today.slice(0, 7));
+  const v = await loadVasteLasten(await getDb(), month, today, locale);
   const catName = new Map(v.categories.map((c) => [c.id, c.name]));
+  // The stored (Dutch) name picks the icon; the label is what the person reads.
   const nameOf = (id: number | null) => (id === null ? null : (catName.get(id) ?? null));
+  const f = t.ui.fixed;
 
   const toRow = (r: VasteLastRow) => (
     <Row
@@ -38,7 +43,7 @@ async function Content({ searchParams }: Pick<PageProps<"/vaste-lasten">, "searc
       name={r.name}
       meta={r.label}
       amount={euro(r.amount)}
-      amountSub={r.status === "missed" ? "gemist" : undefined}
+      amountSub={r.status === "missed" ? f.missedLabel : undefined}
     />
   );
 
@@ -46,39 +51,37 @@ async function Content({ searchParams }: Pick<PageProps<"/vaste-lasten">, "searc
     <div className="fade-in">
       <MoodSetter mood="neutral" />
       <PageHeader
-        title="Vaste lasten"
+        title={f.title}
         sub={monthName(month)}
         step={{
-          prev: `/vaste-lasten?maand=${v.prev}`,
-          next: `/vaste-lasten?maand=${v.next}`,
-          prevLabel: `Naar ${monthName(v.prev)}`,
-          nextLabel: `Naar ${monthName(v.next)}`,
+          prev: `/fixed-costs?month=${v.prev}`,
+          next: `/fixed-costs?month=${v.next}`,
+          prevLabel: t.ui.step.to(monthName(v.prev)),
+          nextLabel: t.ui.step.to(monthName(v.next)),
         }}
       />
       <Hero
         tone="accent"
         value={v.share}
-        ringLabel={`${v.paid} van ${v.total} vaste lasten betaald`}
+        ringLabel={f.ring(v.paid, v.total)}
         centre={`${v.paid}/${v.total}`}
-        caption="betaald"
+        caption={f.caption}
         sentence={v.sentence}
       />
 
       {v.total === 0 && v.income.length === 0 ? (
-        <EmptyState title="Nog geen vaste lasten">
-          Voeg ze hieronder toe, of accepteer een suggestie zodra er genoeg maanden zijn geüpload.
-        </EmptyState>
+        <EmptyState title={f.emptyTitle}>{f.emptyBody}</EmptyState>
       ) : (
         <>
           {v.expenses.length > 0 && (
-            <Section title="Uitgaven" aside={`${euro(v.toCome)} te gaan`}>
+            <Section title={f.expenses} aside={f.toGo(euro(v.toCome))}>
               <div className="glass overflow-hidden">
                 <ul className="divide-hair divide-y">{v.expenses.map(toRow)}</ul>
               </div>
             </Section>
           )}
           {v.income.length > 0 && (
-            <Section title="Inkomen">
+            <Section title={f.income}>
               <div className="glass overflow-hidden">
                 <ul className="divide-hair divide-y">{v.income.map(toRow)}</ul>
               </div>
@@ -88,7 +91,7 @@ async function Content({ searchParams }: Pick<PageProps<"/vaste-lasten">, "searc
       )}
 
       {v.missed.length > 0 && (
-        <Section title="Gemist" aside={`${v.missed.length} om na te kijken`}>
+        <Section title={f.missed} aside={f.missedAside(v.missed.length)}>
           <div className="glass overflow-hidden">
             <ul className="divide-hair divide-y">
               {v.missed.slice(0, 6).map((o) => (
@@ -96,21 +99,18 @@ async function Content({ searchParams }: Pick<PageProps<"/vaste-lasten">, "searc
                   key={o.id}
                   icon={nameOf(o.categoryId)}
                   name={o.itemName}
-                  meta={`verwacht ${dayLabel(o.expectedDate)}`}
+                  meta={f.expectedOn(dayLabel(o.expectedDate))}
                   amount={euro(o.expectedAmount)}
                 />
               ))}
             </ul>
           </div>
-          <p className="text-ink-muted mt-2 px-2 text-sm">
-            Geen betaling gevonden. Betaald met een ander bedrag of onder een andere naam? Pas de
-            vaste last hieronder aan.
-          </p>
+          <p className="text-ink-muted mt-2 px-2 text-sm">{f.missedNote}</p>
         </Section>
       )}
 
       {v.suggestions.length > 0 && (
-        <Section title="Gevonden in je afschriften" aside={`${v.suggestions.length} suggesties`}>
+        <Section title={f.suggestions} aside={f.suggestionsAside(v.suggestions.length)}>
           <SuggestionList
             suggestions={v.suggestions.map((s) => ({
               key: s.key,
@@ -125,7 +125,7 @@ async function Content({ searchParams }: Pick<PageProps<"/vaste-lasten">, "searc
         </Section>
       )}
 
-      <Section title="Beheren">
+      <Section title={f.manage}>
         <div className="grid gap-3">
           <ItemManager
             items={v.items.map((it) => ({

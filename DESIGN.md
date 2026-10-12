@@ -102,13 +102,13 @@ Findings from testing it, which are rules:
 
 ## Screens as built (milestone 7)
 
-| Route           | Screen       | Notes                                                                                                                                                                              |
-| --------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`             | Overzicht    | Ring = budget used or planned, centre = free to spend, status tiles, categories with bars. `?maand=YYYY-MM` steps through months                                                   |
-| `/prognose`     | Prognose     | Ring = share of forecast months in the plus. Chart of the running total (dashed = forecast), tap or arrow-key a month for its details. Horizon 3, 6, 12 or 24 months (`?maanden=`) |
-| `/vaste-lasten` | Vaste lasten | Ring = paid fixed costs. Suggestions (accept or never show again), missed payments, add, pause, delete                                                                             |
-| `/upload`       | Upload       | Ring = transactions sorted. Drop a CSV, then sort what is left (a choice can create a rule)                                                                                        |
-| `/budget`       | Budget       | Per category and optional total; a field saves when you leave it; copy the previous month                                                                                          |
+| Route          | Screen      | Notes                                                                                                                                                                             |
+| -------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`            | Overzicht   | Ring = budget used or planned, centre = free to spend, status tiles, categories with bars. `?maand=YYYY-MM` steps through months                                                  |
+| `/prognose`    | Prognose    | Ring = share of forecast months in the plus. Chart of the running total (dashed = forecast), tap or arrow-key a month for its details. Horizon 3, 6, 12 or 24 months (`?months=`) |
+| `/fixed-costs` | Fixed costs | Ring = paid fixed costs. Suggestions (accept or never show again), missed payments, add, pause, delete                                                                            |
+| `/upload`      | Upload      | Ring = transactions sorted. Drop a CSV, then sort what is left (a choice can create a rule)                                                                                       |
+| `/budget`      | Budget      | Per category and optional total; a field saves when you leave it; copy the previous month                                                                                         |
 
 - **Loading** is a calm skeleton with the hero's footprint (no spinner). **Empty** says what to do next with one action. **Error** never shows the raw error: "Er is niets kwijt".
 - **Glass** (`--glass-bg`, `--glass-border`, `--glass-shadow`, `--glass-nav`) is part of the tokens, per theme, so cards and the nav follow Light, Dark and Dark +.

@@ -2,14 +2,17 @@ import { Settings } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { getDb } from "@/db";
+import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { getNeedsReview } from "@/lib/categories/categorise";
+import { LanguageSwitcher } from "./language-switcher";
 import { Nav } from "./nav";
 import { ThemeSwitcher } from "./theme-switcher";
 
 /** Open items on Upload: transactions that still need a category. Hidden at zero. */
 async function ReviewBadge() {
   await requestTime();
+  const { t } = await getI18n();
   let count = 0;
   try {
     count = (await getNeedsReview(await getDb())).length;
@@ -19,7 +22,7 @@ async function ReviewBadge() {
   if (count === 0) return null;
   return (
     <span
-      aria-label={`${count} te sorteren`}
+      aria-label={t.ui.nav.toSort(count)}
       className="num bg-accent text-accent-ink absolute top-0 left-[calc(50%+6px)] rounded-full px-1.5 text-[10.5px] leading-4 font-semibold @min-[900px]/app:static @min-[900px]/app:ml-auto"
     >
       {count > 99 ? "99+" : count}
@@ -28,14 +31,15 @@ async function ReviewBadge() {
 }
 
 /** One adaptive layout: sidebar and two columns when the app is 900px wide, pill nav below that. */
-export function AppShell({ children }: { children: ReactNode }) {
+export async function AppShell({ children }: { children: ReactNode }) {
+  const { t } = await getI18n();
   return (
     <div className="@container/app min-h-dvh">
       <a
         href="#main"
         className="bg-accent text-accent-ink sr-only z-40 rounded-full px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
-        Naar de inhoud
+        {t.ui.skipToContent}
       </a>
       <div className="@min-[900px]/app:grid @min-[900px]/app:grid-cols-[240px_minmax(0,1fr)]">
         <Nav
@@ -48,16 +52,17 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="mx-auto w-full max-w-[760px] px-4 pt-3 pb-36 @min-[900px]/app:max-w-[1040px] @min-[900px]/app:px-8 @min-[900px]/app:pt-6 @min-[900px]/app:pb-14">
           <div className="flex items-center justify-between pb-2">
             <span className="font-display text-lg font-medium @min-[900px]/app:invisible">
-              Kasboek
+              {t.ui.brand}
             </span>
             <div className="flex gap-2">
               <Link
-                href="/instellingen"
-                aria-label="Instellingen"
+                href="/settings"
+                aria-label={t.ui.nav.settings}
                 className="glass grid size-11 place-items-center rounded-full"
               >
                 <Settings className="size-[18px]" />
               </Link>
+              <LanguageSwitcher />
               <ThemeSwitcher />
             </div>
           </div>

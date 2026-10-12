@@ -349,11 +349,9 @@ describe("detectSuggestions", () => {
   it("validates input", async () => {
     const h = await history();
     await expect(h.suggestions("today")).rejects.toThrow(RecurringError);
-    await expect(rejectSuggestion(h.db, { key: " ", type: "expense" })).rejects.toThrow(
-      /onvolledig/,
-    );
+    await expect(rejectSuggestion(h.db, { key: " ", type: "expense" })).rejects.toThrow(/key/);
     await expect(rejectSuggestion(h.db, { key: "x", type: "transfer" as never })).rejects.toThrow(
-      /uitgave of inkomen/,
+      /Type/,
     );
   });
 });
@@ -430,7 +428,7 @@ describe("acceptSuggestion", () => {
         { key: "netflix", type: "expense", expectedAmount: -5 },
         { today: TODAY },
       ),
-    ).rejects.toThrow(/groter dan nul/);
+    ).rejects.toThrow(/positive integer/);
     expect(await listRecurringItems(h.db)).toHaveLength(0);
     const { item } = await acceptSuggestion(
       h.db,
@@ -463,6 +461,6 @@ describe("acceptSuggestion", () => {
     ).rejects.toThrow(RecurringError);
     await expect(
       acceptSuggestion(h.db, { key: "netflix", type: "income" }, { today: TODAY }),
-    ).rejects.toThrow(/bestaat niet/);
+    ).rejects.toThrow(/no such suggestion/);
   });
 });

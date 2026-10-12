@@ -2,7 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
+import { categoryLabel } from "@/lib/view/categories";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, Field, GhostButton, PrimaryButton, inputClass } from "./form";
 
@@ -21,6 +23,8 @@ interface Cat {
 /** The rules that sort transactions: see them, remove one, add one. A rule matches a piece of text in the name or description. */
 export function RulesManager({ rules, categories }: { rules: Rule[]; categories: Cat[] }) {
   const router = useRouter();
+  const { locale, t } = useI18n();
+  const r18 = t.ui.settings.rule;
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -38,18 +42,14 @@ export function RulesManager({ rules, categories }: { rules: Rule[]; categories:
     setNote(null);
     const pattern = String(form.get("pattern") ?? "").trim();
     const categoryId = Number(form.get("categoryId"));
-    if (pattern.length < 2) return setError("Een zoektekst heeft minstens 2 tekens nodig.");
-    if (!categoryId) return setError("Kies een categorie.");
+    if (pattern.length < 2) return setError(r18.errPattern);
+    if (!categoryId) return setError(r18.errCategory);
     const res = await api<{ alsoCategorised: number }>("POST", "/api/rules", {
       pattern,
       categoryId,
     });
     if (!res.ok) return setError(res.error);
-    setNote(
-      res.data.alsoCategorised > 0
-        ? `Regel toegevoegd; ${res.data.alsoCategorised} transacties zijn meteen gesorteerd.`
-        : "Regel toegevoegd.",
-    );
+    setNote(res.data.alsoCategorised > 0 ? r18.addedSorted(res.data.alsoCategorised) : r18.added);
     startTransition(() => router.refresh());
   }
 
@@ -63,18 +63,15 @@ export function RulesManager({ rules, categories }: { rules: Rule[]; categories:
         }}
         className="glass grid gap-3 p-4"
       >
-        <Field
-          label="Als de naam of omschrijving dit bevat"
-          hint="Hoofdletters maken niet uit, bijvoorbeeld: albert heijn"
-        >
+        <Field label={r18.ifContains} hint={r18.ifHint}>
           <input name="pattern" maxLength={100} className={inputClass} />
         </Field>
-        <Field label="Zet het dan in">
+        <Field label={r18.thenPut}>
           <select name="categoryId" className={inputClass} defaultValue="">
-            <option value="">Kies een categorie…</option>
+            <option value="">{r18.choose}</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
-                {c.name}
+                {categoryLabel(c.name, locale)}
               </option>
             ))}
           </select>
@@ -87,7 +84,7 @@ export function RulesManager({ rules, categories }: { rules: Rule[]; categories:
         )}
         <div>
           <PrimaryButton type="submit" disabled={busy}>
-            Regel toevoegen
+            {r18.add}
           </PrimaryButton>
         </div>
       </form>
@@ -102,21 +99,23 @@ export function RulesManager({ rules, categories }: { rules: Rule[]; categories:
               <CategoryIcon name={r.categoryName} />
               <div className="min-w-0">
                 <div className="truncate font-semibold">{r.pattern}</div>
-                <div className="text-ink-muted truncate text-[13px]">{r.categoryName}</div>
+                <div className="text-ink-muted truncate text-[13px]">
+                  {categoryLabel(r.categoryName, locale)}
+                </div>
               </div>
               <GhostButton
                 type="button"
                 disabled={busy}
                 onClick={() => remove(r.id)}
-                aria-label={`Regel ${r.pattern} verwijderen`}
+                aria-label={r18.removeRule(r.pattern)}
               >
-                Verwijder
+                {r18.remove}
               </GhostButton>
             </li>
           ))}
         </ul>
         {rules.length === 0 && (
-          <p className="text-ink-muted px-4 py-6 text-center text-[15px]">Nog geen regels.</p>
+          <p className="text-ink-muted px-4 py-6 text-center text-[15px]">{r18.none}</p>
         )}
       </div>
     </div>

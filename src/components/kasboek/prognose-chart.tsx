@@ -1,19 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { euro, euroSigned, monthName } from "@/lib/view/format";
+import { useI18n } from "@/i18n/client";
+import { formatter } from "@/lib/view/format";
 import type { PrognosePoint } from "@/lib/view/prognose";
 
 const W = 600;
 const H = 250;
 const PAD = { l: 14, r: 14, t: 34, b: 48 };
-
-const KIND: Record<PrognosePoint["kind"], string> = {
-  actual: "Werkelijk",
-  "no-data": "Geen upload",
-  mixed: "Lopende maand: werkelijk tot nu toe plus verwacht",
-  forecast: "Voorspelling",
-};
 
 /**
  * Cumulative growth month by month. Real months are solid, forecast months dashed. Every value is
@@ -27,6 +21,8 @@ export function PrognoseChart({
   points: PrognosePoint[];
   currentMonth: string;
 }) {
+  const { locale, t } = useI18n();
+  const { euro, euroSigned, monthName } = formatter(locale);
   const [picked, setPicked] = useState<string>(currentMonth);
   const selected = points.find((p) => p.month === picked) ?? points[0];
 
@@ -58,7 +54,7 @@ export function PrognoseChart({
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full"
         role="group"
-        aria-label="Verloop van je geld per maand"
+        aria-label={t.ui.chart.aria}
       >
         <line
           x1={PAD.l}
@@ -98,7 +94,11 @@ export function PrognoseChart({
               id={`pm-${p.month}`}
               tabIndex={isSel ? 0 : -1}
               aria-pressed={isSel}
-              aria-label={`${monthName(p.month)}: ${euroSigned(p.cumulative)} totaal, ${euroSigned(p.net)} deze maand`}
+              aria-label={t.ui.chart.month(
+                monthName(p.month),
+                euroSigned(p.cumulative),
+                euroSigned(p.net),
+              )}
               onClick={() => setPicked(p.month)}
               onKeyDown={(e) => {
                 const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
@@ -178,25 +178,25 @@ export function PrognoseChart({
           className="mr-1 inline-block h-0.5 w-5 align-middle"
           style={{ background: "var(--accent)" }}
         />{" "}
-        werkelijk
+        {t.ui.chart.legendActual}
         <span
           aria-hidden
           className="mr-1 ml-4 inline-block h-0.5 w-5 border-t-2 border-dashed align-middle"
           style={{ borderColor: "var(--accent)" }}
         />
-        voorspeld. Boven elk punt staat je totaal, eronder de groei van die maand.
+        {t.ui.chart.legendForecast}. {t.ui.chart.legendHelp}
       </p>
 
       <div className="border-hair mx-2 mb-3 grid gap-1 border-t pt-4" aria-live="polite">
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="font-display text-xl font-medium">{monthName(selected.month)}</h3>
-          <span className="text-ink-muted text-[13px]">{KIND[selected.kind]}</span>
+          <span className="text-ink-muted text-[13px]">{t.ui.chart.kind[selected.kind]}</span>
         </div>
         <dl className="num grid grid-cols-3 gap-2 text-center">
           {[
-            ["Inkomen", euro(selected.income)],
-            ["Uitgaven", euro(selected.expenses)],
-            ["Groei", euroSigned(selected.net)],
+            [t.ui.chart.income, euro(selected.income)],
+            [t.ui.chart.expenses, euro(selected.expenses)],
+            [t.ui.chart.growth, euroSigned(selected.net)],
           ].map(([k, v]) => (
             <div key={k} className="bg-soft rounded-2xl px-2 py-3">
               <dt className="text-ink-muted text-[13px]">{k}</dt>
@@ -207,12 +207,12 @@ export function PrognoseChart({
       </div>
 
       <table className="sr-only">
-        <caption>Prognose per maand</caption>
+        <caption>{t.ui.chart.table.caption}</caption>
         <thead>
           <tr>
-            <th>Maand</th>
-            <th>Totaal</th>
-            <th>Groei</th>
+            <th>{t.ui.chart.table.month}</th>
+            <th>{t.ui.chart.table.total}</th>
+            <th>{t.ui.chart.table.growth}</th>
           </tr>
         </thead>
         <tbody>

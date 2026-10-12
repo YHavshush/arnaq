@@ -127,7 +127,7 @@ describe("CSV robustness", () => {
     const csv = fixture("rabobank-sample.csv").replace('"2026-09-02"', '"2026-13-45"');
     const res = rabobankParser.parse(csv);
     expect(res.rows).toHaveLength(6);
-    expect(res.skipped[0].reason).toMatch(/Ongeldige datum/);
+    expect(res.skipped[0].reason).toMatch(/Invalid date/);
   });
 
   it("rejects absurd amounts", () => {

@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { api } from "@/lib/client/api";
-import { dayLabel, euroExact } from "@/lib/view/format";
+import { useI18n } from "@/i18n/client";
+import { categoryLabel } from "@/lib/view/categories";
+import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, inputClass } from "./form";
 
@@ -22,9 +24,11 @@ interface Cat {
   type: string;
 }
 
-/** Transactions that need a category. Choosing one saves at once; "onthoud" also learns a rule. */
+/** Transactions that need a category. Choosing one saves at once; "remember" also learns a rule. */
 export function ReviewList({ items, categories }: { items: Item[]; categories: Cat[] }) {
   const router = useRouter();
+  const { locale, t: msg } = useI18n();
+  const { dayLabel, euroExact } = formatter(locale);
   const [busy, startTransition] = useTransition();
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +58,7 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
           onChange={(e) => setRemember(e.target.checked)}
           className="size-5"
         />
-        Onthoud mijn keuze voor dezelfde winkel
+        {msg.ui.upload.review.remember}
       </label>
       <ul className="divide-hair divide-y">
         {items.map((t) => (
@@ -63,34 +67,38 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
               <CategoryIcon name={null} />
               <div className="min-w-0">
                 <div className="truncate font-semibold">
-                  {t.counterparty || t.description || "Onbekend"}
+                  {t.counterparty || t.description || msg.ui.common.unknown}
                 </div>
                 <div className="text-ink-muted truncate text-[13px]">
                   {dayLabel(t.date)}
-                  {t.reason === "foreign-currency" ? `, in ${t.currency}` : ""}
+                  {t.reason === "foreign-currency"
+                    ? `, ${msg.ui.upload.review.inCurrency(t.currency)}`
+                    : ""}
                 </div>
               </div>
               <div className="num font-semibold">{euroExact(t.amount)}</div>
             </div>
             <select
-              aria-label={`Categorie voor ${t.counterparty ?? t.description ?? "transactie"}`}
+              aria-label={msg.ui.upload.review.category(
+                t.counterparty ?? t.description ?? msg.ui.upload.review.transaction,
+              )}
               className={inputClass}
               defaultValue=""
               disabled={busy}
               onChange={(e) => choose(t, Number(e.target.value))}
             >
-              <option value="">Kies een categorie…</option>
-              <optgroup label="Uitgaven">
+              <option value="">{msg.ui.upload.review.choose}</option>
+              <optgroup label={msg.ui.upload.review.expenses}>
                 {expense.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {categoryLabel(c.name, locale)}
                   </option>
                 ))}
               </optgroup>
-              <optgroup label="Inkomen">
+              <optgroup label={msg.ui.upload.review.income}>
                 {income.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.name}
+                    {categoryLabel(c.name, locale)}
                   </option>
                 ))}
               </optgroup>

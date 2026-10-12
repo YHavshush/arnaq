@@ -50,17 +50,17 @@ describe("screen loaders on an imported month", () => {
 
   it("loadOverzicht, loadVasteLasten and loadPrognose run on real data and an empty database", async () => {
     const db = await seeded();
-    const o = await loadOverzicht(db, "2026-09", "2026-09-20");
+    const o = await loadOverzicht(db, "2026-09", "2026-09-20", "nl");
     expect(o.hasActivity).toBe(true);
     expect([o.prev, o.next]).toEqual(["2026-08", "2026-10"]);
-    const v = await loadVasteLasten(db, "2026-09", "2026-09-20");
+    const v = await loadVasteLasten(db, "2026-09", "2026-09-20", "nl");
     expect(v.categories.length).toBeGreaterThan(5);
-    const p = await loadPrognose(db, "2026-09-20", 3);
+    const p = await loadPrognose(db, "2026-09-20", 3, "nl");
     expect(p.points.length).toBeGreaterThan(3);
 
     const empty = await createDb(":memory:");
-    expect((await loadOverzicht(empty, "2026-09", "2026-09-20")).hasActivity).toBe(false);
+    expect((await loadOverzicht(empty, "2026-09", "2026-09-20", "nl")).hasActivity).toBe(false);
     expect((await loadUpload(empty)).share).toBe(0);
-    expect((await loadPrognose(empty, "2026-09-20", 6)).hasForecast).toBe(false);
+    expect((await loadPrognose(empty, "2026-09-20", 6, "nl")).hasForecast).toBe(false);
   });
 });

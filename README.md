@@ -52,6 +52,10 @@ In production the app refuses to start without `DATABASE_URL` (set `KASBOEK_ALLO
 
 Keep the password out of the repo (`.env*` is git-ignored). The app connects as the `postgres` role, which bypasses RLS; the public `anon` and `authenticated` roles see nothing.
 
+## Language
+
+The app is in English by default with Dutch as the second language. The choice (the language button in the top bar) is stored in a cookie. Texts live in `src/i18n/messages/{en,nl}/`: English is the source and Dutch must have exactly the same shape (the compiler and a test check it). Amounts, dates and month names follow the language (`src/lib/view/format.ts`). Server messages (validation, import) are English in the code and translated to Dutch at the API edge (`src/i18n/server-messages.ts`). The default category names are stored in Dutch and shown in English via a label map (`categoryLabel`). To add a language: add it to `LOCALES`, copy `messages/en`, translate, and add a label map and server-message rules.
+
 ## Bank files
 
 - **Revolut:** the CSV export. The period is read from the file name Revolut gives it.

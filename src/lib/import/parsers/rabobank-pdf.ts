@@ -107,7 +107,7 @@ function hasLabel(lines: Line[], label: string): boolean {
 function money(label: string, raw: string | null): number {
   const m = raw ? /^(\S+)(?:\s+(CR|D))?$/.exec(raw) : null;
   if (!m || !AMOUNT_RE.test(m[1]))
-    throw new StatementError(`Kon "${label}" niet lezen uit het afschrift.`);
+    throw new StatementError(`Could not read "${label}" from the statement.`);
   const cents = parseAmountToCents(m[1], ",");
   return m[2] === "D" ? -cents : cents;
 }
@@ -128,8 +128,9 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
     to: dmyToIso(valueBelow(first, "Datum tot en met") ?? "") ?? "",
   };
   if (!period.from || !period.to)
-    throw new StatementError("Kon de periode van het afschrift niet lezen.");
-  if (period.from > period.to) throw new StatementError("De periode van het afschrift klopt niet.");
+    throw new StatementError("Could not read the period of the statement.");
+  if (period.from > period.to)
+    throw new StatementError("The period of the statement is not valid.");
 
   // "NL24 RABO 0359 8587 59 EUR": the account number followed by its currency.
   const ibanTokens = (valueBelow(first, "IBAN / Rekeningnummer") ?? "")
@@ -140,7 +141,7 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
   const candidate = ibanTokens.join("");
   const accountIdentifier = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(candidate) ? candidate : null;
   if (!accountIdentifier)
-    throw new StatementError("Kon het rekeningnummer niet lezen uit het afschrift.");
+    throw new StatementError("Could not read the account number from the statement.");
 
   const opening = money("Beginsaldo", valueBelow(first, "Beginsaldo"));
   const closing = money("Eindsaldo", valueBelow(first, "Eindsaldo"));
@@ -164,7 +165,7 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
     try {
       const dm = /^(\d{2})-(\d{2})$/.exec(joinItems(head.items.filter((i) => i.x < COL.date)));
       const amountItem = head.items.find((i) => i.x >= COL.amounts && AMOUNT_RE.test(i.str.trim()));
-      if (!dm || !amountItem) throw new Error("Regel zonder datum of bedrag");
+      if (!dm || !amountItem) throw new Error("Row without a date or an amount");
       const cents = parseAmountToCents(amountItem.str.trim(), ",");
       const amount = amountItem.right > COL.creditFrom ? cents : -cents;
       const type = joinItems(head.items.filter((i) => i.x >= COL.type[0] && i.x < COL.type[1]));
@@ -195,7 +196,7 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
         .find(Boolean);
       // The booking date (verwerkingsdatum) is what the bank's own CSV calls "Datum".
       const date = (processed && dmyToIso(processed)) || interestDate(dm[1], dm[2], period);
-      if (!date) throw new Error("Datum buiten de periode van het afschrift");
+      if (!date) throw new Error("Date outside the statement period");
       const description =
         cleanText(noteTexts.filter((t) => !t.startsWith("Verwerkingsdatum:")).join(" "), 1000) ||
         null;
@@ -249,7 +250,7 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
     opening - debit + credit !== closing
   ) {
     throw new StatementError(
-      "Het afschrift kon niet betrouwbaar gelezen worden: de transacties kloppen niet met de totalen en saldi op het afschrift. Er is niets geïmporteerd. Download het afschrift opnieuw of gebruik de CSV-export.",
+      "The statement could not be read reliably: the transactions do not match the totals and balances on the statement. Nothing was imported. Download the statement again or use the CSV export.",
     );
   }
   return { rows, skipped, accountIdentifier, period, currency };

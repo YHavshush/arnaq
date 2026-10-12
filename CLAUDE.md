@@ -47,5 +47,5 @@ Model table:
 
 ## Decisions 2026-10-12 (language, accounts)
 
-- **Language:** the app must be English by default with Dutch as the second option, switchable by the user. Until the i18n layer exists the UI and messages are Dutch; do not add more hard-coded Dutch sentences than needed, and never build a sentence by concatenating translated fragments.
+- **Language (done):** English by default, Dutch second, switchable. All UI text goes through the catalogs in `src/i18n/messages/` (never hard-code text in components; never build a sentence by joining translated fragments, a catalog function returns the whole sentence). Server messages stay English in code and are translated at the API edge. See README "Language".
 - **Accounts:** Supabase Auth (register, log in, log out, reset password). **Multiple users, each with their own data**: every table gets an owner and the database enforces it (RLS), see the auth milestone. The unauthenticated API stays closed once that lands.

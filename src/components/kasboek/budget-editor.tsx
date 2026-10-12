@@ -2,7 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useI18n } from "@/i18n/client";
+import type { Locale } from "@/i18n/config";
 import { api, euroInputToCents } from "@/lib/client/api";
+import { categoryLabel } from "@/lib/view/categories";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, GhostButton, inputClass } from "./form";
 
@@ -13,12 +16,12 @@ interface Line {
   budget: number | null;
 }
 
-const toInput = (cents: number | null) =>
-  cents === null ? "" : (cents / 100).toFixed(2).replace(".", ",");
+const toInput = (cents: number | null, locale: Locale) =>
+  cents === null ? "" : (cents / 100).toFixed(2).replace(".", locale === "nl" ? "," : ".");
 
 /**
  * One input per category plus an optional total. A field saves when you leave it; an empty field
- * removes that budget. "Kopieer vorige maand" fills the month from the one before.
+ * removes that budget. "Copy previous month" fills the month from the one before.
  */
 export function BudgetEditor({
   month,
@@ -34,6 +37,7 @@ export function BudgetEditor({
   prevLabel: string;
 }) {
   const router = useRouter();
+  const { locale, t } = useI18n();
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [savedKey, setSavedKey] = useState<string | null>(null);
@@ -46,8 +50,7 @@ export function BudgetEditor({
   ) {
     const trimmed = raw.trim();
     const cents = trimmed === "" ? null : euroInputToCents(trimmed);
-    if (trimmed !== "" && cents === null)
-      return setError("Vul een bedrag in, bijvoorbeeld 250 of 12,50.");
+    if (trimmed !== "" && cents === null) return setError(t.ui.budget.errAmount);
     if (cents === before) return;
     setError(null);
     const res = await call(cents);
@@ -67,12 +70,12 @@ export function BudgetEditor({
     <div className="grid gap-4">
       <div className="glass grid gap-3 p-4">
         <label className="grid gap-1.5 text-sm font-medium">
-          Totaal budget voor de maand
+          {t.ui.budget.total}
           <input
             inputMode="decimal"
-            defaultValue={toInput(total)}
+            defaultValue={toInput(total, locale)}
             key={`total-${total}`}
-            placeholder="Leeg: som van de categorieën"
+            placeholder={t.ui.budget.totalPlaceholder}
             className={inputClass}
             onBlur={(e) =>
               save("total", e.target.value, total, (amount) =>
@@ -83,7 +86,7 @@ export function BudgetEditor({
         </label>
         <div>
           <GhostButton type="button" disabled={busy} onClick={copy}>
-            Kopieer {prevLabel}
+            {t.ui.budget.copy(prevLabel)}
           </GhostButton>
         </div>
       </div>
@@ -97,18 +100,20 @@ export function BudgetEditor({
             >
               <CategoryIcon name={l.name} />
               <label htmlFor={`b-${l.categoryId}`} className="min-w-0 truncate font-semibold">
-                {l.name}
+                {categoryLabel(l.name, locale)}
                 {savedKey === `c${l.categoryId}` && (
-                  <span className="text-good ml-2 text-[13px] font-medium">bewaard</span>
+                  <span className="text-good ml-2 text-[13px] font-medium">
+                    {t.ui.budget.saved}
+                  </span>
                 )}
               </label>
               <input
                 id={`b-${l.categoryId}`}
                 inputMode="decimal"
-                defaultValue={toInput(l.budget)}
+                defaultValue={toInput(l.budget, locale)}
                 key={`${l.categoryId}-${l.budget}`}
                 placeholder="€"
-                aria-label={`Budget voor ${l.name} in euro`}
+                aria-label={t.ui.budget.forCategory(categoryLabel(l.name, locale))}
                 className={`${inputClass} num text-right`}
                 onBlur={(e) =>
                   save(`c${l.categoryId}`, e.target.value, l.budget, (amount) =>

@@ -3,14 +3,16 @@
 import { Palette } from "lucide-react";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { THEME_CHOICES, applyTheme, readTheme, subscribeTheme } from "@/design/theme-client";
+import { useI18n } from "@/i18n/client";
 
 /** Light, Dark, Dark + or follow the system. The only setting the app has. */
 export function ThemeSwitcher() {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const choice = useSyncExternalStore(subscribeTheme, readTheme, () => "system" as const);
   const box = useRef<HTMLDivElement>(null);
 
-  // Follow the system while "Systeem" is chosen.
+  // Follow the system while "System" is chosen.
   useEffect(() => {
     if (choice !== "system") return;
     const mq = matchMedia("(prefers-color-scheme: dark)");
@@ -41,7 +43,7 @@ export function ThemeSwitcher() {
         type="button"
         aria-haspopup="true"
         aria-expanded={open}
-        aria-label="Thema kiezen"
+        aria-label={t.ui.theme.choose}
         onClick={() => setOpen((o) => !o)}
         className="glass grid size-11 place-items-center rounded-full"
       >
@@ -50,22 +52,22 @@ export function ThemeSwitcher() {
       {open && (
         <div
           role="radiogroup"
-          aria-label="Thema"
+          aria-label={t.ui.theme.group}
           className="glass-nav fade-in absolute top-12 right-0 z-30 grid w-44 gap-0.5 rounded-2xl p-1.5"
         >
-          {THEME_CHOICES.map((t) => (
+          {THEME_CHOICES.map((value) => (
             <button
-              key={t.value}
+              key={value}
               type="button"
               role="radio"
-              aria-checked={choice === t.value}
+              aria-checked={choice === value}
               onClick={() => {
-                applyTheme(t.value);
+                applyTheme(value);
                 setOpen(false);
               }}
               className="aria-checked:bg-soft aria-checked:text-accent flex h-11 items-center rounded-xl px-3 text-left text-[15px] font-medium"
             >
-              {t.label}
+              {t.ui.theme[value]}
             </button>
           ))}
         </div>

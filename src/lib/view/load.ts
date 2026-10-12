@@ -8,6 +8,7 @@ import { addMonths } from "@/lib/recurring/dates";
 import { listRecurringItems } from "@/lib/recurring/items";
 import { getMissedOccurrences, getOccurrences } from "@/lib/recurring/occurrences";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
+import type { Locale } from "@/i18n/config";
 import { buildOverzicht } from "./overzicht";
 import { buildPrognose } from "./prognose";
 import { buildVasteLasten } from "./vaste-lasten";
@@ -25,23 +26,23 @@ export function parseHorizon(raw: string | string[] | undefined): number {
   return (HORIZONS as readonly number[]).includes(n) ? n : 6;
 }
 
-export async function loadOverzicht(db: Db, month: string, today: string) {
+export async function loadOverzicht(db: Db, month: string, today: string, locale: Locale) {
   const [overview, occurrences] = await Promise.all([
     getMonthOverview(db, month),
     getOccurrences(db, { from: month, to: month }),
   ]);
   return {
-    ...buildOverzicht({ overview, occurrences, today }),
+    ...buildOverzicht({ overview, occurrences, today, locale }),
     prev: addMonths(month, -1),
     next: addMonths(month, 1),
   };
 }
 
-export async function loadPrognose(db: Db, today: string, months: number) {
-  return buildPrognose(await getForecast(db, { today, months }));
+export async function loadPrognose(db: Db, today: string, months: number, locale: Locale) {
+  return buildPrognose(await getForecast(db, { today, months }), locale);
 }
 
-export async function loadVasteLasten(db: Db, month: string, today: string) {
+export async function loadVasteLasten(db: Db, month: string, today: string, locale: Locale) {
   const [occurrences, items, missed, suggestions, categories] = await Promise.all([
     getOccurrences(db, { from: month, to: month }),
     listRecurringItems(db),
@@ -50,7 +51,7 @@ export async function loadVasteLasten(db: Db, month: string, today: string) {
     db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
   ]);
   return {
-    ...buildVasteLasten(occurrences),
+    ...buildVasteLasten(occurrences, locale),
     items,
     missed,
     suggestions,

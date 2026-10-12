@@ -16,7 +16,7 @@ export const isPdf = (bytes: Uint8Array) =>
   bytes[2] === 0x44 &&
   bytes[3] === 0x46; // "%PDF"
 
-const tooComplex = () => new StatementError("Dit PDF-bestand is te complex voor een afschrift.");
+const tooComplex = () => new StatementError("This PDF is too complex to be a statement.");
 
 /** Positioned text per page. Text only: no scripts, forms or images are touched. */
 export async function readPdfPages(bytes: Uint8Array): Promise<PdfItem[][]> {
@@ -30,7 +30,7 @@ export async function readPdfPages(bytes: Uint8Array): Promise<PdfItem[][]> {
       maxImageSize: 1,
     });
   } catch {
-    throw new StatementError("Dit PDF-bestand kon niet gelezen worden.");
+    throw new StatementError("This PDF could not be read.");
   }
   try {
     if (pdf.numPages > MAX_PDF_PAGES) throw tooComplex();
@@ -46,7 +46,7 @@ export async function readPdfPages(bytes: Uint8Array): Promise<PdfItem[][]> {
           width?: number;
         }[];
       } catch {
-        throw new StatementError("Dit PDF-bestand kon niet gelezen worden.");
+        throw new StatementError("This PDF could not be read.");
       }
       total += items.length;
       if (items.length > MAX_ITEMS_PER_PAGE || total > MAX_ITEMS_TOTAL) throw tooComplex();

@@ -1,12 +1,17 @@
+"use client";
+
 import { Inbox } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useI18n } from "@/i18n/client";
+import type { Messages } from "@/i18n/messages";
 
 /** Calm placeholder while a screen loads: same footprint as the hero, no spinner. */
-export function HeroSkeleton({ label }: { label: string }) {
+export function HeroSkeleton({ screen }: { screen: keyof Messages["ui"]["states"]["loading"] }) {
+  const { t } = useI18n();
   return (
     <div role="status" aria-live="polite" className="flex flex-col items-center gap-5 pt-2">
-      <span className="sr-only">{label}</span>
+      <span className="sr-only">{t.ui.states.loading[screen]}</span>
       <div className="bg-track size-56 animate-pulse rounded-full motion-reduce:animate-none" />
       <div className="bg-track h-6 w-64 max-w-full animate-pulse rounded-full motion-reduce:animate-none" />
       <div className="mt-6 grid w-full grid-cols-2 gap-3">

@@ -5,12 +5,13 @@ import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { RulesManager } from "@/components/kasboek/rules-manager";
 import { HeroSkeleton } from "@/components/kasboek/states";
+import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { sortRules } from "@/lib/categories/categorise";
 
-export default function InstellingenPage() {
+export default function SettingsPage() {
   return (
-    <Suspense fallback={<HeroSkeleton label="Instellingen worden geladen" />}>
+    <Suspense fallback={<HeroSkeleton screen="settings" />}>
       <Content />
     </Suspense>
   );
@@ -21,6 +22,8 @@ const download =
 
 async function Content() {
   await requestTime();
+  const { t } = await getI18n();
+  const s = t.ui.settings;
   const db = await getDb();
   const [rules, categories] = await Promise.all([
     db.select().from(schema.categorisationRules),
@@ -30,30 +33,27 @@ async function Content() {
   return (
     <div className="fade-in">
       <MoodSetter mood="neutral" />
-      <PageHeader title="Instellingen" sub="Je gegevens en je regels" />
+      <PageHeader title={s.title} sub={s.sub} />
 
-      <Section title="Back-up">
-        <p className="text-ink-muted mb-3 max-w-[52ch] px-1 text-[15px]">
-          Bewaar een kopie van alles wat Kasboek van je weet. De back-up is één bestand dat je zelf
-          bewaart; de lijst met transacties past in een spreadsheet.
-        </p>
+      <Section title={s.backup}>
+        <p className="text-ink-muted mb-3 max-w-[52ch] px-1 text-[15px]">{s.backupBody}</p>
         <div className="flex flex-wrap gap-3">
           <a href="/api/export" download className={download}>
-            <Download className="size-4" /> Volledige back-up (JSON)
+            <Download className="size-4" /> {s.backupFull}
           </a>
           <a href="/api/export/csv" download className={download}>
-            <Download className="size-4" /> Transacties (CSV)
+            <Download className="size-4" /> {s.backupCsv}
           </a>
         </div>
       </Section>
 
-      <Section title="Sorteerregels" aside={`${rules.length} regels`}>
+      <Section title={s.rules} aside={s.rulesAside(rules.length)}>
         <RulesManager
           rules={sortRules(rules).map((r) => ({
             id: r.id,
             pattern: r.pattern,
             priority: r.priority,
-            categoryName: name.get(r.categoryId) ?? "Onbekend",
+            categoryName: name.get(r.categoryId) ?? s.unknownCategory,
           }))}
           categories={categories.filter((c) => c.type !== "transfer")}
         />
