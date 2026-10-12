@@ -39,3 +39,8 @@ Model table:
 - The owner's **Rabobank statements arrive as PDF** (Rekeningafschrift), Revolut as CSV. Both formats were verified against real files (never committed; `*.pdf` and `*.csv` are git-ignored). Tests use invented data only (`tests/helpers/statement-pdf.ts`).
 - The PDF parser accepts a statement only when it adds up to the printed totals and balances. Month coverage comes from the declared period: a month counts as uploaded only when a statement covers all of it.
 - `data/real/` (git-ignored) is a local PGlite database made from the owner's real files for looking at the screens; never commit it or paste its contents anywhere.
+
+## Supabase (2026-10-12)
+
+- Project `kasboek`, ref `vdjqqidkoputigxxeqoz`, eu-central-1. Schema applied (migrations 0000 to 0002, registered in `drizzle.__drizzle_migrations`). The older project "yonathanhav@gmail.com's Project" (paused) is not used.
+- The DB password and connection strings are the owner's; they never go in the repo or the chat. Use `DATABASE_URL` (see README).
