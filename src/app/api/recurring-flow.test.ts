@@ -56,16 +56,15 @@ describe("recurring items over HTTP", () => {
       new Request("http://localhost/api/import", { method: "POST", body: form }),
     );
     expect(upload.status).toBe(200);
-    const d = db.getDb();
-    const [account] = d.select().from(db.schema.accounts).all();
+    const d = await db.getDb();
+    const [account] = await d.select().from(db.schema.accounts);
     let n = 0;
-    const tx = (date: string, amount: number, counterparty: string) =>
-      d
+    const tx = async (date: string, amount: number, counterparty: string) =>
+      await d
         .insert(db.schema.transactions)
-        .values({ accountId: account.id, date, amount, counterparty, importHash: `x${n++}` })
-        .run();
-    for (const m of ["07", "08", "09"]) tx(`2026-${m}-05`, -1399, "Netflix");
-    for (const m of ["07", "08"]) tx(`2026-${m}-05`, 123456, "Voorbeeld Werkgever BV");
+        .values({ accountId: account.id, date, amount, counterparty, importHash: `x${n++}` });
+    for (const m of ["07", "08", "09"]) await tx(`2026-${m}-05`, -1399, "Netflix");
+    for (const m of ["07", "08"]) await tx(`2026-${m}-05`, 123456, "Voorbeeld Werkgever BV");
 
     // Suggestions: Netflix and the salary (3 months each); Spotify has only one month.
     const suggestions = (await (await h.suggestions.GET()).json()) as {
@@ -143,11 +142,9 @@ describe("recurring items over HTTP", () => {
     expect((await h.item.DELETE(get("/x"), ctx(spotifyId))).status).toBe(204);
     expect((await h.item.GET(get("/x"), ctx(spotifyId))).status).toBe(404);
     expect((await h.item.DELETE(get("/x"), ctx(spotifyId))).status).toBe(404);
-    const spotifyTx = d
-      .select()
-      .from(db.schema.transactions)
-      .all()
-      .find((t) => t.counterparty === "Spotify AB")!;
+    const spotifyTx = (await d.select().from(db.schema.transactions)).find(
+      (t) => t.counterparty === "Spotify AB",
+    )!;
     expect(spotifyTx.matchedOccurrenceId).toBeNull();
   });
 

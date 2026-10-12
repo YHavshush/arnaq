@@ -4,6 +4,6 @@ import { getDb, schema } from "@/db";
 export async function GET() {
   await requestTime();
   return Response.json(
-    getDb().select().from(schema.categories).orderBy(schema.categories.sortOrder).all(),
+    await (await getDb()).select().from(schema.categories).orderBy(schema.categories.sortOrder),
   );
 }

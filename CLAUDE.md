@@ -1,6 +1,6 @@
 # CLAUDE.md RULES
 
-- Stack: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + SQLite via Drizzle. Local first, hosted later on a Hetzner server via Docker.
+- Stack: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Postgres via Drizzle (PGlite locally and in tests, Supabase when hosted). Local first.
 - Money is stored as integer cents, never floats.
 - Never commit real bank CSVs or the database. Only anonymised files in tests/fixtures/.
 - One branch per milestone (feat/<name>), conventional commits (feat:, fix:, chore:, test:).
@@ -25,7 +25,7 @@ Model table:
 
 ## Decisions added 2026-10-11
 
-- **Database target is Supabase (Postgres).** The user sets up the Supabase project later. Until then keep everything Postgres-portable: no new SQLite-only SQL, money as integers (bigint in Postgres), no reliance on synchronous DB calls in new code. A `feat/postgres-port` milestone converts the code to async Drizzle on Postgres (PGlite locally and in tests, postgres-js for Supabase). Milestone 9 becomes Supabase + app hosting + Supabase Auth; enable RLS (deny all) on every table because Supabase exposes `public` over its REST API.
+- **Database target is Supabase (Postgres).** The user sets up the Supabase project later. Until then keep everything Postgres-portable: no new SQLite-only SQL, money as integers (bigint in Postgres), no reliance on synchronous DB calls in new code. The `feat/postgres-port` milestone is done: all DB code is async Drizzle on Postgres (PGlite locally and in tests, postgres-js for Supabase). Always `await` DB calls (ESLint enforces it), use `tx` inside `db.transaction`, and test with `createDb(":memory:")`. Milestone 9 becomes Supabase + app hosting + Supabase Auth; enable RLS (deny all) on every table because Supabase exposes `public` over its REST API.
 - **The user has final say on the look of the app.** Milestone 6 produces vastly different design variants (UI UX Pro Max to generate, Impeccable principles to critique and iterate), shown as mock screens with demo data. Present one final, or 2-3 only when they are genuinely different. Do not build the dashboard (milestone 7) before the user picks.
 
 ## Design system (milestone 6, done)

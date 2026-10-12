@@ -9,10 +9,10 @@ beforeAll(async () => {
   ({ POST } = await import("./route"));
 });
 
-const upload = (fields: Record<string, string | File>) => {
+const upload = async (fields: Record<string, string | File>) => {
   const form = new FormData();
   for (const [k, v] of Object.entries(fields)) form.set(k, v);
-  return POST(new Request("http://localhost/api/import", { method: "POST", body: form }));
+  return await POST(new Request("http://localhost/api/import", { method: "POST", body: form }));
 };
 const csv = (name: string) =>
   new File([readFileSync(path.join(process.cwd(), "tests/fixtures", name))], name, {

@@ -73,42 +73,43 @@ export function planOccurrences(
  * Idempotent: existing occurrences (whatever their status) are never changed or duplicated.
  * Returns the number of occurrences created.
  */
-export function generateOccurrences(db: Db, opts: { throughMonth: string }): number {
+export async function generateOccurrences(db: Db, opts: { throughMonth: string }): Promise<number> {
   if (!isMonth(opts.throughMonth))
     throw new RecurringError(`Invalid month "${opts.throughMonth}", use YYYY-MM.`);
-  const items = db
+  const items = await db
     .select()
     .from(schema.recurringItems)
-    .where(eq(schema.recurringItems.active, true))
-    .all();
+    .where(eq(schema.recurringItems.active, true));
+  const planned = items.flatMap((item) =>
+    planOccurrences(item, { throughMonth: opts.throughMonth }).map((p) => ({
+      recurringItemId: item.id,
+      month: p.month,
+      expectedDate: p.expectedDate,
+      expectedAmount: item.expectedAmount,
+    })),
+  );
+  // Chunked multi-row inserts: one round trip per 500 instead of one per occurrence.
   let created = 0;
-  for (const item of items) {
-    for (const p of planOccurrences(item, { throughMonth: opts.throughMonth })) {
-      created += db
+  for (let i = 0; i < planned.length; i += 500) {
+    created += (
+      await db
         .insert(schema.recurringOccurrences)
-        .values({
-          recurringItemId: item.id,
-          month: p.month,
-          expectedDate: p.expectedDate,
-          expectedAmount: item.expectedAmount,
-        })
+        .values(planned.slice(i, i + 500))
         .onConflictDoNothing({
           target: [schema.recurringOccurrences.recurringItemId, schema.recurringOccurrences.month],
         })
-        .run().changes;
-    }
+        .returning({ id: schema.recurringOccurrences.id })
+    ).length;
   }
   return created;
 }
 
 /** Months with at least one upload (any account). Two uploads of one month count once. */
-export function coveredMonths(db: Db): Set<string> {
+export async function coveredMonths(db: Db): Promise<Set<string>> {
   return new Set(
-    db
-      .selectDistinct({ month: schema.imports.month })
-      .from(schema.imports)
-      .all()
-      .map((r) => r.month),
+    (await db.selectDistinct({ month: schema.imports.month }).from(schema.imports)).map(
+      (r) => r.month,
+    ),
   );
 }
 
@@ -122,16 +123,15 @@ export function coveredMonths(db: Db): Set<string> {
  * yet, so we do not cry wolf. A late payment can still match a missed occurrence (see matchOccurrences).
  * Returns the number of occurrences marked missed.
  */
-export function markMissed(db: Db, opts: { today: string }): number {
+export async function markMissed(db: Db, opts: { today: string }): Promise<number> {
   if (!isDate(opts.today))
     throw new RecurringError(`Invalid date "${opts.today}", use YYYY-MM-DD.`);
-  const covered = coveredMonths(db);
+  const covered = await coveredMonths(db);
   const firstUpload = [...covered].sort()[0] ?? "";
-  const open = db
+  const open = await db
     .select()
     .from(schema.recurringOccurrences)
-    .where(eq(schema.recurringOccurrences.status, "expected"))
-    .all();
+    .where(eq(schema.recurringOccurrences.status, "expected"));
   let n = 0;
   for (const o of open) {
     const windowStart = addDays(o.expectedDate, -MATCH_WINDOW_DAYS);
@@ -143,10 +143,10 @@ export function markMissed(db: Db, opts: { today: string }): number {
     if (!covered.has(own)) continue;
     if (before !== own && !covered.has(before) && before >= firstUpload) continue;
     if (after !== own && !covered.has(after)) continue;
-    db.update(schema.recurringOccurrences)
+    await db
+      .update(schema.recurringOccurrences)
       .set({ status: "missed" })
-      .where(eq(schema.recurringOccurrences.id, o.id))
-      .run();
+      .where(eq(schema.recurringOccurrences.id, o.id));
     n++;
   }
   return n;
@@ -183,7 +183,10 @@ export interface OccurrenceFilter {
  * Occurrences with their item and, when matched, the real amount from the transaction.
  * This is the read model for the recurring screen and the forecast.
  */
-export function getOccurrences(db: Db, filter: OccurrenceFilter = {}): OccurrenceView[] {
+export async function getOccurrences(
+  db: Db,
+  filter: OccurrenceFilter = {},
+): Promise<OccurrenceView[]> {
   for (const m of [filter.from, filter.to]) {
     if (m !== undefined && !isMonth(m))
       throw new RecurringError(`Invalid month "${m}", use YYYY-MM.`);
@@ -199,43 +202,43 @@ export function getOccurrences(db: Db, filter: OccurrenceFilter = {}): Occurrenc
   if (filter.recurringItemId !== undefined)
     where.push(eq(o.recurringItemId, filter.recurringItemId));
 
-  return db
-    .select({
-      o,
-      item: schema.recurringItems,
-      tx: { amount: schema.transactions.amount, date: schema.transactions.date },
-    })
-    .from(o)
-    .innerJoin(schema.recurringItems, eq(schema.recurringItems.id, o.recurringItemId))
-    .leftJoin(schema.transactions, eq(schema.transactions.id, o.transactionId))
-    .where(and(...where))
-    .orderBy(asc(o.month), asc(o.expectedDate), asc(o.recurringItemId))
-    .all()
-    .map(({ o, item, tx }) => {
-      const matched = o.status === "matched" && tx !== null;
-      // Matching only pairs same-sign transactions, so this is the positive amount.
-      const actualAmount = matched ? (item.type === "expense" ? 0 - tx.amount : tx.amount) : null;
-      return {
-        id: o.id,
-        recurringItemId: o.recurringItemId,
-        itemName: item.name,
-        type: item.type,
-        categoryId: item.categoryId,
-        month: o.month,
-        expectedDate: o.expectedDate,
-        expectedAmount: o.expectedAmount,
-        status: o.status,
-        transactionId: o.transactionId,
-        actualAmount,
-        actualDate: matched ? tx.date : null,
-        amount: actualAmount ?? o.expectedAmount,
-      };
-    });
+  return (
+    await db
+      .select({
+        o,
+        item: schema.recurringItems,
+        tx: { amount: schema.transactions.amount, date: schema.transactions.date },
+      })
+      .from(o)
+      .innerJoin(schema.recurringItems, eq(schema.recurringItems.id, o.recurringItemId))
+      .leftJoin(schema.transactions, eq(schema.transactions.id, o.transactionId))
+      .where(and(...where))
+      .orderBy(asc(o.month), asc(o.expectedDate), asc(o.recurringItemId))
+  ).map(({ o, item, tx }) => {
+    const matched = o.status === "matched" && tx !== null;
+    // Matching only pairs same-sign transactions, so this is the positive amount.
+    const actualAmount = matched ? (item.type === "expense" ? 0 - tx.amount : tx.amount) : null;
+    return {
+      id: o.id,
+      recurringItemId: o.recurringItemId,
+      itemName: item.name,
+      type: item.type,
+      categoryId: item.categoryId,
+      month: o.month,
+      expectedDate: o.expectedDate,
+      expectedAmount: o.expectedAmount,
+      status: o.status,
+      transactionId: o.transactionId,
+      actualAmount,
+      actualDate: matched ? tx.date : null,
+      amount: actualAmount ?? o.expectedAmount,
+    };
+  });
 }
 
 /** Missed occurrences for the review list, most recent first. */
-export function getMissedOccurrences(db: Db): OccurrenceView[] {
-  return getOccurrences(db, { status: "missed" }).sort(
+export async function getMissedOccurrences(db: Db): Promise<OccurrenceView[]> {
+  return (await getOccurrences(db, { status: "missed" })).sort(
     (a, b) => b.expectedDate.localeCompare(a.expectedDate) || a.id - b.id,
   );
 }

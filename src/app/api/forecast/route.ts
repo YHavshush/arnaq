@@ -11,10 +11,10 @@ import { getForecast } from "@/lib/forecast/forecast";
 export async function GET(request: Request) {
   // The answer depends on today's date: never prerender it.
   await requestTime();
-  return handle(() => {
+  return await handle(async () => {
     const params = new URL(request.url).searchParams;
     return Response.json(
-      getForecast(getDb(), {
+      await getForecast(await getDb(), {
         today: todayIso(),
         months: intParam(params, "months"),
         history: intParam(params, "history"),

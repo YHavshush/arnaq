@@ -7,7 +7,7 @@ Personal budget tracker. I upload one CSV per bank account per month. The app sh
 ## Decisions
 
 - Banks: Rabobank + Revolut (two accounts)
-- Stack: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + SQLite (Drizzle ORM)
+- Stack: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Postgres (Drizzle ORM; PGlite locally, Supabase hosted)
 - Hosting: local first, later on a friend's Hetzner server via Docker
 - Prognose horizon: adjustable in the UI. Default 6 months (placeholder, can change)
 - Budget: per category per month, plus an optional total per month
@@ -60,4 +60,4 @@ Other: Interne overboeking (excluded from totals).
 6. feat/design-system (Sonnet): install UI UX Pro Max, generate a design system for a personal finance dashboard (style, palette, fonts), save as design tokens (Tailwind config / CSS variables), document in DESIGN.md. No new styles from the catalog after this.
 7. feat/dashboard (Sonnet): upload screen, month overview (budget vs actual per category and total), recurring items screen with suggestions, forecast chart with horizon selector, needs-review list, settings (categories, rules, budgets).
 8. feat/polish (Sonnet, Haiku for small fixes): install Impeccable, run /teach-impeccable once, run critique and audit on each screen and fix findings, transfer detection edge cases, database backup/export.
-9. feat/deploy (Sonnet, Opus for a final security review): Dockerfile + docker-compose with SQLite on a persistent volume, authentication (login required, this is financial data on someone else's server), HTTPS via reverse proxy, automated encrypted backups, deploy notes for the Hetzner server.
+9. feat/deploy (Sonnet, Opus for a final security review): Supabase project (migrations, RLS deny-all, pooled connection), app hosting, Supabase Auth (login required, this is financial data), backups/export, authentication (login required, this is financial data on someone else's server), HTTPS via reverse proxy, automated encrypted backups, deploy notes for the Hetzner server.

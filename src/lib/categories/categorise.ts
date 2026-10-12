@@ -1,5 +1,5 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
-import { schema, type Db } from "@/db";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { first, schema, type Db } from "@/db";
 
 export interface Rule {
   id: number;
@@ -34,8 +34,8 @@ export function matchRule(sortedRules: Rule[], t: Categorisable): Rule | undefin
  * already has a category (so manual choices stick) or an internal transfer.
  * Returns the number of transactions categorised.
  */
-export function applyRules(db: Db, opts: { importId?: number } = {}): number {
-  const rules = sortRules(db.select().from(schema.categorisationRules).all());
+export async function applyRules(db: Db, opts: { importId?: number } = {}): Promise<number> {
+  const rules = sortRules(await db.select().from(schema.categorisationRules));
   if (rules.length === 0) return 0;
 
   const where = [
@@ -43,34 +43,41 @@ export function applyRules(db: Db, opts: { importId?: number } = {}): number {
     eq(schema.transactions.isInternalTransfer, false),
   ];
   if (opts.importId !== undefined) where.push(eq(schema.transactions.importId, opts.importId));
-  const todo = db
+  const todo = await db
     .select()
     .from(schema.transactions)
-    .where(and(...where))
-    .all();
+    .where(and(...where));
 
+  // Group by target category so each category is one UPDATE per chunk, not one per transaction.
+  const idsByCategory = new Map<number, number[]>();
   let n = 0;
   for (const t of todo) {
     const rule = matchRule(rules, t);
     if (!rule) continue;
-    db.update(schema.transactions)
-      .set({ categoryId: rule.categoryId })
-      .where(eq(schema.transactions.id, t.id))
-      .run();
+    const ids = idsByCategory.get(rule.categoryId);
+    if (ids) ids.push(t.id);
+    else idsByCategory.set(rule.categoryId, [t.id]);
     n++;
+  }
+  for (const [categoryId, ids] of idsByCategory) {
+    for (let i = 0; i < ids.length; i += 500) {
+      await db
+        .update(schema.transactions)
+        .set({ categoryId })
+        .where(inArray(schema.transactions.id, ids.slice(i, i + 500)));
+    }
   }
   return n;
 }
 
 /** Transactions that need a human: no category yet, or not in the account's currency. */
-export function getNeedsReview(db: Db) {
-  const rows = db
+export async function getNeedsReview(db: Db) {
+  const rows = await db
     .select({ t: schema.transactions, accountCurrency: schema.accounts.currency })
     .from(schema.transactions)
     .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
     .where(eq(schema.transactions.isInternalTransfer, false))
-    .orderBy(desc(schema.transactions.date), desc(schema.transactions.id))
-    .all();
+    .orderBy(desc(schema.transactions.date), desc(schema.transactions.id));
   return rows
     .filter(({ t, accountCurrency }) => t.categoryId === null || t.currency !== accountCurrency)
     .map(({ t, accountCurrency }) => ({
@@ -96,42 +103,37 @@ export interface AssignResult {
 export class CategoriseError extends Error {}
 
 /** Set a transaction's category by hand, optionally learning a rule from it. */
-export function assignCategory(
+export async function assignCategory(
   db: Db,
   transactionId: number,
   categoryId: number,
   opts: AssignOptions = {},
-): AssignResult {
-  const t = db
-    .select()
-    .from(schema.transactions)
-    .where(eq(schema.transactions.id, transactionId))
-    .get();
+): Promise<AssignResult> {
+  const t = await first(
+    db.select().from(schema.transactions).where(eq(schema.transactions.id, transactionId)),
+  );
   if (!t) throw new CategoriseError(`Transaction ${transactionId} does not exist.`);
-  const category = db
-    .select()
-    .from(schema.categories)
-    .where(eq(schema.categories.id, categoryId))
-    .get();
+  const category = await first(
+    db.select().from(schema.categories).where(eq(schema.categories.id, categoryId)),
+  );
   if (!category) throw new CategoriseError(`Category ${categoryId} does not exist.`);
 
-  db.update(schema.transactions)
+  await db
+    .update(schema.transactions)
     .set({ categoryId, isInternalTransfer: category.type === "transfer" })
-    .where(eq(schema.transactions.id, transactionId))
-    .run();
+    .where(eq(schema.transactions.id, transactionId));
 
   if (!opts.createRule) return { ruleId: null, alsoCategorised: 0 };
 
   const pattern = (opts.pattern ?? t.counterparty ?? t.description ?? "").trim();
   if (!pattern) throw new CategoriseError("Cannot create a rule without a pattern.");
-  const [rule] = db
+  const [rule] = await db
     .insert(schema.categorisationRules)
     .values({ pattern, categoryId, priority: opts.priority ?? 10 })
-    .returning()
-    .all();
-  return { ruleId: rule.id, alsoCategorised: applyRules(db) };
+    .returning();
+  return { ruleId: rule.id, alsoCategorised: await applyRules(db) };
 }
 
-export function deleteRule(db: Db, ruleId: number): void {
-  db.delete(schema.categorisationRules).where(eq(schema.categorisationRules.id, ruleId)).run();
+export async function deleteRule(db: Db, ruleId: number): Promise<void> {
+  await db.delete(schema.categorisationRules).where(eq(schema.categorisationRules.id, ruleId));
 }

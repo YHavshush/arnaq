@@ -8,10 +8,10 @@ import { getOccurrences } from "@/lib/recurring/occurrences";
  * transaction; `amount` is the one to count.
  */
 export async function GET(request: Request) {
-  return handle(() => {
+  return await handle(async () => {
     const params = new URL(request.url).searchParams;
     return Response.json(
-      getOccurrences(getDb(), {
+      await getOccurrences(await getDb(), {
         from: params.get("from") ?? undefined,
         to: params.get("to") ?? undefined,
       }),

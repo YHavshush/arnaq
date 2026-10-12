@@ -1,5 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
-import { schema, type Db } from "@/db";
+import { first, schema, type Db } from "@/db";
 import { INTERNAL_TRANSFER_CATEGORY } from "./defaults";
 
 const dayNumber = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 86_400_000);
@@ -11,22 +11,25 @@ const dayNumber = (iso: string) => Math.floor(Date.parse(`${iso}T00:00:00Z`) / 8
  *     at most `maxDays` apart. Each transaction is used in at most one pair.
  * Already-flagged transactions are left alone. Returns the number of transactions flagged.
  */
-export function detectInternalTransfers(db: Db, opts: { maxDays?: number } = {}): number {
+export async function detectInternalTransfers(
+  db: Db,
+  opts: { maxDays?: number } = {},
+): Promise<number> {
   const maxDays = opts.maxDays ?? 3;
-  const category = db
-    .select()
-    .from(schema.categories)
-    .where(eq(schema.categories.name, INTERNAL_TRANSFER_CATEGORY))
-    .get();
+  const category = await first(
+    db
+      .select()
+      .from(schema.categories)
+      .where(eq(schema.categories.name, INTERNAL_TRANSFER_CATEGORY)),
+  );
   if (!category) return 0;
 
-  const accounts = db.select().from(schema.accounts).all();
+  const accounts = await db.select().from(schema.accounts);
   const ownIbans = new Set(accounts.map((a) => a.iban).filter((i): i is string => !!i));
-  const open = db
+  const open = await db
     .select()
     .from(schema.transactions)
-    .where(eq(schema.transactions.isInternalTransfer, false))
-    .all();
+    .where(eq(schema.transactions.isInternalTransfer, false));
 
   const flagged = new Set<number>();
 
@@ -73,10 +76,10 @@ export function detectInternalTransfers(db: Db, opts: { maxDays?: number } = {})
   if (flagged.size === 0) return 0;
   const ids = [...flagged];
   for (let i = 0; i < ids.length; i += 500) {
-    db.update(schema.transactions)
+    await db
+      .update(schema.transactions)
       .set({ isInternalTransfer: true, categoryId: category.id })
-      .where(inArray(schema.transactions.id, ids.slice(i, i + 500)))
-      .run();
+      .where(inArray(schema.transactions.id, ids.slice(i, i + 500)));
   }
   return flagged.size;
 }

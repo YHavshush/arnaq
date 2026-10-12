@@ -82,17 +82,19 @@ const fromStored = (o: OccurrenceView): Line => ({
  * - An `expected` occurrence of an earlier month whose match window reaches into the current
  *   month is also listed (carriedOver) in the current month: it may still be paid there.
  */
-export function projectRecurring(
+export async function projectRecurring(
   db: Db,
   w: { first: string; current: string; last: string },
-): RecurringProjection {
-  const items = db.select().from(schema.recurringItems).all();
+): Promise<RecurringProjection> {
+  const items = await db.select().from(schema.recurringItems);
   const active = new Set(items.filter((i) => i.active).map((i) => i.id));
   const previous = addMonths(w.current, -1);
-  const stored = getOccurrences(db, {
-    from: w.first < previous ? w.first : previous,
-    to: w.last,
-  }).filter((o) => o.status !== "expected" || active.has(o.recurringItemId));
+  const stored = (
+    await getOccurrences(db, {
+      from: w.first < previous ? w.first : previous,
+      to: w.last,
+    })
+  ).filter((o) => o.status !== "expected" || active.has(o.recurringItemId));
 
   const byMonth = new Map<string, Line[]>();
   const add = (month: string, line: Line) => {
@@ -110,7 +112,7 @@ export function projectRecurring(
   }
 
   const storedKeys = new Set(stored.map((o) => key(o.recurringItemId, o.month)));
-  const { lines, inMemoryMatched } = plannedLines(db, items, storedKeys, w);
+  const { lines, inMemoryMatched } = await plannedLines(db, items, storedKeys, w);
   for (const line of lines) add(line.month, line);
 
   for (const list of byMonth.values())
@@ -129,12 +131,12 @@ type Item = typeof schema.recurringItems.$inferSelect;
  * Lines for every (active item, month) from the current month on that is scheduled but not
  * stored yet, with the ones already paid matched in memory.
  */
-function plannedLines(
+async function plannedLines(
   db: Db,
   items: Item[],
   storedKeys: Set<string>,
   w: { current: string; last: string },
-): { lines: Line[]; inMemoryMatched: Set<number> } {
+): Promise<{ lines: Line[]; inMemoryMatched: Set<number> }> {
   const planned = items
     .filter((i) => i.active)
     .flatMap((item) =>
@@ -142,7 +144,7 @@ function plannedLines(
         .filter((p) => !storedKeys.has(key(item.id, p.month)))
         .map((p) => ({ item, ...p })),
     );
-  const paid = matchInMemory(db, planned);
+  const paid = await matchInMemory(db, planned);
   const inMemoryMatched = new Set([...paid.values()].map((t) => t.id));
   const lines = planned.map(({ item, month, expectedDate }, i): Line => {
     const t = paid.get(i);
@@ -168,11 +170,11 @@ function plannedLines(
 }
 
 /** Planned index -> the unmatched transaction that already pays it (nothing is written). */
-function matchInMemory(db: Db, planned: { item: Item; expectedDate: string }[]) {
+async function matchInMemory(db: Db, planned: { item: Item; expectedDate: string }[]) {
   const paid = new Map<number, { id: number; amount: number; date: string }>();
   if (planned.length === 0) return paid;
   const dates = planned.map((p) => p.expectedDate).sort();
-  const txs = unmatchedCandidates(
+  const txs = await unmatchedCandidates(
     db,
     addDays(dates[0], -MATCH_WINDOW_DAYS),
     addDays(dates[dates.length - 1], MATCH_WINDOW_DAYS),

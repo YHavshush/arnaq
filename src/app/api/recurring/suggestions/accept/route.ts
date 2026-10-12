@@ -11,7 +11,7 @@ const optionalInt = (v: unknown) => v === undefined || isInt(v);
  * 201 with the new item, or 200 with the existing one when it was accepted before.
  */
 export async function POST(request: Request) {
-  return handle(async () => {
+  return await handle(async () => {
     const body: unknown = await request.json();
     if (
       !isObject(body) ||
@@ -28,8 +28,8 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const { item, created } = acceptSuggestion(
-      getDb(),
+    const { item, created } = await acceptSuggestion(
+      await getDb(),
       {
         key: body.key,
         type: body.type as RecurringType,

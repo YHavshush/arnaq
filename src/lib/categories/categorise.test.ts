@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { createDb, schema } from "@/db";
+import { one, createDb, schema } from "@/db";
 import { DEFAULT_CATEGORIES } from "./defaults";
 import {
   CategoriseError,
@@ -11,36 +11,36 @@ import {
   sortRules,
 } from "./categorise";
 
-function setup() {
-  const db = createDb(":memory:");
-  const [account] = db
+async function setup() {
+  const db = await createDb(":memory:");
+  const [account] = await db
     .insert(schema.accounts)
     .values({ name: "A", bank: "rabobank", iban: "NL1" })
-    .returning()
-    .all();
-  const cat = (name: string) =>
-    db.select().from(schema.categories).where(eq(schema.categories.name, name)).get()!;
+    .returning();
+  const cat = async (name: string) =>
+    (await one(db.select().from(schema.categories).where(eq(schema.categories.name, name))))!;
   let n = 0;
-  const addTx = (v: Partial<typeof schema.transactions.$inferInsert>) =>
-    db
-      .insert(schema.transactions)
-      .values({
-        accountId: account.id,
-        date: "2026-09-01",
-        amount: -100,
-        importHash: `h${n++}`,
-        ...v,
-      })
-      .returning()
-      .get();
+  const addTx = async (v: Partial<typeof schema.transactions.$inferInsert>) =>
+    await one(
+      db
+        .insert(schema.transactions)
+        .values({
+          accountId: account.id,
+          date: "2026-09-01",
+          amount: -100,
+          importHash: `h${n++}`,
+          ...v,
+        })
+        .returning(),
+    );
   return { db, account, cat, addTx };
 }
 
 describe("seed", () => {
-  it("creates the default categories and starter rules once", () => {
-    const { db } = setup();
-    expect(db.select().from(schema.categories).all()).toHaveLength(DEFAULT_CATEGORIES.length);
-    const rules = db.select().from(schema.categorisationRules).all().length;
+  it("creates the default categories and starter rules once", async () => {
+    const { db } = await setup();
+    expect(await db.select().from(schema.categories)).toHaveLength(DEFAULT_CATEGORIES.length);
+    const rules = (await db.select().from(schema.categorisationRules)).length;
     expect(rules).toBeGreaterThan(20);
   });
 });
@@ -77,74 +77,76 @@ describe("rule matching", () => {
 });
 
 describe("applyRules", () => {
-  it("categorises matching uncategorised rows and leaves the rest for review", () => {
-    const { db, addTx, cat } = setup();
-    const ah = addTx({ counterparty: "Albert Heijn 1234" });
-    const unknown = addTx({ counterparty: "Koffie Voorbeeld" });
-    expect(applyRules(db)).toBe(1);
+  it("categorises matching uncategorised rows and leaves the rest for review", async () => {
+    const { db, addTx, cat } = await setup();
+    const ah = await addTx({ counterparty: "Albert Heijn 1234" });
+    const unknown = await addTx({ counterparty: "Koffie Voorbeeld" });
+    expect(await applyRules(db)).toBe(1);
     expect(
-      db.select().from(schema.transactions).where(eq(schema.transactions.id, ah.id)).get()
+      (await one(db.select().from(schema.transactions).where(eq(schema.transactions.id, ah.id))))
         ?.categoryId,
-    ).toBe(cat("Boodschappen").id);
-    expect(getNeedsReview(db).map((t) => t.id)).toEqual([unknown.id]);
+    ).toBe((await cat("Boodschappen")).id);
+    expect((await getNeedsReview(db)).map((t) => t.id)).toEqual([unknown.id]);
   });
 
-  it("never overwrites a category the user set by hand", () => {
-    const { db, addTx, cat } = setup();
-    const t = addTx({ counterparty: "Albert Heijn", categoryId: cat("Overig").id });
-    applyRules(db);
+  it("never overwrites a category the user set by hand", async () => {
+    const { db, addTx, cat } = await setup();
+    const t = await addTx({ counterparty: "Albert Heijn", categoryId: (await cat("Overig")).id });
+    await applyRules(db);
     expect(
-      db.select().from(schema.transactions).where(eq(schema.transactions.id, t.id)).get()
+      (await one(db.select().from(schema.transactions).where(eq(schema.transactions.id, t.id))))
         ?.categoryId,
-    ).toBe(cat("Overig").id);
+    ).toBe((await cat("Overig")).id);
   });
 });
 
 describe("needs review", () => {
-  it("lists foreign-currency rows even when they have a category, and hides internal transfers", () => {
-    const { db, addTx, cat } = setup();
-    const gbp = addTx({ currency: "GBP", categoryId: cat("Vervoer").id });
-    addTx({ isInternalTransfer: true });
-    const review = getNeedsReview(db);
+  it("lists foreign-currency rows even when they have a category, and hides internal transfers", async () => {
+    const { db, addTx, cat } = await setup();
+    const gbp = await addTx({ currency: "GBP", categoryId: (await cat("Vervoer")).id });
+    await addTx({ isInternalTransfer: true });
+    const review = await getNeedsReview(db);
     expect(review).toHaveLength(1);
     expect(review[0]).toMatchObject({ id: gbp.id, reason: "foreign-currency" });
   });
 });
 
 describe("assignCategory", () => {
-  it("assigns and can learn a rule that categorises the other matching rows", () => {
-    const { db, addTx, cat } = setup();
-    const a = addTx({ counterparty: "Koffie Voorbeeld" });
-    const b = addTx({ counterparty: "Koffie Voorbeeld", date: "2026-09-02" });
-    const res = assignCategory(db, a.id, cat("Eten & drinken").id, { createRule: true });
+  it("assigns and can learn a rule that categorises the other matching rows", async () => {
+    const { db, addTx, cat } = await setup();
+    const a = await addTx({ counterparty: "Koffie Voorbeeld" });
+    const b = await addTx({ counterparty: "Koffie Voorbeeld", date: "2026-09-02" });
+    const res = await assignCategory(db, a.id, (await cat("Eten & drinken")).id, {
+      createRule: true,
+    });
     expect(res.ruleId).not.toBeNull();
     expect(res.alsoCategorised).toBe(1);
     expect(
-      db.select().from(schema.transactions).where(eq(schema.transactions.id, b.id)).get()
+      (await one(db.select().from(schema.transactions).where(eq(schema.transactions.id, b.id))))
         ?.categoryId,
-    ).toBe(cat("Eten & drinken").id);
-    expect(getNeedsReview(db)).toHaveLength(0);
+    ).toBe((await cat("Eten & drinken")).id);
+    expect(await getNeedsReview(db)).toHaveLength(0);
   });
 
-  it("assigning the transfer category flags it as internal; moving away clears it", () => {
-    const { db, addTx, cat } = setup();
-    const t = addTx({});
-    assignCategory(db, t.id, cat("Interne overboeking").id);
+  it("assigning the transfer category flags it as internal; moving away clears it", async () => {
+    const { db, addTx, cat } = await setup();
+    const t = await addTx({});
+    await assignCategory(db, t.id, (await cat("Interne overboeking")).id);
     expect(
-      db.select().from(schema.transactions).where(eq(schema.transactions.id, t.id)).get()
+      (await one(db.select().from(schema.transactions).where(eq(schema.transactions.id, t.id))))
         ?.isInternalTransfer,
     ).toBe(true);
-    assignCategory(db, t.id, cat("Overig").id);
+    await assignCategory(db, t.id, (await cat("Overig")).id);
     expect(
-      db.select().from(schema.transactions).where(eq(schema.transactions.id, t.id)).get()
+      (await one(db.select().from(schema.transactions).where(eq(schema.transactions.id, t.id))))
         ?.isInternalTransfer,
     ).toBe(false);
   });
 
-  it("rejects unknown ids", () => {
-    const { db, addTx } = setup();
-    const t = addTx({});
-    expect(() => assignCategory(db, 999, 1)).toThrow(CategoriseError);
-    expect(() => assignCategory(db, t.id, 999)).toThrow(CategoriseError);
+  it("rejects unknown ids", async () => {
+    const { db, addTx } = await setup();
+    const t = await addTx({});
+    await expect(assignCategory(db, 999, 1)).rejects.toThrow(CategoriseError);
+    await expect(assignCategory(db, t.id, 999)).rejects.toThrow(CategoriseError);
   });
 });

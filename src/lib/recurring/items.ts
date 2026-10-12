@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, gte, inArray, ne } from "drizzle-orm";
-import { schema, type Db } from "@/db";
+import { first, schema, type Db } from "@/db";
 import { MAX_CENTS } from "@/lib/money";
 import { FREQUENCIES, RECURRING_TYPES } from "@/db/schema";
 import { MAX_ITEM_DATE, MIN_ITEM_DATE, clampDay, isDate, monthOf } from "./dates";
@@ -39,7 +39,7 @@ function assertToday(today: string): void {
 }
 
 /** Validate and normalise an item. Throws RecurringError with a user-facing message. */
-function clean(db: Db, input: RecurringItemInput): ItemValues {
+async function clean(db: Db, input: RecurringItemInput): Promise<ItemValues> {
   const name = typeof input.name === "string" ? input.name.trim() : "";
   if (!name) throw new RecurringError("Name is required.");
   if (name.length > MAX_TEXT) throw new RecurringError(`Name is too long (max ${MAX_TEXT}).`);
@@ -89,7 +89,7 @@ function clean(db: Db, input: RecurringItemInput): ItemValues {
   const categoryId = input.categoryId ?? null;
   if (categoryId !== null) {
     const category = Number.isInteger(categoryId)
-      ? db.select().from(schema.categories).where(eq(schema.categories.id, categoryId)).get()
+      ? await first(db.select().from(schema.categories).where(eq(schema.categories.id, categoryId)))
       : undefined;
     if (!category) throw new RecurringError(`Category ${categoryId} does not exist.`);
     if (category.type !== input.type)
@@ -114,8 +114,8 @@ function clean(db: Db, input: RecurringItemInput): ItemValues {
   };
 }
 
-export function listRecurringItems(db: Db): RecurringItem[] {
-  return db
+export async function listRecurringItems(db: Db): Promise<RecurringItem[]> {
+  return await db
     .select()
     .from(schema.recurringItems)
     .orderBy(
@@ -123,56 +123,64 @@ export function listRecurringItems(db: Db): RecurringItem[] {
       asc(schema.recurringItems.type),
       asc(schema.recurringItems.name),
       asc(schema.recurringItems.id),
-    )
-    .all();
+    );
 }
 
-export function getRecurringItem(db: Db, id: number): RecurringItem | undefined {
-  return db.select().from(schema.recurringItems).where(eq(schema.recurringItems.id, id)).get();
+export async function getRecurringItem(db: Db, id: number): Promise<RecurringItem | undefined> {
+  return await first(
+    db.select().from(schema.recurringItems).where(eq(schema.recurringItems.id, id)),
+  );
 }
 
 /**
  * Create an item, then generate its occurrences through this month (or the newest data),
  * match existing transactions to them and mark overdue ones missed.
  */
-export function createRecurringItem(
+export async function createRecurringItem(
   db: Db,
   input: RecurringItemInput,
   opts: { today: string },
-): RecurringItem {
+): Promise<RecurringItem> {
   assertToday(opts.today);
-  return db.transaction((tx) => {
-    const txDb = tx as unknown as Db;
-    if (listRecurringItems(txDb).length >= MAX_ITEMS)
+  return await db.transaction(async (tx) => {
+    if ((await listRecurringItems(tx)).length >= MAX_ITEMS)
       throw new RecurringError(`At most ${MAX_ITEMS} recurring items are supported.`);
-    const [item] = tx.insert(schema.recurringItems).values(clean(txDb, input)).returning().all();
-    syncRecurring(txDb, { throughMonth: planThroughMonth(txDb, opts.today), today: opts.today });
+    const [item] = await tx
+      .insert(schema.recurringItems)
+      .values(await clean(tx, input))
+      .returning();
+    await syncRecurring(tx, {
+      throughMonth: await planThroughMonth(tx, opts.today),
+      today: opts.today,
+    });
     return item;
   });
 }
 
 /** Delete the not-yet-matched occurrences of an item, optionally only some of them. */
-function dropUnmatched(db: Db, itemId: number, keep: (month: string) => boolean): void {
-  const unmatched = db
-    .select()
-    .from(schema.recurringOccurrences)
-    .where(
-      and(
-        eq(schema.recurringOccurrences.recurringItemId, itemId),
-        ne(schema.recurringOccurrences.status, "matched"),
-      ),
-    )
-    .all()
-    .filter((o) => !keep(o.month));
+async function dropUnmatched(
+  db: Db,
+  itemId: number,
+  keep: (month: string) => boolean,
+): Promise<void> {
+  const unmatched = (
+    await db
+      .select()
+      .from(schema.recurringOccurrences)
+      .where(
+        and(
+          eq(schema.recurringOccurrences.recurringItemId, itemId),
+          ne(schema.recurringOccurrences.status, "matched"),
+        ),
+      )
+  ).filter((o) => !keep(o.month));
   if (unmatched.length === 0) return;
-  db.delete(schema.recurringOccurrences)
-    .where(
-      inArray(
-        schema.recurringOccurrences.id,
-        unmatched.map((o) => o.id),
-      ),
-    )
-    .run();
+  await db.delete(schema.recurringOccurrences).where(
+    inArray(
+      schema.recurringOccurrences.id,
+      unmatched.map((o) => o.id),
+    ),
+  );
 }
 
 /**
@@ -184,40 +192,38 @@ function dropUnmatched(db: Db, itemId: number, keep: (month: string) => boolean)
  * Then occurrences are regenerated and matched again, so for example a corrected
  * counterparty can still pick up past payments (including rescuing missed occurrences).
  */
-export function updateRecurringItem(
+export async function updateRecurringItem(
   db: Db,
   id: number,
   patch: RecurringItemPatch,
   opts: { today: string },
-): RecurringItem {
+): Promise<RecurringItem> {
   assertToday(opts.today);
-  return db.transaction((tx) => {
-    const txDb = tx as unknown as Db;
-    const before = getRecurringItem(txDb, id);
+  return await db.transaction(async (tx) => {
+    const before = await getRecurringItem(tx, id);
     if (!before) throw new RecurringError(`Recurring item ${id} does not exist.`);
     const defined = Object.fromEntries(
       Object.entries(patch).filter(([, v]) => v !== undefined),
     ) as RecurringItemPatch;
-    const values = clean(txDb, { ...before, ...defined });
-    const [item] = tx
+    const values = await clean(tx, { ...before, ...defined });
+    const [item] = await tx
       .update(schema.recurringItems)
       .set(values)
       .where(eq(schema.recurringItems.id, id))
-      .returning()
-      .all();
+      .returning();
 
     if (!item.active) {
-      dropUnmatched(txDb, id, () => false);
+      await dropUnmatched(tx, id, () => false);
       return item;
     }
     // Past months only fall away when the start, end or frequency excludes them; changing the
     // day of month must never delete history. From this month on the exact day applies.
     const thisMonth = monthOf(opts.today);
-    dropUnmatched(txDb, id, (month) =>
+    await dropUnmatched(tx, id, (month) =>
       month < thisMonth ? isScheduledMonth(item, month) : isScheduled(item, month),
     );
 
-    const future = tx
+    const future = await tx
       .select()
       .from(schema.recurringOccurrences)
       .where(
@@ -226,19 +232,21 @@ export function updateRecurringItem(
           eq(schema.recurringOccurrences.status, "expected"),
           gte(schema.recurringOccurrences.month, monthOf(opts.today)),
         ),
-      )
-      .all();
+      );
     for (const o of future) {
-      tx.update(schema.recurringOccurrences)
+      await tx
+        .update(schema.recurringOccurrences)
         .set({
           expectedAmount: item.expectedAmount,
           expectedDate: clampDay(o.month, item.dayOfMonth),
         })
-        .where(eq(schema.recurringOccurrences.id, o.id))
-        .run();
+        .where(eq(schema.recurringOccurrences.id, o.id));
     }
 
-    syncRecurring(txDb, { throughMonth: planThroughMonth(txDb, opts.today), today: opts.today });
+    await syncRecurring(tx, {
+      throughMonth: await planThroughMonth(tx, opts.today),
+      today: opts.today,
+    });
     return item;
   });
 }
@@ -249,25 +257,25 @@ export function updateRecurringItem(
  * To stop an item but keep its history, update it with `active: false` instead.
  * Returns false when the item does not exist.
  */
-export function deleteRecurringItem(db: Db, id: number): boolean {
-  return db.transaction((tx) => {
-    if (!getRecurringItem(tx as unknown as Db, id)) return false;
-    const occurrenceIds = tx
-      .select({ id: schema.recurringOccurrences.id })
-      .from(schema.recurringOccurrences)
-      .where(eq(schema.recurringOccurrences.recurringItemId, id))
-      .all()
-      .map((o) => o.id);
-    if (occurrenceIds.length > 0) {
-      tx.update(schema.transactions)
-        .set({ matchedOccurrenceId: null })
-        .where(inArray(schema.transactions.matchedOccurrenceId, occurrenceIds))
-        .run();
-      tx.delete(schema.recurringOccurrences)
+export async function deleteRecurringItem(db: Db, id: number): Promise<boolean> {
+  return await db.transaction(async (tx) => {
+    if (!(await getRecurringItem(tx, id))) return false;
+    const occurrenceIds = (
+      await tx
+        .select({ id: schema.recurringOccurrences.id })
+        .from(schema.recurringOccurrences)
         .where(eq(schema.recurringOccurrences.recurringItemId, id))
-        .run();
+    ).map((o) => o.id);
+    if (occurrenceIds.length > 0) {
+      await tx
+        .update(schema.transactions)
+        .set({ matchedOccurrenceId: null })
+        .where(inArray(schema.transactions.matchedOccurrenceId, occurrenceIds));
+      await tx
+        .delete(schema.recurringOccurrences)
+        .where(eq(schema.recurringOccurrences.recurringItemId, id));
     }
-    tx.delete(schema.recurringItems).where(eq(schema.recurringItems.id, id)).run();
+    await tx.delete(schema.recurringItems).where(eq(schema.recurringItems.id, id));
     return true;
   });
 }
