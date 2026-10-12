@@ -3,11 +3,14 @@
 import { FileUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
+import { dayLabel, monthName } from "@/lib/view/format";
 import { ErrorLine, Field, PrimaryButton, inputClass } from "./form";
 
 interface Summary {
   bank: string;
   month: string;
+  period: { from: string; to: string } | null;
+  skipped: { line: number; reason: string }[];
   rowsImported: number;
   rowsDuplicate: number;
   rowsSkipped: number;
@@ -142,7 +145,11 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
       {summary && (
         <div role="status" className="glass fade-in grid gap-3 p-4">
           <h3 className="font-display text-xl font-medium">
-            {BANK[summary.bank] ?? summary.bank}, {summary.month} verwerkt
+            {BANK[summary.bank] ?? summary.bank},{" "}
+            {summary.period
+              ? `${dayLabel(summary.period.from)} t/m ${dayLabel(summary.period.to)}`
+              : monthName(summary.month)}{" "}
+            verwerkt
           </h3>
           <dl className="num grid grid-cols-3 gap-2 text-center">
             {[
@@ -160,6 +167,16 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
             <p className="text-ink-muted text-sm">
               {summary.recurring.matched} vaste lasten gekoppeld.
             </p>
+          )}
+          {summary.skipped.length > 0 && (
+            <ul className="text-ink-muted list-disc pl-5 text-sm">
+              {summary.skipped.slice(0, 5).map((r) => (
+                <li key={r.line}>
+                  Regel {r.line} overgeslagen: {r.reason}
+                </li>
+              ))}
+              {summary.skipped.length > 5 && <li>… en {summary.skipped.length - 5} meer</li>}
+            </ul>
           )}
           {summary.warnings.map((w) => (
             <p key={w} className="text-warn text-sm font-medium">

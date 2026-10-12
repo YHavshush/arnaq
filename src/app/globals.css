@@ -16,6 +16,7 @@
   --color-canvas: var(--canvas);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
+  --color-accent-ink: var(--accent-ink);
   --color-ink-muted: var(--ink-muted);
   --color-hair: var(--hair);
   --color-track: var(--track);

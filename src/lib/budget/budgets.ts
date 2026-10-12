@@ -7,12 +7,12 @@ export class BudgetError extends Error {}
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 export function assertMonth(month: string): void {
-  if (!MONTH_RE.test(month)) throw new BudgetError(`Invalid month "${month}", use YYYY-MM.`);
+  if (!MONTH_RE.test(month)) throw new BudgetError(`Ongeldige maand "${month}". Gebruik JJJJ-MM.`);
 }
 
 function assertCents(amount: number): void {
   if (!Number.isSafeInteger(amount) || amount < 0 || amount > MAX_CENTS) {
-    throw new BudgetError("Budget amount must be a non-negative integer number of cents.");
+    throw new BudgetError("Een budget moet een bedrag van nul of meer zijn.");
   }
 }
 

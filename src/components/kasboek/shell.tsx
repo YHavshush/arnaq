@@ -1,3 +1,5 @@
+import { Settings } from "lucide-react";
+import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { getDb } from "@/db";
 import { requestTime } from "@/lib/api";
@@ -48,7 +50,16 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="font-display text-lg font-medium @min-[900px]/app:invisible">
               Kasboek
             </span>
-            <ThemeSwitcher />
+            <div className="flex gap-2">
+              <Link
+                href="/instellingen"
+                aria-label="Instellingen"
+                className="glass grid size-11 place-items-center rounded-full"
+              >
+                <Settings className="size-[18px]" />
+              </Link>
+              <ThemeSwitcher />
+            </div>
           </div>
           <main id="main">{children}</main>
         </div>

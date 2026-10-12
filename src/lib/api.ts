@@ -28,7 +28,7 @@ export async function handle(fn: () => Response | Promise<Response>): Promise<Re
     return await fn();
   } catch (e) {
     if (e instanceof SyntaxError)
-      return Response.json({ error: "Invalid JSON body." }, { status: 400 });
+      return Response.json({ error: "Ongeldige invoer." }, { status: 400 });
     if (DOMAIN_ERRORS.some((C) => e instanceof C)) {
       return Response.json({ error: (e as Error).message }, { status: 422 });
     }
@@ -36,7 +36,7 @@ export async function handle(fn: () => Response | Promise<Response>): Promise<Re
     // (or already exists). Never leak the SQL, just say so.
     if (isConstraintViolation(e)) {
       return Response.json(
-        { error: "The request conflicts with existing data (unknown reference or duplicate)." },
+        { error: "Dit past niet bij wat er al is (onbekende verwijzing of dubbele waarde)." },
         { status: 422 },
       );
     }
