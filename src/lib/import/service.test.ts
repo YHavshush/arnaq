@@ -88,7 +88,7 @@ describe("importCsv", () => {
       rowsSkipped: 2,
       foreignCurrencyRows: 1,
     });
-    expect(s.warnings.join(" ")).toMatch(/not in EUR/);
+    expect(s.warnings.join(" ")).toMatch(/niet in EUR/);
     const [log] = await db.select().from(schema.imports).where(eq(schema.imports.id, s.importId));
     expect(log).toMatchObject({ rowsTotal: 8, rowsImported: 6, rowsSkipped: 2, month: "2026-09" });
   });
@@ -112,7 +112,7 @@ describe("importCsv", () => {
         filename: "x.csv",
         accountId: rev.id,
       }),
-    ).rejects.toThrow(/looks like a rabobank/);
+    ).rejects.toThrow(/lijkt een Rabobank/);
   });
 
   it("rejects unknown files and bad months", async () => {
@@ -126,7 +126,7 @@ describe("importCsv", () => {
         filename: "x.csv",
         month: "2026-13",
       }),
-    ).rejects.toThrow(/Invalid month/);
+    ).rejects.toThrow(/Ongeldige maand/);
   });
 
   it("the same transaction on two different accounts is not a duplicate", async () => {

@@ -10,19 +10,20 @@ export async function POST(request: Request) {
   // Refuse before buffering the body. (A reverse proxy should enforce the same cap, see deploy notes.)
   const declared = Number(request.headers.get("content-length") ?? "0");
   if (declared > MAX_BYTES + 64 * 1024)
-    return Response.json({ error: "File too large (max 2 MB)." }, { status: 413 });
+    return Response.json({ error: "Dit bestand is te groot (maximaal 2 MB)." }, { status: 413 });
 
   let form: FormData;
   try {
     form = await request.formData();
   } catch {
-    return Response.json({ error: "Expected multipart/form-data." }, { status: 400 });
+    return Response.json({ error: "Verwacht een bestand (multipart/form-data)." }, { status: 400 });
   }
 
   const file = form.get("file");
-  if (!(file instanceof File)) return Response.json({ error: "Missing file." }, { status: 400 });
+  if (!(file instanceof File))
+    return Response.json({ error: "Er is geen bestand meegestuurd." }, { status: 400 });
   if (file.size > MAX_BYTES)
-    return Response.json({ error: "File too large (max 2 MB)." }, { status: 413 });
+    return Response.json({ error: "Dit bestand is te groot (maximaal 2 MB)." }, { status: 413 });
 
   const accountRaw = form.get("accountId");
   const monthRaw = form.get("month");
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
     accountId !== undefined &&
     !(Number.isSafeInteger(accountId) && accountId > 0 && accountId <= MAX_ID)
   ) {
-    return Response.json({ error: "Invalid accountId." }, { status: 400 });
+    return Response.json({ error: "Ongeldige rekening." }, { status: 400 });
   }
 
   try {

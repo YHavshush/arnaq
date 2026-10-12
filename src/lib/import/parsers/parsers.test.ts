@@ -46,7 +46,9 @@ describe("rabobank parser", () => {
     expect(r.skipped[0].line).toBe(5);
   });
   it("rejects a file from another bank", () => {
-    expect(() => rabobankParser.parse(fixture("revolut-sample.csv"))).toThrow(/Not a Rabobank/);
+    expect(() => rabobankParser.parse(fixture("revolut-sample.csv"))).toThrow(
+      /geen Rabobank-export/,
+    );
   });
 });
 

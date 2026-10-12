@@ -88,7 +88,7 @@ describe("input limits", () => {
     ).rejects.toThrow(RecurringError);
     await expect(
       createRecurringItem(s.db, { ...base, endDate: "9999-12-31" }, { today }),
-    ).rejects.toThrow(/between/);
+    ).rejects.toThrow(/moet tussen/);
     const ok = await createRecurringItem(s.db, { ...base, startDate: "2000-01-01" }, { today });
     expect((await s.occurrences(ok.id)).length).toBeLessThan(400);
   });
@@ -111,11 +111,11 @@ describe("input limits", () => {
     const s = await setup();
     await expect(
       createRecurringItem(s.db, { ...base, name: "x".repeat(201) }, { today }),
-    ).rejects.toThrow(/too long/);
+    ).rejects.toThrow(/te lang/);
     // Seed directly: creating through the API re-syncs everything each time.
     for (let i = 0; i < MAX_ITEMS; i++)
       await s.addItem({ name: `Item ${i}`, startDate: "2026-03-01" });
-    await expect(createRecurringItem(s.db, base, { today })).rejects.toThrow(/At most/);
+    await expect(createRecurringItem(s.db, base, { today })).rejects.toThrow(/maximaal/);
   });
 });
 

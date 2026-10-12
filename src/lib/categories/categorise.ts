@@ -112,11 +112,11 @@ export async function assignCategory(
   const t = await first(
     db.select().from(schema.transactions).where(eq(schema.transactions.id, transactionId)),
   );
-  if (!t) throw new CategoriseError(`Transaction ${transactionId} does not exist.`);
+  if (!t) throw new CategoriseError(`Transactie ${transactionId} bestaat niet.`);
   const category = await first(
     db.select().from(schema.categories).where(eq(schema.categories.id, categoryId)),
   );
-  if (!category) throw new CategoriseError(`Category ${categoryId} does not exist.`);
+  if (!category) throw new CategoriseError(`Categorie ${categoryId} bestaat niet.`);
 
   await db
     .update(schema.transactions)
@@ -126,7 +126,7 @@ export async function assignCategory(
   if (!opts.createRule) return { ruleId: null, alsoCategorised: 0 };
 
   const pattern = (opts.pattern ?? t.counterparty ?? t.description ?? "").trim();
-  if (!pattern) throw new CategoriseError("Cannot create a rule without a pattern.");
+  if (!pattern) throw new CategoriseError("Een regel heeft een zoektekst nodig.");
   const [rule] = await db
     .insert(schema.categorisationRules)
     .values({ pattern, categoryId, priority: opts.priority ?? 10 })

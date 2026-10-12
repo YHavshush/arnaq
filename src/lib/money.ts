@@ -10,12 +10,12 @@ export function parseAmountToCents(input: string, decimalSeparator: "," | "."): 
   const cleaned = input.trim().replaceAll(thousands, "").replaceAll(/\s/g, "");
   const match = /^([+-])?(\d*)(?:[.,](\d{1,2}))?$/.exec(cleaned);
   if (!match || (match[2] === "" && match[3] === undefined)) {
-    throw new Error(`Invalid amount: "${input}"`);
+    throw new Error(`Ongeldig bedrag: "${input}"`);
   }
   const [, sign, whole, fraction = ""] = match;
   const cents = Number(whole || "0") * 100 + Number(fraction.padEnd(2, "0"));
   if (!Number.isSafeInteger(cents) || cents > MAX_CENTS)
-    throw new Error(`Amount out of range: "${input}"`);
+    throw new Error(`Bedrag te groot: "${input}"`);
   return sign === "-" ? -cents : cents;
 }
 

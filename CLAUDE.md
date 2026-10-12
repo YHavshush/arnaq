@@ -44,3 +44,8 @@ Model table:
 
 - Project `kasboek`, ref `vdjqqidkoputigxxeqoz`, eu-central-1. Schema applied (migrations 0000 to 0002, registered in `drizzle.__drizzle_migrations`). The older project "yonathanhav@gmail.com's Project" (paused) is not used.
 - The DB password and connection strings are the owner's; they never go in the repo or the chat. Use `DATABASE_URL` (see README).
+
+## Decisions 2026-10-12 (language, accounts)
+
+- **Language:** the app must be English by default with Dutch as the second option, switchable by the user. Until the i18n layer exists the UI and messages are Dutch; do not add more hard-coded Dutch sentences than needed, and never build a sentence by concatenating translated fragments.
+- **Accounts:** Supabase Auth (register, log in, log out, reset password). **Multiple users, each with their own data**: every table gets an owner and the database enforces it (RLS), see the auth milestone. The unauthenticated API stays closed once that lands.

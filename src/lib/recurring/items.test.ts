@@ -54,25 +54,25 @@ describe("createRecurringItem", () => {
   });
 
   it.each<[string, Partial<RecurringItemInput>, RegExp]>([
-    ["empty name", { name: " " }, /Name/],
-    ["bad type", { type: "transfer" as never }, /Type/],
+    ["empty name", { name: " " }, /naam/],
+    ["bad type", { type: "transfer" as never }, /uitgave of inkomen/],
     [
       "nothing to match on",
       { matchCounterparty: null, matchIban: "  " },
-      /counterparty name or an IBAN/,
+      /naam zoals op je afschrift/,
     ],
-    ["zero amount", { expectedAmount: 0 }, /positive integer/],
-    ["negative amount", { expectedAmount: -999 }, /positive integer/],
-    ["float amount", { expectedAmount: 9.99 }, /positive integer/],
-    ["negative tolerance", { tolerance: -1 }, /Tolerance/],
-    ["float tolerance", { tolerance: 0.5 }, /Tolerance/],
-    ["day 0", { dayOfMonth: 0 }, /Day of month/],
-    ["day 32", { dayOfMonth: 32 }, /Day of month/],
-    ["bad frequency", { frequency: "weekly" as never }, /Frequency/],
-    ["bad start", { startDate: "2026-02-30" }, /start date/],
-    ["bad end", { endDate: "2026-13-01" }, /end date/],
-    ["end before start", { endDate: "2025-12-31" }, /before the start/],
-    ["unknown category", { categoryId: 9999 }, /does not exist/],
+    ["zero amount", { expectedAmount: 0 }, /groter dan nul/],
+    ["negative amount", { expectedAmount: -999 }, /groter dan nul/],
+    ["float amount", { expectedAmount: 9.99 }, /groter dan nul/],
+    ["negative tolerance", { tolerance: -1 }, /marge/],
+    ["float tolerance", { tolerance: 0.5 }, /marge/],
+    ["day 0", { dayOfMonth: 0 }, /dag van de maand/],
+    ["day 32", { dayOfMonth: 32 }, /dag van de maand/],
+    ["bad frequency", { frequency: "weekly" as never }, /per maand, per kwartaal of per jaar/],
+    ["bad start", { startDate: "2026-02-30" }, /begindatum/],
+    ["bad end", { endDate: "2026-13-01" }, /einddatum/],
+    ["end before start", { endDate: "2025-12-31" }, /niet voor de begindatum/],
+    ["unknown category", { categoryId: 9999 }, /bestaat niet/],
   ])("rejects %s", async (_, extra, message) => {
     const { db } = await setup();
     await expect(createRecurringItem(db, spotify(extra), { today: TODAY })).rejects.toThrow(
@@ -90,7 +90,7 @@ describe("createRecurringItem", () => {
       createRecurringItem(db, spotify({ categoryId: await cat("Zorgtoeslag") }), {
         today: TODAY,
       }),
-    ).rejects.toThrow(/not an expense category/);
+    ).rejects.toThrow(/hoort niet bij een uitgave/);
     await expect(
       createRecurringItem(db, spotify({ categoryId: await cat("Interne overboeking") }), {
         today: TODAY,
@@ -287,11 +287,11 @@ describe("updateRecurringItem", () => {
     expect(updated).toMatchObject({ name: "Spotify", tolerance: 10 });
     await expect(
       updateRecurringItem(db, item.id, { endDate: "2025-01-01" }, { today: "2026-03-12" }),
-    ).rejects.toThrow(/before the start/);
+    ).rejects.toThrow(/niet voor de begindatum/);
     expect((await getRecurringItem(db, item.id))?.endDate).toBeNull();
     await expect(
       updateRecurringItem(db, 999, { tolerance: 1 }, { today: "2026-03-12" }),
-    ).rejects.toThrow(/does not exist/);
+    ).rejects.toThrow(/bestaat niet/);
   });
 });
 
