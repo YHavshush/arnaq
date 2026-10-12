@@ -37,6 +37,8 @@ All database access is async (`await`); ESLint fails on a forgotten `await`.
 
 ### Using Supabase
 
+The Supabase project **kasboek** (ref `vdjqqidkoputigxxeqoz`, Frankfurt, free plan) exists and already has the schema (migrations 0000 to 0002 applied and registered, so `db:migrate` finds nothing left to run but still seeds the default categories). `anon` and `authenticated` have no privileges on `public`. Never put the `service_role` key in the app or the browser: it bypasses RLS.
+
 1. Create a project at supabase.com and copy the **direct** connection string (Project settings, Database). Use the pooled one (port 6543) for the running app.
 2. Migrate once with the direct string:
 
