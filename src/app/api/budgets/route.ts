@@ -5,18 +5,18 @@ import { assertMonth, clearBudget, setBudget } from "@/lib/budget/budgets";
 
 /** GET /api/budgets?month=YYYY-MM */
 export async function GET(request: Request) {
-  return handle(() => {
+  return await handle(async () => {
     const month = new URL(request.url).searchParams.get("month") ?? "";
     assertMonth(month);
     return Response.json(
-      getDb().select().from(schema.budgets).where(eq(schema.budgets.month, month)).all(),
+      await (await getDb()).select().from(schema.budgets).where(eq(schema.budgets.month, month)),
     );
   });
 }
 
 /** PUT JSON: { month, categoryId, amount } in cents. amount null removes the budget. */
 export async function PUT(request: Request) {
-  return handle(async () => {
+  return await handle(async () => {
     const body = await request.json();
     if (
       typeof body?.month !== "string" ||
@@ -30,9 +30,9 @@ export async function PUT(request: Request) {
     }
     if (body.amount === null) {
       assertMonth(body.month);
-      clearBudget(getDb(), body.categoryId, body.month);
+      await clearBudget(await getDb(), body.categoryId, body.month);
     } else {
-      setBudget(getDb(), body.categoryId, body.month, body.amount);
+      await setBudget(await getDb(), body.categoryId, body.month, body.amount);
     }
     return Response.json({ ok: true });
   });

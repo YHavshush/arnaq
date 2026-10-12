@@ -37,15 +37,39 @@ describe("constraint errors are 422, not 500", () => {
   it("unknown category on a budget and on a rule", async () => {
     const b = await r.budgets.PUT(json("PUT", { month: "2026-09", categoryId: 9999, amount: 100 }));
     expect(b.status).toBe(422);
-    expect(JSON.stringify(await b.json())).not.toMatch(/SQLITE|FOREIGN KEY/i);
+    expect(JSON.stringify(await b.json())).not.toMatch(
+      /SQLITE|FOREIGN KEY|violates|insert into|constraint/i,
+    );
     const rule = await r.rules.POST(json("POST", { pattern: "abc", categoryId: 9999 }));
     expect(rule.status).toBe(422);
+  });
+
+  it("ids and priorities beyond the int4 column range are 422 (Postgres: out of range), not 500", async () => {
+    const big = await r.rules.POST(json("POST", { pattern: "abc", categoryId: 5_000_000_000 }));
+    expect(big.status).toBe(422);
+    const prio = await r.rules.POST(
+      json("POST", { pattern: "abc", categoryId: 1, priority: 5_000_000_000 }),
+    );
+    expect(prio.status).toBe(422);
+  });
+
+  it("a NUL character in an uploaded file does not crash the import", async () => {
+    const form = new FormData();
+    const csv = fixture("rabobank-sample.csv").replace(
+      "Koffie Voorbeeld",
+      "Koffie\u0000 Voorbeeld",
+    );
+    form.set("file", new File([csv], "nul.csv", { type: "text/csv" }));
+    const res = await r.upload.POST(
+      new Request("http://localhost/x", { method: "POST", body: form }),
+    );
+    expect(res.status).toBe(200);
   });
 });
 
 describe("accounts validation", () => {
   it("rejects bad currency, bad IBAN and a duplicate IBAN", async () => {
-    const post = (body: unknown) => r.accounts.POST(json("POST", body));
+    const post = async (body: unknown) => await r.accounts.POST(json("POST", body));
     expect((await post({ name: "A", bank: "revolut", currency: "euro" })).status).toBe(400);
     expect((await post({ name: "A", bank: "revolut", iban: "not an iban" })).status).toBe(400);
     expect(
@@ -76,19 +100,23 @@ describe("upload caps", () => {
     expect(res.status).toBe(413);
   });
 
-  it("rejects files with too many rows and caps the skipped detail", () => {
-    const db = createDb(":memory:");
+  it("rejects files with too many rows and caps the skipped detail", async () => {
+    const db = await createDb(":memory:");
     const header = fixture("revolut-sample.csv").split("\n")[0];
     const many = [header, ...Array.from({ length: MAX_IMPORT_ROWS + 1 }, () => "x,y,z")].join("\n");
-    expect(() =>
+    await expect(
       importCsv(db, { content: many, filename: "big.csv", accountId: undefined }),
-    ).toThrow();
+    ).rejects.toThrow();
 
     const bad = [
       header,
       ...Array.from({ length: 500 }, () => "CARD,Current,nope,,Shop,1.00,0,EUR,COMPLETED,1"),
     ];
-    const s = importCsv(db, { content: bad.join("\n"), filename: "bad.csv", month: "2026-09" });
+    const s = await importCsv(db, {
+      content: bad.join("\n"),
+      filename: "bad.csv",
+      month: "2026-09",
+    });
     expect(s.rowsSkipped).toBe(500);
     expect(s.skipped).toHaveLength(50);
   });
@@ -110,14 +138,13 @@ describe("CSV robustness", () => {
 });
 
 describe("transfer detection scales", () => {
-  it("handles 6000 transactions fast and still pairs correctly", () => {
-    const db = createDb(":memory:");
-    const [a] = db
+  it("handles 6000 transactions fast and still pairs correctly", async () => {
+    const db = await createDb(":memory:");
+    const [a] = await db
       .insert(schema.accounts)
       .values({ name: "A", bank: "rabobank" })
-      .returning()
-      .all();
-    const [b] = db.insert(schema.accounts).values({ name: "B", bank: "revolut" }).returning().all();
+      .returning();
+    const [b] = await db.insert(schema.accounts).values({ name: "B", bank: "revolut" }).returning();
     const rows = [];
     for (let i = 0; i < 3000; i++) {
       const day = String((i % 28) + 1).padStart(2, "0");
@@ -130,11 +157,9 @@ describe("transfer detection scales", () => {
       rows.push({ accountId: b.id, date: `2026-09-${day}`, amount: 100 + i, importHash: `b${i}` });
     }
     for (let i = 0; i < rows.length; i += 500)
-      db.insert(schema.transactions)
-        .values(rows.slice(i, i + 500))
-        .run();
+      await db.insert(schema.transactions).values(rows.slice(i, i + 500));
     const started = Date.now();
-    expect(detectInternalTransfers(db)).toBe(6000);
+    expect(await detectInternalTransfers(db)).toBe(6000);
     expect(Date.now() - started).toBeLessThan(3000);
   });
 });

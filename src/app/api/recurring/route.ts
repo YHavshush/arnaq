@@ -5,7 +5,7 @@ import { createRecurringItem, listRecurringItems } from "@/lib/recurring/items";
 
 export async function GET() {
   await requestTime();
-  return Response.json(listRecurringItems(getDb()));
+  return Response.json(await listRecurringItems(await getDb()));
 }
 
 /**
@@ -14,10 +14,10 @@ export async function GET() {
  * Also plans occurrences through this month and matches existing transactions.
  */
 export async function POST(request: Request) {
-  return handle(async () => {
+  return await handle(async () => {
     const body = readItemBody(await request.json(), false);
     if (!body.ok) return Response.json({ error: body.error }, { status: 400 });
-    const item = createRecurringItem(getDb(), body.value, { today: todayIso() });
+    const item = await createRecurringItem(await getDb(), body.value, { today: todayIso() });
     return Response.json(item, { status: 201 });
   });
 }

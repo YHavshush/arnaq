@@ -18,10 +18,10 @@ const projectedNames = (m: ForecastMonth) =>
   m.recurring.occurrences.filter((o) => o.counted === "projected").map((o) => o.name);
 
 describe("getForecast: recurring items", () => {
-  it("plans occurrences of active items that are not stored yet, from the current month on", () => {
-    const { db, addItem, cat } = setup();
-    addItem({ ...rent, startDate: "2026-01-01", categoryId: cat("Huur") });
-    const f = getForecast(db, { today: "2026-10-11", months: 2, pastMonths: 1 });
+  it("plans occurrences of active items that are not stored yet, from the current month on", async () => {
+    const { db, addItem, cat } = await setup();
+    await addItem({ ...rent, startDate: "2026-01-01", categoryId: await cat("Huur") });
+    const f = await getForecast(db, { today: "2026-10-11", months: 2, pastMonths: 1 });
     expect(f.months[0].recurring.occurrences).toEqual([]); // past months show stored history only
     for (const m of f.months.slice(1)) {
       expect(m.recurring.expenses).toBe(80000);
@@ -34,27 +34,37 @@ describe("getForecast: recurring items", () => {
           status: "expected",
           counted: "projected",
           amount: 80000,
-          categoryId: cat("Huur"),
+          categoryId: await cat("Huur"),
         }),
       ]);
       expect(m.categories.find((c) => c.name === "Huur")).toMatchObject({ recurring: 80000 });
     }
   });
 
-  it("lands quarterly and yearly items in the right months and honours start, end and active", () => {
-    const { db, addItem } = setup();
-    addItem({ name: "Kwartaal", frequency: "quarterly", startDate: "2026-08-15", dayOfMonth: 15 });
-    addItem({ name: "Jaarlijks", frequency: "yearly", startDate: "2025-12-20", dayOfMonth: 20 });
-    addItem({ name: "Stopt", startDate: "2026-01-01", endDate: "2026-11-30" });
-    addItem({ name: "Begint", startDate: "2027-01-05", dayOfMonth: 5 });
-    addItem({ name: "Uit", startDate: "2026-01-01", active: false });
-    addItem({
+  it("lands quarterly and yearly items in the right months and honours start, end and active", async () => {
+    const { db, addItem } = await setup();
+    await addItem({
+      name: "Kwartaal",
+      frequency: "quarterly",
+      startDate: "2026-08-15",
+      dayOfMonth: 15,
+    });
+    await addItem({
+      name: "Jaarlijks",
+      frequency: "yearly",
+      startDate: "2025-12-20",
+      dayOfMonth: 20,
+    });
+    await addItem({ name: "Stopt", startDate: "2026-01-01", endDate: "2026-11-30" });
+    await addItem({ name: "Begint", startDate: "2027-01-05", dayOfMonth: 5 });
+    await addItem({ name: "Uit", startDate: "2026-01-01", active: false });
+    await addItem({
       name: "Laatste dag",
       startDate: "2026-01-31",
       dayOfMonth: 31,
       endDate: "2027-02-27",
     });
-    const f = getForecast(db, { today: "2026-10-11", months: 6, pastMonths: 0 });
+    const f = await getForecast(db, { today: "2026-10-11", months: 6, pastMonths: 0 });
     expect(f.months.map((m) => [m.month, projectedNames(m).sort()])).toEqual([
       ["2026-10", ["Laatste dag", "Stopt"]],
       ["2026-11", ["Kwartaal", "Laatste dag", "Stopt"]],
@@ -66,15 +76,15 @@ describe("getForecast: recurring items", () => {
     ]);
   });
 
-  it("uses stored occurrences (edited amounts included) and never adds a planned twin", () => {
-    const { db, addItem, occ } = setup();
-    const item = addItem({ startDate: "2026-09-01" });
-    generateOccurrences(db, { throughMonth: "2026-11" });
-    db.update(schema.recurringOccurrences)
+  it("uses stored occurrences (edited amounts included) and never adds a planned twin", async () => {
+    const { db, addItem, occ } = await setup();
+    const item = await addItem({ startDate: "2026-09-01" });
+    await generateOccurrences(db, { throughMonth: "2026-11" });
+    await db
+      .update(schema.recurringOccurrences)
       .set({ expectedAmount: 1500 })
-      .where(eq(schema.recurringOccurrences.id, occ(item.id, "2026-11").id))
-      .run();
-    const f = getForecast(db, { today: "2026-10-11", months: 2, pastMonths: 0 });
+      .where(eq(schema.recurringOccurrences.id, (await occ(item.id, "2026-11")).id));
+    const f = await getForecast(db, { today: "2026-10-11", months: 2, pastMonths: 0 });
     expect(f.months.map((m) => lines(m, "Spotify").map((o) => [o.source, o.amount]))).toEqual([
       [["stored", 999]],
       [["stored", 1500]],
@@ -83,13 +93,13 @@ describe("getForecast: recurring items", () => {
     expect(f.months[1].recurring.expenses).toBe(1500);
   });
 
-  it("never projects a matched occurrence and shows its real amount", () => {
-    const { db, addItem, tx } = setup();
-    addItem({ startDate: "2026-10-01", tolerance: 100 });
-    generateOccurrences(db, { throughMonth: "2026-10" });
-    const t = tx("2026-10-08", -1050, { counterparty: "Spotify" });
-    matchOccurrences(db);
-    const [oct] = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 0 }).months;
+  it("never projects a matched occurrence and shows its real amount", async () => {
+    const { db, addItem, tx } = await setup();
+    await addItem({ startDate: "2026-10-01", tolerance: 100 });
+    await generateOccurrences(db, { throughMonth: "2026-10" });
+    const t = await tx("2026-10-08", -1050, { counterparty: "Spotify" });
+    await matchOccurrences(db);
+    const [oct] = (await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 0 })).months;
     expect(lines(oct, "Spotify")).toEqual([
       expect.objectContaining({
         status: "matched",
@@ -107,35 +117,37 @@ describe("getForecast: recurring items", () => {
     });
   });
 
-  it("counts an occurrence matched early in the month it was paid, not in its own month", () => {
-    const { db, addItem, tx } = setup();
-    addItem({ ...rent, startDate: "2026-11-01" });
-    generateOccurrences(db, { throughMonth: "2026-11" });
-    tx("2026-10-28", -80000, { counterparty: "Verhuurder BV" });
-    expect(matchOccurrences(db).matched).toBe(1);
-    const [oct, nov] = getForecast(db, { today: "2026-10-29", months: 1, pastMonths: 0 }).months;
+  it("counts an occurrence matched early in the month it was paid, not in its own month", async () => {
+    const { db, addItem, tx } = await setup();
+    await addItem({ ...rent, startDate: "2026-11-01" });
+    await generateOccurrences(db, { throughMonth: "2026-11" });
+    await tx("2026-10-28", -80000, { counterparty: "Verhuurder BV" });
+    expect((await matchOccurrences(db)).matched).toBe(1);
+    const [oct, nov] = (await getForecast(db, { today: "2026-10-29", months: 1, pastMonths: 0 }))
+      .months;
     expect(lines(nov, "Huur")[0]).toMatchObject({ status: "matched", counted: "none" });
     expect(nov.expenses).toBe(0);
     expect(oct.expenses).toBe(80000); // the real payment, once
   });
 
-  it("does not project this month's occurrence when it was already paid last month", () => {
-    const { db, addItem, tx, cover } = setup();
-    addItem({ ...rent, startDate: "2026-10-01" });
-    generateOccurrences(db, { throughMonth: "2026-10" });
-    cover("2026-09");
-    tx("2026-09-28", -80000, { counterparty: "Verhuurder" });
-    expect(matchOccurrences(db).matched).toBe(1);
-    const [sep, oct] = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 }).months;
+  it("does not project this month's occurrence when it was already paid last month", async () => {
+    const { db, addItem, tx, cover } = await setup();
+    await addItem({ ...rent, startDate: "2026-10-01" });
+    await generateOccurrences(db, { throughMonth: "2026-10" });
+    await cover("2026-09");
+    await tx("2026-09-28", -80000, { counterparty: "Verhuurder" });
+    expect((await matchOccurrences(db)).matched).toBe(1);
+    const [sep, oct] = (await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 }))
+      .months;
     expect(lines(oct, "Huur")[0]).toMatchObject({ status: "matched", counted: "none" });
     expect(oct).toMatchObject({ expenses: 0, recurring: { expenses: 0 } });
     expect(sep).toMatchObject({ kind: "actual", expenses: 80000 });
   });
 
-  it("projects an item on the 31st when today is the 31st, clamped in short months", () => {
-    const { db, addItem } = setup();
-    addItem({ dayOfMonth: 31, startDate: "2026-12-31" });
-    const f = getForecast(db, { today: "2027-01-31", months: 2, pastMonths: 1 });
+  it("projects an item on the 31st when today is the 31st, clamped in short months", async () => {
+    const { db, addItem } = await setup();
+    await addItem({ dayOfMonth: 31, startDate: "2026-12-31" });
+    const f = await getForecast(db, { today: "2027-01-31", months: 2, pastMonths: 1 });
     expect(
       f.months.map((m) => lines(m, "Spotify").map((o) => [o.expectedDate, o.counted])),
     ).toEqual([
@@ -146,18 +158,22 @@ describe("getForecast: recurring items", () => {
     ]);
   });
 
-  it("treats a planned occurrence that is already paid as matched, in memory only", () => {
-    const { db, addItem, tx, cover, cat } = setup();
-    addItem({ ...rent, startDate: "2026-10-01", categoryId: cat("Huur") });
-    generateOccurrences(db, { throughMonth: "2026-10" }); // November is not stored yet
-    tx("2026-10-01", -80000, { counterparty: "Verhuurder", categoryId: cat("Huur") });
-    matchOccurrences(db);
-    const early = tx("2026-10-29", -80000, { counterparty: "Verhuurder", categoryId: cat("Huur") });
-    cover("2026-09");
-    tx("2026-09-15", -10000, { categoryId: cat("Huur") }); // some variable Huur spend in history
-    const before = snapshot(db);
+  it("treats a planned occurrence that is already paid as matched, in memory only", async () => {
+    const { db, addItem, tx, cover, cat } = await setup();
+    await addItem({ ...rent, startDate: "2026-10-01", categoryId: await cat("Huur") });
+    await generateOccurrences(db, { throughMonth: "2026-10" }); // November is not stored yet
+    await tx("2026-10-01", -80000, { counterparty: "Verhuurder", categoryId: await cat("Huur") });
+    await matchOccurrences(db);
+    const early = await tx("2026-10-29", -80000, {
+      counterparty: "Verhuurder",
+      categoryId: await cat("Huur"),
+    });
+    await cover("2026-09");
+    await tx("2026-09-15", -10000, { categoryId: await cat("Huur") }); // some variable Huur spend in history
+    const before = await snapshot(db);
 
-    const [oct, nov] = getForecast(db, { today: "2026-10-30", months: 1, pastMonths: 0 }).months;
+    const [oct, nov] = (await getForecast(db, { today: "2026-10-30", months: 1, pastMonths: 0 }))
+      .months;
     expect(lines(nov, "Huur")).toEqual([
       expect.objectContaining({
         source: "planned",
@@ -175,16 +191,16 @@ describe("getForecast: recurring items", () => {
       variable: 10000,
       total: 170000,
     });
-    expect(snapshot(db)).toEqual(before);
+    expect(await snapshot(db)).toEqual(before);
   });
 
-  it("does not project missed occurrences but surfaces them", () => {
-    const { db, addItem, cover } = setup();
-    addItem({ startDate: "2026-09-01" });
-    generateOccurrences(db, { throughMonth: "2026-10" });
-    cover("2026-09", "2026-10");
-    expect(markMissed(db, { today: "2026-10-20" })).toBe(2);
-    const f = getForecast(db, { today: "2026-10-20", months: 1, pastMonths: 1 });
+  it("does not project missed occurrences but surfaces them", async () => {
+    const { db, addItem, cover } = await setup();
+    await addItem({ startDate: "2026-09-01" });
+    await generateOccurrences(db, { throughMonth: "2026-10" });
+    await cover("2026-09", "2026-10");
+    expect(await markMissed(db, { today: "2026-10-20" })).toBe(2);
+    const f = await getForecast(db, { today: "2026-10-20", months: 1, pastMonths: 1 });
     const [sep, oct, nov] = f.months;
     expect(sep.recurring.missedCount).toBe(1);
     expect(oct.recurring).toMatchObject({ expenses: 0, missedCount: 1 });
@@ -194,9 +210,9 @@ describe("getForecast: recurring items", () => {
     expect(f.missed.map((o) => o.month)).toEqual(["2026-09", "2026-10"]);
   });
 
-  it("carries an open occurrence of last month into this month while it can still be paid", () => {
-    const { db, addItem } = setup();
-    addItem({
+  it("carries an open occurrence of last month into this month while it can still be paid", async () => {
+    const { db, addItem } = await setup();
+    await addItem({
       name: "Salaris",
       type: "income",
       matchCounterparty: "Werkgever",
@@ -204,9 +220,10 @@ describe("getForecast: recurring items", () => {
       dayOfMonth: 30,
       startDate: "2026-09-01",
     });
-    addItem({ startDate: "2026-09-01" }); // Spotify on the 10th: its window closed in September
-    generateOccurrences(db, { throughMonth: "2026-09" });
-    const [sep, oct] = getForecast(db, { today: "2026-10-02", months: 1, pastMonths: 1 }).months;
+    await addItem({ startDate: "2026-09-01" }); // Spotify on the 10th: its window closed in September
+    await generateOccurrences(db, { throughMonth: "2026-09" });
+    const [sep, oct] = (await getForecast(db, { today: "2026-10-02", months: 1, pastMonths: 1 }))
+      .months;
     expect(sep.kind).toBe("no-data");
     expect(lines(sep, "Salaris")[0]).toMatchObject({ status: "expected", counted: "none" });
     expect(lines(oct, "Salaris").map((o) => [o.month, o.carriedOver, o.counted])).toEqual([
@@ -218,17 +235,17 @@ describe("getForecast: recurring items", () => {
     expect(lines(oct, "Spotify").map((o) => o.month)).toEqual(["2026-10"]);
   });
 
-  it("books recurring income as income, never as an expense category", () => {
-    const { db, addItem, cat } = setup();
-    addItem({
+  it("books recurring income as income, never as an expense category", async () => {
+    const { db, addItem, cat } = await setup();
+    await addItem({
       name: "DUO",
       type: "income",
       matchCounterparty: "DUO",
       expectedAmount: 30000,
       dayOfMonth: 24,
-      categoryId: cat("Studiefinanciering (DUO)"),
+      categoryId: await cat("Studiefinanciering (DUO)"),
     });
-    const [oct] = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 0 }).months;
+    const [oct] = (await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 0 })).months;
     expect(oct).toMatchObject({ income: 30000, expenses: 0, net: 30000 });
     expect(oct.recurring).toMatchObject({ income: 30000, expenses: 0 });
     expect(oct.categories.every((c) => c.total === 0)).toBe(true);

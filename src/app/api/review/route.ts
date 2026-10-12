@@ -4,5 +4,5 @@ import { getNeedsReview } from "@/lib/categories/categorise";
 
 export async function GET() {
   await requestTime();
-  return Response.json(getNeedsReview(getDb()));
+  return Response.json(await getNeedsReview(await getDb()));
 }

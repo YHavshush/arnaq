@@ -167,19 +167,20 @@ function assertToday(today: string): void {
  * Only monthly series are detected. Quarterly and yearly charges need years of history to be
  * told apart from noise reliably, so for now those are created by hand.
  */
-export function detectSuggestions(db: Db, opts: { today: string }): Suggestion[] {
+export async function detectSuggestions(db: Db, opts: { today: string }): Promise<Suggestion[]> {
   assertToday(opts.today);
-  const rows = db
-    .select({ t: schema.transactions, accountCurrency: schema.accounts.currency })
-    .from(schema.transactions)
-    .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
-    .where(
-      and(
-        eq(schema.transactions.isInternalTransfer, false),
-        lte(schema.transactions.date, opts.today),
-      ),
-    )
-    .all()
+  const rows = (
+    await db
+      .select({ t: schema.transactions, accountCurrency: schema.accounts.currency })
+      .from(schema.transactions)
+      .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
+      .where(
+        and(
+          eq(schema.transactions.isInternalTransfer, false),
+          lte(schema.transactions.date, opts.today),
+        ),
+      )
+  )
     .filter(({ t, accountCurrency }) => t.currency === accountCurrency && t.amount !== 0)
     .map(({ t }) => t);
   if (rows.length === 0) return [];
@@ -205,23 +206,14 @@ export function detectSuggestions(db: Db, opts: { today: string }): Suggestion[]
   }
 
   const rejected = new Set(
-    db
-      .select()
-      .from(schema.recurringSuggestionRejections)
-      .all()
-      .map((r) => `${r.type}|${r.key}`),
+    (await db.select().from(schema.recurringSuggestionRejections)).map((r) => `${r.type}|${r.key}`),
   );
-  const activeItems = db
+  const activeItems = await db
     .select()
     .from(schema.recurringItems)
-    .where(eq(schema.recurringItems.active, true))
-    .all();
+    .where(eq(schema.recurringItems.active, true));
   const categoryType = new Map(
-    db
-      .select()
-      .from(schema.categories)
-      .all()
-      .map((c) => [c.id, c.type]),
+    (await db.select().from(schema.categories)).map((c) => [c.id, c.type]),
   );
 
   const out: Suggestion[] = [];
@@ -304,28 +296,27 @@ export type SuggestionOverrides = Partial<
  * occurrences through this month and match the history, so those payments count as recurring
  * from then on. Accepting again returns the existing item instead of creating a duplicate.
  */
-export function acceptSuggestion(
+export async function acceptSuggestion(
   db: Db,
   ref: SuggestionRef & SuggestionOverrides,
   opts: { today: string },
-): { item: RecurringItem; created: boolean } {
+): Promise<{ item: RecurringItem; created: boolean }> {
   assertToday(opts.today);
   const { key, type } = assertRef(ref);
-  return db.transaction((tx) => {
-    const txDb = tx as unknown as Db;
-    const s = detectSuggestions(txDb, opts).find((x) => x.key === key && x.type === type);
+  return await db.transaction(async (tx) => {
+    const s = (await detectSuggestions(tx, opts)).find((x) => x.key === key && x.type === type);
     if (!s) {
-      const existing = tx
-        .select()
-        .from(schema.recurringItems)
-        .where(and(eq(schema.recurringItems.type, type), eq(schema.recurringItems.active, true)))
-        .all()
-        .find((i) => normaliseCounterparty(i.matchCounterparty) === key);
+      const existing = (
+        await tx
+          .select()
+          .from(schema.recurringItems)
+          .where(and(eq(schema.recurringItems.type, type), eq(schema.recurringItems.active, true)))
+      ).find((i) => normaliseCounterparty(i.matchCounterparty) === key);
       if (existing) return { item: existing, created: false };
       throw new RecurringError("There is no such suggestion (any more).");
     }
-    const item = createRecurringItem(
-      txDb,
+    const item = await createRecurringItem(
+      tx,
       {
         name: ref.name ?? s.name,
         type: s.type,
@@ -345,12 +336,12 @@ export function acceptSuggestion(
 }
 
 /** Never suggest this counterparty (with this sign) again. Safe to call twice. */
-export function rejectSuggestion(db: Db, ref: SuggestionRef): void {
+export async function rejectSuggestion(db: Db, ref: SuggestionRef): Promise<void> {
   const { key, type } = assertRef(ref);
-  db.insert(schema.recurringSuggestionRejections)
+  await db
+    .insert(schema.recurringSuggestionRejections)
     .values({ key, type })
     .onConflictDoNothing({
       target: [schema.recurringSuggestionRejections.key, schema.recurringSuggestionRejections.type],
-    })
-    .run();
+    });
 }

@@ -4,8 +4,8 @@ import { getMonthOverview } from "@/lib/budget/overview";
 
 /** GET /api/overview?month=YYYY-MM */
 export async function GET(request: Request) {
-  return handle(() => {
+  return await handle(async () => {
     const month = new URL(request.url).searchParams.get("month") ?? "";
-    return Response.json(getMonthOverview(getDb(), month));
+    return Response.json(await getMonthOverview(await getDb(), month));
   });
 }

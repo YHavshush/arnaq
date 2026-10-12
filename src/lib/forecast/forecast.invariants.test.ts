@@ -27,50 +27,55 @@ function rng(seed: number) {
 const FREQ = ["monthly", "monthly", "quarterly", "yearly"] as const;
 
 /** Everything the forecast could possibly write to. */
-function fullSnapshot(db: Db) {
+async function fullSnapshot(db: Db) {
   return {
-    ...snapshot(db),
-    budgets: db.select().from(schema.budgets).all(),
-    totals: db.select().from(schema.monthlyTotalBudget).all(),
-    imports: db.select().from(schema.imports).orderBy(asc(schema.imports.id)).all(),
-    categories: db.select().from(schema.categories).orderBy(asc(schema.categories.id)).all(),
+    ...(await snapshot(db)),
+    budgets: await db.select().from(schema.budgets),
+    totals: await db.select().from(schema.monthlyTotalBudget),
+    imports: await db.select().from(schema.imports).orderBy(asc(schema.imports.id)),
+    categories: await db.select().from(schema.categories).orderBy(asc(schema.categories.id)),
   };
 }
 
 /** A random but plausible history: items, uploads, recurring payments, variable spend. */
-function randomWorld(seed: number) {
+async function randomWorld(seed: number) {
   const r = rng(seed);
-  const s = setup();
+  const s = await setup();
   const { db, tx, addItem, cover, cat } = s;
-  const expenseCats = ["Huur", "Boodschappen", "Abonnementen", "Overig", "Vervoer"].map(cat);
-  const incomeCats = ["Salaris / bijbaan", "Zorgtoeslag"].map(cat);
+  const expenseCats = await Promise.all(
+    ["Huur", "Boodschappen", "Abonnementen", "Overig", "Vervoer"].map(cat),
+  );
+  const incomeCats = await Promise.all(["Salaris / bijbaan", "Zorgtoeslag"].map(cat));
   const today = `2026-10-${String(r.int(1, 31)).padStart(2, "0")}`;
 
-  const items = Array.from({ length: r.int(1, 6) }, (_, i) => {
+  const items = [];
+  for (let i = 0, count = r.int(1, 6); i < count; i++) {
     const type = r.next() < 0.3 ? ("income" as const) : ("expense" as const);
     const start = addMonths("2026-01", r.int(-6, 12));
-    return addItem({
-      name: `Item ${i}`,
-      type,
-      matchCounterparty: `Party ${i}`,
-      expectedAmount: r.int(100, 200000),
-      tolerance: r.pick([0, 0, 100, 1000]),
-      dayOfMonth: r.int(1, 31),
-      frequency: r.pick(FREQ),
-      startDate: `${start}-01`,
-      endDate: r.next() < 0.2 ? clampDay(addMonths(start, r.int(1, 18)), 28) : null,
-      active: r.next() < 0.9,
-      categoryId: r.next() < 0.2 ? null : r.pick(type === "income" ? incomeCats : expenseCats),
-    });
-  });
+    items.push(
+      await addItem({
+        name: `Item ${i}`,
+        type,
+        matchCounterparty: `Party ${i}`,
+        expectedAmount: r.int(100, 200000),
+        tolerance: r.pick([0, 0, 100, 1000]),
+        dayOfMonth: r.int(1, 31),
+        frequency: r.pick(FREQ),
+        startDate: `${start}-01`,
+        endDate: r.next() < 0.2 ? clampDay(addMonths(start, r.int(1, 18)), 28) : null,
+        active: r.next() < 0.9,
+        categoryId: r.next() < 0.2 ? null : r.pick(type === "income" ? incomeCats : expenseCats),
+      }),
+    );
+  }
 
   // Uploads: a random subset of January..October 2026, sometimes the same month twice.
   for (let m = "2026-01"; m <= "2026-10"; m = addMonths(m, 1)) {
-    if (r.next() < 0.7) cover(m);
-    if (r.next() < 0.1) cover(m);
+    if (r.next() < 0.7) await cover(m);
+    if (r.next() < 0.1) await cover(m);
   }
   // Occurrences were last generated some time ago (or later), as in real use.
-  generateOccurrences(db, { throughMonth: addMonths("2026-10", r.int(-3, 1)) });
+  await generateOccurrences(db, { throughMonth: addMonths("2026-10", r.int(-3, 1)) });
 
   // Recurring payments (some early, some late, some off by more than the tolerance).
   for (const item of items) {
@@ -80,7 +85,7 @@ function randomWorld(seed: number) {
       const date = dayShift(p.expectedDate, day);
       if (date > today) continue;
       const amount = item.expectedAmount + r.int(-1200, 1200);
-      tx(date, item.type === "expense" ? -Math.max(1, amount) : Math.max(1, amount), {
+      await tx(date, item.type === "expense" ? -Math.max(1, amount) : Math.max(1, amount), {
         counterparty: `Party ${item.name.slice(5)}`,
       });
     }
@@ -91,16 +96,16 @@ function randomWorld(seed: number) {
     const date = clampDay(month, r.int(1, 31));
     if (date > today) continue;
     const roll = r.next();
-    tx(date, roll < 0.1 ? r.int(1, 5000) : -r.int(1, 30000), {
+    await tx(date, roll < 0.1 ? r.int(1, 5000) : -r.int(1, 30000), {
       categoryId: roll < 0.8 ? r.pick(expenseCats) : roll < 0.85 ? r.pick(incomeCats) : null,
       currency: r.next() < 0.05 ? "USD" : "EUR",
       isInternalTransfer: r.next() < 0.05,
       counterparty: r.next() < 0.1 ? `Party ${r.int(0, 5)}` : "Winkel",
     });
   }
-  matchOccurrences(db);
-  if (r.next() < 0.7) markMissed(db, { today });
-  if (r.next() < 0.5) setBudget(db, expenseCats[0], "2026-11", r.int(0, 100000));
+  await matchOccurrences(db);
+  if (r.next() < 0.7) await markMissed(db, { today });
+  if (r.next() < 0.5) await setBudget(db, expenseCats[0], "2026-11", r.int(0, 100000));
 
   return {
     db,
@@ -117,7 +122,7 @@ function dayShift(expectedDate: string, day: number): string {
   return new Date(Date.UTC(y, m - 1, day)).toISOString().slice(0, 10);
 }
 
-function checkInvariants(db: Db, f: Forecast) {
+async function checkInvariants(db: Db, f: Forecast) {
   const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
   const countedOnce = new Map<string, number>();
   const countedTx = new Map<number, string>();
@@ -157,7 +162,7 @@ function checkInvariants(db: Db, f: Forecast) {
     expect(m.recurring.income).toBe(projectedIncome);
 
     if (m.kind === "actual") {
-      const o = getMonthOverview(db, m.month);
+      const o = await getMonthOverview(db, m.month);
       expect([m.income, m.expenses]).toEqual([o.totals.incomeActual, o.totals.expenseActual]);
       expect(m.recurring.expenses + m.recurring.income + m.variable).toBe(0);
     } else if (m.kind === "no-data") {
@@ -173,52 +178,59 @@ function checkInvariants(db: Db, f: Forecast) {
 }
 
 describe("getForecast invariants over random histories", () => {
-  it("never counts recurring money twice, stays read-only and is deterministic", () => {
-    for (let seed = 1; seed <= 60; seed++) {
-      const w = randomWorld(seed);
-      const before = fullSnapshot(w.db);
-      const opts = {
-        today: w.today,
-        months: w.months,
-        history: w.history,
-        pastMonths: w.pastMonths,
-      };
-      const f = getForecast(w.db, opts);
-      expect(fullSnapshot(w.db), `seed ${seed}: read-only`).toEqual(before);
-      expect(getForecast(w.db, opts), `seed ${seed}: deterministic`).toEqual(f);
-      expect(f.months).toHaveLength(w.pastMonths + 1 + w.months);
-      checkInvariants(w.db, f);
-    }
-  });
+  // 60 random worlds, each built in a fresh database: slow on a loaded machine.
+  it(
+    "never counts recurring money twice, stays read-only and is deterministic",
+    { timeout: 120_000 },
+    async () => {
+      for (let seed = 1; seed <= 60; seed++) {
+        const w = await randomWorld(seed);
+        const before = await fullSnapshot(w.db);
+        const opts = {
+          today: w.today,
+          months: w.months,
+          history: w.history,
+          pastMonths: w.pastMonths,
+        };
+        const f = await getForecast(w.db, opts);
+        expect(await fullSnapshot(w.db), `seed ${seed}: read-only`).toEqual(before);
+        expect(await getForecast(w.db, opts), `seed ${seed}: deterministic`).toEqual(f);
+        expect(f.months).toHaveLength(w.pastMonths + 1 + w.months);
+        await checkInvariants(w.db, f);
+      }
+    },
+  );
 
-  it("does not create occurrences for items that have none stored", () => {
-    const { db, addItem } = setup();
-    addItem({ startDate: "2025-01-01" });
-    getForecast(db, { today: "2026-10-11", months: 36, pastMonths: 12 });
-    expect(db.select().from(schema.recurringOccurrences).all()).toEqual([]);
+  it("does not create occurrences for items that have none stored", async () => {
+    const { db, addItem } = await setup();
+    await addItem({ startDate: "2025-01-01" });
+    await getForecast(db, { today: "2026-10-11", months: 36, pastMonths: 12 });
+    expect(await db.select().from(schema.recurringOccurrences)).toEqual([]);
   });
 });
 
 describe("getForecast performance", () => {
-  it("handles five years of transactions and 30 items well under a second", () => {
-    const { db, account, addItem, cover, cat } = setup();
-    const cats = ["Boodschappen", "Eten & drinken", "Vervoer", "Overig", "Uitgaan & social"].map(
-      cat,
+  it("handles five years of transactions and 30 items well under a second", async () => {
+    const { db, account, addItem, cover, cat } = await setup();
+    const cats = await Promise.all(
+      ["Boodschappen", "Eten & drinken", "Vervoer", "Overig", "Uitgaan & social"].map(cat),
     );
-    const items = Array.from({ length: 30 }, (_, i) =>
-      addItem({
-        name: `Item ${i}`,
-        matchCounterparty: `Vaste last ${i}`,
-        expectedAmount: 1000 + i * 100,
-        dayOfMonth: (i % 28) + 1,
-        frequency: i % 10 === 0 ? "quarterly" : i % 15 === 1 ? "yearly" : "monthly",
-        startDate: "2021-10-01",
-      }),
-    );
+    const items = [];
+    for (let i = 0; i < 30; i++)
+      items.push(
+        await addItem({
+          name: `Item ${i}`,
+          matchCounterparty: `Vaste last ${i}`,
+          expectedAmount: 1000 + i * 100,
+          dayOfMonth: (i % 28) + 1,
+          frequency: i % 10 === 0 ? "quarterly" : i % 15 === 1 ? "yearly" : "monthly",
+          startDate: "2021-10-01",
+        }),
+      );
     const rows: (typeof schema.transactions.$inferInsert)[] = [];
     let n = 0;
     for (let m = "2021-10"; m <= "2026-09"; m = addMonths(m, 1)) {
-      cover(m);
+      await cover(m);
       for (const item of items)
         for (const p of planOccurrences(item, { fromMonth: m, throughMonth: m }))
           rows.push({
@@ -238,15 +250,18 @@ describe("getForecast performance", () => {
         });
     }
     for (let i = 0; i < rows.length; i += 500)
-      db.insert(schema.transactions)
-        .values(rows.slice(i, i + 500))
-        .run();
-    generateOccurrences(db, { throughMonth: "2026-10" });
-    matchOccurrences(db);
+      await db.insert(schema.transactions).values(rows.slice(i, i + 500));
+    await generateOccurrences(db, { throughMonth: "2026-10" });
+    await matchOccurrences(db);
     expect(rows.length).toBeGreaterThan(9000);
 
     const started = performance.now();
-    const f = getForecast(db, { today: "2026-10-11", months: 36, history: 12, pastMonths: 12 });
+    const f = await getForecast(db, {
+      today: "2026-10-11",
+      months: 36,
+      history: 12,
+      pastMonths: 12,
+    });
     const elapsed = performance.now() - started;
     expect(f.months).toHaveLength(49);
     expect(f.months.at(-1)!.recurring.expenses).toBeGreaterThan(0);

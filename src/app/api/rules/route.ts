@@ -4,12 +4,12 @@ import { applyRules, sortRules } from "@/lib/categories/categorise";
 
 export async function GET() {
   await requestTime();
-  return Response.json(sortRules(getDb().select().from(schema.categorisationRules).all()));
+  return Response.json(sortRules(await (await getDb()).select().from(schema.categorisationRules)));
 }
 
 /** POST JSON: { pattern, categoryId, priority? }. Also categorises existing uncategorised rows. */
 export async function POST(request: Request) {
-  return handle(async () => {
+  return await handle(async () => {
     const body = await request.json();
     const pattern = typeof body?.pattern === "string" ? body.pattern.trim() : "";
     if (pattern.length < 2 || pattern.length > 100 || !isInt(body?.categoryId)) {
@@ -18,16 +18,15 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-    const db = getDb();
-    const [rule] = db
+    const db = await getDb();
+    const [rule] = await db
       .insert(schema.categorisationRules)
       .values({
         pattern,
         categoryId: body.categoryId,
         priority: isInt(body.priority) ? body.priority : 10,
       })
-      .returning()
-      .all();
-    return Response.json({ rule, alsoCategorised: applyRules(db) }, { status: 201 });
+      .returning();
+    return Response.json({ rule, alsoCategorised: await applyRules(db) }, { status: 201 });
   });
 }

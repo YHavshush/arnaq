@@ -4,5 +4,5 @@ import { detectSuggestions } from "@/lib/recurring/suggestions";
 
 export async function GET() {
   await requestTime();
-  return Response.json(detectSuggestions(getDb(), { today: todayIso() }));
+  return Response.json(await detectSuggestions(await getDb(), { today: todayIso() }));
 }

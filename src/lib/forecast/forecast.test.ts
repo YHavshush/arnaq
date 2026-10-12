@@ -4,13 +4,13 @@ import { setup } from "@/lib/recurring/test-utils";
 import { ForecastError } from "./errors";
 import { getForecast } from "./forecast";
 
-const monthsOf = (f: ReturnType<typeof getForecast>) => f.months.map((m) => m.month);
-const kindsOf = (f: ReturnType<typeof getForecast>) => f.months.map((m) => m.kind);
+const monthsOf = (f: Awaited<ReturnType<typeof getForecast>>) => f.months.map((m) => m.month);
+const kindsOf = (f: Awaited<ReturnType<typeof getForecast>>) => f.months.map((m) => m.kind);
 
 describe("getForecast: options and timeline", () => {
-  it("defaults to 3 past months, the current month and 6 months ahead", () => {
-    const { db } = setup();
-    const f = getForecast(db, { today: "2026-10-11" });
+  it("defaults to 3 past months, the current month and 6 months ahead", async () => {
+    const { db } = await setup();
+    const f = await getForecast(db, { today: "2026-10-11" });
     expect(f.currentMonth).toBe("2026-10");
     expect(f.settings).toEqual({ months: 6, history: 3, pastMonths: 3 });
     expect(monthsOf(f)).toEqual([
@@ -27,33 +27,32 @@ describe("getForecast: options and timeline", () => {
     ]);
   });
 
-  it("rolls over the year end", () => {
-    const { db } = setup();
-    const f = getForecast(db, { today: "2026-12-31", months: 2, pastMonths: 2 });
+  it("rolls over the year end", async () => {
+    const { db } = await setup();
+    const f = await getForecast(db, { today: "2026-12-31", months: 2, pastMonths: 2 });
     expect(monthsOf(f)).toEqual(["2026-10", "2026-11", "2026-12", "2027-01", "2027-02"]);
-    const jan = getForecast(db, { today: "2027-01-01", months: 1, pastMonths: 1 });
+    const jan = await getForecast(db, { today: "2027-01-01", months: 1, pastMonths: 1 });
     expect(monthsOf(jan)).toEqual(["2026-12", "2027-01", "2027-02"]);
   });
 
-  it("handles today on the 31st without skipping short months", () => {
-    const { db } = setup();
-    const f = getForecast(db, { today: "2026-01-31", months: 2, pastMonths: 0 });
+  it("handles today on the 31st without skipping short months", async () => {
+    const { db } = await setup();
+    const f = await getForecast(db, { today: "2026-01-31", months: 2, pastMonths: 0 });
     expect(monthsOf(f)).toEqual(["2026-01", "2026-02", "2026-03"]);
   });
 
-  it("supports horizons 1 and 36", () => {
-    const { db } = setup();
-    expect(monthsOf(getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 0 }))).toEqual([
-      "2026-10",
-      "2026-11",
-    ]);
-    const long = getForecast(db, { today: "2026-10-11", months: 36, pastMonths: 0 });
+  it("supports horizons 1 and 36", async () => {
+    const { db } = await setup();
+    expect(
+      monthsOf(await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 0 })),
+    ).toEqual(["2026-10", "2026-11"]);
+    const long = await getForecast(db, { today: "2026-10-11", months: 36, pastMonths: 0 });
     expect(long.months).toHaveLength(37);
     expect(long.months.at(-1)!.month).toBe("2029-10");
   });
 
-  it("rejects invalid options with a ForecastError", () => {
-    const { db } = setup();
+  it("rejects invalid options with a ForecastError", async () => {
+    const { db } = await setup();
     const bad = [
       { today: "2026-10-32" },
       { today: "11-10-2026" },
@@ -67,36 +66,36 @@ describe("getForecast: options and timeline", () => {
       { today: "2026-10-11", pastMonths: 13 },
     ];
     for (const opts of bad)
-      expect(() => getForecast(db, opts), JSON.stringify(opts)).toThrow(ForecastError);
+      await expect(getForecast(db, opts), JSON.stringify(opts)).rejects.toThrow(ForecastError);
   });
 });
 
 describe("getForecast: month kinds and actuals", () => {
-  it("marks uploaded past months actual, others no-data, now mixed and later forecast", () => {
-    const { db, cover } = setup();
-    cover("2026-08");
-    const f = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 2 });
+  it("marks uploaded past months actual, others no-data, now mixed and later forecast", async () => {
+    const { db, cover } = await setup();
+    await cover("2026-08");
+    const f = await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 2 });
     expect(kindsOf(f)).toEqual(["actual", "no-data", "mixed", "forecast"]);
     expect(f.months.map((m) => m.hasUpload)).toEqual([true, false, false, false]);
-    cover("2026-10");
+    await cover("2026-10");
     expect(
-      getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 2 }).months[2],
+      (await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 2 })).months[2],
     ).toMatchObject({ kind: "mixed", hasUpload: true });
   });
 
-  it("reports actual months on exactly the month overview basis", () => {
-    const { db, tx, cover, cat } = setup();
-    cover("2026-09");
-    tx("2026-09-01", -65000, { categoryId: cat("Huur") });
-    tx("2026-09-03", -4237, { categoryId: cat("Boodschappen") });
-    tx("2026-09-04", 500, { categoryId: cat("Boodschappen") }); // refund
-    tx("2026-09-05", 123456, { categoryId: cat("Salaris / bijbaan") });
-    tx("2026-09-06", -450); // uncategorised
-    tx("2026-09-07", -20000, { isInternalTransfer: true });
-    tx("2026-09-08", -1200, { currency: "GBP", categoryId: cat("Vervoer") });
-    const f = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
+  it("reports actual months on exactly the month overview basis", async () => {
+    const { db, tx, cover, cat } = await setup();
+    await cover("2026-09");
+    await tx("2026-09-01", -65000, { categoryId: await cat("Huur") });
+    await tx("2026-09-03", -4237, { categoryId: await cat("Boodschappen") });
+    await tx("2026-09-04", 500, { categoryId: await cat("Boodschappen") }); // refund
+    await tx("2026-09-05", 123456, { categoryId: await cat("Salaris / bijbaan") });
+    await tx("2026-09-06", -450); // uncategorised
+    await tx("2026-09-07", -20000, { isInternalTransfer: true });
+    await tx("2026-09-08", -1200, { currency: "GBP", categoryId: await cat("Vervoer") });
+    const f = await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
     const sep = f.months[0];
-    const o = getMonthOverview(db, "2026-09");
+    const o = await getMonthOverview(db, "2026-09");
     expect(sep).toMatchObject({
       kind: "actual",
       income: o.totals.incomeActual,
@@ -116,10 +115,10 @@ describe("getForecast: month kinds and actuals", () => {
     expect(sep.categories.at(-1)).toMatchObject({ categoryId: null, actual: 450, total: 450 });
   });
 
-  it("keeps no-data months at zero even when stray transactions fall in them", () => {
-    const { db, tx, cat } = setup();
-    tx("2026-09-30", -5000, { categoryId: cat("Overig") }); // from a CSV labelled October, say
-    const f = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
+  it("keeps no-data months at zero even when stray transactions fall in them", async () => {
+    const { db, tx, cat } = await setup();
+    await tx("2026-09-30", -5000, { categoryId: await cat("Overig") }); // from a CSV labelled October, say
+    const f = await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
     expect(f.months[0]).toMatchObject({ kind: "no-data", income: 0, expenses: 0, net: 0 });
     expect(f.months[0].categories.every((c) => c.total === 0)).toBe(true);
   });

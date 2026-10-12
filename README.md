@@ -2,7 +2,7 @@
 
 Personal budget tracker: upload one CSV per bank per month (Rabobank, Revolut), see budget vs actual, manage vaste lasten and inkomen, and get an adjustable prognose. See [PLAN.md](PLAN.md) for the full plan and [CLAUDE.md](CLAUDE.md) for repo rules.
 
-**Stack:** Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · SQLite via Drizzle ORM · Vitest
+**Stack:** Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · Postgres via Drizzle ORM (PGlite locally, Supabase when hosted) · Vitest
 
 ## Run locally
 
@@ -10,29 +10,45 @@ Requires Node 22+.
 
 ```bash
 npm install
-npm run db:migrate   # creates data/budget.db and applies migrations
 npm run dev          # http://localhost:3000
 ```
 
-The database lives in `data/budget.db` (git-ignored). Set `DATABASE_URL` to use another path.
+No database server needed: the app runs a real Postgres in-process ([PGlite](https://pglite.dev)) and keeps it in `data/pglite/` (git-ignored). It migrates and seeds itself on first start.
 
 ## Scripts
 
-| Script                            | What it does                            |
-| --------------------------------- | --------------------------------------- |
-| `npm run dev`                     | Start the dev server                    |
-| `npm run build` / `npm start`     | Production build / serve it             |
-| `npm test` / `npm run test:watch` | Run Vitest once / in watch mode         |
-| `npm run lint`                    | ESLint                                  |
-| `npm run format` / `format:check` | Prettier write / check                  |
-| `npm run typecheck`               | TypeScript without emitting             |
-| `npm run db:generate`             | Generate a migration after schema edits |
-| `npm run db:migrate`              | Apply migrations to the local database  |
-| `npm run db:studio`               | Browse the database in Drizzle Studio   |
+| Script                            | What it does                               |
+| --------------------------------- | ------------------------------------------ |
+| `npm run dev`                     | Start the dev server                       |
+| `npm run build` / `npm start`     | Production build / serve it                |
+| `npm test` / `npm run test:watch` | Run Vitest once / in watch mode            |
+| `npm run lint`                    | ESLint                                     |
+| `npm run format` / `format:check` | Prettier write / check                     |
+| `npm run typecheck`               | TypeScript without emitting                |
+| `npm run db:generate`             | Generate a migration after schema edits    |
+| `npm run db:migrate`              | Migrate a hosted Postgres (`DATABASE_URL`) |
+| `npm run db:studio`               | Browse the database in Drizzle Studio      |
 
 ## Database
 
-Schema is in [src/db/schema.ts](src/db/schema.ts); migrations are in `drizzle/`. After changing the schema run `npm run db:generate`, then `npm run db:migrate`. Money is stored as integer cents, dates as ISO strings (`YYYY-MM-DD`, months as `YYYY-MM`).
+Schema is in [src/db/schema.ts](src/db/schema.ts); migrations are in `drizzle/`. After changing the schema run `npm run db:generate` and commit the new migration. Money is stored as integer cents (`bigint`, read as a JS number), dates as ISO strings (`YYYY-MM-DD`, months as `YYYY-MM`). Every table has row level security switched on with no policies (deny all), so Supabase's REST API exposes nothing; a test fails if a new table forgets it.
+
+All database access is async (`await`); ESLint fails on a forgotten `await`.
+
+### Using Supabase
+
+1. Create a project at supabase.com and copy the **direct** connection string (Project settings, Database). Use the pooled one (port 6543) for the running app.
+2. Migrate once with the direct string:
+
+   ```bash
+   DATABASE_URL='postgres://postgres:<password>@db.<ref>.supabase.co:5432/postgres?sslmode=require' npm run db:migrate
+   ```
+
+3. Start the app with `DATABASE_URL` set to the pooled string. The app never changes a hosted schema by itself; `db:migrate` does that.
+
+In production the app refuses to start without `DATABASE_URL` (set `KASBOEK_ALLOW_LOCAL_DB=1` only if you really want PGlite there), and a value that looks like a URL but is not `postgres://` is rejected. Connections to a non-local host use TLS. Also switch on "Enforce SSL" in the Supabase project.
+
+Keep the password out of the repo (`.env*` is git-ignored). The app connects as the `postgres` role, which bypasses RLS; the public `anon` and `authenticated` roles see nothing.
 
 ## Data safety
 

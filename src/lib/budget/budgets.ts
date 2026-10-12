@@ -1,5 +1,5 @@
 import { and, between, eq } from "drizzle-orm";
-import { schema, type Db } from "@/db";
+import { first, schema, type Db } from "@/db";
 import { MAX_CENTS } from "@/lib/money";
 
 export class BudgetError extends Error {}
@@ -16,50 +16,56 @@ function assertCents(amount: number): void {
   }
 }
 
-export function setBudget(db: Db, categoryId: number, month: string, amount: number): void {
+export async function setBudget(
+  db: Db,
+  categoryId: number,
+  month: string,
+  amount: number,
+): Promise<void> {
   assertMonth(month);
   assertCents(amount);
-  db.insert(schema.budgets)
+  await db
+    .insert(schema.budgets)
     .values({ categoryId, month, amount })
     .onConflictDoUpdate({
       target: [schema.budgets.categoryId, schema.budgets.month],
       set: { amount },
-    })
-    .run();
+    });
 }
 
-export function clearBudget(db: Db, categoryId: number, month: string): void {
-  db.delete(schema.budgets)
-    .where(and(eq(schema.budgets.categoryId, categoryId), eq(schema.budgets.month, month)))
-    .run();
+export async function clearBudget(db: Db, categoryId: number, month: string): Promise<void> {
+  await db
+    .delete(schema.budgets)
+    .where(and(eq(schema.budgets.categoryId, categoryId), eq(schema.budgets.month, month)));
 }
 
 /** Set (or with null, remove) the optional overall budget for a month. */
-export function setTotalBudget(db: Db, month: string, amount: number | null): void {
+export async function setTotalBudget(db: Db, month: string, amount: number | null): Promise<void> {
   assertMonth(month);
   if (amount === null) {
-    db.delete(schema.monthlyTotalBudget).where(eq(schema.monthlyTotalBudget.month, month)).run();
+    await db.delete(schema.monthlyTotalBudget).where(eq(schema.monthlyTotalBudget.month, month));
     return;
   }
   assertCents(amount);
-  db.insert(schema.monthlyTotalBudget)
+  await db
+    .insert(schema.monthlyTotalBudget)
     .values({ month, amount })
-    .onConflictDoUpdate({ target: schema.monthlyTotalBudget.month, set: { amount } })
-    .run();
+    .onConflictDoUpdate({ target: schema.monthlyTotalBudget.month, set: { amount } });
 }
 
 /** Copy all category budgets (and the total) from one month to another, overwriting. */
-export function copyBudgets(db: Db, fromMonth: string, toMonth: string): number {
+export async function copyBudgets(db: Db, fromMonth: string, toMonth: string): Promise<number> {
   assertMonth(fromMonth);
   assertMonth(toMonth);
-  const rows = db.select().from(schema.budgets).where(eq(schema.budgets.month, fromMonth)).all();
-  for (const r of rows) setBudget(db, r.categoryId, toMonth, r.amount);
-  const total = db
-    .select()
-    .from(schema.monthlyTotalBudget)
-    .where(eq(schema.monthlyTotalBudget.month, fromMonth))
-    .get();
-  if (total) setTotalBudget(db, toMonth, total.amount);
+  const rows = await db.select().from(schema.budgets).where(eq(schema.budgets.month, fromMonth));
+  for (const r of rows) await setBudget(db, r.categoryId, toMonth, r.amount);
+  const total = await first(
+    db
+      .select()
+      .from(schema.monthlyTotalBudget)
+      .where(eq(schema.monthlyTotalBudget.month, fromMonth)),
+  );
+  if (total) await setTotalBudget(db, toMonth, total.amount);
   return rows.length;
 }
 
@@ -71,11 +77,11 @@ export interface MonthBudgets {
 }
 
 /** Budgets for every month in fromMonth..toMonth (inclusive) that has any. Two queries. */
-export function getBudgetsByMonth(
+export async function getBudgetsByMonth(
   db: Db,
   fromMonth: string,
   toMonth: string,
-): Map<string, MonthBudgets> {
+): Promise<Map<string, MonthBudgets>> {
   assertMonth(fromMonth);
   assertMonth(toMonth);
   const out = new Map<string, MonthBudgets>();
@@ -84,17 +90,15 @@ export function getBudgetsByMonth(
     if (!b) out.set(month, (b = { byCategory: new Map(), total: null }));
     return b;
   };
-  for (const r of db
+  for (const r of await db
     .select()
     .from(schema.budgets)
-    .where(between(schema.budgets.month, fromMonth, toMonth))
-    .all())
+    .where(between(schema.budgets.month, fromMonth, toMonth)))
     at(r.month).byCategory.set(r.categoryId, r.amount);
-  for (const r of db
+  for (const r of await db
     .select()
     .from(schema.monthlyTotalBudget)
-    .where(between(schema.monthlyTotalBudget.month, fromMonth, toMonth))
-    .all())
+    .where(between(schema.monthlyTotalBudget.month, fromMonth, toMonth)))
     at(r.month).total = r.amount;
   return out;
 }

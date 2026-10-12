@@ -102,111 +102,115 @@ describe("planOccurrences", () => {
 });
 
 describe("generateOccurrences", () => {
-  it("creates occurrences for active items only, idempotently", () => {
-    const { db, addItem, occurrences } = setup();
-    const spotify = addItem();
-    const old = addItem({ name: "Old", active: false });
-    expect(generateOccurrences(db, { throughMonth: "2026-03" })).toBe(3);
-    expect(generateOccurrences(db, { throughMonth: "2026-03" })).toBe(0);
-    expect(occurrences(spotify.id).map((o) => [o.month, o.expectedDate, o.status])).toEqual([
-      ["2026-01", "2026-01-10", "expected"],
-      ["2026-02", "2026-02-10", "expected"],
-      ["2026-03", "2026-03-10", "expected"],
-    ]);
-    expect(occurrences(spotify.id).every((o) => o.expectedAmount === 999)).toBe(true);
-    expect(occurrences(old.id)).toHaveLength(0);
+  it("creates occurrences for active items only, idempotently", async () => {
+    const { db, addItem, occurrences } = await setup();
+    const spotify = await addItem();
+    const old = await addItem({ name: "Old", active: false });
+    expect(await generateOccurrences(db, { throughMonth: "2026-03" })).toBe(3);
+    expect(await generateOccurrences(db, { throughMonth: "2026-03" })).toBe(0);
+    expect((await occurrences(spotify.id)).map((o) => [o.month, o.expectedDate, o.status])).toEqual(
+      [
+        ["2026-01", "2026-01-10", "expected"],
+        ["2026-02", "2026-02-10", "expected"],
+        ["2026-03", "2026-03-10", "expected"],
+      ],
+    );
+    expect((await occurrences(spotify.id)).every((o) => o.expectedAmount === 999)).toBe(true);
+    expect(await occurrences(old.id)).toHaveLength(0);
 
     // Going further only adds the new months; a shorter horizon removes nothing.
-    expect(generateOccurrences(db, { throughMonth: "2026-05" })).toBe(2);
-    expect(generateOccurrences(db, { throughMonth: "2026-02" })).toBe(0);
-    expect(occurrences(spotify.id)).toHaveLength(5);
+    expect(await generateOccurrences(db, { throughMonth: "2026-05" })).toBe(2);
+    expect(await generateOccurrences(db, { throughMonth: "2026-02" })).toBe(0);
+    expect(await occurrences(spotify.id)).toHaveLength(5);
   });
 
-  it("never touches existing occurrences", () => {
-    const { db, addItem, occurrences } = setup();
-    const item = addItem();
-    generateOccurrences(db, { throughMonth: "2026-02" });
-    const [jan] = occurrences(item.id);
-    db.update(schema.recurringOccurrences)
+  it("never touches existing occurrences", async () => {
+    const { db, addItem, occurrences } = await setup();
+    const item = await addItem();
+    await generateOccurrences(db, { throughMonth: "2026-02" });
+    const [jan] = await occurrences(item.id);
+    await db
+      .update(schema.recurringOccurrences)
       .set({ status: "missed" })
-      .where(eq(schema.recurringOccurrences.id, jan.id))
-      .run();
-    db.update(schema.recurringItems)
+      .where(eq(schema.recurringOccurrences.id, jan.id));
+    await db
+      .update(schema.recurringItems)
       .set({ expectedAmount: 1199, dayOfMonth: 20 })
-      .where(eq(schema.recurringItems.id, item.id))
-      .run();
-    const before = snapshot(db).occurrences;
-    generateOccurrences(db, { throughMonth: "2026-02" });
-    expect(snapshot(db).occurrences).toEqual(before);
-    generateOccurrences(db, { throughMonth: "2026-03" });
-    const all = occurrences(item.id);
+      .where(eq(schema.recurringItems.id, item.id));
+    const before = (await snapshot(db)).occurrences;
+    await generateOccurrences(db, { throughMonth: "2026-02" });
+    expect((await snapshot(db)).occurrences).toEqual(before);
+    await generateOccurrences(db, { throughMonth: "2026-03" });
+    const all = await occurrences(item.id);
     expect(all[0]).toMatchObject({ status: "missed", expectedAmount: 999 });
     expect(all[2]).toMatchObject({ expectedDate: "2026-03-20", expectedAmount: 1199 });
   });
 
-  it("rejects an invalid month", () => {
-    const { db } = setup();
-    expect(() => generateOccurrences(db, { throughMonth: "2026-3" })).toThrow(RecurringError);
+  it("rejects an invalid month", async () => {
+    const { db } = await setup();
+    await expect(generateOccurrences(db, { throughMonth: "2026-3" })).rejects.toThrow(
+      RecurringError,
+    );
   });
 });
 
 describe("markMissed", () => {
-  it("does not cry wolf before the month is uploaded", () => {
-    const { db, addItem, occ } = setup();
-    const item = addItem({ startDate: "2026-03-01" });
-    generateOccurrences(db, { throughMonth: "2026-03" });
-    expect(markMissed(db, { today: "2027-01-01" })).toBe(0);
-    expect(occ(item.id, "2026-03").status).toBe("expected");
+  it("does not cry wolf before the month is uploaded", async () => {
+    const { db, addItem, occ } = await setup();
+    const item = await addItem({ startDate: "2026-03-01" });
+    await generateOccurrences(db, { throughMonth: "2026-03" });
+    expect(await markMissed(db, { today: "2027-01-01" })).toBe(0);
+    expect((await occ(item.id, "2026-03")).status).toBe("expected");
   });
 
-  it("marks missed only after the full 5 day window has passed", () => {
-    const { db, addItem, cover, occ } = setup();
-    const item = addItem({ startDate: "2026-03-01" });
-    generateOccurrences(db, { throughMonth: "2026-03" });
-    cover("2026-03");
-    expect(markMissed(db, { today: "2026-03-15" })).toBe(0); // window ends on the 15th
-    expect(occ(item.id, "2026-03").status).toBe("expected");
-    expect(markMissed(db, { today: "2026-03-16" })).toBe(1);
-    expect(occ(item.id, "2026-03").status).toBe("missed");
-    expect(markMissed(db, { today: "2026-03-16" })).toBe(0); // idempotent
+  it("marks missed only after the full 5 day window has passed", async () => {
+    const { db, addItem, cover, occ } = await setup();
+    const item = await addItem({ startDate: "2026-03-01" });
+    await generateOccurrences(db, { throughMonth: "2026-03" });
+    await cover("2026-03");
+    expect(await markMissed(db, { today: "2026-03-15" })).toBe(0); // window ends on the 15th
+    expect((await occ(item.id, "2026-03")).status).toBe("expected");
+    expect(await markMissed(db, { today: "2026-03-16" })).toBe(1);
+    expect((await occ(item.id, "2026-03")).status).toBe("missed");
+    expect(await markMissed(db, { today: "2026-03-16" })).toBe(0); // idempotent
   });
 
-  it("needs every month the window touches to be uploaded", () => {
-    const { db, addItem, cover, occ } = setup();
-    const late = addItem({ name: "Late", dayOfMonth: 29, startDate: "2026-01-01" });
-    const early = addItem({ name: "Early", dayOfMonth: 2, startDate: "2026-03-01" });
-    generateOccurrences(db, { throughMonth: "2026-03" });
-    cover("2026-01", "2026-03");
+  it("needs every month the window touches to be uploaded", async () => {
+    const { db, addItem, cover, occ } = await setup();
+    const late = await addItem({ name: "Late", dayOfMonth: 29, startDate: "2026-01-01" });
+    const early = await addItem({ name: "Early", dayOfMonth: 2, startDate: "2026-03-01" });
+    await generateOccurrences(db, { throughMonth: "2026-03" });
+    await cover("2026-01", "2026-03");
     // Late: 29 Jan, window runs into February (not uploaded). Early: 2 Mar, window starts in
     // February. Both could have been paid in February, so neither is missed yet.
-    markMissed(db, { today: "2026-04-01" });
-    expect(occ(late.id, "2026-01").status).toBe("expected");
-    expect(occ(early.id, "2026-03").status).toBe("expected");
-    cover("2026-02");
-    markMissed(db, { today: "2026-04-01" });
-    expect(occ(late.id, "2026-01").status).toBe("missed");
-    expect(occ(late.id, "2026-02").status).toBe("missed");
-    expect(occ(early.id, "2026-03").status).toBe("missed");
+    await markMissed(db, { today: "2026-04-01" });
+    expect((await occ(late.id, "2026-01")).status).toBe("expected");
+    expect((await occ(early.id, "2026-03")).status).toBe("expected");
+    await cover("2026-02");
+    await markMissed(db, { today: "2026-04-01" });
+    expect((await occ(late.id, "2026-01")).status).toBe("missed");
+    expect((await occ(late.id, "2026-02")).status).toBe("missed");
+    expect((await occ(early.id, "2026-03")).status).toBe("missed");
   });
 
-  it("leaves matched occurrences alone and validates today", () => {
-    const { db, addItem, cover, tx, occ } = setup();
-    const item = addItem({ startDate: "2026-03-01" });
-    tx("2026-03-10", -999, { counterparty: "Spotify" });
-    generateOccurrences(db, { throughMonth: "2026-03" });
-    matchOccurrences(db);
-    cover("2026-03");
-    expect(markMissed(db, { today: "2026-06-01" })).toBe(0);
-    expect(occ(item.id, "2026-03").status).toBe("matched");
-    expect(() => markMissed(db, { today: "2026-06" })).toThrow(RecurringError);
+  it("leaves matched occurrences alone and validates today", async () => {
+    const { db, addItem, cover, tx, occ } = await setup();
+    const item = await addItem({ startDate: "2026-03-01" });
+    await tx("2026-03-10", -999, { counterparty: "Spotify" });
+    await generateOccurrences(db, { throughMonth: "2026-03" });
+    await matchOccurrences(db);
+    await cover("2026-03");
+    expect(await markMissed(db, { today: "2026-06-01" })).toBe(0);
+    expect((await occ(item.id, "2026-03")).status).toBe("matched");
+    await expect(markMissed(db, { today: "2026-06" })).rejects.toThrow(RecurringError);
   });
 });
 
 describe("getOccurrences", () => {
-  it("reports the actual amount for matched occurrences and the plan otherwise", () => {
-    const { db, addItem, tx, cat } = setup();
-    addItem({ tolerance: 100, categoryId: cat("Abonnementen") });
-    addItem({
+  it("reports the actual amount for matched occurrences and the plan otherwise", async () => {
+    const { db, addItem, tx, cat } = await setup();
+    await addItem({ tolerance: 100, categoryId: await cat("Abonnementen") });
+    await addItem({
       name: "Salaris",
       type: "income",
       matchCounterparty: "Werkgever",
@@ -214,17 +218,17 @@ describe("getOccurrences", () => {
       tolerance: 5000,
       dayOfMonth: 25,
     });
-    const paid = tx("2026-01-11", -1049, { counterparty: "Spotify AB" });
-    tx("2026-01-24", 123456, { counterparty: "Voorbeeld Werkgever BV" });
-    generateOccurrences(db, { throughMonth: "2026-02" });
-    matchOccurrences(db);
+    const paid = await tx("2026-01-11", -1049, { counterparty: "Spotify AB" });
+    await tx("2026-01-24", 123456, { counterparty: "Voorbeeld Werkgever BV" });
+    await generateOccurrences(db, { throughMonth: "2026-02" });
+    await matchOccurrences(db);
 
-    const rows = getOccurrences(db, { from: "2026-01", to: "2026-01" });
+    const rows = await getOccurrences(db, { from: "2026-01", to: "2026-01" });
     expect(rows).toHaveLength(2);
     expect(rows[0]).toMatchObject({
       itemName: "Spotify",
       type: "expense",
-      categoryId: cat("Abonnementen"),
+      categoryId: await cat("Abonnementen"),
       status: "matched",
       transactionId: paid.id,
       expectedAmount: 999,
@@ -234,26 +238,26 @@ describe("getOccurrences", () => {
     });
     expect(rows[1]).toMatchObject({ itemName: "Salaris", actualAmount: 123456, amount: 123456 });
 
-    const feb = getOccurrences(db, { from: "2026-02" });
+    const feb = await getOccurrences(db, { from: "2026-02" });
     expect(feb.map((r) => [r.status, r.actualAmount, r.amount])).toEqual([
       ["expected", null, 999],
       ["expected", null, 120000],
     ]);
-    expect(getOccurrences(db)).toHaveLength(4);
+    expect(await getOccurrences(db)).toHaveLength(4);
   });
 
-  it("validates the range", () => {
-    const { db } = setup();
-    expect(() => getOccurrences(db, { from: "2026-1" })).toThrow(RecurringError);
-    expect(() => getOccurrences(db, { from: "2026-03", to: "2026-02" })).toThrow(/from/);
+  it("validates the range", async () => {
+    const { db } = await setup();
+    await expect(getOccurrences(db, { from: "2026-1" })).rejects.toThrow(RecurringError);
+    await expect(getOccurrences(db, { from: "2026-03", to: "2026-02" })).rejects.toThrow(/from/);
   });
 
-  it("lists missed occurrences most recent first", () => {
-    const { db, addItem, cover } = setup();
-    addItem();
-    generateOccurrences(db, { throughMonth: "2026-03" });
-    cover("2026-01", "2026-02", "2026-03");
-    markMissed(db, { today: "2026-03-01" });
-    expect(getMissedOccurrences(db).map((o) => o.month)).toEqual(["2026-02", "2026-01"]);
+  it("lists missed occurrences most recent first", async () => {
+    const { db, addItem, cover } = await setup();
+    await addItem();
+    await generateOccurrences(db, { throughMonth: "2026-03" });
+    await cover("2026-01", "2026-02", "2026-03");
+    await markMissed(db, { today: "2026-03-01" });
+    expect((await getMissedOccurrences(db)).map((o) => o.month)).toEqual(["2026-02", "2026-01"]);
   });
 });

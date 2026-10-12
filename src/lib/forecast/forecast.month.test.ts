@@ -13,55 +13,59 @@ const line = (m: ForecastMonth, name: string | null) =>
  * 50 + 50 (avg 50), uncategorised 0 + 20 (avg 10). From October: rent 800 on the 1st,
  * Spotify 9,99 on the 20th, salary 2500 on the 25th.
  */
-function scenario() {
-  const s = setup();
+async function scenario() {
+  const s = await setup();
   const { tx, cover, cat, addItem } = s;
-  cover("2026-08", "2026-09");
-  tx("2026-08-05", -30000, { categoryId: cat("Boodschappen") });
-  tx("2026-09-05", -40000, { categoryId: cat("Boodschappen") });
-  tx("2026-08-06", -5000, { categoryId: cat("Eten & drinken") });
-  tx("2026-09-06", -5000, { categoryId: cat("Eten & drinken") });
-  tx("2026-09-07", -2000);
-  addItem({
+  await cover("2026-08", "2026-09");
+  await tx("2026-08-05", -30000, { categoryId: await cat("Boodschappen") });
+  await tx("2026-09-05", -40000, { categoryId: await cat("Boodschappen") });
+  await tx("2026-08-06", -5000, { categoryId: await cat("Eten & drinken") });
+  await tx("2026-09-06", -5000, { categoryId: await cat("Eten & drinken") });
+  await tx("2026-09-07", -2000);
+  await addItem({
     name: "Huur",
     matchCounterparty: "Verhuurder",
     expectedAmount: 80000,
     dayOfMonth: 1,
     startDate: "2026-10-01",
-    categoryId: cat("Huur"),
+    categoryId: await cat("Huur"),
   });
-  addItem({ startDate: "2026-10-01", dayOfMonth: 20, categoryId: cat("Abonnementen") });
-  addItem({
+  await addItem({ startDate: "2026-10-01", dayOfMonth: 20, categoryId: await cat("Abonnementen") });
+  await addItem({
     name: "Salaris",
     type: "income",
     matchCounterparty: "Werkgever",
     expectedAmount: 250000,
     dayOfMonth: 25,
     startDate: "2026-10-01",
-    categoryId: cat("Salaris / bijbaan"),
+    categoryId: await cat("Salaris / bijbaan"),
   });
   return s;
 }
 
 /** October uploaded so far: rent paid (matched), groceries 120, eating out 70, plus noise. */
-function uploadOctober(s: ReturnType<typeof scenario>) {
+async function uploadOctober(s: Awaited<ReturnType<typeof scenario>>) {
   const { db, tx, cover, cat } = s;
-  cover("2026-10");
-  generateOccurrences(db, { throughMonth: "2026-10" });
-  tx("2026-10-01", -80000, { counterparty: "Verhuurder", categoryId: cat("Huur") });
-  tx("2026-10-05", -12000, { categoryId: cat("Boodschappen") });
-  tx("2026-10-06", -7000, { categoryId: cat("Eten & drinken") });
+  await cover("2026-10");
+  await generateOccurrences(db, { throughMonth: "2026-10" });
+  await tx("2026-10-01", -80000, { counterparty: "Verhuurder", categoryId: await cat("Huur") });
+  await tx("2026-10-05", -12000, { categoryId: await cat("Boodschappen") });
+  await tx("2026-10-06", -7000, { categoryId: await cat("Eten & drinken") });
   // Neither changes a number: a foreign-currency row and an internal transfer.
-  tx("2026-10-07", -50000, { categoryId: cat("Boodschappen"), currency: "USD" });
-  tx("2026-10-08", -30000, { categoryId: cat("Boodschappen"), isInternalTransfer: true });
-  expect(matchOccurrences(db).matched).toBe(1);
+  await tx("2026-10-07", -50000, { categoryId: await cat("Boodschappen"), currency: "USD" });
+  await tx("2026-10-08", -30000, {
+    categoryId: await cat("Boodschappen"),
+    isInternalTransfer: true,
+  });
+  expect((await matchOccurrences(db)).matched).toBe(1);
 }
 
 describe("getForecast: the current month mixes actual and expected", () => {
-  it("adds still-expected recurring and the remaining variable spend to the actuals", () => {
-    const s = scenario();
-    uploadOctober(s);
-    const [oct] = getForecast(s.db, { today: "2026-10-11", months: 1, pastMonths: 0 }).months;
+  it("adds still-expected recurring and the remaining variable spend to the actuals", async () => {
+    const s = await scenario();
+    await uploadOctober(s);
+    const [oct] = (await getForecast(s.db, { today: "2026-10-11", months: 1, pastMonths: 0 }))
+      .months;
     expect(oct).toMatchObject({ kind: "mixed", hasUpload: true });
     expect(line(oct, "Boodschappen")).toMatchObject({
       actual: 12000,
@@ -85,9 +89,10 @@ describe("getForecast: the current month mixes actual and expected", () => {
     });
   });
 
-  it("without an upload projects the full averages and every recurring payment", () => {
-    const s = scenario();
-    const [oct] = getForecast(s.db, { today: "2026-10-11", months: 1, pastMonths: 0 }).months;
+  it("without an upload projects the full averages and every recurring payment", async () => {
+    const s = await scenario();
+    const [oct] = (await getForecast(s.db, { today: "2026-10-11", months: 1, pastMonths: 0 }))
+      .months;
     expect(oct).toMatchObject({ kind: "mixed", hasUpload: false });
     expect(line(oct, "Boodschappen")).toMatchObject({ actual: 0, variable: 35000 });
     expect(oct).toMatchObject({
@@ -97,10 +102,10 @@ describe("getForecast: the current month mixes actual and expected", () => {
     });
   });
 
-  it("projects future months from recurring items plus average variable spend", () => {
-    const s = scenario();
-    uploadOctober(s);
-    const f = getForecast(s.db, { today: "2026-10-11", months: 2, pastMonths: 0 });
+  it("projects future months from recurring items plus average variable spend", async () => {
+    const s = await scenario();
+    await uploadOctober(s);
+    const f = await getForecast(s.db, { today: "2026-10-11", months: 2, pastMonths: 0 });
     for (const m of f.months.slice(1)) {
       expect(m).toMatchObject({
         kind: "forecast",
@@ -123,14 +128,14 @@ describe("getForecast: the current month mixes actual and expected", () => {
 });
 
 describe("getForecast: budget comparison and chart totals", () => {
-  it("compares with the month's budget and never invents one", () => {
-    const s = scenario();
+  it("compares with the month's budget and never invents one", async () => {
+    const s = await scenario();
     const { db, cat } = s;
-    setBudget(db, cat("Boodschappen"), "2026-09", 25000); // a past month without upload
-    setBudget(db, cat("Boodschappen"), "2026-10", 30000);
-    setBudget(db, cat("Huur"), "2026-10", 80000);
-    setTotalBudget(db, "2026-12", 150000);
-    const f = getForecast(db, { today: "2026-10-11", months: 2, pastMonths: 1, history: 1 });
+    await setBudget(db, await cat("Boodschappen"), "2026-09", 25000); // a past month without upload
+    await setBudget(db, await cat("Boodschappen"), "2026-10", 30000);
+    await setBudget(db, await cat("Huur"), "2026-10", 80000);
+    await setTotalBudget(db, "2026-12", 150000);
+    const f = await getForecast(db, { today: "2026-10-11", months: 2, pastMonths: 1, history: 1 });
     const [sep, oct, nov, dec] = f.months;
 
     expect(sep.kind).toBe("actual");
@@ -159,19 +164,19 @@ describe("getForecast: budget comparison and chart totals", () => {
     });
   });
 
-  it("reports budgets of no-data months without a difference", () => {
-    const { db, cat } = setup();
-    setBudget(db, cat("Boodschappen"), "2026-09", 25000);
-    const [sep] = getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 }).months;
+  it("reports budgets of no-data months without a difference", async () => {
+    const { db, cat } = await setup();
+    await setBudget(db, await cat("Boodschappen"), "2026-09", 25000);
+    const [sep] = (await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 })).months;
     expect(sep.kind).toBe("no-data");
     expect(sep.budget).toEqual({ total: 25000, isExplicit: false, difference: null });
     expect(line(sep, "Boodschappen")).toMatchObject({ budget: 25000, difference: null });
   });
 
-  it("keeps a running cumulative net over the returned months", () => {
-    const s = scenario();
-    uploadOctober(s);
-    const f = getForecast(s.db, { today: "2026-10-11", months: 3, pastMonths: 3 });
+  it("keeps a running cumulative net over the returned months", async () => {
+    const s = await scenario();
+    await uploadOctober(s);
+    const f = await getForecast(s.db, { today: "2026-10-11", months: 3, pastMonths: 3 });
     let running = 0;
     for (const m of f.months) {
       running += m.net;

@@ -1,5 +1,5 @@
 import { getDb } from "@/db";
-import { todayIso } from "@/lib/api";
+import { MAX_ID, todayIso } from "@/lib/api";
 import { ImportError, importCsv } from "@/lib/import/service";
 
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -26,13 +26,17 @@ export async function POST(request: Request) {
   const accountRaw = form.get("accountId");
   const monthRaw = form.get("month");
   const accountId = accountRaw ? Number(accountRaw) : undefined;
-  if (accountId !== undefined && !(Number.isSafeInteger(accountId) && accountId > 0)) {
+  if (
+    accountId !== undefined &&
+    !(Number.isSafeInteger(accountId) && accountId > 0 && accountId <= MAX_ID)
+  ) {
     return Response.json({ error: "Invalid accountId." }, { status: 400 });
   }
 
   try {
-    const summary = importCsv(getDb(), {
-      content: await file.text(),
+    const summary = await importCsv(await getDb(), {
+      // Postgres text cannot hold NUL characters.
+      content: (await file.text()).replaceAll("\u0000", ""),
       filename: file.name,
       accountId,
       month: typeof monthRaw === "string" && monthRaw ? monthRaw : undefined,

@@ -45,24 +45,23 @@ export interface VariableAverages {
  * Income is deliberately not averaged: projected income comes from recurring items only.
  * Uncategorised outgoing money gets its own average; uncategorised incoming money is ignored.
  */
-export function getVariableAverages(
+export async function getVariableAverages(
   db: Db,
   opts: { beforeMonth: string; history: number },
-): VariableAverages {
-  const months = [...coveredMonths(db)]
+): Promise<VariableAverages> {
+  const months = [...(await coveredMonths(db))]
     .filter((m) => m < opts.beforeMonth)
     .sort()
     .slice(-opts.history);
-  const expenseCategories = db
+  const expenseCategories = await db
     .select({ id: schema.categories.id })
     .from(schema.categories)
-    .where(eq(schema.categories.type, "expense"))
-    .all();
+    .where(eq(schema.categories.type, "expense"));
 
   const spent = new Map<number, number>(expenseCategories.map((c) => [c.id, 0]));
   let uncategorised = 0;
   if (months.length > 0) {
-    const sums = sumTransactions(db, {
+    const sums = await sumTransactions(db, {
       fromMonth: months[0],
       toMonth: months[months.length - 1],
       excludeMatched: true,

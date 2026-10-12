@@ -1,79 +1,78 @@
 // Test helpers: build transaction histories in code instead of adding big CSV fixtures.
 import { asc, eq } from "drizzle-orm";
-import { createDb, schema, type Db } from "@/db";
+import { one, createDb, schema, type Db } from "@/db";
 
 type NewTx = typeof schema.transactions.$inferInsert;
 type NewItem = typeof schema.recurringItems.$inferInsert;
 
-export function setup() {
-  const db = createDb(":memory:");
-  const [account] = db
+export async function setup() {
+  const db = await createDb(":memory:");
+  const [account] = await db
     .insert(schema.accounts)
     .values({ name: "Rabo", bank: "rabobank", iban: "NL00RABO0000000001" })
-    .returning()
-    .all();
+    .returning();
   let n = 0;
 
   /** Insert a transaction directly. Amount in signed cents. */
-  const tx = (date: string, amount: number, extra: Partial<NewTx> = {}) =>
-    db
-      .insert(schema.transactions)
-      .values({ accountId: account.id, date, amount, importHash: `h${n++}`, ...extra })
-      .returning()
-      .get();
+  const tx = async (date: string, amount: number, extra: Partial<NewTx> = {}) =>
+    await one(
+      db
+        .insert(schema.transactions)
+        .values({ accountId: account.id, date, amount, importHash: `h${n++}`, ...extra })
+        .returning(),
+    );
 
   /** Insert an item directly, without generating or matching anything. */
-  const addItem = (extra: Partial<NewItem> = {}) =>
-    db
-      .insert(schema.recurringItems)
-      .values({
-        name: "Spotify",
-        type: "expense",
-        matchCounterparty: "Spotify",
-        expectedAmount: 999,
-        tolerance: 0,
-        dayOfMonth: 10,
-        startDate: "2026-01-01",
-        ...extra,
-      })
-      .returning()
-      .get();
+  const addItem = async (extra: Partial<NewItem> = {}) =>
+    await one(
+      db
+        .insert(schema.recurringItems)
+        .values({
+          name: "Spotify",
+          type: "expense",
+          matchCounterparty: "Spotify",
+          expectedAmount: 999,
+          tolerance: 0,
+          dayOfMonth: 10,
+          startDate: "2026-01-01",
+          ...extra,
+        })
+        .returning(),
+    );
 
   /** Pretend these months were uploaded. */
-  const cover = (...months: string[]) => {
+  const cover = async (...months: string[]) => {
     for (const month of months)
-      db.insert(schema.imports).values({ accountId: account.id, month, filename: "t.csv" }).run();
+      await db.insert(schema.imports).values({ accountId: account.id, month, filename: "t.csv" });
   };
 
-  const cat = (name: string) =>
-    db.select().from(schema.categories).where(eq(schema.categories.name, name)).get()!.id;
+  const cat = async (name: string) =>
+    (await one(db.select().from(schema.categories).where(eq(schema.categories.name, name))))!.id;
 
-  const occurrences = (itemId: number) =>
-    db
+  const occurrences = async (itemId: number) =>
+    await db
       .select()
       .from(schema.recurringOccurrences)
       .where(eq(schema.recurringOccurrences.recurringItemId, itemId))
-      .orderBy(asc(schema.recurringOccurrences.month))
-      .all();
+      .orderBy(asc(schema.recurringOccurrences.month));
 
-  const occ = (itemId: number, month: string) =>
-    occurrences(itemId).find((o) => o.month === month)!;
+  const occ = async (itemId: number, month: string) =>
+    (await occurrences(itemId)).find((o) => o.month === month)!;
 
-  const getTx = (id: number) =>
-    db.select().from(schema.transactions).where(eq(schema.transactions.id, id)).get()!;
+  const getTx = async (id: number) =>
+    (await one(db.select().from(schema.transactions).where(eq(schema.transactions.id, id))))!;
 
   return { db, account, tx, addItem, cover, cat, occurrences, occ, getTx };
 }
 
 /** Everything matching can change, for "nothing changed" assertions. */
-export function snapshot(db: Db) {
+export async function snapshot(db: Db) {
   return {
-    occurrences: db
+    occurrences: await db
       .select()
       .from(schema.recurringOccurrences)
-      .orderBy(asc(schema.recurringOccurrences.id))
-      .all(),
-    transactions: db.select().from(schema.transactions).orderBy(asc(schema.transactions.id)).all(),
-    items: db.select().from(schema.recurringItems).orderBy(asc(schema.recurringItems.id)).all(),
+      .orderBy(asc(schema.recurringOccurrences.id)),
+    transactions: await db.select().from(schema.transactions).orderBy(asc(schema.transactions.id)),
+    items: await db.select().from(schema.recurringItems).orderBy(asc(schema.recurringItems.id)),
   };
 }

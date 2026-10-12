@@ -122,24 +122,26 @@ interface Context {
  * occurrences come from planOccurrences. A matched occurrence is real money in the actuals and
  * is never projected again (see projectRecurring and countedAs).
  */
-export function getForecast(db: Db, opts: ForecastOptions): Forecast {
+export async function getForecast(db: Db, opts: ForecastOptions): Promise<Forecast> {
   const settings = readOptions(opts);
   const current = monthOf(opts.today);
   const first = addMonths(current, -settings.pastMonths);
   const last = addMonths(current, settings.months);
-  const averages = getVariableAverages(db, { beforeMonth: current, history: settings.history });
-  const { byMonth, inMemoryMatched } = projectRecurring(db, { first, current, last });
+  const averages = await getVariableAverages(db, {
+    beforeMonth: current,
+    history: settings.history,
+  });
+  const { byMonth, inMemoryMatched } = await projectRecurring(db, { first, current, last });
   const ctx: Context = {
     current,
-    uploaded: coveredMonths(db),
-    categories: db
+    uploaded: await coveredMonths(db),
+    categories: await db
       .select({ id: schema.categories.id, name: schema.categories.name })
       .from(schema.categories)
       .where(eq(schema.categories.type, "expense"))
-      .orderBy(asc(schema.categories.sortOrder), asc(schema.categories.id))
-      .all(),
+      .orderBy(asc(schema.categories.sortOrder), asc(schema.categories.id)),
     averages,
-    budgets: getBudgetsByMonth(db, first, last),
+    budgets: await getBudgetsByMonth(db, first, last),
     occurrences: byMonth,
     inMemoryMatched,
   };
@@ -147,7 +149,7 @@ export function getForecast(db: Db, opts: ForecastOptions): Forecast {
   let cumulativeNet = 0;
   const months: ForecastMonth[] = [];
   for (let m = first; m <= last; m = addMonths(m, 1)) {
-    const month = buildMonth(db, ctx, m);
+    const month = await buildMonth(db, ctx, m);
     cumulativeNet += month.net;
     months.push({ ...month, cumulativeNet });
   }
@@ -175,7 +177,11 @@ function kindOf(ctx: Context, month: string): MonthKind {
   return ctx.uploaded.has(month) ? "actual" : "no-data";
 }
 
-function buildMonth(db: Db, ctx: Context, month: string): Omit<ForecastMonth, "cumulativeNet"> {
+async function buildMonth(
+  db: Db,
+  ctx: Context,
+  month: string,
+): Promise<Omit<ForecastMonth, "cumulativeNet">> {
   const kind = kindOf(ctx, month);
   const occurrences: ForecastOccurrence[] = (ctx.occurrences.get(month) ?? []).map((o) => ({
     ...o,
@@ -185,15 +191,17 @@ function buildMonth(db: Db, ctx: Context, month: string): Omit<ForecastMonth, "c
   const projectedIncome = projected.filter((o) => o.type === "income");
   const projectedExpenses = projected.filter((o) => o.type === "expense");
 
-  const overview = kind === "actual" || kind === "mixed" ? getMonthOverview(db, month) : null;
+  const overview = kind === "actual" || kind === "mixed" ? await getMonthOverview(db, month) : null;
   const soFar =
     kind === "mixed"
-      ? sumTransactions(db, {
-          fromMonth: month,
-          toMonth: month,
-          excludeMatched: true,
-          excludeIds: ctx.inMemoryMatched,
-        }).get(month)
+      ? (
+          await sumTransactions(db, {
+            fromMonth: month,
+            toMonth: month,
+            excludeMatched: true,
+            excludeIds: ctx.inMemoryMatched,
+          })
+        ).get(month)
       : undefined;
 
   const categories = categoryLines(ctx, month, kind, { overview, soFar, projectedExpenses });
@@ -239,7 +247,7 @@ function categoryLines(
   month: string,
   kind: MonthKind,
   data: {
-    overview: ReturnType<typeof getMonthOverview> | null;
+    overview: Awaited<ReturnType<typeof getMonthOverview>> | null;
     soFar: MonthSums | undefined;
     projectedExpenses: ForecastOccurrence[];
   },

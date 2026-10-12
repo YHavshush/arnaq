@@ -54,7 +54,7 @@ export interface SumOptions {
  * their account's currency left out, refunds netted against their category. One ranged query;
  * months without transactions are absent from the result.
  */
-export function sumTransactions(db: Db, opts: SumOptions): Map<string, MonthSums> {
+export async function sumTransactions(db: Db, opts: SumOptions): Promise<Map<string, MonthSums>> {
   assertMonth(opts.fromMonth);
   assertMonth(opts.toMonth);
   const t = schema.transactions;
@@ -64,7 +64,7 @@ export function sumTransactions(db: Db, opts: SumOptions): Map<string, MonthSums
     eq(t.isInternalTransfer, false),
   ];
   if (opts.excludeMatched) where.push(isNull(t.matchedOccurrenceId));
-  const rows = db
+  const rows = await db
     .select({
       id: t.id,
       date: t.date,
@@ -75,8 +75,7 @@ export function sumTransactions(db: Db, opts: SumOptions): Map<string, MonthSums
     })
     .from(t)
     .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
-    .where(and(...where))
-    .all();
+    .where(and(...where));
 
   const out = new Map<string, MonthSums>();
   for (const r of rows) {
@@ -107,12 +106,12 @@ export function sumTransactions(db: Db, opts: SumOptions): Map<string, MonthSums
 /**
  * Budget vs actual for one calendar month (by transaction date), on the sumTransactions basis.
  */
-export function getMonthOverview(db: Db, month: string): MonthOverview {
+export async function getMonthOverview(db: Db, month: string): Promise<MonthOverview> {
   assertMonth(month);
 
-  const categories = db.select().from(schema.categories).orderBy(schema.categories.sortOrder).all();
-  const budget = getBudgetsByMonth(db, month, month).get(month);
-  const sums = sumTransactions(db, { fromMonth: month, toMonth: month }).get(month);
+  const categories = await db.select().from(schema.categories).orderBy(schema.categories.sortOrder);
+  const budget = (await getBudgetsByMonth(db, month, month)).get(month);
+  const sums = (await sumTransactions(db, { fromMonth: month, toMonth: month })).get(month);
   const unc = sums?.uncategorised ?? { expense: 0, income: 0, count: 0 };
 
   const line = (c: (typeof categories)[number], type: "expense" | "income"): CategoryLine => {

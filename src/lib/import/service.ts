@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, eq } from "drizzle-orm";
-import { schema, type Db } from "@/db";
+import { first, schema, type Db } from "@/db";
 import { applyRules } from "@/lib/categories/categorise";
 import { detectInternalTransfers } from "@/lib/categories/transfers";
 import { isDate } from "@/lib/recurring/dates";
@@ -45,6 +45,7 @@ export class ImportError extends Error {}
 export const MAX_IMPORT_ROWS = 20_000;
 /** Detail for at most this many skipped rows goes back to the client (the count is always exact). */
 const MAX_SKIPPED_DETAIL = 50;
+const INSERT_CHUNK = 500;
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -67,35 +68,33 @@ function dominantMonth(rows: ParsedRow[]): string | null {
   );
 }
 
-function resolveAccount(db: Db, bank: Bank, identifier: string | null): number {
-  const accounts = db.select().from(schema.accounts).where(eq(schema.accounts.bank, bank)).all();
+async function resolveAccount(db: Db, bank: Bank, identifier: string | null): Promise<number> {
+  const accounts = await db.select().from(schema.accounts).where(eq(schema.accounts.bank, bank));
   if (identifier) {
     const byIban = accounts.find((a) => a.iban === identifier);
     if (byIban) return byIban.id;
-    const [created] = db
+    const [created] = await db
       .insert(schema.accounts)
       .values({
         name: `${bank === "rabobank" ? "Rabobank" : "Revolut"} ${identifier}`,
         bank,
         iban: identifier,
       })
-      .returning()
-      .all();
+      .returning();
     return created.id;
   }
   if (accounts.length === 1) return accounts[0].id;
   if (accounts.length === 0) {
-    const [created] = db
+    const [created] = await db
       .insert(schema.accounts)
       .values({ name: bank === "rabobank" ? "Rabobank" : "Revolut", bank })
-      .returning()
-      .all();
+      .returning();
     return created.id;
   }
   throw new ImportError(`Several ${bank} accounts exist, pick one with accountId.`);
 }
 
-export function importCsv(db: Db, input: ImportInput): ImportSummary {
+export async function importCsv(db: Db, input: ImportInput): Promise<ImportSummary> {
   if (input.month && !MONTH_RE.test(input.month))
     throw new ImportError(`Invalid month "${input.month}", use YYYY-MM.`);
   if (input.today !== undefined && !isDate(input.today))
@@ -105,11 +104,9 @@ export function importCsv(db: Db, input: ImportInput): ImportSummary {
   let bank: Bank;
   let accountId = input.accountId;
   if (accountId !== undefined) {
-    const account = db
-      .select()
-      .from(schema.accounts)
-      .where(eq(schema.accounts.id, accountId))
-      .get();
+    const account = await first(
+      db.select().from(schema.accounts).where(eq(schema.accounts.id, accountId)),
+    );
     if (!account) throw new ImportError(`Account ${accountId} does not exist.`);
     bank = account.bank;
     if (detected && detected !== bank) {
@@ -144,64 +141,69 @@ export function importCsv(db: Db, input: ImportInput): ImportSummary {
   if (outside > 0)
     warnings.push(`${outside} row(s) fall outside ${month}; they were imported anyway.`);
 
-  return db.transaction((tx) => {
-    const txDb = tx as unknown as Db;
-    accountId ??= resolveAccount(txDb, bank, parsed.accountIdentifier);
-    const account = tx
-      .select()
-      .from(schema.accounts)
-      .where(eq(schema.accounts.id, accountId))
-      .get()!;
+  return await db.transaction(async (tx) => {
+    accountId ??= await resolveAccount(tx, bank, parsed.accountIdentifier);
+    const account = (await first(
+      tx.select().from(schema.accounts).where(eq(schema.accounts.id, accountId)),
+    ))!;
 
-    const [imp] = tx
+    const [imp] = await tx
       .insert(schema.imports)
       .values({ accountId, month, filename: input.filename })
-      .returning()
-      .all();
+      .returning();
 
     const hashes = buildImportHashes(accountId, parsed.rows);
     let imported = 0;
     let foreign = 0;
-    parsed.rows.forEach((row, i) => {
-      const res = tx
-        .insert(schema.transactions)
-        .values({
-          accountId: account.id,
-          importId: imp.id,
-          date: row.date,
-          amount: row.amount,
-          currency: row.currency,
-          counterparty: row.counterparty,
-          counterpartyIban: row.counterpartyIban,
-          description: row.description,
-          importHash: hashes[i],
-        })
-        .onConflictDoNothing({ target: schema.transactions.importHash })
-        .run();
-      if (res.changes > 0) {
+    // Insert in chunks; rows whose hash already exists are skipped and not returned.
+    for (let from = 0; from < parsed.rows.length; from += INSERT_CHUNK) {
+      const chunk = parsed.rows.slice(from, from + INSERT_CHUNK);
+      const inserted = new Set(
+        (
+          await tx
+            .insert(schema.transactions)
+            .values(
+              chunk.map((row, j) => ({
+                accountId: account.id,
+                importId: imp.id,
+                date: row.date,
+                amount: row.amount,
+                currency: row.currency,
+                counterparty: row.counterparty,
+                counterpartyIban: row.counterpartyIban,
+                description: row.description,
+                importHash: hashes[from + j],
+              })),
+            )
+            .onConflictDoNothing({ target: schema.transactions.importHash })
+            .returning({ importHash: schema.transactions.importHash })
+        ).map((r) => r.importHash),
+      );
+      chunk.forEach((row, j) => {
+        if (!inserted.has(hashes[from + j])) return;
         imported++;
         if (row.currency !== account.currency) foreign++;
-      }
-    });
+      });
+    }
 
     const duplicate = parsed.rows.length - imported;
-    tx.update(schema.imports)
+    await tx
+      .update(schema.imports)
       .set({
         rowsTotal: parsed.rows.length + parsed.skipped.length,
         rowsImported: imported,
         rowsDuplicate: duplicate,
         rowsSkipped: parsed.skipped.length,
       })
-      .where(and(eq(schema.imports.id, imp.id)))
-      .run();
+      .where(and(eq(schema.imports.id, imp.id)));
 
     // New rows get categorised and own-account transfers are flagged straight away.
-    detectInternalTransfers(txDb);
-    applyRules(txDb, { importId: imp.id });
+    await detectInternalTransfers(tx);
+    await applyRules(tx, { importId: imp.id });
     // Then recurring items: plan through the newest data, match, and flag what is overdue.
     // Rules ran first, so an item's category only fills in what the rules left open.
-    const recurring = syncRecurring(txDb, {
-      throughMonth: latestTransactionMonth(txDb),
+    const recurring = await syncRecurring(tx, {
+      throughMonth: await latestTransactionMonth(tx),
       today: input.today,
     });
 

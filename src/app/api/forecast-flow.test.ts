@@ -24,7 +24,7 @@ beforeAll(async () => {
 });
 afterAll(() => vi.useRealTimers());
 
-const get = (url: string) => h.forecast.GET(new Request(`http://localhost${url}`));
+const get = async (url: string) => await h.forecast.GET(new Request(`http://localhost${url}`));
 
 type Month = {
   month: string;
@@ -63,8 +63,8 @@ describe("forecast over HTTP", () => {
     );
     expect(created.status).toBe(201);
 
-    const d = db.getDb();
-    const occurrencesBefore = d.select().from(db.schema.recurringOccurrences).all();
+    const d = await db.getDb();
+    const occurrencesBefore = await d.select().from(db.schema.recurringOccurrences);
 
     const res = await get("/api/forecast");
     expect(res.status).toBe(200);
@@ -89,7 +89,7 @@ describe("forecast over HTTP", () => {
     expect(sep.expenses).toBeGreaterThan(0);
     expect(nov.recurring.expenses).toBe(999);
     // Read-only: November was planned in memory, nothing was stored.
-    expect(d.select().from(db.schema.recurringOccurrences).all()).toEqual(occurrencesBefore);
+    expect(await d.select().from(db.schema.recurringOccurrences)).toEqual(occurrencesBefore);
 
     const short = (await (await get("/api/forecast?months=1&history=1&pastMonths=0")).json()) as {
       settings: unknown;
