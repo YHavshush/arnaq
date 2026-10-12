@@ -1,7 +1,9 @@
 import { Download } from "lucide-react";
 import { Suspense } from "react";
 import { schema } from "@/db";
+import { GhostButton } from "@/components/kasboek/form";
 import { pageDb } from "@/lib/auth/request";
+import { currentUser } from "@/lib/auth/session";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { RulesManager } from "@/components/kasboek/rules-manager";
@@ -30,10 +32,22 @@ async function Content() {
     await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
   ]);
   const name = new Map(categories.map((c) => [c.id, c.name]));
+  const user = await currentUser(); // pageDb above already sent anyone signed out to the login
   return (
     <div className="fade-in">
       <MoodSetter mood="neutral" />
       <PageHeader title={s.title} sub={s.sub} />
+
+      <Section title={t.auth.account.title}>
+        <div className="glass flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="min-w-0 text-[15px] break-words">
+            {user.email ? t.auth.account.signedInAs(user.email) : t.auth.account.signedIn}
+          </p>
+          <form action="/auth/logout" method="post">
+            <GhostButton type="submit">{t.auth.account.signOut}</GhostButton>
+          </form>
+        </div>
+      </Section>
 
       <Section title={s.backup}>
         <p className="text-ink-muted mb-3 max-w-[52ch] px-1 text-[15px]">{s.backupBody}</p>

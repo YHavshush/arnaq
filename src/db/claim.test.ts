@@ -21,15 +21,13 @@ describe("claiming the rows that existed before accounts did", () => {
       .insert(schema.accounts)
       .values({ name: "Oud", bank: "rabobank" })
       .returning();
-    await db
-      .insert(schema.transactions)
-      .values({
-        accountId: acct.id,
-        categoryId: cat.id,
-        date: "2026-09-01",
-        amount: -5,
-        importHash: "old",
-      });
+    await db.insert(schema.transactions).values({
+      accountId: acct.id,
+      categoryId: cat.id,
+      date: "2026-09-01",
+      amount: -5,
+      importHash: "old",
+    });
     await db.insert(schema.budgets).values({ categoryId: cat.id, month: "2026-09", amount: 100 });
 
     const moved = await claimSentinelRows(db, TEST_USER_B);

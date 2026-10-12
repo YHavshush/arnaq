@@ -1,0 +1,75 @@
+import type { auth as en } from "../en/auth";
+
+export const auth: typeof en = {
+  brandLine: "Je geld, één rustig getal tegelijk.",
+  fields: {
+    email: "E-mailadres",
+    password: "Wachtwoord",
+    newPassword: "Nieuw wachtwoord",
+    confirmPassword: "Herhaal het wachtwoord",
+    passwordHint: (min: number) => `Minstens ${min} tekens.`,
+  },
+  login: {
+    title: "Inloggen",
+    submit: "Inloggen",
+    busy: "Bezig met inloggen…",
+    forgot: "Wachtwoord vergeten?",
+    noAccount: "Nog geen account?",
+    createOne: "Maak er een",
+    confirmed: "Je e-mailadres is bevestigd. Log in om verder te gaan.",
+  },
+  register: {
+    title: "Maak je account",
+    submit: "Account maken",
+    busy: "Bezig…",
+    haveAccount: "Heb je al een account?",
+    signIn: "Inloggen",
+    checkTitle: "Kijk in je e-mail",
+    checkBody: (email: string) =>
+      `Als ${email} gebruikt kan worden, hebben we een link gestuurd om het te bevestigen. Open die op dit apparaat om je account af te maken.`,
+  },
+  forgot: {
+    title: "Wachtwoord opnieuw instellen",
+    intro: "Vul je e-mailadres in; we sturen je een link om een nieuw wachtwoord te kiezen.",
+    submit: "Stuur de link",
+    busy: "Bezig met versturen…",
+    back: "Terug naar inloggen",
+    sentTitle: "Kijk in je e-mail",
+    sentBody: (email: string) =>
+      `Als er een account is voor ${email}, is er een link onderweg om het wachtwoord opnieuw in te stellen.`,
+  },
+  reset: {
+    title: "Kies een nieuw wachtwoord",
+    forAccount: (email: string) => `Voor het account ${email}. Niet van jou? Sluit deze pagina.`,
+    submit: "Wachtwoord opslaan",
+    busy: "Bezig met opslaan…",
+  },
+  confirm: {
+    title: "Bevestig je e-mailadres",
+    bodyEmail: "Nog één stap: bevestig dat jij het bent.",
+    bodyRecovery: "Nog één stap: ga verder om een nieuw wachtwoord te kiezen.",
+    submit: "Verder",
+    busy: "Een moment…",
+    invalidTitle: "Deze link werkt niet",
+    invalidBody: "De link is verlopen of al gebruikt. Vraag een nieuwe aan.",
+    backToSignIn: "Terug naar inloggen",
+  },
+  account: {
+    title: "Account",
+    signedInAs: (email: string) => `Ingelogd als ${email}`,
+    signedIn: "Je bent ingelogd.",
+    signOut: "Uitloggen",
+  },
+  errors: {
+    invalid: "Dit e-mailadres en wachtwoord horen niet bij elkaar.",
+    email: "Vul een geldig e-mailadres in.",
+    short: (min: number) => `Kies een wachtwoord van minstens ${min} tekens.`,
+    long: "Dit wachtwoord is te lang (maximaal 72 bytes).",
+    mismatch: "De twee wachtwoorden zijn niet hetzelfde.",
+    weak: "Dit wachtwoord is te makkelijk te raden. Kies een langer of minder gebruikelijk wachtwoord.",
+    notConfirmed: "Bevestig eerst je e-mailadres: kijk in je inbox voor de link.",
+    rate: "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
+    generic: "Er ging iets mis. Probeer het zo nog eens.",
+    link: "Deze link werkt niet meer. Vraag een nieuwe aan.",
+  },
+};

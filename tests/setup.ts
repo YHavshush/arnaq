@@ -20,3 +20,23 @@ vi.mock("@/lib/auth/session", async (importOriginal) => {
     },
   };
 });
+
+// The Supabase auth client is a stub: tests choose what the session claims say (null: signed out).
+vi.mock("@supabase/ssr", () => ({
+  createServerClient: () => ({
+    auth: {
+      getClaims: async () => {
+        const g = globalThis as { __claims?: Record<string, unknown> | null };
+        const claims =
+          g.__claims === undefined
+            ? {
+                sub: "00000000-0000-0000-0000-00000000000a",
+                role: "authenticated",
+                email: "a@example.com",
+              }
+            : g.__claims;
+        return { data: claims ? { claims } : null, error: null };
+      },
+    },
+  }),
+}));

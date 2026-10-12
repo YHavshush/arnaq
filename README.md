@@ -59,6 +59,7 @@ Several people can have an account, and each sees only their own data. This is e
 - **Local development without sign-in:** `npm run dev` sets `KASBOEK_DEV_AUTH=1`, which signs you in as one development user. It only works with `next dev` on the local database; a hosted database or a production build ignores it. `npm run seed:demo` fills that user's data.
 - **Rows from before accounts existed** belong to a sentinel owner nobody can see. Move them to a real user with `DATABASE_URL=<direct connection as postgres> npm run db:claim -- <user id>`.
 - App code must not import `@/db/admin` (ESLint and a test enforce it).
+- **Real sign-in** is Supabase Auth (email and password, email confirmation, password reset). Setup for the hosted project: [docs/auth-setup.md](docs/auth-setup.md). To try it locally, run `npx next dev` (without the dev bypass; `.env.local` holds the public Supabase values).
 
 ## Language
 

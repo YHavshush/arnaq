@@ -169,25 +169,23 @@ describe("cross-site guard", () => {
     new NextRequest("http://localhost:3000/api/rules", { method, headers });
 
   it("blocks cross-site and foreign-origin state changes", async () => {
-    expect(proxy(req("POST", { "sec-fetch-site": "cross-site" })).status).toBe(403);
+    expect((await proxy(req("POST", { "sec-fetch-site": "cross-site" }))).status).toBe(403);
     expect(
-      proxy(req("POST", { origin: "https://evil.example", host: "localhost:3000" })).status,
+      (await proxy(req("POST", { origin: "https://evil.example", host: "localhost:3000" }))).status,
     ).toBe(403);
-    expect(proxy(req("DELETE", { origin: "not a url", host: "localhost:3000" })).status).toBe(403);
+    expect(
+      (await proxy(req("DELETE", { origin: "not a url", host: "localhost:3000" }))).status,
+    ).toBe(403);
   });
 
-  it("lets same-origin, header-less and read requests through", () => {
-    expect(
-      proxy(req("POST", { "sec-fetch-site": "same-origin" })).headers.get("x-middleware-next"),
-    ).toBe("1");
-    expect(
-      proxy(req("POST", { origin: "http://localhost:3000", host: "localhost:3000" })).headers.get(
-        "x-middleware-next",
-      ),
-    ).toBe("1");
-    expect(proxy(req("POST", {})).headers.get("x-middleware-next")).toBe("1");
-    expect(
-      proxy(req("GET", { "sec-fetch-site": "cross-site" })).headers.get("x-middleware-next"),
-    ).toBe("1");
+  it("lets same-origin, header-less and read requests through", async () => {
+    const through = async (method: string, headers: Record<string, string>) =>
+      (await proxy(req(method, headers))).headers.get("x-middleware-next");
+    expect(await through("POST", { "sec-fetch-site": "same-origin" })).toBe("1");
+    expect(await through("POST", { origin: "http://localhost:3000", host: "localhost:3000" })).toBe(
+      "1",
+    );
+    expect(await through("POST", {})).toBe("1");
+    expect(await through("GET", { "sec-fetch-site": "cross-site" })).toBe("1");
   });
 });
