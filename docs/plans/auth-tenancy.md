@@ -54,3 +54,21 @@ tenancy suite proves user B can read or change nothing of user A through every r
 
 Code path without RLS; PGlite role/RLS differences; composite keys vs conflict targets; cached user data
 or a leaking setting through the pooler; email flow pitfalls (SMTP limits, scanners, open redirect).
+
+## Open points from the security review (2026-10-12)
+
+Fixed in `feat/auth`: the app refuses to serve over a connection that is not the restricted `kasboek_app`
+role (`assertTenantRole`); a confirmation link no longer leaves the browser signed in (the person signs
+in with their own password; the reset page names the account); sign-out always clears the session
+cookies; anonymous sessions are refused; only the token types the email templates use are accepted.
+
+Not done yet, needed before registration is opened to strangers:
+
+- CAPTCHA (Turnstile) on the forms, and app-side rate limits per client IP and per email. All auth calls
+  come from the server's IP, so Supabase's per-IP limits are one shared bucket (lock-out and email-quota
+  exhaustion).
+- Changing a password outside the recovery flow should ask for the current password (Supabase "Secure
+  password change" covers part of this).
+- Build redirect URLs from a configured `APP_URL` instead of the `Host` header, and compare the CSRF
+  `Origin` with it when the app runs behind a proxy that rewrites `Host`.
+- Row ids are global serials, so a user can see how many rows other users create (no contents). Accepted.

@@ -1,3 +1,6 @@
+import { cache } from "react";
+import { supabaseServer } from "@/lib/supabase/server";
+
 /** Who is making this request. */
 export class UnauthenticatedError extends Error {
   constructor() {
@@ -19,11 +22,27 @@ export function devAuthEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
   return !/^postgres(ql)?:\/\//i.test(env.DATABASE_URL?.trim() ?? "");
 }
 
+export interface SessionUser {
+  id: string;
+  email: string | null;
+}
+
 /**
- * The signed-in user's id, or throws UnauthenticatedError. Everything that reads or writes data
- * asks this first (through userDb).
+ * The signed-in user, or UnauthenticatedError. The session cookie is verified here (its signature
+ * and expiry, locally when the project uses asymmetric keys), not just looked at: this is the check
+ * that matters, the proxy only makes it pleasant. Remembered for the rest of the request.
  */
+export const currentUser = cache(async (): Promise<SessionUser> => {
+  if (devAuthEnabled()) return { id: DEV_USER_ID, email: "dev@localhost" };
+  const supabase = await supabaseServer();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (error || !claims?.sub || claims.role !== "authenticated" || claims.is_anonymous === true)
+    throw new UnauthenticatedError();
+  return { id: claims.sub, email: typeof claims.email === "string" ? claims.email : null };
+});
+
+/** The signed-in user's id, or throws UnauthenticatedError. Everything that touches data asks this first. */
 export async function currentUserId(): Promise<string> {
-  if (devAuthEnabled()) return DEV_USER_ID;
-  throw new UnauthenticatedError();
+  return (await currentUser()).id;
 }

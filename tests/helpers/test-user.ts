@@ -19,3 +19,8 @@ export async function asTestUser<T>(fn: (db: Db) => Promise<T>): Promise<T> {
   if (!id) throw new Error("No test user set.");
   return await withUser(await getRootDb(), id, fn);
 }
+
+/** What the (stubbed) session cookie says. null: nobody is signed in. Reset with undefined. */
+export function setClaims(claims: Record<string, unknown> | null | undefined): void {
+  (globalThis as { __claims?: Record<string, unknown> | null }).__claims = claims;
+}
