@@ -11,8 +11,8 @@ const REQUIRED = ["Started Date", "Description", "Amount", "Currency", "State"];
  * - The fee column is folded into the amount (net effect on the balance).
  * - Non-EUR rows are imported with their own currency and are flagged downstream
  *   (never added into EUR totals).
- * NOTE: built against an anonymised sample that follows the documented column layout.
- * Verify against a real export (see tests/fixtures/README.md).
+ * Checked against a real export (Type, Product, Started Date, Completed Date, Description,
+ * Amount, Fee, Currency, State, Balance).
  */
 export const revolutParser: BankParser = {
   bank: "revolut",
@@ -36,8 +36,11 @@ export const revolutParser: BankParser = {
           return;
         }
         const started = (r["Started Date"] ?? "").trim();
-        const date = /^(\d{4}-\d{2}-\d{2})/.exec(started)?.[1];
-        if (!isDate(date)) throw new Error(`Invalid date "${started}"`);
+        // The statement period is by completion, so a card payment started late on the 30th that
+        // settled on the 1st belongs to the 1st (the bank's own month).
+        const completed = (r["Completed Date"] ?? "").trim();
+        const date = /^(\d{4}-\d{2}-\d{2})/.exec(completed || started)?.[1];
+        if (!isDate(date)) throw new Error(`Invalid date "${completed || started}"`);
         const feeRaw = (r["Fee"] ?? "").trim();
         const fee = feeRaw === "" ? 0 : parseAmountToCents(feeRaw, ".");
         const amount = parseAmountToCents(r["Amount"] ?? "", ".") - fee;

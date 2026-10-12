@@ -33,7 +33,7 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
     setError(null);
     setSummary(null);
     if (!f) return setFile(null);
-    if (!/\.csv$/i.test(f.name)) return setError("Kies een CSV-bestand (.csv).");
+    if (!/\.(csv|pdf)$/i.test(f.name)) return setError("Kies een CSV- of PDF-bestand.");
     if (f.size > 2 * 1024 * 1024) return setError("Dit bestand is te groot (maximaal 2 MB).");
     setFile(f);
   }
@@ -83,16 +83,18 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
         <span className="bg-soft text-accent grid size-12 place-items-center rounded-2xl">
           <FileUp className="size-6" />
         </span>
-        <p className="text-[17px] font-semibold">{file ? file.name : "Kies de CSV van je bank"}</p>
+        <p className="text-[17px] font-semibold">
+          {file ? file.name : "Kies het afschrift van je bank"}
+        </p>
         <p className="text-ink-muted max-w-[40ch] text-sm">
           {file
             ? `${Math.max(1, Math.round(file.size / 1024))} kB, klaar om te uploaden`
-            : "Sleep het bestand hierheen of kies het. Rabobank en Revolut worden herkend; dubbele regels worden overgeslagen."}
+            : "Sleep het bestand hierheen of kies het. Een Revolut-CSV of een Rabobank-afschrift (PDF) wordt herkend; dubbele regels worden overgeslagen."}
         </p>
         <input
           ref={input}
           type="file"
-          accept=".csv,text/csv"
+          accept=".csv,.pdf,text/csv,application/pdf"
           className="sr-only"
           id="csv"
           onChange={(e) => choose(e.target.files?.[0])}

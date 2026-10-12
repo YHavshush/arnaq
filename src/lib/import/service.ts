@@ -6,10 +6,17 @@ import { detectInternalTransfers } from "@/lib/categories/transfers";
 import { isDate } from "@/lib/recurring/dates";
 import { latestTransactionMonth, syncRecurring, type SyncResult } from "@/lib/recurring/sync";
 import { detectBank, getParser } from "./parsers";
-import type { Bank, ParsedRow, SkippedRow } from "./types";
+import {
+  StatementError,
+  looksLikeRabobankStatement,
+  parseRabobankStatement,
+} from "./parsers/rabobank-pdf";
+import { isPdf, readPdfPages } from "./pdf";
+import type { Bank, ParsedRow, ParseResult, SkippedRow } from "./types";
 
 export interface ImportInput {
-  content: string;
+  /** The file: CSV text, or the raw bytes of a CSV or a Rabobank PDF statement. */
+  content: string | Uint8Array;
   filename: string;
   /** Explicit account. If omitted, the account is resolved from the file (bank + IBAN). */
   accountId?: number;
@@ -27,6 +34,8 @@ export interface ImportSummary {
   accountId: number;
   bank: Bank;
   month: string;
+  /** The period the file declares, when it does (PDF statements, Revolut file names). */
+  period: { from: string; to: string } | null;
   rowsTotal: number;
   rowsImported: number;
   rowsDuplicate: number;
@@ -94,13 +103,45 @@ async function resolveAccount(db: Db, bank: Bank, identifier: string | null): Pr
   throw new ImportError(`Several ${bank} accounts exist, pick one with accountId.`);
 }
 
-export async function importCsv(db: Db, input: ImportInput): Promise<ImportSummary> {
+/** "account-statement_2026-10-01_2026-10-12_en_x.csv": Revolut puts the period in the file name. */
+export function periodFromFilename(name: string): { from: string; to: string } | undefined {
+  const m = /(\d{4}-\d{2}-\d{2})[_ -]+(\d{4}-\d{2}-\d{2})/.exec(name);
+  return m && isDate(m[1]) && isDate(m[2]) && m[1] <= m[2] ? { from: m[1], to: m[2] } : undefined;
+}
+
+type Source =
+  { kind: "pdf"; pages: Awaited<ReturnType<typeof readPdfPages>> } | { kind: "text"; text: string };
+
+async function readSource(content: string | Uint8Array): Promise<Source> {
+  if (typeof content === "string") return { kind: "text", text: content };
+  if (isPdf(content)) {
+    try {
+      return { kind: "pdf", pages: await readPdfPages(content) };
+    } catch (e) {
+      if (e instanceof StatementError) throw new ImportError(e.message);
+      throw e;
+    }
+  }
+  return { kind: "text", text: new TextDecoder("utf-8").decode(content) };
+}
+
+/** Import one bank file (CSV or Rabobank PDF statement) into an account. Re-uploads are safe. */
+export async function importStatement(db: Db, input: ImportInput): Promise<ImportSummary> {
   if (input.month && !MONTH_RE.test(input.month))
     throw new ImportError(`Invalid month "${input.month}", use YYYY-MM.`);
   if (input.today !== undefined && !isDate(input.today))
     throw new ImportError(`Invalid date "${input.today}", use YYYY-MM-DD.`);
 
-  const detected = detectBank(input.content);
+  const source = await readSource(input.content);
+  let detected: Bank | null;
+  if (source.kind === "pdf") {
+    if (!looksLikeRabobankStatement(source.pages))
+      throw new ImportError(
+        "Dit PDF-bestand is geen Rabobank-afschrift. Alleen Rabobank-afschriften worden gelezen.",
+      );
+    detected = "rabobank";
+  } else detected = detectBank(source.text);
+
   let bank: Bank;
   let accountId = input.accountId;
   if (accountId !== undefined) {
@@ -116,28 +157,33 @@ export async function importCsv(db: Db, input: ImportInput): Promise<ImportSumma
     }
   } else {
     if (!detected)
-      throw new ImportError("Could not recognise this CSV as a Rabobank or Revolut export.");
+      throw new ImportError("Could not recognise this file as a Rabobank or Revolut export.");
     bank = detected;
   }
 
-  let parsed;
+  let parsed: ParseResult;
   try {
-    parsed = getParser(bank).parse(input.content);
+    parsed =
+      source.kind === "pdf"
+        ? parseRabobankStatement(source.pages)
+        : getParser(bank).parse(source.text);
   } catch (e) {
     throw new ImportError(e instanceof Error ? e.message : String(e));
   }
+  const period = parsed.period ?? periodFromFilename(input.filename);
   if (parsed.rows.length + parsed.skipped.length > MAX_IMPORT_ROWS)
     throw new ImportError(`Too many rows (max ${MAX_IMPORT_ROWS} per file).`);
-  if (parsed.rows.length === 0 && parsed.skipped.length === 0)
+  // A statement with a declared period and no transactions is a real answer: a quiet period.
+  if (parsed.rows.length === 0 && parsed.skipped.length === 0 && !period)
     throw new ImportError("The file contains no transactions.");
 
   const warnings: string[] = [];
-  const month = input.month ?? dominantMonth(parsed.rows);
+  const month = input.month ?? (period ? period.to.slice(0, 7) : dominantMonth(parsed.rows));
   if (!month)
     throw new ImportError(
       "No importable rows found, so the month cannot be detected. Pass a month.",
     );
-  const outside = parsed.rows.filter((r) => r.date.slice(0, 7) !== month).length;
+  const outside = period ? 0 : parsed.rows.filter((r) => r.date.slice(0, 7) !== month).length;
   if (outside > 0)
     warnings.push(`${outside} row(s) fall outside ${month}; they were imported anyway.`);
 
@@ -149,7 +195,13 @@ export async function importCsv(db: Db, input: ImportInput): Promise<ImportSumma
 
     const [imp] = await tx
       .insert(schema.imports)
-      .values({ accountId, month, filename: input.filename })
+      .values({
+        accountId,
+        month,
+        periodFrom: period?.from ?? null,
+        periodTo: period?.to ?? null,
+        filename: input.filename,
+      })
       .returning();
 
     const hashes = buildImportHashes(accountId, parsed.rows);
@@ -215,6 +267,7 @@ export async function importCsv(db: Db, input: ImportInput): Promise<ImportSumma
       accountId: account.id,
       bank,
       month,
+      period: period ?? null,
       rowsTotal: parsed.rows.length + parsed.skipped.length,
       rowsImported: imported,
       rowsDuplicate: duplicate,
@@ -226,3 +279,6 @@ export async function importCsv(db: Db, input: ImportInput): Promise<ImportSumma
     };
   });
 }
+
+/** Kept for callers and tests that still use the CSV-only name. */
+export const importCsv = importStatement;

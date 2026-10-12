@@ -47,6 +47,9 @@ export const imports = pgTable("imports", {
     .notNull()
     .references(() => accounts.id),
   month: text("month").notNull(), // YYYY-MM
+  /** The period the file declares (PDF statements, Revolut file names), inclusive. Null: judge by `month`. */
+  periodFrom: text("period_from"),
+  periodTo: text("period_to"),
   filename: text("filename").notNull(),
   uploadedAt: timestamp("uploaded_at", { withTimezone: true, mode: "string" })
     .notNull()

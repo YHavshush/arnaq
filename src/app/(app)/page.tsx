@@ -63,10 +63,10 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         <PageHeader title="Overzicht" sub={monthName(month)} step={step} />
         <EmptyState
           title={`Nog niets in ${monthName(month)}`}
-          action={{ href: "/upload", label: "CSV uploaden" }}
+          action={{ href: "/upload", label: "Afschrift uploaden" }}
         >
-          Upload de export van je bank om te zien hoe deze maand ervoor staat. Je kunt daarna een
-          budget instellen.
+          Upload een afschrift van je bank om te zien hoe deze maand ervoor staat. Je kunt daarna
+          een budget instellen.
         </EmptyState>
       </>
     );

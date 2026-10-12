@@ -26,7 +26,7 @@ async function Content() {
   return (
     <div className="fade-in">
       <MoodSetter mood="neutral" />
-      <PageHeader title="Upload" sub="Eén CSV per bank per maand" />
+      <PageHeader title="Upload" sub="Een afschrift per bank, per periode" />
       <Hero
         tone="accent"
         value={u.total === 0 ? 0 : u.share}
@@ -43,7 +43,7 @@ async function Content() {
         }
         sentence={
           u.total === 0
-            ? [{ text: "Upload je eerste CSV om te beginnen." }]
+            ? [{ text: "Upload je eerste afschrift om te beginnen." }]
             : done
               ? [
                   {

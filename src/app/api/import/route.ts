@@ -1,6 +1,7 @@
 import { getDb } from "@/db";
 import { MAX_ID, todayIso } from "@/lib/api";
-import { ImportError, importCsv } from "@/lib/import/service";
+import { isPdf } from "@/lib/import/pdf";
+import { ImportError, importStatement } from "@/lib/import/service";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
@@ -34,9 +35,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const summary = await importCsv(await getDb(), {
-      // Postgres text cannot hold NUL characters.
-      content: (await file.text()).replaceAll("\u0000", ""),
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const summary = await importStatement(await getDb(), {
+      // A PDF goes in as bytes. Text must not hold NUL characters (Postgres cannot store them).
+      content: isPdf(bytes) ? bytes : new TextDecoder().decode(bytes).replaceAll("\u0000", ""),
       filename: file.name,
       accountId,
       month: typeof monthRaw === "string" && monthRaw ? monthRaw : undefined,

@@ -2,6 +2,7 @@ node_modules
 .next
 data/
 *.csv
+*.pdf
 !tests/fixtures/*.csv
 *.db
 *.sqlite

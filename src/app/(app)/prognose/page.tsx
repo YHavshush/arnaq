@@ -31,7 +31,7 @@ async function Content({ searchParams }: Pick<PageProps<"/prognose">, "searchPar
         <PageHeader title="Prognose" sub="Hoe het er de komende maanden uitziet" />
         <EmptyState
           title="Nog niets te voorspellen"
-          action={{ href: "/upload", label: "CSV uploaden" }}
+          action={{ href: "/upload", label: "Afschrift uploaden" }}
         >
           Upload minstens een maand en voeg je vaste lasten toe. Daarna zie je hier hoe je geld zich
           ontwikkelt.
