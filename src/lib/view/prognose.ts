@@ -48,7 +48,9 @@ export function buildPrognose(f: Forecast): Prognose {
     cumulative: m.cumulativeNet,
     projected: m.kind === "forecast" || m.kind === "mixed",
   }));
-  const ahead = points.filter((p) => p.projected);
+  // With no data at all every month nets to 0: that is "nothing to say", not "all in the plus".
+  const hasData = points.some((p) => p.income !== 0 || p.expenses !== 0);
+  const ahead = hasData ? points.filter((p) => p.projected) : [];
   const inThePlus = ahead.filter((p) => p.net >= 0).length;
   const growth = ahead.reduce((s, p) => s + p.net, 0);
   const share = ahead.length === 0 ? 0 : inThePlus / ahead.length;

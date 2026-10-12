@@ -14,7 +14,13 @@ import { todayIso } from "../src/lib/api";
 
 async function main() {
   const url = process.env.DATABASE_URL?.trim();
-  if (url && !/@(localhost|127\.0\.0\.1)[:/]/.test(url)) {
+  let host = "";
+  try {
+    host = url ? new URL(url).hostname : "";
+  } catch {
+    /* not a URL: treated as non-local below */
+  }
+  if (url && !["localhost", "127.0.0.1", "[::1]"].includes(host)) {
     console.error("Refusing to seed demo data into a non-local DATABASE_URL.");
     process.exit(1);
   }

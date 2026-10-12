@@ -18,7 +18,7 @@ const KIND: Record<PrognosePoint["kind"], string> = {
 /**
  * Cumulative growth month by month. Real months are solid, forecast months dashed. Every value is
  * printed (balance above the point, month growth below) until there are too many months to read;
- * then only the selected one. Tap or arrow-key a month to see its details underneath.
+ * then only the selected one. Tap a month, or use the left and right arrow keys, to see its details underneath.
  */
 export function PrognoseChart({
   points,
@@ -95,19 +95,36 @@ export function PrognoseChart({
             <g
               key={p.month}
               role="button"
-              tabIndex={0}
+              id={`pm-${p.month}`}
+              tabIndex={isSel ? 0 : -1}
               aria-pressed={isSel}
               aria-label={`${monthName(p.month)}: ${euroSigned(p.cumulative)} totaal, ${euroSigned(p.net)} deze maand`}
               onClick={() => setPicked(p.month)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
+                const step = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+                if (step !== 0) {
+                  e.preventDefault();
+                  const next = points[Math.min(Math.max(i + step, 0), points.length - 1)];
+                  setPicked(next.month);
+                  // The roving tab stop moves with the selection; focus follows once it renders.
+                  requestAnimationFrame(() => document.getElementById(`pm-${next.month}`)?.focus());
+                } else if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   setPicked(p.month);
                 }
               }}
-              className="cursor-pointer outline-none [&:focus-visible_circle.hit]:stroke-[var(--accent)]"
+              className="group cursor-pointer outline-none"
             >
               <rect x={x(i) - band / 2} y={0} width={band} height={H} fill="transparent" />
+              <circle
+                cx={x(i)}
+                cy={y(p.cumulative)}
+                r={13}
+                fill="none"
+                strokeWidth="2"
+                className="opacity-0 group-focus-visible:opacity-100"
+                style={{ stroke: "var(--accent)" }}
+              />
               <circle
                 cx={x(i)}
                 cy={y(p.cumulative)}

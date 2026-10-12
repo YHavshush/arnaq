@@ -8,7 +8,7 @@ import { ReviewList } from "@/components/kasboek/review-list";
 import { HeroSkeleton } from "@/components/kasboek/states";
 import { UploadPanel } from "@/components/kasboek/upload-panel";
 import { requestTime } from "@/lib/api";
-import { monthName } from "@/lib/view/format";
+import { dayLabel, monthName } from "@/lib/view/format";
 import { loadUpload } from "@/lib/view/load";
 
 export default function UploadPage() {
@@ -88,7 +88,10 @@ async function Content() {
                 <li key={i.id} className="flex items-baseline justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
                     <div className="truncate font-semibold">
-                      {i.account}, {monthName(i.month)}
+                      {i.account},{" "}
+                      {i.periodFrom && i.periodTo
+                        ? `${dayLabel(i.periodFrom)} t/m ${dayLabel(i.periodTo)}`
+                        : monthName(i.month)}
                     </div>
                     <div className="text-ink-muted truncate text-[13px]">{i.filename}</div>
                   </div>

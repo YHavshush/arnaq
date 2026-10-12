@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { createDb, schema } from "@/db";
 import { coveredMonths } from "@/lib/recurring/occurrences";
@@ -75,6 +77,44 @@ describe("importing a Rabobank PDF statement", () => {
       importStatement(db, { content: pdf({ rows, totals: { debit: 1 } }), filename: "x.pdf" }),
     ).rejects.toThrow(ImportError);
     expect(await db.select().from(schema.transactions)).toEqual([]);
+  });
+});
+
+describe("guards on where a statement goes", () => {
+  it("a statement for another IBAN is refused when an account is chosen", async () => {
+    const db = await createDb(":memory:");
+    const [mine] = await db
+      .insert(schema.accounts)
+      .values({ name: "Mijn rekening", bank: "rabobank", iban: "NL00RABO0000000099" })
+      .returning();
+    await expect(
+      importStatement(db, { content: pdf({ rows }), filename: "x.pdf", accountId: mine.id }),
+    ).rejects.toThrow(/andere rekening/);
+    expect(await db.select().from(schema.transactions)).toEqual([]);
+  });
+
+  it("a period in a Rabobank file name is not trusted (only Revolut names carry one)", async () => {
+    const db = await createDb(":memory:");
+    const csv = readFileSync(
+      path.join(process.cwd(), "tests/fixtures/rabobank-sample.csv"),
+      "utf8",
+    );
+    const s = await importStatement(db, {
+      content: csv,
+      filename: "export_2026-01-01_2026-12-31.csv",
+    });
+    expect(s.period).toBeNull();
+  });
+
+  it("cleans the stored file name", async () => {
+    const db = await createDb(":memory:");
+    await importStatement(db, {
+      content: pdf({ rows }),
+      filename: `a\u0000${"x".repeat(400)}.pdf`,
+    });
+    const [imp] = await db.select().from(schema.imports);
+    expect(imp.filename).not.toContain("\u0000");
+    expect(imp.filename.length).toBeLessThanOrEqual(255);
   });
 });
 

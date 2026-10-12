@@ -70,6 +70,8 @@ export async function loadUpload(db: Db) {
         id: schema.imports.id,
         filename: schema.imports.filename,
         month: schema.imports.month,
+        periodFrom: schema.imports.periodFrom,
+        periodTo: schema.imports.periodTo,
         uploadedAt: schema.imports.uploadedAt,
         rowsImported: schema.imports.rowsImported,
         rowsDuplicate: schema.imports.rowsDuplicate,

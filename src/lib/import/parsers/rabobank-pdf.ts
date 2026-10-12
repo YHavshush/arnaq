@@ -1,5 +1,6 @@
 import { parseAmountToCents } from "@/lib/money";
 import { isDate } from "@/lib/recurring/dates";
+import { cleanText } from "../clean";
 import type { ParsedRow, ParseResult, SkippedRow } from "../types";
 
 /** One piece of text on a PDF page: where it starts (x), where it ends (right) and its baseline (y). */
@@ -30,6 +31,9 @@ const COL = {
   creditFrom: 520,
 } as const;
 
+/** Largest vertical gap between a row's own lines (the real pitch is about 10 points). */
+const MAX_NOTE_GAP = 14;
+
 const AMOUNT_RE = /^\d{1,3}(\.\d{3})*,\d{2}$|^\d+,\d{2}$/;
 const LEGEND_RE = /^(?:[a-z]{2} = |CR = |D = )/;
 
@@ -38,12 +42,12 @@ interface Line {
   items: PdfItem[];
 }
 
-/** Items on (nearly) the same baseline form a line, left to right. Top of the page first. */
+/** Items on (nearly) the same baseline form a line, left to right. Top of the page first. Linear. */
 function toLines(items: PdfItem[]): Line[] {
   const lines: Line[] = [];
   for (const it of items.filter((i) => i.str.trim() !== "").sort((a, b) => b.y - a.y)) {
-    const line = lines.find((l) => Math.abs(l.y - it.y) <= 1.5);
-    if (line) line.items.push(it);
+    const last = lines.at(-1); // sorted by y, so an item can only belong to the latest line
+    if (last && Math.abs(last.y - it.y) <= 1.5) last.items.push(it);
     else lines.push({ y: it.y, items: [it] });
   }
   for (const l of lines) l.items.sort((a, b) => a.x - b.x);
@@ -96,6 +100,10 @@ function valueBelow(lines: Line[], label: string): string | null {
   return cells.length ? cells.map((c) => c.text).join(" ") : null;
 }
 
+function hasLabel(lines: Line[], label: string): boolean {
+  return lines.some((l) => phrases(l).some((p) => p.text === label));
+}
+
 function money(label: string, raw: string | null): number {
   const m = raw ? /^(\S+)(?:\s+(CR|D))?$/.exec(raw) : null;
   if (!m || !AMOUNT_RE.test(m[1]))
@@ -106,9 +114,10 @@ function money(label: string, raw: string | null): number {
 
 /**
  * Read a Rabobank PDF statement (already turned into positioned text) into transactions.
- * Totals on the first page are checked against what was read: opening balance + credits - debits
- * must equal the closing balance and both totals must match, otherwise the statement is refused.
- * That check is what makes reading a PDF safe: a misread row cannot slip through unnoticed.
+ * Totals on the first page are checked against what was read: both totals must match and opening
+ * balance + credits - debits must equal the closing balance, otherwise the statement is refused.
+ * That catches a missing, extra or mis-signed amount. It cannot see a wrong date or name, which is
+ * why dates come from the bank's own "Verwerkingsdatum" and rows are read by fixed columns.
  */
 export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
   const allLines = pages.map(toLines);
@@ -120,6 +129,7 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
   };
   if (!period.from || !period.to)
     throw new StatementError("Kon de periode van het afschrift niet lezen.");
+  if (period.from > period.to) throw new StatementError("De periode van het afschrift klopt niet.");
 
   // "NL24 RABO 0359 8587 59 EUR": the account number followed by its currency.
   const ibanTokens = (valueBelow(first, "IBAN / Rekeningnummer") ?? "")
@@ -134,8 +144,13 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
 
   const opening = money("Beginsaldo", valueBelow(first, "Beginsaldo"));
   const closing = money("Eindsaldo", valueBelow(first, "Eindsaldo"));
-  const totalDebit = money("Totaal afgeschreven", valueBelow(first, "Totaal afgeschreven"));
-  const totalCredit = money("Totaal bijgeschreven", valueBelow(first, "Totaal bijgeschreven"));
+  // A total can print blank (no money moved that way): the label is there, the value is not.
+  const total = (label: string) =>
+    hasLabel(first, label) && valueBelow(first, label) === null
+      ? 0
+      : money(label, valueBelow(first, label));
+  const totalDebit = total("Totaal afgeschreven");
+  const totalCredit = total("Totaal bijgeschreven");
 
   const rows: ParsedRow[] = [];
   const skipped: SkippedRow[] = [];
@@ -156,13 +171,25 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
       const ibanRaw = joinItems(
         head.items.filter((i) => i.x >= COL.iban[0] && i.x < COL.iban[1]),
       ).replaceAll(" ", "");
-      const name =
-        joinItems(
-          head.items.filter(
-            (i) => i.x >= COL.text && i.right < COL.amounts + 5 && !AMOUNT_RE.test(i.str.trim()),
+      let name: string | null =
+        cleanText(
+          joinItems(
+            head.items.filter(
+              (i) => i.x >= COL.text && i.x < COL.amounts && !AMOUNT_RE.test(i.str.trim()),
+            ),
           ),
+          200,
         ) || null;
-      const noteTexts = notes.map((n) => joinItems(n.items.filter((i) => i.x >= COL.text)));
+      const noteTexts = notes
+        .map((n) => joinItems(n.items.filter((i) => i.x >= COL.text)))
+        .filter(Boolean);
+      // Some lines have an empty name column and start the name on the next line instead.
+      if (
+        !name &&
+        noteTexts[0] &&
+        !/^(Kenmerk|Verwerkingsdatum|Transactiereferentie|BETALINGSKENM)/i.test(noteTexts[0])
+      )
+        name = cleanText(noteTexts.shift()!, 200) || null;
       const processed = noteTexts
         .map((t) => /^Verwerkingsdatum:\s*(\d{2}-\d{2}-\d{4})$/.exec(t)?.[1])
         .find(Boolean);
@@ -170,11 +197,8 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
       const date = (processed && dmyToIso(processed)) || interestDate(dm[1], dm[2], period);
       if (!date) throw new Error("Datum buiten de periode van het afschrift");
       const description =
-        noteTexts
-          .filter((t) => !t.startsWith("Verwerkingsdatum:"))
-          .join(" ")
-          .trim()
-          .slice(0, 1000) || null;
+        cleanText(noteTexts.filter((t) => !t.startsWith("Verwerkingsdatum:")).join(" "), 1000) ||
+        null;
       const counterpartyIban = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/.test(ibanRaw) ? ibanRaw : null;
       rows.push({
         date,
@@ -193,21 +217,28 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
   for (const lines of allLines) {
     const headerIdx = lines.findIndex((l) => textOf(l).includes("Naam/omschrijving"));
     if (headerIdx === -1) continue;
+    let prevY: number | null = null;
     for (const line of lines.slice(headerIdx + 1)) {
       const text = textOf(line);
       if (text === "datum") continue;
       if (LEGEND_RE.test(text)) break; // the footer legend: everything below is not a transaction
-      lineNo++;
       const dateCell = line.items[0];
-      if (dateCell && dateCell.x < COL.date && /^\d{2}-\d{2}$/.test(dateCell.str.trim())) {
+      const startsRow =
+        dateCell && dateCell.x < COL.date && /^\d{2}-\d{2}$/.test(dateCell.str.trim());
+      // Description lines sit one line pitch (about 10 points) apart; a bigger jump below the last
+      // line is page furniture (a page number, a footer), not part of the transaction.
+      if (!startsRow && prevY !== null && prevY - line.y > MAX_NOTE_GAP) break;
+      lineNo++;
+      prevY = line.y;
+      if (startsRow) {
         finish();
         current = { head: line, notes: [], line: lineNo };
       } else if (current) {
-        current.notes.push(line);
+        current.notes.push(line); // also the top of a page continuing the previous page's row
       }
     }
-    finish(); // a transaction never continues on the next page in Rabobank's layout
   }
+  finish();
 
   const debit = rows.filter((r) => r.amount < 0).reduce((s, r) => s - r.amount, 0);
   const credit = rows.filter((r) => r.amount > 0).reduce((s, r) => s + r.amount, 0);
@@ -236,5 +267,8 @@ function interestDate(dd: string, mm: string, period: { from: string; to: string
 /** Looks like a Rabobank statement? (Used before the stricter parse above.) */
 export function looksLikeRabobankStatement(pages: PdfItem[][]): boolean {
   const text = (pages[0] ?? []).map((i) => i.str).join(" ");
-  return text.includes("Rekeningafschrift") && text.includes("Naam/omschrijving");
+  return (
+    text.includes("Rekeningafschrift") &&
+    (text.includes("Naam/omschrijving") || text.includes("Beginsaldo"))
+  );
 }

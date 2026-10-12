@@ -2,8 +2,12 @@ import { getDocumentProxy } from "unpdf";
 import { StatementError } from "./parsers/rabobank-pdf";
 import type { PdfItem } from "./parsers/rabobank-pdf";
 
-/** Statements are a handful of pages; anything bigger is not a bank statement. */
+/** A statement is a handful of pages with a few hundred text items; anything beyond these limits
+ * is not a bank statement (or is built to be slow), so it is refused before it is processed. */
 export const MAX_PDF_PAGES = 60;
+export const MAX_ITEMS_PER_PAGE = 5_000;
+export const MAX_ITEMS_TOTAL = 20_000;
+const MAX_READ_MS = 10_000;
 
 export const isPdf = (bytes: Uint8Array) =>
   bytes.length > 4 &&
@@ -12,22 +16,42 @@ export const isPdf = (bytes: Uint8Array) =>
   bytes[2] === 0x44 &&
   bytes[3] === 0x46; // "%PDF"
 
+const tooComplex = () => new StatementError("Dit PDF-bestand is te complex voor een afschrift.");
+
 /** Positioned text per page. Text only: no scripts, forms or images are touched. */
 export async function readPdfPages(bytes: Uint8Array): Promise<PdfItem[][]> {
+  const deadline = Date.now() + MAX_READ_MS;
   let pdf;
   try {
-    pdf = await getDocumentProxy(new Uint8Array(bytes));
+    pdf = await getDocumentProxy(new Uint8Array(bytes), {
+      verbosity: 0,
+      stopAtErrors: true,
+      disableFontFace: true,
+      maxImageSize: 1,
+    });
   } catch {
     throw new StatementError("Dit PDF-bestand kon niet gelezen worden.");
   }
   try {
-    if (pdf.numPages > MAX_PDF_PAGES)
-      throw new StatementError("Dit PDF-bestand heeft te veel pagina's voor een afschrift.");
+    if (pdf.numPages > MAX_PDF_PAGES) throw tooComplex();
     const pages: PdfItem[][] = [];
+    let total = 0;
     for (let n = 1; n <= pdf.numPages; n++) {
-      const content = await (await pdf.getPage(n)).getTextContent();
+      if (Date.now() > deadline) throw tooComplex();
+      let items;
+      try {
+        items = (await (await pdf.getPage(n)).getTextContent()).items as {
+          str?: string;
+          transform?: number[];
+          width?: number;
+        }[];
+      } catch {
+        throw new StatementError("Dit PDF-bestand kon niet gelezen worden.");
+      }
+      total += items.length;
+      if (items.length > MAX_ITEMS_PER_PAGE || total > MAX_ITEMS_TOTAL) throw tooComplex();
       pages.push(
-        (content.items as { str?: string; transform?: number[]; width?: number }[])
+        items
           .filter((i) => typeof i.str === "string" && i.transform && typeof i.width === "number")
           .map((i) => ({
             str: i.str!,

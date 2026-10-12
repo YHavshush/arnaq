@@ -61,6 +61,13 @@ describe("buildPrognose", () => {
     expect([none.hasForecast, none.tone]).toEqual([false, "accent"]);
   });
 
+  it("a forecast with no money anywhere has nothing to say (no green ring over an empty database)", () => {
+    const p = buildPrognose(
+      forecast([fm("2026-10", "mixed", 0, 0), fm("2026-11", "forecast", 0, 0)]),
+    );
+    expect([p.hasForecast, p.tone, p.ahead]).toEqual([false, "accent", 0]);
+  });
+
   it("passes the low-confidence reason through", () => {
     expect(buildPrognose(forecast([fm("2026-10", "mixed", 1, 1)], true)).lowConfidence).toBe(
       "Maar 1 maand data.",

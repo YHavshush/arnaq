@@ -29,7 +29,11 @@ function rowProps(r: OverzichtRow) {
       r.planned > 0 && !onlyPlanned
         ? `nog ${euro(r.planned)} gepland`
         : r.budget !== null && !onlyPlanned
-          ? `${euro(Math.max(r.budget - r.actual, 0))} over`
+          ? r.actual > r.budget
+            ? `${euro(r.actual - r.budget)} over budget`
+            : r.actual === r.budget
+              ? "precies op budget"
+              : `${euro(r.budget - r.actual)} over`
           : undefined,
     amount: euro(onlyPlanned ? r.planned : r.actual),
     amountSub: onlyPlanned

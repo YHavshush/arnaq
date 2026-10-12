@@ -61,6 +61,6 @@ describe("screen loaders on an imported month", () => {
     const empty = await createDb(":memory:");
     expect((await loadOverzicht(empty, "2026-09", "2026-09-20")).hasActivity).toBe(false);
     expect((await loadUpload(empty)).share).toBe(0);
-    expect((await loadPrognose(empty, "2026-09-20", 6)).hasForecast).toBe(true);
+    expect((await loadPrognose(empty, "2026-09-20", 6)).hasForecast).toBe(false);
   });
 });

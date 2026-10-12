@@ -66,7 +66,13 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
   }
 
   return (
-    <form action={submit} className="grid gap-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void submit(new FormData(e.currentTarget));
+      }}
+      className="grid gap-4"
+    >
       <div
         onDragOver={(e) => {
           e.preventDefault();
@@ -95,13 +101,13 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
           ref={input}
           type="file"
           accept=".csv,.pdf,text/csv,application/pdf"
-          className="sr-only"
+          className="peer sr-only"
           id="csv"
           onChange={(e) => choose(e.target.files?.[0])}
         />
         <label
           htmlFor="csv"
-          className="bg-soft text-accent focus-within:outline-accent mt-1 inline-flex min-h-11 cursor-pointer items-center rounded-full px-5 text-[15px] font-semibold"
+          className="bg-soft text-accent peer-focus-visible:outline-accent mt-1 inline-flex min-h-11 cursor-pointer items-center rounded-full px-5 text-[15px] font-semibold peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2"
         >
           {file ? "Ander bestand" : "Bestand kiezen"}
         </label>

@@ -11,6 +11,7 @@ import {
   looksLikeRabobankStatement,
   parseRabobankStatement,
 } from "./parsers/rabobank-pdf";
+import { cleanText } from "./clean";
 import { isPdf, readPdfPages } from "./pdf";
 import type { Bank, ParsedRow, ParseResult, SkippedRow } from "./types";
 
@@ -170,7 +171,16 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
   } catch (e) {
     throw new ImportError(e instanceof Error ? e.message : String(e));
   }
-  const period = parsed.period ?? periodFromFilename(input.filename);
+  // Revolut puts the period in the file name; for other files a name is not evidence.
+  if (accountId !== undefined && parsed.accountIdentifier) {
+    const chosen = await first(
+      db.select().from(schema.accounts).where(eq(schema.accounts.id, accountId)),
+    );
+    if (chosen?.iban && chosen.iban !== parsed.accountIdentifier)
+      throw new ImportError("Dit afschrift hoort bij een andere rekening dan de gekozen rekening.");
+  }
+  const period =
+    parsed.period ?? (bank === "revolut" ? periodFromFilename(input.filename) : undefined);
   if (parsed.rows.length + parsed.skipped.length > MAX_IMPORT_ROWS)
     throw new ImportError(`Too many rows (max ${MAX_IMPORT_ROWS} per file).`);
   // A statement with a declared period and no transactions is a real answer: a quiet period.
@@ -200,7 +210,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
         month,
         periodFrom: period?.from ?? null,
         periodTo: period?.to ?? null,
-        filename: input.filename,
+        filename: cleanText(input.filename, 255) || "bestand",
       })
       .returning();
 
@@ -221,9 +231,11 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
                 date: row.date,
                 amount: row.amount,
                 currency: row.currency,
-                counterparty: row.counterparty,
+                counterparty:
+                  row.counterparty === null ? null : cleanText(row.counterparty, 200) || null,
                 counterpartyIban: row.counterpartyIban,
-                description: row.description,
+                description:
+                  row.description === null ? null : cleanText(row.description, 1000) || null,
                 importHash: hashes[from + j],
               })),
             )

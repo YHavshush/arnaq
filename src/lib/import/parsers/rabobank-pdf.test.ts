@@ -120,6 +120,112 @@ describe("parseRabobankStatement", () => {
   });
 });
 
+describe("layouts a real statement can have", () => {
+  const one: StatementRow[] = [
+    {
+      rente: "05-09",
+      type: "ei",
+      iban: "NL00 TEST 0000 0000 11",
+      name: "Streamdienst",
+      notes: ["Kenmerk REF-1"],
+      processed: "06-09-2026",
+      debit: 999,
+    },
+    { rente: "10-09", type: "ec", name: "Winkel", processed: "10-09-2026", debit: 500 },
+  ];
+
+  it("a row whose last lines continue on the next page keeps its booking date and description", () => {
+    const pages = statementPages({ rows: one, perPage: 1 });
+    const processed = pages[0].find((i) => i.str.startsWith("Verwerkingsdatum: 06-09"))!;
+    const note = pages[0].find((i) => i.str === "Kenmerk REF-1")!;
+    // The note and the booking date of the first row move to the top of the second page.
+    pages[0].splice(pages[0].indexOf(processed), 1);
+    pages[0].splice(pages[0].indexOf(note), 1);
+    pages[1].push({ ...note, y: 566 }, { ...processed, y: 556 });
+    const r = parseRabobankStatement(pages);
+    expect(r.rows[0]).toMatchObject({ date: "2026-09-06", description: "Kenmerk REF-1" });
+    expect(r.rows[1]).toMatchObject({ date: "2026-09-10", counterparty: "Winkel" });
+  });
+
+  it("page furniture below the last row (a page number) is not part of its description", () => {
+    const pages = statementPages({ rows: one });
+    pages[0].push({ str: "Pagina 1 van 1", x: 300, right: 330, y: 330 });
+    const r = parseRabobankStatement(pages);
+    expect(r.rows[1].description).toBeNull();
+  });
+
+  it("a long name that runs towards the amount column is kept", () => {
+    const long = "Een Zeer Lange Naam Van Een Organisatie BV Amsterdam";
+    const r = parseRabobankStatement(statementPages({ rows: [{ ...one[1], name: long }] }));
+    expect(r.rows[0].counterparty).toBe(long);
+  });
+
+  it("a row with an empty name column takes its name from the first description line", () => {
+    const r = parseRabobankStatement(
+      statementPages({
+        rows: [
+          {
+            rente: "22-09",
+            type: "ei",
+            iban: "NL00 TEST 0000 0000 55",
+            name: "",
+            notes: ["VIDEODIENST B.V.", "Kenmerk machtiging"],
+            processed: "22-09-2026",
+            debit: 2099,
+          },
+        ],
+      }),
+    );
+    expect(r.rows[0]).toMatchObject({
+      counterparty: "VIDEODIENST B.V.",
+      description: "Kenmerk machtiging",
+    });
+  });
+
+  it("a total that prints blank counts as zero", () => {
+    const pages = statementPages({
+      rows: [{ rente: "02-09", type: "cb", name: "Bij", processed: "02-09-2026", credit: 1000 }],
+    });
+    const debitValue = pages[0].find((i) => i.str === "0,00" && i.x > 380 && i.x < 450)!;
+    pages[0].splice(pages[0].indexOf(debitValue), 1);
+    expect(parseRabobankStatement(pages).rows).toHaveLength(1);
+  });
+
+  it("strips control characters from names and descriptions", () => {
+    const r = parseRabobankStatement(
+      statementPages({
+        rows: [{ ...one[0], name: "Naam\u0000Met\u202ENul", notes: ["Een\u0007 regel"] }],
+      }),
+    );
+    expect(r.rows[0].counterparty).toBe("NaamMetNul");
+    expect(r.rows[0].description).toBe("Een regel");
+  });
+});
+
+describe("readPdfPages limits", () => {
+  it("refuses a PDF with an absurd number of text items", async () => {
+    const items = Array.from({ length: 6000 }, (_, i) => ({
+      str: "x",
+      x: 10,
+      right: 15,
+      y: 800 - (i % 700) - i / 10000,
+    }));
+    await expect(readPdfPages(toPdfBytes([items]))).rejects.toThrow(/te complex/);
+  });
+
+  it("groups lines in linear time (many distinct baselines stay fast)", () => {
+    const items = Array.from({ length: 20000 }, (_, i) => ({
+      str: "x",
+      x: 10,
+      right: 15,
+      y: i * 3,
+    }));
+    const started = Date.now();
+    expect(() => parseRabobankStatement([items])).toThrow(StatementError);
+    expect(Date.now() - started).toBeLessThan(1500);
+  });
+});
+
 describe("readPdfPages (real PDF bytes)", () => {
   it("extracts the same rows from an actual PDF file", async () => {
     const bytes = toPdfBytes(statementPages({ rows, perPage: 3 }));

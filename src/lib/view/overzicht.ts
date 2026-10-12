@@ -83,7 +83,8 @@ function sentenceFor(o: {
       : [plain("Je ging "), em(euro(-diff)), plain(" over je budget.")];
   }
   const variableBudget = budget - fixedTotal;
-  const variableSpent = spent - paidFixed;
+  // A rent paid just before the month starts is matched here but not counted in this month's spending.
+  const variableSpent = Math.max(spent - paidFixed, 0);
   if (variableBudget <= 0)
     return [
       plain("Je vaste lasten ("),

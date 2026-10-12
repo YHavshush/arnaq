@@ -205,7 +205,13 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
     );
 
   return (
-    <form action={submit} className="glass fade-in grid gap-4 p-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void submit(new FormData(e.currentTarget));
+      }}
+      className="glass fade-in grid gap-4 p-4"
+    >
       <div
         role="radiogroup"
         aria-label="Soort"
