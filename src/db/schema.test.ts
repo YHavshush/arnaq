@@ -5,7 +5,8 @@ import { sql } from "drizzle-orm";
 import { getTableName, is } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
-import { createDb, one, schema } from "./index";
+import { TEST_USER_A, createDb, one, schema } from "./index";
+import { withUser } from "./scoped";
 
 describe("database", () => {
   it("applies migrations and stores money as integer cents", async () => {
@@ -58,9 +59,14 @@ describe("database", () => {
     const location = path.join(dir, "pglite");
     try {
       const db = await createDb(location);
-      await db.insert(schema.accounts).values({ name: "Blijft", bank: "revolut" });
+      await withUser(db, TEST_USER_A, (tx) =>
+        tx.insert(schema.accounts).values({ name: "Blijft", bank: "revolut" }),
+      );
       const again = await createDb(location);
-      expect((await again.select().from(schema.accounts)).map((a) => a.name)).toEqual(["Blijft"]);
+      const names = await withUser(again, TEST_USER_A, async (tx) =>
+        (await tx.select().from(schema.accounts)).map((a) => a.name),
+      );
+      expect(names).toEqual(["Blijft"]);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

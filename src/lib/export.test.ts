@@ -34,6 +34,7 @@ describe("buildExport", () => {
     );
     expect(out.tables.transactions).toHaveLength(1);
     expect(out.tables.transactions[0].amount).toBe(-1234);
+    expect("userId" in out.tables.transactions[0]).toBe(false);
     expect(out.tables.categories.length).toBeGreaterThan(10); // the seeded defaults
     expect(JSON.parse(JSON.stringify(out))).toEqual(out);
   });
@@ -44,6 +45,7 @@ describe("buildExport", () => {
     const declared = Object.values(schema)
       .filter((t) => is(t, PgTable))
       .map((t) => getTableName(t as never))
+      .filter((n) => n !== "app_users") // who owns the rows, not data of its own
       .sort();
     const out = await buildExport(await createDb(":memory:"));
     const exported = Object.keys(out.tables)

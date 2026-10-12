@@ -29,7 +29,7 @@ export interface RecurringItemInput {
 
 export type RecurringItemPatch = Partial<RecurringItemInput>;
 
-type ItemValues = Omit<RecurringItem, "id">;
+type ItemValues = Omit<RecurringItem, "id" | "userId">;
 
 export const MAX_ITEMS = 500;
 const MAX_TEXT = 200;

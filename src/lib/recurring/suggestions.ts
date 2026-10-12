@@ -342,6 +342,10 @@ export async function rejectSuggestion(db: Db, ref: SuggestionRef): Promise<void
     .insert(schema.recurringSuggestionRejections)
     .values({ key, type })
     .onConflictDoNothing({
-      target: [schema.recurringSuggestionRejections.key, schema.recurringSuggestionRejections.type],
+      target: [
+        schema.recurringSuggestionRejections.userId,
+        schema.recurringSuggestionRejections.key,
+        schema.recurringSuggestionRejections.type,
+      ],
     });
 }

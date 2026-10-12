@@ -3,12 +3,12 @@ import type { Db } from "@/db";
 import * as schema from "@/db/schema";
 import { DEFAULT_CATEGORIES, DEFAULT_RULES } from "./defaults";
 
-/** Insert the default categories and starter rules. Safe to call repeatedly. */
+/** Insert the current user's default categories and starter rules. Safe to call repeatedly. */
 export async function seedDefaults(db: Db): Promise<void> {
   await db
     .insert(schema.categories)
     .values(DEFAULT_CATEGORIES.map((c, i) => ({ name: c.name, type: c.type, sortOrder: i })))
-    .onConflictDoNothing({ target: schema.categories.name });
+    .onConflictDoNothing({ target: [schema.categories.userId, schema.categories.name] });
 
   // Starter rules only when the user has none, so deleting a rule sticks.
   const [{ n }] = await db.select({ n: count() }).from(schema.categorisationRules);
