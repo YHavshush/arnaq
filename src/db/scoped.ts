@@ -8,6 +8,16 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 // Users whose defaults are known to exist in a database, so only a user's first request pays for the
 // check. Added to after the transaction commits, never before: a rollback must not stick. Keyed by
 // the database handle, so a fresh test database starts empty.
+/**
+ * The rows of a raw `db.execute` result. PGlite answers `{ rows }`, postgres-js answers the array
+ * itself: code that reads results must accept both, or it works in the tests and fails when hosted.
+ */
+export function rowsOf<T>(result: unknown): T[] {
+  if (Array.isArray(result)) return result as T[];
+  const rows = (result as { rows?: unknown } | null)?.rows;
+  return Array.isArray(rows) ? (rows as T[]) : [];
+}
+
 const seededByRoot = new WeakMap<object, Set<string>>();
 
 // Roots whose connection role was checked. A promise, so concurrent first requests share one check;
@@ -24,17 +34,15 @@ export async function assertTenantRole(root: Db): Promise<void> {
   let checking = roleChecked.get(root);
   if (!checking) {
     checking = (async () => {
-      const result = (await root.execute(sql`
+      const result = await root.execute(sql`
         select current_user::text as role,
                (r.rolsuper or r.rolbypassrls) as privileged,
                coalesce(pg_has_role(current_user, c.relowner, 'USAGE'), true) as owns,
                c.relrowsecurity as rls
           from pg_roles r
           left join pg_class c on c.relname = 'transactions' and c.relnamespace = 'public'::regnamespace
-         where r.rolname = current_user`)) as unknown as {
-        rows: { privileged: boolean; owns: boolean; rls: boolean | null }[];
-      };
-      const row = result.rows[0];
+         where r.rolname = current_user`);
+      const [row] = rowsOf<{ privileged: boolean; owns: boolean; rls: boolean | null }>(result);
       if (!row || row.privileged || row.owns || !row.rls)
         throw new Error(
           "The database connection is not the restricted tenant role (kasboek_app), so row level security would not apply. Refusing to serve requests. See docs/auth-setup.md.",

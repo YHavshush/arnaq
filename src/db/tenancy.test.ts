@@ -2,7 +2,7 @@ import { sql, getTableName, is } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
 import { describe, expect, it } from "vitest";
 import { TEST_USER_A, TEST_USER_B, createDb, schema } from "./index";
-import { assertTenantRole, withUser } from "./scoped";
+import { assertTenantRole, rowsOf as driverRows, withUser } from "./scoped";
 
 const rowsOf = async (db: Awaited<ReturnType<typeof createDb>>, query: ReturnType<typeof sql>) =>
   ((await db.execute(query)) as unknown as { rows: Record<string, unknown>[] }).rows;
@@ -148,6 +148,12 @@ describe("the database enforces who owns a row", () => {
 });
 
 describe("the app refuses a connection that row level security does not apply to", () => {
+  it("reads raw results from both drivers (PGlite: { rows }, postgres-js: the array)", () => {
+    expect(driverRows<number>({ rows: [1, 2] })).toEqual([1, 2]);
+    expect(driverRows<number>([1, 2])).toEqual([1, 2]);
+    expect(driverRows<number>(undefined)).toEqual([]);
+  });
+
   it("accepts the tenant role", async () => {
     const db = await createDb(":memory:");
     await expect(assertTenantRole(db)).resolves.toBeUndefined();
