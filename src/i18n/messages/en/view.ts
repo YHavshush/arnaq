@@ -83,6 +83,13 @@ export const view = {
     },
   },
   prognose: {
+    noIncome: [
+      plain(
+        "No income is planned yet, so this shows spending only. Add your salary or benefits under ",
+      ),
+      em("Fixed costs"),
+      plain(" for a real forecast."),
+    ] as Sentence,
     nothing: "There is nothing to forecast yet. Upload a statement first.",
     noHistory: "No uploaded month before this one, so everyday spending is forecast as 0.",
     shortHistory: (n: number, wanted: number) =>

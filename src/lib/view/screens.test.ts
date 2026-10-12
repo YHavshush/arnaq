@@ -30,6 +30,34 @@ const forecast = (months: ForecastMonth[], lowConfidence = false): Forecast =>
   }) as Forecast;
 
 describe("buildPrognose", () => {
+  it("says what is missing when real income exists but none is planned (no fixed income items)", () => {
+    const p = buildPrognose(
+      forecast([
+        fm("2026-09", "actual", 20000, 20000),
+        fm("2026-10", "mixed", -5000, 15000),
+        fm("2026-11", "forecast", -30000, -15000),
+        fm("2026-12", "forecast", -30000, -45000),
+      ]),
+      "en",
+    );
+    expect(p.incomeMissing).toBe(true);
+    expect(p.tone).toBe("accent");
+    expect(p.share).toBe(0);
+    expect(p.sentence.map((s) => s.text).join("")).toMatch(/No income is planned/);
+  });
+
+  it("does not flag missing income when income is planned", () => {
+    const p = buildPrognose(
+      forecast([
+        fm("2026-09", "actual", 20000, 20000),
+        fm("2026-10", "mixed", 5000, 25000),
+        fm("2026-11", "forecast", 30000, 55000),
+      ]),
+      "en",
+    );
+    expect(p.incomeMissing).toBe(false);
+  });
+
   it("ring = share of months ahead that end in the plus; centre = growth; sentence names tightest and best", () => {
     const p = buildPrognose(
       forecast([

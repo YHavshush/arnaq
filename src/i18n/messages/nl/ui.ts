@@ -76,6 +76,8 @@ export const ui: typeof en = {
       "Upload minstens een maand en voeg je vaste lasten toe. Daarna zie je hier hoe je geld zich ontwikkelt.",
     ring: (a: number, b: number) => `${a} van ${b} maanden eindigen in de plus`,
     caption: (label: string) => `groei tot en met ${label}`,
+    captionSpend: (label: string) => `uitgaven tot en met ${label}`,
+    addIncome: "Voeg je inkomen toe",
     progress: "Verloop",
     horizon: "Aantal maanden vooruit",
     note: "Let op:",

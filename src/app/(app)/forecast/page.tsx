@@ -50,9 +50,23 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         value={p.share}
         ringLabel={t.ui.forecast.ring(p.inThePlus, p.ahead)}
         centre={f.euroSigned(p.growth)}
-        caption={t.ui.forecast.caption(p.points.at(-1)?.label ?? "")}
+        caption={
+          p.incomeMissing
+            ? t.ui.forecast.captionSpend(p.points.at(-1)?.label ?? "")
+            : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
+        }
         sentence={p.sentence}
       />
+      {p.incomeMissing && (
+        <div className="flex justify-center pb-2">
+          <Link
+            href="/fixed-costs"
+            className="bg-accent text-accent-ink inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold"
+          >
+            {t.ui.forecast.addIncome}
+          </Link>
+        </div>
+      )}
       <Section
         title={t.ui.forecast.progress}
         aside={

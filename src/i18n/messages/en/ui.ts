@@ -76,6 +76,8 @@ export const ui = {
       "Upload at least one month and add your fixed costs. Then you'll see here how your money develops.",
     ring: (a: number, b: number) => `${a} of ${b} months end in the plus`,
     caption: (label: string) => `growth through ${label}`,
+    captionSpend: (label: string) => `spending through ${label}`,
+    addIncome: "Add your income",
     progress: "Progress",
     horizon: "Months ahead",
     note: "Note:",

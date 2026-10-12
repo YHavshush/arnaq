@@ -29,6 +29,8 @@ export interface Prognose {
   share: number;
   /** Net growth from the current month to the last forecast month, cents. */
   growth: number;
+  /** Real income exists in the data, but none is planned for the coming months (no fixed income). */
+  incomeMissing: boolean;
   tone: Tone;
   mood: Mood;
   sentence: Sentence;
@@ -56,11 +58,28 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
   const growth = ahead.reduce((s, p) => s + p.net, 0);
   const share = ahead.length === 0 ? 0 : inThePlus / ahead.length;
 
-  const tone: Tone =
-    ahead.length === 0 ? "accent" : share === 1 ? "good" : growth >= 0 ? "warn" : "bad";
+  // Income is only forecast from fixed income items. Without any, the future months show spending
+  // and no money in, so a "growth" number would be a plain mistake: say what is missing instead.
+  const future = points.filter((p) => p.kind === "forecast");
+  const incomeMissing =
+    future.length > 0 &&
+    future.every((p) => p.income === 0) &&
+    points.some((p) => !p.projected && p.income > 0);
+
+  const tone: Tone = incomeMissing
+    ? "accent"
+    : ahead.length === 0
+      ? "accent"
+      : share === 1
+        ? "good"
+        : growth >= 0
+          ? "warn"
+          : "bad";
 
   let sentence: Sentence = [{ text: t.nothing }];
-  if (ahead.length > 0) {
+  if (incomeMissing) {
+    sentence = t.noIncome;
+  } else if (ahead.length > 0) {
     const sorted = [...ahead].sort((a, b) => a.net - b.net);
     const tight = sorted[0];
     const best = sorted[sorted.length - 1];
@@ -80,8 +99,9 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     points,
     ahead: ahead.length,
     inThePlus,
-    share,
+    share: incomeMissing ? 0 : share,
     growth,
+    incomeMissing,
     tone,
     mood: moodForTone(tone),
     sentence,

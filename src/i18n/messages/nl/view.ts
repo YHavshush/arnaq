@@ -79,6 +79,13 @@ export const view: typeof en = {
     },
   },
   prognose: {
+    noIncome: [
+      plain(
+        "Er is nog geen inkomen gepland, dus dit toont alleen uitgaven. Voeg je salaris of toeslagen toe onder ",
+      ),
+      em("Vaste lasten"),
+      plain(" voor een echte prognose."),
+    ] as Sentence,
     nothing: "Er is nog niets om te voorspellen. Upload eerst een afschrift.",
     noHistory: "Er is geen eerdere maand geüpload, dus gewone uitgaven worden als 0 voorspeld.",
     shortHistory: (n: number, wanted: number) =>
