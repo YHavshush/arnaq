@@ -32,6 +32,9 @@ async function main() {
 }
 
 main().catch((e) => {
-  console.error("Failed:", e instanceof Error ? e.name : "unknown error");
+  // The server's code and message never contain the password; the connection string is not printed.
+  const code = typeof e?.code === "string" ? ` ${e.code}` : "";
+  const message = e instanceof Error && !e.message.includes("://") ? `: ${e.message}` : "";
+  console.error(`Failed:${code} ${e instanceof Error ? e.name : "unknown error"}${message}`);
   process.exit(1);
 });
