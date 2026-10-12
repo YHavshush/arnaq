@@ -7,6 +7,7 @@ import { BudgetError } from "@/lib/budget/budgets";
 import { CategoriseError } from "@/lib/categories/categorise";
 import { ForecastError } from "@/lib/forecast/errors";
 import { ImportError } from "@/lib/import/service";
+import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { RecurringError } from "@/lib/recurring/errors";
 
 const DOMAIN_ERRORS = [BudgetError, CategoriseError, ForecastError, ImportError, RecurringError];
@@ -39,11 +40,17 @@ export async function errorResponse(message: string, status: number): Promise<Re
   return Response.json({ error: localizeMessage(message, await requestLocale()) }, { status });
 }
 
-/** Run a handler; turn expected domain errors into 422 JSON, bad JSON into 400. */
+/**
+ * Run an API handler. Who is asking is checked first, before the request is looked at (a visitor
+ * who is not signed in gets 401 whatever they sent). Expected domain errors become 422 JSON, bad
+ * JSON 400.
+ */
 export async function handle(fn: () => Response | Promise<Response>): Promise<Response> {
   try {
+    await currentUserId();
     return await fn();
   } catch (e) {
+    if (e instanceof UnauthenticatedError) return errorResponse("Not signed in.", 401);
     if (e instanceof SyntaxError) return errorResponse("Invalid JSON body.", 400);
     if (DOMAIN_ERRORS.some((C) => e instanceof C)) return errorResponse((e as Error).message, 422);
     // A foreign key or unique constraint hit: the request referenced something that is not there

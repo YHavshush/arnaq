@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { getDb } from "@/db";
+import { pageDb } from "@/lib/auth/request";
 import { Hero } from "@/components/kasboek/hero";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
@@ -25,7 +25,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
   const f = formatter(locale);
   const today = todayIso();
   const months = parseHorizon((await searchParams).months);
-  const p = await loadPrognose(await getDb(), today, months, locale);
+  const p = await pageDb((db) => loadPrognose(db, today, months, locale));
 
   if (!p.hasForecast)
     return (

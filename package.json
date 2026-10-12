@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "KASBOEK_DEV_AUTH=1 next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -16,7 +16,8 @@
     "db:migrate": "tsx src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
     "tokens": "tsx scripts/build-tokens.ts",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "seed:demo": "tsx scripts/seed-demo.ts",
+    "db:claim": "tsx scripts/db-claim.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

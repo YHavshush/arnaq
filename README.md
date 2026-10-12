@@ -52,6 +52,14 @@ In production the app refuses to start without `DATABASE_URL` (set `KASBOEK_ALLO
 
 Keep the password out of the repo (`.env*` is git-ignored). The app connects as the `postgres` role, which bypasses RLS; the public `anon` and `authenticated` roles see nothing.
 
+## Accounts and privacy
+
+Several people can have an account, and each sees only their own data. This is enforced by the database, not just by the code: every table has an owner (`user_id`) and a row level security policy, and the app connects as a role (`kasboek_app`) that cannot bypass it. Each request runs as one user in one transaction (`userDb` in `src/lib/auth/request.ts`); a query that runs without a user fails instead of showing data. Foreign keys include the owner, so a row can never point at another user's row. The design and its reasons are in [docs/plans/auth-tenancy.md](docs/plans/auth-tenancy.md); `src/app/api/tenancy.test.ts` proves isolation through every route and loader.
+
+- **Local development without sign-in:** `npm run dev` sets `KASBOEK_DEV_AUTH=1`, which signs you in as one development user. It only works with `next dev` on the local database; a hosted database or a production build ignores it. `npm run seed:demo` fills that user's data.
+- **Rows from before accounts existed** belong to a sentinel owner nobody can see. Move them to a real user with `DATABASE_URL=<direct connection as postgres> npm run db:claim -- <user id>`.
+- App code must not import `@/db/admin` (ESLint and a test enforce it).
+
 ## Language
 
 The app is in English by default with Dutch as the second language. The choice (the language button in the top bar) is stored in a cookie. Texts live in `src/i18n/messages/{en,nl}/`: English is the source and Dutch must have exactly the same shape (the compiler and a test check it). Amounts, dates and month names follow the language (`src/lib/view/format.ts`). Server messages (validation, import) are English in the code and translated to Dutch at the API edge (`src/i18n/server-messages.ts`). The default category names are stored in Dutch and shown in English via a label map (`categoryLabel`). To add a language: add it to `LOCALES`, copy `messages/en`, translate, and add a label map and server-message rules.

@@ -1,3 +1,4 @@
+import { asTestUser } from "../../../tests/helpers/test-user";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -63,8 +64,9 @@ describe("forecast over HTTP", () => {
     );
     expect(created.status).toBe(201);
 
-    const d = await db.getDb();
-    const occurrencesBefore = await d.select().from(db.schema.recurringOccurrences);
+    const occurrencesBefore = await asTestUser((d) =>
+      d.select().from(db.schema.recurringOccurrences),
+    );
 
     const res = await get("/api/forecast");
     expect(res.status).toBe(200);
@@ -89,7 +91,9 @@ describe("forecast over HTTP", () => {
     expect(sep.expenses).toBeGreaterThan(0);
     expect(nov.recurring.expenses).toBe(999);
     // Read-only: November was planned in memory, nothing was stored.
-    expect(await d.select().from(db.schema.recurringOccurrences)).toEqual(occurrencesBefore);
+    expect(await asTestUser((d) => d.select().from(db.schema.recurringOccurrences))).toEqual(
+      occurrencesBefore,
+    );
 
     const short = (await (await get("/api/forecast?months=1&history=1&pastMonths=0")).json()) as {
       settings: unknown;

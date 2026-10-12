@@ -1,4 +1,4 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle } from "@/lib/api";
 import { getMonthOverview } from "@/lib/budget/overview";
 
@@ -6,6 +6,6 @@ import { getMonthOverview } from "@/lib/budget/overview";
 export async function GET(request: Request) {
   return await handle(async () => {
     const month = new URL(request.url).searchParams.get("month") ?? "";
-    return Response.json(await getMonthOverview(await getDb(), month));
+    return Response.json(await userDb((db) => getMonthOverview(db, month)));
   });
 }

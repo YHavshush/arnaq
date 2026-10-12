@@ -1,6 +1,7 @@
 import { Download } from "lucide-react";
 import { Suspense } from "react";
-import { getDb, schema } from "@/db";
+import { schema } from "@/db";
+import { pageDb } from "@/lib/auth/request";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { RulesManager } from "@/components/kasboek/rules-manager";
@@ -24,10 +25,9 @@ async function Content() {
   await requestTime();
   const { t } = await getI18n();
   const s = t.ui.settings;
-  const db = await getDb();
-  const [rules, categories] = await Promise.all([
-    db.select().from(schema.categorisationRules),
-    db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
+  const [rules, categories] = await pageDb(async (db) => [
+    await db.select().from(schema.categorisationRules),
+    await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
   ]);
   const name = new Map(categories.map((c) => [c.id, c.name]));
   return (

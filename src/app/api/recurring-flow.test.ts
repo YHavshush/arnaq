@@ -1,3 +1,4 @@
+import { asTestUser } from "../../../tests/helpers/test-user";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -56,13 +57,14 @@ describe("recurring items over HTTP", () => {
       new Request("http://localhost/api/import", { method: "POST", body: form }),
     );
     expect(upload.status).toBe(200);
-    const d = await db.getDb();
-    const [account] = await d.select().from(db.schema.accounts);
+    const [account] = await asTestUser((d) => d.select().from(db.schema.accounts));
     let n = 0;
     const tx = async (date: string, amount: number, counterparty: string) =>
-      await d
-        .insert(db.schema.transactions)
-        .values({ accountId: account.id, date, amount, counterparty, importHash: `x${n++}` });
+      await asTestUser((d) =>
+        d
+          .insert(db.schema.transactions)
+          .values({ accountId: account.id, date, amount, counterparty, importHash: `x${n++}` }),
+      );
     for (const m of ["07", "08", "09"]) await tx(`2026-${m}-05`, -1399, "Netflix");
     for (const m of ["07", "08"]) await tx(`2026-${m}-05`, 123456, "Voorbeeld Werkgever BV");
 
@@ -142,7 +144,7 @@ describe("recurring items over HTTP", () => {
     expect((await h.item.DELETE(get("/x"), ctx(spotifyId))).status).toBe(204);
     expect((await h.item.GET(get("/x"), ctx(spotifyId))).status).toBe(404);
     expect((await h.item.DELETE(get("/x"), ctx(spotifyId))).status).toBe(404);
-    const spotifyTx = (await d.select().from(db.schema.transactions)).find(
+    const spotifyTx = (await asTestUser((d) => d.select().from(db.schema.transactions))).find(
       (t) => t.counterparty === "Spotify AB",
     )!;
     expect(spotifyTx.matchedOccurrenceId).toBeNull();

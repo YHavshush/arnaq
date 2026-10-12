@@ -29,7 +29,13 @@ export interface FullExport {
 export async function buildExport(db: Db, now: Date = new Date()): Promise<FullExport> {
   const tables = {} as FullExport["tables"];
   for (const [name, table] of Object.entries(TABLES)) {
-    (tables as Record<string, unknown[]>)[name] = await db.select().from(table);
+    // Rows belong to one person; the owner id is not part of the backup (it is the same on every row
+    // and would not mean anything in another account).
+    const rows = (await db.select().from(table)) as Record<string, unknown>[];
+    (tables as Record<string, unknown[]>)[name] = rows.map(({ userId, ...rest }) => {
+      void userId;
+      return rest;
+    });
   }
   return { app: "kasboek", version: EXPORT_VERSION, exportedAt: now.toISOString(), tables };
 }

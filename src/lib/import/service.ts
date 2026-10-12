@@ -239,7 +239,9 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
                 importHash: hashes[from + j],
               })),
             )
-            .onConflictDoNothing({ target: schema.transactions.importHash })
+            .onConflictDoNothing({
+              target: [schema.transactions.userId, schema.transactions.importHash],
+            })
             .returning({ importHash: schema.transactions.importHash })
         ).map((r) => r.importHash),
       );

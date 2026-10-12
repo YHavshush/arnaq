@@ -1,4 +1,4 @@
-import { getDb } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { handle, isInt, parseId } from "@/lib/api";
 import { assignCategory } from "@/lib/categories/categorise";
 
@@ -11,11 +11,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       return Response.json({ error: "Valid id and categoryId are required." }, { status: 400 });
     }
     return Response.json(
-      await assignCategory(await getDb(), id, body.categoryId, {
-        createRule: body.createRule === true,
-        pattern: typeof body.pattern === "string" ? body.pattern : undefined,
-        priority: isInt(body.priority) ? body.priority : undefined,
-      }),
+      await userDb((db) =>
+        assignCategory(db, id, body.categoryId, {
+          createRule: body.createRule === true,
+          pattern: typeof body.pattern === "string" ? body.pattern : undefined,
+          priority: isInt(body.priority) ? body.priority : undefined,
+        }),
+      ),
     );
   });
 }

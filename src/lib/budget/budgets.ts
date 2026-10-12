@@ -28,7 +28,7 @@ export async function setBudget(
     .insert(schema.budgets)
     .values({ categoryId, month, amount })
     .onConflictDoUpdate({
-      target: [schema.budgets.categoryId, schema.budgets.month],
+      target: [schema.budgets.userId, schema.budgets.categoryId, schema.budgets.month],
       set: { amount },
     });
 }
@@ -50,7 +50,10 @@ export async function setTotalBudget(db: Db, month: string, amount: number | nul
   await db
     .insert(schema.monthlyTotalBudget)
     .values({ month, amount })
-    .onConflictDoUpdate({ target: schema.monthlyTotalBudget.month, set: { amount } });
+    .onConflictDoUpdate({
+      target: [schema.monthlyTotalBudget.userId, schema.monthlyTotalBudget.month],
+      set: { amount },
+    });
 }
 
 /** Copy all category budgets (and the total) from one month to another, overwriting. */

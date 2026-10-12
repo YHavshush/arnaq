@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getDb } from "@/db";
+import { pageDb } from "@/lib/auth/request";
 import { BudgetEditor } from "@/components/kasboek/budget-editor";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader } from "@/components/kasboek/page-header";
@@ -24,7 +24,7 @@ async function Content({ searchParams }: Pick<PageProps<"/budget">, "searchParam
   const { locale, t } = await getI18n();
   const { monthName } = formatter(locale);
   const month = parseMonth((await searchParams).month, todayIso().slice(0, 7));
-  const o = await getMonthOverview(await getDb(), month);
+  const o = await pageDb((db) => getMonthOverview(db, month));
   const prev = addMonths(month, -1);
   const next = addMonths(month, 1);
   return (

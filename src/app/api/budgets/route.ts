@@ -1,4 +1,5 @@
-import { getDb, schema } from "@/db";
+import { schema } from "@/db";
+import { userDb } from "@/lib/auth/request";
 import { eq } from "drizzle-orm";
 import { handle, isInt } from "@/lib/api";
 import { assertMonth, clearBudget, setBudget } from "@/lib/budget/budgets";
@@ -9,7 +10,7 @@ export async function GET(request: Request) {
     const month = new URL(request.url).searchParams.get("month") ?? "";
     assertMonth(month);
     return Response.json(
-      await (await getDb()).select().from(schema.budgets).where(eq(schema.budgets.month, month)),
+      await userDb((db) => db.select().from(schema.budgets).where(eq(schema.budgets.month, month))),
     );
   });
 }
@@ -30,9 +31,9 @@ export async function PUT(request: Request) {
     }
     if (body.amount === null) {
       assertMonth(body.month);
-      await clearBudget(await getDb(), body.categoryId, body.month);
+      await userDb((db) => clearBudget(db, body.categoryId, body.month));
     } else {
-      await setBudget(await getDb(), body.categoryId, body.month, body.amount);
+      await userDb((db) => setBudget(db, body.categoryId, body.month, body.amount));
     }
     return Response.json({ ok: true });
   });
