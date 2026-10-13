@@ -9,6 +9,38 @@ Newest first. Decisions, research and state of the project that are not obvious 
   the switch is one place (`src/components/kasboek/ring.tsx`, the light shadow element). See
   `docs/design/ontwerp-v14.html` for both.
 
+## Plan for when we continue: UI alignment pass (not started, waiting for the owner's go)
+
+Method: per screen, put the app and the final mockup (`docs/design/ontwerp-v14.html`) side by side in the
+browser (phone and laptop width), list every difference, say which version is better and why, and let the
+owner choose before anything changes. The mockup is not copied blindly: the owner likes parts of each.
+Order: Prognose, Overzicht, Vaste lasten, Upload, then the dark themes. Model: Sonnet 5.5.
+
+Differences found so far (2026-10-13), each still to be decided:
+
+- **Hero number font (all screens).** Mockup: system sans, weight 500, tight letter spacing. App: serif.
+  Serif stays for titles and the hero sentence.
+- **Ring, thin light line.** Likely a 1 px gap between the ring and the glow-F shadow element (the ring
+  sits about 1 px inside it). Fix by making the ring end exactly at the shadow's edge. Also see the open
+  glow decision above (F or A).
+- **Prognose sentence.** Mockup: "December wordt krap, februari is je beste maand." plus a paragraph with
+  the saldo from start to end and "6 van 7 maanden sluit je in de plus". App: "The tightest month is ...".
+- **Prognose chart.** Mockup: bigger smooth saldo line with a gradient under it, saldo in bold above each
+  point, month label, monthly growth below as coloured "+44" / "-54" (true minus), highlighted selected
+  month, toggle "Saldo | Per maand", month detail card. App: small chart, tiny labels, hollow points.
+  Owner wants: keep the forecast part dashed, but with the gradient under it; keep the live Income /
+  Expenses / Growth pills, and let Growth get colour back (green plus, red minus).
+- **Overzicht (mockup has, app lacks).** Attention list at the top ("4 transactions without category -
+  Sort", "Zorgtoeslag not in yet - View"); "Tempo van de maand" card (bar with schedule tick and one bar per
+  day); Inkomsten list with when each arrives; "Binnenkort" (what is still to pay); two-column layout on a
+  laptop. The app's Expenses list resembles "Waar het heen ging" but differs in detail.
+- The "a^'54" in the mockup is only a character-set glitch when the file is opened without a charset; the
+  app uses the real minus sign.
+
+Parked until this is done: smart categorising (branch `feat/smart-categorising`, slice 1 of 8 committed,
+migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation.md`), then milestone 9
+(hosting).
+
 ## 2026-10-12: Research, "Sign in with ChatGPT" as an AI option
 
 **Why we looked.** Idea from the owner: let a user who has ChatGPT connect their own plan for the smart
