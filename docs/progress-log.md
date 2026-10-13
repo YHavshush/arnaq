@@ -2,6 +2,13 @@
 
 Newest first. Decisions, research and state of the project that are not obvious from the code.
 
+## Open decisions and todos
+
+- **Light-mode ring glow: F or A?** The owner is not sure yet whether the light ring keeps glow F (tinted
+  shadow underneath, current) or goes to A (no glow). Decide after seeing the finished screens on a phone;
+  the switch is one place (`src/components/kasboek/ring.tsx`, the light shadow element). See
+  `docs/design/ontwerp-v14.html` for both.
+
 ## 2026-10-12: Research, "Sign in with ChatGPT" as an AI option
 
 **Why we looked.** Idea from the owner: let a user who has ChatGPT connect their own plan for the smart
