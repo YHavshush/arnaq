@@ -314,6 +314,14 @@ export const ui: typeof en = {
       switchedOn: "Slim sorteren staat aan.",
       saved: "Opgeslagen.",
     },
+    erase: {
+      title: "Verwijder mijn gegevens",
+      body: "Verwijdert al je transacties, uploads, rekeningen, categorieën, regels, budgetten en instellingen. Je login blijft bestaan; vraag om verwijdering als je die ook weg wilt. Dit kan niet ongedaan worden gemaakt: maak eerst een back-up.",
+      prompt: "Typ verwijder om te bevestigen",
+      word: "verwijder",
+      button: "Verwijder al mijn gegevens",
+      done: "Al je gegevens zijn verwijderd.",
+    },
     advanced: "Geavanceerd",
     advancedHint:
       "Sorteerregels en de winkels die Kasboek heeft geleerd. Je hebt deze zelden nodig.",

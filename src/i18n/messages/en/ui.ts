@@ -307,6 +307,14 @@ export const ui = {
       switchedOn: "Smart sorting is on.",
       saved: "Saved.",
     },
+    erase: {
+      title: "Delete my data",
+      body: "Deletes all your transactions, imports, accounts, categories, rules, budgets and settings. Your login stays; ask to have it removed if you want that too. This cannot be undone: download a backup first.",
+      prompt: "Type delete to confirm",
+      word: "delete",
+      button: "Delete all my data",
+      done: "All your data is deleted.",
+    },
     advanced: "Advanced",
     advancedHint: "Sorting rules and the shops Kasboek has learned. You rarely need these.",
     learned: {

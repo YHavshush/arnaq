@@ -62,6 +62,10 @@ role (`assertTenantRole`); a confirmation link no longer leaves the browser sign
 in with their own password; the reset page names the account); sign-out always clears the session
 cookies; anonymous sessions are refused; only the token types the email templates use are accepted.
 
+Done since: "Delete my data" in Settings (all of a person's data; the login itself is removed in Supabase,
+because the app never holds an admin key). Security headers (nosniff, frame deny, referrer, permissions
+policy) are set; a CSP still needs a nonce setup.
+
 Not done yet, needed before registration is opened to strangers:
 
 - CAPTCHA (Turnstile) on the forms, and app-side rate limits per client IP and per email. All auth calls

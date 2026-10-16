@@ -7,6 +7,7 @@ import { pageDb } from "@/lib/auth/request";
 import { currentUser } from "@/lib/auth/session";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
+import { EraseData } from "@/components/kasboek/erase-data";
 import { LearnedShops } from "@/components/kasboek/learned-shops";
 import { SmartSettings } from "@/components/kasboek/smart-settings";
 import { RulesManager } from "@/components/kasboek/rules-manager";
@@ -75,6 +76,10 @@ async function Content() {
           entitled={isEntitled(user.id)}
           available={PROVIDERS.claude !== undefined}
         />
+      </Section>
+
+      <Section title={s.erase.title}>
+        <EraseData />
       </Section>
 
       <details className="group mt-8">
