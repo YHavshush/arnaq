@@ -13,7 +13,7 @@ export interface PrognosePoint {
   income: number;
   expenses: number;
   net: number;
-  /** Running sum over the shown months (cents). */
+  /** The balance at the end of this month when the bank's balances are known, else the growth since the first month (cents). */
   cumulative: number;
   /** Month is not (fully) real money yet: drawn dashed. */
   projected: boolean;
@@ -21,6 +21,8 @@ export interface PrognosePoint {
 
 export interface Prognose {
   hasForecast: boolean;
+  /** `cumulative` is a real balance (the person's money), not just growth since the first month. */
+  hasBalance: boolean;
   points: PrognosePoint[];
   /** Months ahead (current month included) and how many of them end in the plus. */
   ahead: number;
@@ -52,7 +54,7 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     income: m.income,
     expenses: m.expenses,
     net: m.net,
-    cumulative: m.cumulativeNet,
+    cumulative: m.cumulativeNet + (f.openingBalance ?? 0),
     projected: m.kind === "forecast" || m.kind === "mixed",
   }));
   // With no data at all every month nets to 0: that is "nothing to say", not "all in the plus".
@@ -104,10 +106,12 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
   }
 
   const notes = [t.noteEstimate];
+  if (f.openingBalance !== null) notes.push(t.noteBalance);
   for (const o of f.missed.slice(0, 3)) notes.push(t.noteMissed(o.name, dayLabel(o.expectedDate)));
 
   return {
     hasForecast: ahead.length > 0,
+    hasBalance: f.openingBalance !== null,
     points,
     ahead: ahead.length,
     inThePlus,

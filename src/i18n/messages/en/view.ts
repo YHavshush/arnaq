@@ -145,6 +145,8 @@ export const view = {
       `In total your money grows by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
     detailDown: (amount: string, month: string, plus: number, total: number) =>
       `In total your money shrinks by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
+    noteBalance:
+      "The balance adds up the accounts you uploaded; money you have not uploaded is not in it.",
     noteEstimate:
       "Forecast months are an estimate: fixed costs and income as you set them up, plus your average everyday spending.",
     noteMissed: (name: string, date: string) =>

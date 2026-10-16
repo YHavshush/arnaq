@@ -99,7 +99,7 @@ approved, plus storing the bank balance:
 3. Change password with the current password, in Settings. **DONE.**
 4. A full CSP (needs a nonce for the theme script; careful work). **DONE as report-only in production** (`src/lib/csp.ts`, no nonce because of partial prerendering): check on the real deployment, then set `CSP_MODE=enforce`.
 5. Draft privacy notice and terms (the owner reads them; a lawyer should too). **DONE (drafts in `docs/legal/`).**
-6. (NEXT, needs the owner's OK for the migration) Store the bank balance (Rabobank "Saldo na trn", Revolut "Balance") so the Prognose can show a real saldo.
+6. **BUILT on branch `feat/bank-balance`, NOT merged: needs the owner's OK to apply migration 0005 to Supabase first (then merge).** Store the bank balance (Rabobank "Saldo na trn", Revolut "Balance") so the Prognose can show a real saldo.
    Needs a migration: build it on a branch and ask the owner before applying it to Supabase or merging.
 7. Restore from a backup file (the export exists, the import does not). **DONE (Settings, replaces the data, ids renumbered, links kept).**
 8. App icon and web app manifest for the iPhone (the icon is a 404 today). **DONE.**

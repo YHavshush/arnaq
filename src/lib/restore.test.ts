@@ -58,6 +58,7 @@ async function seeded() {
         categorySource: "user",
         matchedOccurrenceId: occ.id,
         counterparty: "Verhuurder",
+        balanceAfter: 123400,
       })
       .returning();
     await tx.insert(schema.transactions).values({
@@ -106,6 +107,7 @@ describe("restoreFromBackup", () => {
       categoryId: food.id,
       categorySource: "user",
       counterparty: "Verhuurder",
+      balanceAfter: 123400,
     });
     // The payment and the fixed cost point at each other, and at B's own rows.
     expect(got.occ[0]).toMatchObject({ transactionId: rent.id, status: "matched" });

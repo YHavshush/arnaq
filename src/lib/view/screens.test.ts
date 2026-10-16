@@ -26,8 +26,28 @@ const forecast = (months: ForecastMonth[], lowConfidence = false): Forecast =>
       reason: lowConfidence ? "Maar 1 maand data." : null,
     },
     missed: [],
+    openingBalance: null,
     months,
-  }) as Forecast;
+  }) as unknown as Forecast;
+
+describe("buildPrognose with the bank's balances", () => {
+  it("the totals become the real balance, starting from the opening balance", () => {
+    const months = [
+      fm("2026-09", "actual", 5000, 5000),
+      fm("2026-10", "mixed", 20000, 25000),
+      fm("2026-11", "forecast", -10000, 15000),
+    ];
+    const without = buildPrognose(forecast(months), "en");
+    const withBalance = buildPrognose({ ...forecast(months), openingBalance: 250000 }, "en");
+    expect(without.hasBalance).toBe(false);
+    expect(without.points.map((p) => p.cumulative)).toEqual([5000, 25000, 15000]);
+    expect(withBalance.hasBalance).toBe(true);
+    expect(withBalance.points.map((p) => p.cumulative)).toEqual([255000, 275000, 265000]);
+    expect(withBalance.notes.some((n) => /balance adds up/.test(n))).toBe(true);
+    // Growth (the ring, the sentence) does not depend on the opening balance.
+    expect(withBalance.growth).toBe(without.growth);
+  });
+});
 
 describe("buildPrognose", () => {
   it("says what is missing when real income exists but none is planned (no fixed income items)", () => {
