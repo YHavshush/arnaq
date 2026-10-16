@@ -15,6 +15,33 @@ Newest first. Decisions, research and state of the project that are not obvious 
   Related finding for the same pass: the light end of the ring gradients (for example `#8fe0bd`) is far
   below 3:1 against the page (WCAG non-text contrast); darken the light end of each light gradient.
 
+## 2026-10-16: Smart categorising, state when work was paused (branch `feat/smart-categorising`, NOT merged)
+
+Built and tested on the branch (570 tests green): slice 1 schema (migration 0004), slice 2 merchant keys and
+learned shops (a correction with "remember" is applied to the same shop next time and replaces what a machine
+guessed), slice 3 bundled catalog of Dutch shops (unambiguous names only), slice 4 history similarity and the
+decision rule (a disagreement between catalog and the person's habit is asked, not applied), slice 5 UI
+(Upload: "Sorted automatically" with label, change, Undo and All correct; "Probably X?" with a Yes button;
+Settings: Advanced with sorting rules and learned shops).
+Not built yet: slice 6 (provider interface, fake provider, the two-phase run with caps, lease and cache),
+slice 7 (Claude provider, consent, entitlement), slice 8 (`smart:eval` calibration), and the Opus security
+review. Without slices 6 and 7 nothing leaves the app: the model layer does not exist yet.
+The branch is NOT merged because migration 0004 is not applied to Supabase (the hosted app would break on the
+missing columns). Merge only after the migration is applied.
+
+Questions for the owner, collected while working autonomously:
+
+1. May I apply migration 0004 to the Supabase project, then merge the branch? (A production change.)
+2. The starter rules were kept (the catalog only fills what is left) instead of retiring them, because the
+   rules also match words in the description ("huur", "salaris") that the catalog's shop key does not. Is
+   that fine? (The plan said to retire them.)
+3. Slices 4 and 6 are rated Opus work in `CLAUDE.md`; slice 4 was done on Sonnet. OK to review it with an Opus
+   subagent together with the final security review?
+4. Savings tile and catalog find the default categories by name or slug; categories the user renames or adds
+   themselves get no automatic help. Acceptable for now?
+5. "Stop at 70% of my session": I read it as the 5-hour limit and, to be safe, also the context window. Which one
+   did you mean?
+
 ## UI alignment pass (started 2026-10-16, owner approved the Prognose advice)
 
 Method: per screen, app and the final mockup (`docs/design/ontwerp-v14.html`) side by side, a recommendation
