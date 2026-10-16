@@ -250,6 +250,23 @@ export const ui: typeof en = {
       expenses: "Uitgaven",
       income: "Inkomen",
       inCurrency: (currency: string) => `in ${currency}`,
+      probably: (name: string) => `Waarschijnlijk ${name}?`,
+      yes: "Ja",
+    },
+    auto: {
+      title: "Automatisch gesorteerd",
+      aside: (n: number) => `${n} om te checken`,
+      intro:
+        "Kasboek heeft deze gesorteerd. Check ze: een correctie wordt onthouden voor dezelfde winkel.",
+      label: "Automatisch",
+      undo: "Ongedaan maken",
+      undoFor: (name: string) => `Maak de categorie van ${name} ongedaan`,
+      allCorrect: "Alles klopt",
+      more: (shown: number) => `De ${shown} nieuwste staan hier.`,
+      alsoChanged: (n: number) =>
+        n === 1
+          ? "Ook 1 andere transactie van deze winkel aangepast."
+          : `Ook ${n} andere transacties van deze winkel aangepast.`,
     },
   },
   budget: {

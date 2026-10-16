@@ -4,6 +4,7 @@ import { pageDb } from "@/lib/auth/request";
 import { Hero } from "@/components/kasboek/hero";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
+import { AutoList } from "@/components/kasboek/auto-list";
 import { ReviewList } from "@/components/kasboek/review-list";
 import { HeroSkeleton } from "@/components/kasboek/states";
 import { UploadPanel } from "@/components/kasboek/upload-panel";
@@ -61,11 +62,33 @@ async function Content() {
               description: r.description,
               reason: r.reason,
               currency: r.currency,
+              suggestedCategoryId: r.suggestedCategoryId,
             }))}
             categories={u.categories}
           />
           {u.reviewCount > u.review.length && (
             <p className="text-ink-muted mt-2 px-2 text-sm">{m.sortMore(u.review.length)}</p>
+          )}
+        </Section>
+      )}
+
+      {u.automatic.rows.length > 0 && (
+        <Section title={m.auto.title} aside={m.auto.aside(u.automatic.total)}>
+          <AutoList
+            items={u.automatic.rows.map((r) => ({
+              id: r.id,
+              date: r.date,
+              amount: r.amount,
+              counterparty: r.counterparty,
+              description: r.description,
+              categoryId: r.categoryId!,
+            }))}
+            categories={u.categories}
+          />
+          {u.automatic.total > u.automatic.rows.length && (
+            <p className="text-ink-muted mt-2 px-2 text-sm">
+              {m.auto.more(u.automatic.rows.length)}
+            </p>
           )}
         </Section>
       )}

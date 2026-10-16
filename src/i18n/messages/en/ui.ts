@@ -244,6 +244,22 @@ export const ui = {
       expenses: "Expenses",
       income: "Income",
       inCurrency: (currency: string) => `in ${currency}`,
+      probably: (name: string) => `Probably ${name}?`,
+      yes: "Yes",
+    },
+    auto: {
+      title: "Sorted automatically",
+      aside: (n: number) => `${n} to check`,
+      intro: "Kasboek sorted these. Check them: a correction is remembered for the same shop.",
+      label: "Automatic",
+      undo: "Undo",
+      undoFor: (name: string) => `Undo the category of ${name}`,
+      allCorrect: "All correct",
+      more: (shown: number) => `The ${shown} newest are shown here.`,
+      alsoChanged: (n: number) =>
+        n === 1
+          ? "Also changed 1 other transaction from this shop."
+          : `Also changed ${n} other transactions from this shop.`,
     },
   },
   budget: {

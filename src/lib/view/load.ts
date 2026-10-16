@@ -5,6 +5,7 @@ import { getDailySpend, getMonthOverview, getOtherIncome } from "@/lib/budget/ov
 import { getNeedsReview } from "@/lib/categories/categorise";
 import { getForecast } from "@/lib/forecast/forecast";
 import { addMonths } from "@/lib/recurring/dates";
+import { getAutomatic } from "@/lib/smart/review";
 import { listRecurringItems } from "@/lib/recurring/items";
 import { getMissedOccurrences, getOccurrences } from "@/lib/recurring/occurrences";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
@@ -66,7 +67,7 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
 }
 
 export async function loadUpload(db: Db) {
-  const [accounts, categories, review, imports, [counts]] = await Promise.all([
+  const [accounts, categories, review, imports, [counts], automatic] = await Promise.all([
     db.select().from(schema.accounts),
     db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
     getNeedsReview(db),
@@ -91,12 +92,14 @@ export async function loadUpload(db: Db) {
       .select({ total: sql<number>`count(*)`.mapWith(Number) })
       .from(schema.transactions)
       .where(and(eq(schema.transactions.isInternalTransfer, false))),
+    getAutomatic(db),
   ]);
   const left = review.length;
   const total = counts?.total ?? 0;
   return {
     accounts,
     categories: categories.filter((c) => c.type !== "transfer"),
+    automatic,
     review: review.slice(0, 50),
     reviewCount: left,
     imports,

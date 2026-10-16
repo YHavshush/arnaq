@@ -17,6 +17,8 @@ interface Item {
   description: string | null;
   reason: "uncategorised" | "foreign-currency";
   currency: string;
+  /** A category worth offering ("Probably X?"). */
+  suggestedCategoryId: number | null;
 }
 interface Cat {
   id: number;
@@ -24,7 +26,7 @@ interface Cat {
   type: string;
 }
 
-/** Transactions that need a category. Choosing one saves at once; "remember" also learns a rule. */
+/** Transactions that need a category. Choosing one saves at once; "remember" teaches Kasboek the shop. */
 export function ReviewList({ items, categories }: { items: Item[]; categories: Cat[] }) {
   const router = useRouter();
   const { locale, t: msg } = useI18n();
@@ -39,13 +41,14 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
     setError(null);
     const res = await api("PUT", `/api/transactions/${item.id}/category`, {
       categoryId,
-      createRule: remember && !!(item.counterparty || item.description),
+      learn: remember && !!(item.counterparty || item.description),
     });
     if (!res.ok) return setError(res.error);
     setSaved(item.id);
     startTransition(() => router.refresh());
   }
 
+  const byId = new Map(categories.map((c) => [c.id, c]));
   const expense = categories.filter((c) => c.type === "expense");
   const income = categories.filter((c) => c.type === "income");
 
@@ -78,6 +81,23 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
               </div>
               <div className="num font-semibold">{euroExact(t.amount)}</div>
             </div>
+            {t.suggestedCategoryId !== null && byId.get(t.suggestedCategoryId) && (
+              <div className="flex items-center justify-between gap-3 text-[14px]">
+                <span className="text-ink-muted">
+                  {msg.ui.upload.review.probably(
+                    categoryLabel(byId.get(t.suggestedCategoryId)!.name, locale),
+                  )}
+                </span>
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => choose(t, t.suggestedCategoryId!)}
+                  className="bg-accent text-accent-ink inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold"
+                >
+                  {msg.ui.upload.review.yes}
+                </button>
+              </div>
+            )}
             <select
               aria-label={msg.ui.upload.review.category(
                 t.counterparty ?? t.description ?? msg.ui.upload.review.transaction,
