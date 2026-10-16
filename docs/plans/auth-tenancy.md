@@ -76,6 +76,8 @@ set it in production).
 Done since: changing the password in Settings asks for the current one (checked by signing in again, under the
 same limits as sign in).
 
+Drafts of a privacy notice and terms are in `docs/legal/` (marked DRAFT; the owner and then a lawyer must read them).
+
 Not done yet, needed before registration is opened to strangers:
 
 - CAPTCHA (Turnstile) on the forms, and app-side rate limits per client IP and per email. All auth calls
