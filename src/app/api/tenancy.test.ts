@@ -3,8 +3,9 @@
 // test until someone decides how it is covered.
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
-import { TEST_USER_A, TEST_USER_B } from "@/db";
+import { TEST_USER_A, TEST_USER_B, schema } from "@/db";
 import { buildExport } from "@/lib/export";
 import { loadOverzicht, loadPrognose, loadUpload, loadVasteLasten } from "@/lib/view/load";
 import { asTestUser, setTestUser } from "../../../tests/helpers/test-user";
@@ -29,6 +30,7 @@ const ROUTES: Record<string, string[]> = {
   import: ["POST"],
   overview: ["GET"],
   recurring: ["GET", "POST"],
+  "merchant-labels/[id]": ["DELETE"],
   "recurring/[id]": ["GET", "PATCH", "DELETE"],
   "recurring/missed": ["GET"],
   "recurring/occurrences": ["GET"],
@@ -39,6 +41,8 @@ const ROUTES: Record<string, string[]> = {
   rules: ["GET", "POST"],
   "rules/[id]": ["DELETE"],
   "transactions/[id]/category": ["PUT"],
+  "transactions/[id]/undo": ["POST"],
+  "transactions/confirm": ["POST"],
 };
 
 const MARK = "TENANT-A-MARKER";
@@ -311,6 +315,44 @@ describe("user B cannot change A's data, even knowing its ids", () => {
         )
       ).status,
     ).toBe(422);
+  });
+
+  it("another user cannot undo or confirm A's automatic categories", async () => {
+    // Make one of A's transactions automatic, as A; then back to the other user.
+    setTestUser(TEST_USER_A);
+    await asTestUser((db) =>
+      db
+        .update(schema.transactions)
+        .set({ categoryId: a.categoryId, categorySource: "catalog" })
+        .where(eq(schema.transactions.id, a.transactionId)),
+    );
+    setTestUser(TEST_USER_B);
+    const undo = await call(
+      "transactions/[id]/undo",
+      "POST",
+      json("POST", "/x", {}),
+      a.transactionId,
+    );
+    expect((await undo.json()) as { changed: boolean }).toEqual({ changed: false });
+    const confirm = await call(
+      "transactions/confirm",
+      "POST",
+      json("POST", "/api/transactions/confirm", { ids: [a.transactionId] }),
+    );
+    expect((await confirm.json()) as { confirmed: number }).toEqual({ confirmed: 0 });
+    setTestUser(TEST_USER_A);
+    const still = await asTestUser((db) =>
+      db.select().from(schema.transactions).where(eq(schema.transactions.id, a.transactionId)),
+    );
+    // Put A's row back as it was, for the checks that A's data is unchanged.
+    await asTestUser((db) =>
+      db
+        .update(schema.transactions)
+        .set({ categoryId: null, categorySource: null })
+        .where(eq(schema.transactions.id, a.transactionId)),
+    );
+    setTestUser(TEST_USER_B);
+    expect(still[0]).toMatchObject({ categoryId: a.categoryId, categorySource: "catalog" });
   });
 
   it("A's account cannot receive an upload; deleting A's rule changes nothing", async () => {

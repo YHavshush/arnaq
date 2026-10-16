@@ -244,6 +244,22 @@ export const ui = {
       expenses: "Expenses",
       income: "Income",
       inCurrency: (currency: string) => `in ${currency}`,
+      probably: (name: string) => `Probably ${name}?`,
+      yes: "Yes",
+    },
+    auto: {
+      title: "Sorted automatically",
+      aside: (n: number) => `${n} to check`,
+      intro: "Kasboek sorted these. Check them: a correction is remembered for the same shop.",
+      label: "Automatic",
+      undo: "Undo",
+      undoFor: (name: string) => `Undo the category of ${name}`,
+      allCorrect: "All correct",
+      more: (shown: number) => `The ${shown} newest are shown here.`,
+      alsoChanged: (n: number) =>
+        n === 1
+          ? "Also changed 1 other transaction from this shop."
+          : `Also changed ${n} other transactions from this shop.`,
     },
   },
   budget: {
@@ -267,6 +283,15 @@ export const ui = {
     backupCsv: "Transactions (CSV)",
     rules: "Sorting rules",
     rulesAside: (n: number) => `${n} rules`,
+    advanced: "Advanced",
+    advancedHint: "Sorting rules and the shops Kasboek has learned. You rarely need these.",
+    learned: {
+      title: "Learned shops",
+      aside: (n: number) => `${n} shops`,
+      none: 'Nothing yet. When you choose a category and keep "remember my choice", the shop shows up here.',
+      forget: "Forget",
+      forgetFor: (shop: string) => `Forget ${shop}`,
+    },
     unknownCategory: "Unknown",
     rule: {
       ifContains: "If the name or description contains",

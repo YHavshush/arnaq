@@ -197,7 +197,7 @@ export async function matchOccurrences(db: Db): Promise<MatchResult> {
       .set({
         matchedOccurrenceId: o.id,
         ...(t.categoryId === null && o.item.categoryId !== null
-          ? { categoryId: o.item.categoryId }
+          ? { categoryId: o.item.categoryId, categorySource: "recurring" as const }
           : {}),
       })
       .where(eq(schema.transactions.id, t.id));

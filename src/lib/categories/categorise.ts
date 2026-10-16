@@ -1,5 +1,7 @@
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
+import { merchantKey } from "@/lib/smart/merchant";
+import { learnLabel, propagateLabel } from "@/lib/smart/learned";
 
 export interface Rule {
   id: number;
@@ -63,7 +65,7 @@ export async function applyRules(db: Db, opts: { importId?: number } = {}): Prom
     for (let i = 0; i < ids.length; i += 500) {
       await db
         .update(schema.transactions)
-        .set({ categoryId })
+        .set({ categoryId, categorySource: "rule", suggestedCategoryId: null })
         .where(inArray(schema.transactions.id, ids.slice(i, i + 500)));
     }
   }
@@ -93,6 +95,11 @@ export interface AssignOptions {
   /** Rule pattern. Defaults to the counterparty (or description when there is none). */
   pattern?: string;
   priority?: number;
+  /**
+   * Remember this shop: the same shop gets this category next time, and what a machine guessed for
+   * it earlier follows. Needs a counterparty or description to recognise the shop by.
+   */
+  learn?: boolean;
 }
 
 export interface AssignResult {
@@ -118,12 +125,24 @@ export async function assignCategory(
   );
   if (!category) throw new CategoriseError(`Category ${categoryId} does not exist.`);
 
+  const key = merchantKey(t.counterparty, t.description);
   await db
     .update(schema.transactions)
-    .set({ categoryId, isInternalTransfer: category.type === "transfer" })
+    .set({
+      categoryId,
+      isInternalTransfer: category.type === "transfer",
+      categorySource: "user",
+      suggestedCategoryId: null,
+      merchantKey: key,
+    })
     .where(eq(schema.transactions.id, transactionId));
 
-  if (!opts.createRule) return { ruleId: null, alsoCategorised: 0 };
+  let learned = 0;
+  if (opts.learn && key) {
+    await learnLabel(db, key, categoryId);
+    learned = await propagateLabel(db, key, categoryId, transactionId);
+  }
+  if (!opts.createRule) return { ruleId: null, alsoCategorised: learned };
 
   const pattern = (opts.pattern ?? t.counterparty ?? t.description ?? "").trim();
   if (!pattern) throw new CategoriseError("Cannot create a rule without a pattern.");
@@ -131,7 +150,7 @@ export async function assignCategory(
     .insert(schema.categorisationRules)
     .values({ pattern, categoryId, priority: opts.priority ?? 10 })
     .returning();
-  return { ruleId: rule.id, alsoCategorised: await applyRules(db) };
+  return { ruleId: rule.id, alsoCategorised: learned + (await applyRules(db)) };
 }
 
 export async function deleteRule(db: Db, ruleId: number): Promise<void> {

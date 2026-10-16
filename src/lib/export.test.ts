@@ -25,11 +25,13 @@ describe("buildExport", () => {
         "categories",
         "categorisationRules",
         "imports",
+        "merchantLabels",
         "monthlyTotalBudget",
         "recurringItems",
         "recurringOccurrences",
         "recurringSuggestionRejections",
         "transactions",
+        "userSettings",
       ].sort(),
     );
     expect(out.tables.transactions).toHaveLength(1);
@@ -45,7 +47,7 @@ describe("buildExport", () => {
     const declared = Object.values(schema)
       .filter((t) => is(t, PgTable))
       .map((t) => getTableName(t as never))
-      .filter((n) => n !== "app_users") // who owns the rows, not data of its own
+      .filter((n) => n !== "app_users" && n !== "ai_usage") // owner bookkeeping and cap counters, not the person's data
       .sort();
     const out = await buildExport(await createDb(":memory:"));
     const exported = Object.keys(out.tables)

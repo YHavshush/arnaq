@@ -250,6 +250,23 @@ export const ui: typeof en = {
       expenses: "Uitgaven",
       income: "Inkomen",
       inCurrency: (currency: string) => `in ${currency}`,
+      probably: (name: string) => `Waarschijnlijk ${name}?`,
+      yes: "Ja",
+    },
+    auto: {
+      title: "Automatisch gesorteerd",
+      aside: (n: number) => `${n} om te checken`,
+      intro:
+        "Kasboek heeft deze gesorteerd. Check ze: een correctie wordt onthouden voor dezelfde winkel.",
+      label: "Automatisch",
+      undo: "Ongedaan maken",
+      undoFor: (name: string) => `Maak de categorie van ${name} ongedaan`,
+      allCorrect: "Alles klopt",
+      more: (shown: number) => `De ${shown} nieuwste staan hier.`,
+      alsoChanged: (n: number) =>
+        n === 1
+          ? "Ook 1 andere transactie van deze winkel aangepast."
+          : `Ook ${n} andere transacties van deze winkel aangepast.`,
     },
   },
   budget: {
@@ -273,6 +290,16 @@ export const ui: typeof en = {
     backupCsv: "Transacties (CSV)",
     rules: "Sorteerregels",
     rulesAside: (n: number) => `${n} regels`,
+    advanced: "Geavanceerd",
+    advancedHint:
+      "Sorteerregels en de winkels die Kasboek heeft geleerd. Je hebt deze zelden nodig.",
+    learned: {
+      title: "Geleerde winkels",
+      aside: (n: number) => `${n} winkels`,
+      none: 'Nog niets. Kies je een categorie en laat je "onthoud mijn keuze" aan staan, dan verschijnt de winkel hier.',
+      forget: "Vergeet",
+      forgetFor: (shop: string) => `Vergeet ${shop}`,
+    },
     unknownCategory: "Onbekend",
     rule: {
       ifContains: "Als de naam of omschrijving dit bevat",

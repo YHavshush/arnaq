@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   boolean,
+  check,
   foreignKey,
   index,
   integer,
@@ -29,6 +30,26 @@ export const CATEGORY_TYPES = ["expense", "income", "transfer"] as const;
 export const RECURRING_TYPES = ["expense", "income"] as const;
 export const FREQUENCIES = ["monthly", "quarterly", "yearly"] as const;
 export const OCCURRENCE_STATUSES = ["expected", "matched", "missed"] as const;
+/**
+ * Where a transaction's category came from. `user` is a person's own choice; `learned`, `rule` and
+ * `recurring` apply something the person set up; `catalog`, `history` and `model` are automatic (shown
+ * as such, one click to undo); `confirmed` is an automatic one the person approved; `undone` is an
+ * automatic one the person rejected (automation leaves it alone).
+ */
+export const CATEGORY_SOURCES = [
+  "user",
+  "learned",
+  "rule",
+  "recurring",
+  "catalog",
+  "history",
+  "model",
+  "confirmed",
+  "undone",
+] as const;
+export const AUTOMATIC_SOURCES = ["catalog", "history", "model"] as const;
+export const LABEL_SOURCES = ["user", "model"] as const;
+export const SMART_PROVIDERS = ["off", "claude", "chatgpt"] as const;
 
 /** Money column: integer cents as bigint, surfaced as number. */
 const cents = (name: string) => bigint(name, { mode: "number" });
@@ -72,10 +93,15 @@ export const categories = pgTable(
     name: text("name").notNull(),
     type: text("type", { enum: CATEGORY_TYPES }).notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
+    /** Stable key of a default category (survives renaming); null for the user's own categories. */
+    slug: text("slug"),
   },
   (t) => [
     unique("categories_user_id_id_unique").on(t.userId, t.id),
     unique("categories_user_name_unique").on(t.userId, t.name),
+    uniqueIndex("categories_user_slug_idx")
+      .on(t.userId, t.slug)
+      .where(sql`${t.slug} is not null`),
   ],
 ).enableRLS();
 
@@ -197,9 +223,25 @@ export const transactions = pgTable(
     importHash: text("import_hash").notNull(),
     matchedOccurrenceId: integer("matched_occurrence_id"),
     isInternalTransfer: boolean("is_internal_transfer").notNull().default(false),
+    /** Where `categoryId` came from (see CATEGORY_SOURCES); null while uncategorised or before this existed. */
+    categorySource: text("category_source", { enum: CATEGORY_SOURCES }),
+    /** A category worth offering ("Probably X?") that was not sure enough to apply. */
+    suggestedCategoryId: integer("suggested_category_id"),
+    /** Normalised counterparty, the key for learned labels and the history layer. Filled lazily. */
+    merchantKey: text("merchant_key"),
   },
   (t): PgTableExtraConfigValue[] => [
     unique("transactions_user_id_id_unique").on(t.userId, t.id),
+    index("transactions_merchant_key_idx").on(t.userId, t.merchantKey),
+    check(
+      "transactions_category_source_check",
+      sql`${t.categorySource} is null or ${t.categorySource} in ('user','learned','rule','recurring','catalog','history','model','confirmed','undone')`,
+    ),
+    foreignKey({
+      name: "transactions_suggested_category_fk",
+      columns: [t.userId, t.suggestedCategoryId],
+      foreignColumns: [categories.userId, categories.id],
+    }),
     uniqueIndex("transactions_import_hash_idx").on(t.userId, t.importHash),
     index("transactions_date_idx").on(t.userId, t.date),
     foreignKey({
@@ -269,4 +311,74 @@ export const categorisationRules = pgTable(
       foreignColumns: [categories.userId, categories.id],
     }).onDelete("cascade"),
   ],
+).enableRLS();
+
+/**
+ * What is known about a shop (by merchant key) for one user: their own choice (`user`) or what the
+ * language model said (`model`; null category = it abstained). One table for learned labels and the
+ * model cache. A `user` row is never overwritten by the model. Per user on purpose: a shared cache
+ * would break the tenancy invariant and reveal what other people pay.
+ */
+export const merchantLabels = pgTable(
+  "merchant_labels",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: owner(),
+    merchantKey: text("merchant_key").notNull(),
+    categoryId: integer("category_id"),
+    source: text("source", { enum: LABEL_SOURCES }).notNull(),
+    provider: text("provider"),
+    /** Hash of the user's category set when the model abstained, so it is asked again when that changes. */
+    optionsHash: text("options_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("merchant_labels_user_key_idx").on(t.userId, t.merchantKey),
+    check("merchant_labels_source_check", sql`${t.source} in ('user','model')`),
+    foreignKey({
+      name: "merchant_labels_category_fk",
+      columns: [t.userId, t.categoryId],
+      foreignColumns: [categories.userId, categories.id],
+    }).onDelete("cascade"),
+  ],
+).enableRLS();
+
+/** One row per user at most; no row means the defaults (smart sorting off). */
+export const userSettings = pgTable(
+  "user_settings",
+  {
+    userId: uuid("user_id")
+      .primaryKey()
+      .notNull()
+      .default(sql`app.uid()`)
+      .references(() => appUsers.userId, { onDelete: "cascade" }),
+    smartProvider: text("smart_provider", { enum: SMART_PROVIDERS }).notNull().default("off"),
+    /** Version of the consent text the user agreed to; null = never. */
+    consentVersion: integer("consent_version"),
+    consentAt: timestamp("consent_at", { withTimezone: true, mode: "string" }),
+    /** A smart run holds this lease so two runs for one user cannot overlap. */
+    smartLeaseUntil: timestamp("smart_lease_until", { withTimezone: true, mode: "string" }),
+    /** Version of the default categories and rules this user has been upgraded to. */
+    defaultsVersion: integer("defaults_version").notNull().default(1),
+  },
+  () => [check("user_settings_provider_check", sql`smart_provider in ('off','claude','chatgpt')`)],
+).enableRLS();
+
+/** What the language model has been asked for, per user per day (caps and cost). */
+export const aiUsage = pgTable(
+  "ai_usage",
+  {
+    userId: owner(),
+    day: text("day").notNull(), // YYYY-MM-DD
+    merchants: integer("merchants").notNull().default(0),
+    calls: integer("calls").notNull().default(0),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.day] })],
 ).enableRLS();
