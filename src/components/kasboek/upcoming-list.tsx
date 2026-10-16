@@ -17,7 +17,7 @@ export async function UpcomingList({ rows }: { rows: UpcomingRow[] }) {
           <CategoryIcon name={r.category} />
           <div className="min-w-0">
             <div className="truncate text-base leading-tight font-semibold">{r.name}</div>
-            <span className="bg-accent/12 text-accent mt-1 inline-block rounded-full px-2 py-0.5 text-[12px] font-semibold">
+            <span className="text-accent mt-1 inline-block rounded-full bg-[color-mix(in_srgb,var(--ring-accent-to)_18%,transparent)] px-2 py-0.5 text-[12px] font-semibold">
               {t.ui.overview.subDue(dayLabel(r.date))}
             </span>
           </div>

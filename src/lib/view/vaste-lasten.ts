@@ -53,7 +53,13 @@ export function buildVasteLasten(occurrences: OccurrenceView[], locale: Locale):
       date: o.status === "matched" ? (o.actualDate ?? o.expectedDate) : o.expectedDate,
       label: labelFor(o, locale),
     }))
-    .sort((a, b) => a.date.localeCompare(b.date) || a.name.localeCompare(b.name));
+    // What still needs paying comes first (missed, then due by date), what is paid goes below it.
+    .sort(
+      (a, b) =>
+        Number(a.status === "matched") - Number(b.status === "matched") ||
+        a.date.localeCompare(b.date) ||
+        a.name.localeCompare(b.name),
+    );
   const expenses = rows.filter((r) => r.type === "expense");
   const income = rows.filter((r) => r.type === "income");
   const paid = expenses.filter((r) => r.status === "matched").length;

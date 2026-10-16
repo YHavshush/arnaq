@@ -29,8 +29,9 @@ then the dark themes.
   value fits. Screens: `docs/design/compare/prognose-app-after-*.jpg`.
   Deviation from the mockup: the mockup shows a bank saldo; the app has no balances yet, so it shows growth
   since the first month shown (see the note in `DESIGN.md`). Storing balances is a backlog item.
-- **Fixed costs: advice agreed, not built.** Keep the Expenses and Income sections. Show paid versus due:
-  a coloured label per row (blue "due 18 Oct", green with a check "paid 1 Oct"), due rows first.
+- **Fixed costs: done 2026-10-16** (branch `feat/ui-fixed-costs`): Expenses and Income stay separate; every
+  row has a status label (green with a check for paid, blue for due, rose for missed); what still needs
+  paying comes first, paid rows below.
 - **Upload: keep as is.** Report real problems first, change nothing silently.
 - **Overzicht: done 2026-10-16** (branch `feat/ui-overzicht`, all advice approved). Explanation under the
   sentence; attention list with actions; tiles Budget, Fixed costs, Savings, Income ("To sort" moved to the

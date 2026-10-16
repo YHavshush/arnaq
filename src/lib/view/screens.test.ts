@@ -178,7 +178,8 @@ describe("buildVasteLasten", () => {
     expect(v.share).toBeCloseTo(1 / 3);
     expect(v.toCome).toBe(4599);
     expect(v.sentence.map((s) => s.text).join("")).toMatch(/eerstvolgende is Internet op 18 okt/);
-    expect(v.expenses.map((r) => r.label)).toEqual(["betaald 1 okt", "komt 18 okt", "komt 25 okt"]);
+    // What is still to pay comes first, by date; what is paid goes below it.
+    expect(v.expenses.map((r) => r.label)).toEqual(["komt 18 okt", "komt 25 okt", "betaald 1 okt"]);
     expect(v.income).toHaveLength(1);
   });
 

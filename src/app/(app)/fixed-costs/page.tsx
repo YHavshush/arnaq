@@ -3,6 +3,7 @@ import { pageDb } from "@/lib/auth/request";
 import { Hero } from "@/components/kasboek/hero";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
+import { StatusChip } from "@/components/kasboek/status-chip";
 import { Row } from "@/components/kasboek/row";
 import { EmptyState, HeroSkeleton } from "@/components/kasboek/states";
 import {
@@ -41,7 +42,7 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
       key={r.occurrenceId}
       icon={nameOf(r.categoryId)}
       name={r.name}
-      meta={r.label}
+      meta={<StatusChip status={r.status} label={r.label} />}
       amount={euro(r.amount)}
       amountSub={r.status === "missed" ? f.missedLabel : undefined}
     />
