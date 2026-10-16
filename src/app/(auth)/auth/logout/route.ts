@@ -1,3 +1,4 @@
+import { redirectTarget } from "@/lib/app-url";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { authCookieOptions, supabaseServer } from "@/lib/supabase/server";
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
   }
   // signOut reports a failed call as a value and leaves the cookies behind, so whatever it said the
   // session cookies are removed here: signing out on a shared computer must always work.
-  const response = NextResponse.redirect(new URL("/login", request.url), 303);
+  const response = NextResponse.redirect(redirectTarget("/login", request.url), 303);
   for (const name of names)
     if (name.startsWith("sb-"))
       response.cookies.set(name, "", { ...authCookieOptions(), maxAge: 0 });

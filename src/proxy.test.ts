@@ -8,7 +8,10 @@ const ask = (path: string, init: { method?: string; headers?: Record<string, str
 const next = (res: Response) => res.headers.get("x-middleware-next");
 const location = (res: Response) => res.headers.get("location");
 
-afterEach(() => setClaims(undefined));
+afterEach(() => {
+  setClaims(undefined);
+  delete process.env.APP_URL;
+});
 
 describe("proxy: signed out", () => {
   it("sends pages to the login page and remembers where they were going", async () => {
@@ -89,5 +92,31 @@ describe("proxy: signed in", () => {
         })
       ).status,
     ).toBe(403);
+  });
+});
+
+describe("proxy: APP_URL", () => {
+  const post = (origin: string, host = "localhost:3000") =>
+    ask("/api/review", { method: "POST", headers: { origin, host } });
+
+  it("without it the Origin must match the Host", async () => {
+    setClaims(null);
+    expect((await post("http://localhost:3000")).status).toBe(401); // same site: on to the sign-in check
+    expect((await post("https://evil.example")).status).toBe(403);
+  });
+
+  it("with it the Origin must be that address, whatever the Host says (a proxy may rewrite it)", async () => {
+    setClaims(null);
+    process.env.APP_URL = "https://kasboek.example/ignored/path";
+    expect((await post("https://kasboek.example", "internal:3000")).status).toBe(401);
+    expect((await post("http://localhost:3000", "localhost:3000")).status).toBe(403);
+  });
+
+  it("builds redirects from it, not from the Host header", async () => {
+    setClaims(null);
+    process.env.APP_URL = "https://kasboek.example";
+    const res = await ask("/forecast");
+    expect(new URL(location(res)!).origin).toBe("https://kasboek.example");
+    expect(new URL(location(res)!).pathname).toBe("/login");
   });
 });

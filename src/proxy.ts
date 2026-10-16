@@ -1,3 +1,4 @@
+import { appUrl, redirectTarget } from "@/lib/app-url";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { LOCALE_COOKIE, toLocale } from "@/i18n/config";
@@ -70,9 +71,7 @@ export async function proxy(request: NextRequest) {
         NextResponse.json({ error: localizeMessage("Not signed in.", locale) }, { status: 401 }),
       );
     }
-    const login = request.nextUrl.clone();
-    login.pathname = "/login";
-    login.search = "";
+    const login = redirectTarget("/login", request.url);
     const next = safeNext(path + request.nextUrl.search, "");
     if (next) login.searchParams.set("next", next);
     return carry(response, NextResponse.redirect(login));
@@ -83,7 +82,8 @@ export async function proxy(request: NextRequest) {
 function crossSite(request: NextRequest): boolean {
   if (request.headers.get("sec-fetch-site") === "cross-site") return true;
   const origin = request.headers.get("origin");
-  const host = request.headers.get("host");
+  // With APP_URL set the browser's Origin must be that address; otherwise it must match the Host.
+  const host = appUrl()?.host ?? request.headers.get("host");
   if (origin && host) {
     try {
       return new URL(origin).host !== host;
@@ -95,7 +95,7 @@ function crossSite(request: NextRequest): boolean {
 }
 
 const redirect = (request: NextRequest, to: string) =>
-  NextResponse.redirect(new URL(to, request.url));
+  NextResponse.redirect(redirectTarget(to, request.url));
 
 /** A redirect or error must still carry the refreshed session cookies. */
 function carry(from: NextResponse, to: NextResponse): NextResponse {
