@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createDb, one, schema } from "@/db";
 import { DEFAULT_CATEGORIES, DEFAULT_RULES } from "@/lib/categories/defaults";
-import { applyCatalog } from "./catalog";
+import { applyAutomatic } from "./auto";
 import { catalogLookup } from "./catalog-nl";
 
 describe("catalogLookup", () => {
@@ -46,7 +46,7 @@ describe("catalogLookup", () => {
   });
 });
 
-describe("applyCatalog", () => {
+describe("applyAutomatic with the catalog", () => {
   async function setup() {
     const db = await createDb(":memory:");
     const [account] = await db
@@ -83,7 +83,7 @@ describe("applyCatalog", () => {
     const open = await tx("Basic-Fit Zoetermeer");
     const unknown = await tx("Bakker Piet");
     const done = await tx("Lidl", { categoryId: await cat("sport"), categorySource: "user" });
-    expect(await applyCatalog(db)).toBe(1);
+    expect((await applyAutomatic(db)).applied).toBe(1);
     expect(await get(open.id)).toMatchObject({
       categoryId: await cat("sport"),
       categorySource: "catalog",
@@ -98,7 +98,7 @@ describe("applyCatalog", () => {
     const transfer = await tx("Lidl", { isInternalTransfer: true });
     const refundOut = await tx("Salaris Werkgever", { amount: -5000 }); // money out is not a salary
     const salary = await tx("Salaris Werkgever", { amount: 150000 });
-    expect(await applyCatalog(db)).toBe(1);
+    expect((await applyAutomatic(db)).applied).toBe(1);
     expect((await get(undone.id)).categoryId).toBeNull();
     expect((await get(transfer.id)).categoryId).toBeNull();
     expect((await get(refundOut.id)).categoryId).toBeNull();
@@ -109,6 +109,6 @@ describe("applyCatalog", () => {
     const { db, tx } = await setup();
     await db.update(schema.categories).set({ slug: null });
     await tx("Lidl");
-    expect(await applyCatalog(db)).toBe(0);
+    expect((await applyAutomatic(db)).applied).toBe(0);
   });
 });
