@@ -307,6 +307,16 @@ export const ui = {
       switchedOn: "Smart sorting is on.",
       saved: "Saved.",
     },
+    restore: {
+      title: "Restore a backup",
+      body: "Replaces everything in Kasboek with the contents of a backup file you made with Full backup. What you have now is deleted first.",
+      choose: "Choose the backup file",
+      agree: "I understand that my current data is replaced",
+      button: "Restore",
+      working: "Restoring…",
+      done: "The backup is restored.",
+      notBackup: "That is not a Kasboek backup file.",
+    },
     erase: {
       title: "Delete my data",
       body: "Deletes all your transactions, imports, accounts, categories, rules, budgets and settings. Your login stays; ask to have it removed if you want that too. This cannot be undone: download a backup first.",

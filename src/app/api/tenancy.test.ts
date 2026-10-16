@@ -35,6 +35,7 @@ const ROUTES: Record<string, string[]> = {
   "smart/settings": ["GET", "PUT"],
   "categorise/smart": ["POST"],
   "account/delete": ["POST"],
+  "account/restore": ["POST"],
   "recurring/missed": ["GET"],
   "recurring/occurrences": ["GET"],
   "recurring/suggestions": ["GET"],

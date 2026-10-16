@@ -314,6 +314,16 @@ export const ui: typeof en = {
       switchedOn: "Slim sorteren staat aan.",
       saved: "Opgeslagen.",
     },
+    restore: {
+      title: "Back-up terugzetten",
+      body: "Vervangt alles in Kasboek door de inhoud van een back-upbestand dat je met Volledige back-up hebt gemaakt. Wat je nu hebt wordt eerst verwijderd.",
+      choose: "Kies het back-upbestand",
+      agree: "Ik begrijp dat mijn huidige gegevens worden vervangen",
+      button: "Terugzetten",
+      working: "Bezig met terugzetten…",
+      done: "De back-up is teruggezet.",
+      notBackup: "Dit is geen Kasboek-back-up.",
+    },
     erase: {
       title: "Verwijder mijn gegevens",
       body: "Verwijdert al je transacties, uploads, rekeningen, categorieën, regels, budgetten en instellingen. Je login blijft bestaan; vraag om verwijdering als je die ook weg wilt. Dit kan niet ongedaan worden gemaakt: maak eerst een back-up.",

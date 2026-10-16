@@ -8,6 +8,12 @@ import { seedDefaults } from "@/lib/categories/seed";
  * security keeps it to their own rows.
  */
 export async function deleteAllMyData(db: Db): Promise<void> {
+  await wipeMyData(db);
+  await seedDefaults(db);
+}
+
+/** Remove every row the current person owns (children first), without putting anything back. */
+export async function wipeMyData(db: Db): Promise<void> {
   // The matched payment and its occurrence point at each other: cut one side first.
   await db.update(schema.transactions).set({ matchedOccurrenceId: null });
   await db.delete(schema.recurringOccurrences);
@@ -23,5 +29,4 @@ export async function deleteAllMyData(db: Db): Promise<void> {
   await db.delete(schema.userSettings);
   await db.delete(schema.accounts);
   await db.delete(schema.categories);
-  await seedDefaults(db);
 }

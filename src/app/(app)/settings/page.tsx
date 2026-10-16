@@ -10,6 +10,7 @@ import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { ChangePasswordForm } from "@/components/kasboek/auth-forms";
 import { EraseData } from "@/components/kasboek/erase-data";
 import { LearnedShops } from "@/components/kasboek/learned-shops";
+import { RestoreBackup } from "@/components/kasboek/restore-backup";
 import { SmartSettings } from "@/components/kasboek/smart-settings";
 import { RulesManager } from "@/components/kasboek/rules-manager";
 import { HeroSkeleton } from "@/components/kasboek/states";
@@ -85,6 +86,10 @@ async function Content() {
           entitled={isEntitled(user.id)}
           available={PROVIDERS.claude !== undefined}
         />
+      </Section>
+
+      <Section title={s.restore.title}>
+        <RestoreBackup />
       </Section>
 
       <Section title={s.erase.title}>

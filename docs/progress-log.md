@@ -94,15 +94,15 @@ The owner decided: the AI link (Claude provider), starting a run after an import
 `smart:eval` are NOT wanted yet; the Opus security review of the smart part comes later. Everything else is
 approved, plus storing the bank balance:
 
-1. Limits per IP and per email on sign in, register and forgot password (app side).
-2. A fixed `APP_URL` for redirects and the origin check.
-3. Change password with the current password, in Settings.
+1. Limits per IP and per email on sign in, register and forgot password (app side). **DONE.**
+2. A fixed `APP_URL` for redirects and the origin check. **DONE.**
+3. Change password with the current password, in Settings. **DONE.**
 4. A full CSP (needs a nonce for the theme script; careful work).
-5. Draft privacy notice and terms (the owner reads them; a lawyer should too).
+5. Draft privacy notice and terms (the owner reads them; a lawyer should too). **DONE (drafts in `docs/legal/`).**
 6. Store the bank balance (Rabobank "Saldo na trn", Revolut "Balance") so the Prognose can show a real saldo.
    Needs a migration: build it on a branch and ask the owner before applying it to Supabase or merging.
-7. Restore from a backup file (the export exists, the import does not).
-8. App icon and web app manifest for the iPhone (the icon is a 404 today).
+7. Restore from a backup file (the export exists, the import does not). **DONE (Settings, replaces the data, ids renumbered, links kept).**
+8. App icon and web app manifest for the iPhone (the icon is a 404 today). **DONE.**
 9. Check dark and phone on Prognose, Fixed costs and Upload after the redesigns; fix what is off.
 10. Clean up: unused catalog texts, Dutch names in the code.
 11. End-to-end tests in a real browser (sign in, upload, sort).
