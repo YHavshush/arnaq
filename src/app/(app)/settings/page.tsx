@@ -7,6 +7,7 @@ import { pageDb } from "@/lib/auth/request";
 import { currentUser } from "@/lib/auth/session";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
+import { ChangePasswordForm } from "@/components/kasboek/auth-forms";
 import { EraseData } from "@/components/kasboek/erase-data";
 import { LearnedShops } from "@/components/kasboek/learned-shops";
 import { SmartSettings } from "@/components/kasboek/smart-settings";
@@ -56,6 +57,14 @@ async function Content() {
             <GhostButton type="submit">{t.auth.account.signOut}</GhostButton>
           </form>
         </div>
+        <details className="glass mt-3">
+          <summary className="min-h-11 cursor-pointer px-4 py-3 text-[15px] font-semibold">
+            {t.auth.change.title}
+          </summary>
+          <div className="px-4 pb-4">
+            <ChangePasswordForm />
+          </div>
+        </details>
       </Section>
 
       <Section title={s.backup}>

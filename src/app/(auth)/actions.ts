@@ -14,13 +14,19 @@ export type ErrorKey =
   | "long"
   | "mismatch"
   | "weak"
+  | "currentWrong"
   | "notConfirmed"
   | "rate"
   | "generic"
   | "link";
 
 /** What a form shows after it was submitted: an error, or "done, check your email". */
-export type FormState = { error?: ErrorKey; sent?: { email: string }; email?: string } | null;
+export type FormState = {
+  error?: ErrorKey;
+  sent?: { email: string };
+  email?: string;
+  done?: boolean;
+} | null;
 
 const text = (form: FormData, name: string) => {
   const v = form.get(name);
@@ -119,4 +125,34 @@ export async function confirmLink(_prev: FormState, form: FormData): Promise<For
   // stay signed in as whoever it belongs to. The address is confirmed; the person signs in themselves.
   await supabase.auth.signOut({ scope: "local" });
   redirect(`/login?confirmed=1&next=${encodeURIComponent(safeNext(text(form, "next")))}`);
+}
+
+/**
+ * Change the password of the signed-in person. The current password is asked for, so a stolen session
+ * cookie alone cannot take the account over; it is checked by signing in with it again, under the same
+ * limits as signing in.
+ */
+export async function changePassword(_prev: FormState, form: FormData): Promise<FormState> {
+  let user;
+  try {
+    user = await currentUser();
+  } catch (e) {
+    if (e instanceof UnauthenticatedError) redirect("/login");
+    throw e;
+  }
+  const current = text(form, "current");
+  const password = text(form, "password");
+  const bad = passwordError(password, text(form, "repeat"));
+  if (bad) return { error: bad };
+  if (!user.email || !current) return { error: "currentWrong" };
+  if (await overLimit("signIn", user.email)) return { error: "rate" };
+  const supabase = await supabaseServer();
+  const check = await supabase.auth.signInWithPassword({ email: user.email, password: current });
+  if (check.error)
+    return {
+      error: check.error.code === "invalid_credentials" ? "currentWrong" : mapError(check.error),
+    };
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: mapError(error) };
+  return { done: true };
 }

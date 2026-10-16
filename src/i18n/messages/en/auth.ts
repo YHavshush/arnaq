@@ -4,6 +4,7 @@ export const auth = {
   fields: {
     email: "Email address",
     password: "Password",
+    currentPassword: "Current password",
     newPassword: "New password",
     confirmPassword: "Repeat the password",
     passwordHint: (min: number) => `At least ${min} characters.`,
@@ -43,6 +44,13 @@ export const auth = {
     submit: "Save password",
     busy: "Saving…",
   },
+  change: {
+    title: "Change password",
+    submit: "Change password",
+    busy: "Saving…",
+    done: "Your password is changed.",
+    hint: 'You need your current password. Forgot it? Sign out and use "Forgot your password?".',
+  },
   confirm: {
     title: "Confirm your email address",
     bodyEmail: "One more step: confirm that this is you.",
@@ -61,6 +69,7 @@ export const auth = {
   },
   errors: {
     invalid: "That email address and password don't match.",
+    currentWrong: "That is not your current password.",
     email: "Enter a valid email address.",
     short: (min: number) => `Choose a password of at least ${min} characters.`,
     long: "That password is too long (at most 72 bytes).",

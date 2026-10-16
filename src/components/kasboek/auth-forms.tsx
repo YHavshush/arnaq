@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import {
+  changePassword,
   confirmLink,
   forgotPassword,
   signIn,
@@ -287,5 +288,54 @@ export function InvalidLink() {
         {m.confirm.backToSignIn}
       </Link>
     </AuthCard>
+  );
+}
+
+/** Change the password from Settings: needs the current one. */
+export function ChangePasswordForm() {
+  const { state, run, pending, error, t } = useAuthAction(changePassword);
+  const m = t.auth;
+  return (
+    <form action={run} className="grid gap-4">
+      <p className="text-ink-muted max-w-[52ch] text-[14px]">{m.change.hint}</p>
+      <Field label={m.fields.currentPassword}>
+        <input
+          name="current"
+          type="password"
+          required
+          autoComplete="current-password"
+          className={inputClass}
+        />
+      </Field>
+      <Field label={m.fields.newPassword} hint={m.fields.passwordHint(MIN_PASSWORD)}>
+        <input
+          name="password"
+          type="password"
+          required
+          minLength={MIN_PASSWORD}
+          autoComplete="new-password"
+          className={inputClass}
+        />
+      </Field>
+      <Field label={m.fields.confirmPassword}>
+        <input
+          name="repeat"
+          type="password"
+          required
+          minLength={MIN_PASSWORD}
+          autoComplete="new-password"
+          className={inputClass}
+        />
+      </Field>
+      <ErrorLine message={error} />
+      <div aria-live="polite" className="text-ink-muted text-[14px]">
+        {state?.done ? m.change.done : null}
+      </div>
+      <div>
+        <PrimaryButton type="submit" disabled={pending}>
+          {pending ? m.change.busy : m.change.submit}
+        </PrimaryButton>
+      </div>
+    </form>
   );
 }

@@ -5,6 +5,7 @@ export const auth: typeof en = {
   fields: {
     email: "E-mailadres",
     password: "Wachtwoord",
+    currentPassword: "Huidig wachtwoord",
     newPassword: "Nieuw wachtwoord",
     confirmPassword: "Herhaal het wachtwoord",
     passwordHint: (min: number) => `Minstens ${min} tekens.`,
@@ -44,6 +45,13 @@ export const auth: typeof en = {
     submit: "Wachtwoord opslaan",
     busy: "Bezig met opslaan…",
   },
+  change: {
+    title: "Wachtwoord wijzigen",
+    submit: "Wachtwoord wijzigen",
+    busy: "Bezig met opslaan…",
+    done: "Je wachtwoord is gewijzigd.",
+    hint: 'Je hebt je huidige wachtwoord nodig. Vergeten? Log uit en gebruik "Wachtwoord vergeten?".',
+  },
   confirm: {
     title: "Bevestig je e-mailadres",
     bodyEmail: "Nog één stap: bevestig dat jij het bent.",
@@ -62,6 +70,7 @@ export const auth: typeof en = {
   },
   errors: {
     invalid: "Dit e-mailadres en wachtwoord horen niet bij elkaar.",
+    currentWrong: "Dat is niet je huidige wachtwoord.",
     email: "Vul een geldig e-mailadres in.",
     short: (min: number) => `Kies een wachtwoord van minstens ${min} tekens.`,
     long: "Dit wachtwoord is te lang (maximaal 72 bytes).",

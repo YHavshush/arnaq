@@ -73,6 +73,9 @@ from `x-forwarded-for`, which only means something behind a proxy you trust).
 Done since: `APP_URL` (redirects and the cross-site Origin check no longer depend on the Host header when it is set;
 set it in production).
 
+Done since: changing the password in Settings asks for the current one (checked by signing in again, under the
+same limits as sign in).
+
 Not done yet, needed before registration is opened to strangers:
 
 - CAPTCHA (Turnstile) on the forms, and app-side rate limits per client IP and per email. All auth calls
