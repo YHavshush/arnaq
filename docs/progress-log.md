@@ -88,6 +88,28 @@ Parked until this is done: smart categorising (branch `feat/smart-categorising`,
 migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation.md`), then milestone 9
 (hosting).
 
+## Agreed work list (2026-10-16), to do without the owner, in this order
+
+The owner decided: the AI link (Claude provider), starting a run after an import / "sort the rest" and
+`smart:eval` are NOT wanted yet; the Opus security review of the smart part comes later. Everything else is
+approved, plus storing the bank balance:
+
+1. Limits per IP and per email on sign in, register and forgot password (app side).
+2. A fixed `APP_URL` for redirects and the origin check.
+3. Change password with the current password, in Settings.
+4. A full CSP (needs a nonce for the theme script; careful work).
+5. Draft privacy notice and terms (the owner reads them; a lawyer should too).
+6. Store the bank balance (Rabobank "Saldo na trn", Revolut "Balance") so the Prognose can show a real saldo.
+   Needs a migration: build it on a branch and ask the owner before applying it to Supabase or merging.
+7. Restore from a backup file (the export exists, the import does not).
+8. App icon and web app manifest for the iPhone (the icon is a 404 today).
+9. Check dark and phone on Prognose, Fixed costs and Upload after the redesigns; fix what is off.
+10. Clean up: unused catalog texts, Dutch names in the code.
+11. End-to-end tests in a real browser (sign in, upload, sort).
+12. A Dockerfile for Hetzner, tried locally if Docker is installed.
+
+Work is paced by the 5-hour usage limit: stop at 70% (see memory), commit, report, bundle questions.
+
 ## 2026-10-12: Research, "Sign in with ChatGPT" as an AI option
 
 **Why we looked.** Idea from the owner: let a user who has ChatGPT connect their own plan for the smart
