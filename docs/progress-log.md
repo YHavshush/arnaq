@@ -32,9 +32,14 @@ then the dark themes.
 - **Fixed costs: advice agreed, not built.** Keep the Expenses and Income sections. Show paid versus due:
   a coloured label per row (blue "due 18 Oct", green with a check "paid 1 Oct"), due rows first.
 - **Upload: keep as is.** Report real problems first, change nothing silently.
-- **Overzicht (mockup has, app lacks), still to compare and decide:** attention list at the top; "Tempo van
-  de maand" card (bar with schedule tick and one bar per day); Inkomsten list with when each arrives;
-  "Binnenkort"; two-column layout on a laptop; the Expenses list versus "Waar het heen ging".
+- **Overzicht: comparison made 2026-10-16, waiting for the owner's choices** (screens:
+  `docs/design/compare/overzicht-*-laptop.jpg`). Mockup has, app lacks: (1) a short explanation under the
+  hero sentence (percent of budget used, days left, per day, which categories are over); (2) an attention
+  list at the top with actions ("4 without category - Sort", "Zorgtoeslag not in - View"); (3) the "Tempo
+  van de maand" card (bar with schedule tick, one bar per day); (4) "Waar het heen ging" with bar colours by
+  meaning (fixed and paid green) and a link to all categories; (5) an Inkomsten list; (6) "Binnenkort";
+  (7) two columns on a laptop; (8) a footnote on what is counted. Advice and open choices are in the chat of
+  2026-10-16. A layout regression from the Hero change (sentence under the tiles) was fixed the same day.
 - **Open owner decision: ring contrast.** The light ring colours are decorative and far below 3:1 against
   the page (best end of blue 2.3, green 2.5, warm 2.0; light ends about 1.1 to 1.5). Reaching 3:1 would
   need much darker rings and change the approved pastel look. The information is also in the text, so

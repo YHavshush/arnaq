@@ -89,30 +89,28 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
     <div className="fade-in">
       <MoodSetter mood={o.mood} />
       <PageHeader title={t.ui.overview.title} sub={f.monthName(month)} step={step} />
-      <div className="@min-[900px]/app:grid @min-[900px]/app:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] @min-[900px]/app:items-center @min-[900px]/app:gap-8">
-        <Hero
-          tone={o.tone}
-          value={o.used ?? (o.spent > 0 ? 1 : 0)}
-          ringLabel={
-            o.used === null
-              ? t.ui.overview.ringNoBudget
-              : t.ui.overview.ringUsed(Math.round(o.used * 100))
-          }
-          centre={o.free === null ? f.euro(o.spent) : f.euro(o.free)}
-          caption={
-            o.free === null
-              ? t.ui.overview.captionSpent
-              : o.free < 0
-                ? t.ui.overview.captionOver
-                : t.ui.overview.captionFree
-          }
-          sentence={o.sentence}
-        />
-        <div className="mt-6 grid grid-cols-2 gap-3 @min-[900px]/app:mt-0">
-          {o.tiles.map((tile) => (
-            <StatusTile key={tile.key} tile={tile} />
-          ))}
-        </div>
+      <Hero
+        tone={o.tone}
+        value={o.used ?? (o.spent > 0 ? 1 : 0)}
+        ringLabel={
+          o.used === null
+            ? t.ui.overview.ringNoBudget
+            : t.ui.overview.ringUsed(Math.round(o.used * 100))
+        }
+        centre={o.free === null ? f.euro(o.spent) : f.euro(o.free)}
+        caption={
+          o.free === null
+            ? t.ui.overview.captionSpent
+            : o.free < 0
+              ? t.ui.overview.captionOver
+              : t.ui.overview.captionFree
+        }
+        sentence={o.sentence}
+      />
+      <div className="mt-6 grid grid-cols-2 gap-3 @min-[900px]/app:grid-cols-4">
+        {o.tiles.map((tile) => (
+          <StatusTile key={tile.key} tile={tile} />
+        ))}
       </div>
 
       <Section
