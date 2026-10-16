@@ -5,13 +5,14 @@ settings, the app's database role, the migration). Nothing here contains a secre
 
 ## What the app needs
 
-| Variable                   | What                                                                           | Where it comes from                                 |
-| -------------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------- |
-| `SUPABASE_URL`             | the project URL                                                                | Supabase > Project Settings > API                   |
-| `SUPABASE_PUBLISHABLE_KEY` | the publishable key (`sb_publishable_...`), never a secret or service_role key | same page                                           |
-| `DATABASE_URL`             | the pooler string for the restricted role `kasboek_app`                        | `scripts/db-app-role.sh` writes it to `.env.hosted` |
-| `KASBOEK_AI_USERS`         | optional: user ids that may use Kasboek AI                                     | Supabase > Authentication > Users                   |
-| `ANTHROPIC_API_KEY`        | only when the Claude provider exists; server side only                         | console.anthropic.com, with a spend limit           |
+| Variable                   | What                                                                                                                                     | Where it comes from                                 |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `SUPABASE_URL`             | the project URL                                                                                                                          | Supabase > Project Settings > API                   |
+| `SUPABASE_PUBLISHABLE_KEY` | the publishable key (`sb_publishable_...`), never a secret or service_role key                                                           | same page                                           |
+| `DATABASE_URL`             | the pooler string for the restricted role `kasboek_app`                                                                                  | `scripts/db-app-role.sh` writes it to `.env.hosted` |
+| `APP_URL`                  | the address the app is served from, e.g. `https://kasboek.example`; redirects and the cross-site check use it instead of the Host header | your own address; leave unset on a local machine    |
+| `KASBOEK_AI_USERS`         | optional: user ids that may use Kasboek AI                                                                                               | Supabase > Authentication > Users                   |
+| `ANTHROPIC_API_KEY`        | only when the Claude provider exists; server side only                                                                                   | console.anthropic.com, with a spend limit           |
 
 The app refuses to run over a database role that bypasses row level security (it says so and serves
 nothing), and refuses to start in production without `DATABASE_URL`. Never set `KASBOEK_DEV_AUTH` anywhere
