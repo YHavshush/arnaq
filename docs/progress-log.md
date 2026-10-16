@@ -99,7 +99,7 @@ approved, plus storing the bank balance:
 3. Change password with the current password, in Settings. **DONE.**
 4. A full CSP (needs a nonce for the theme script; careful work). **DONE as report-only in production** (`src/lib/csp.ts`, no nonce because of partial prerendering): check on the real deployment, then set `CSP_MODE=enforce`.
 5. Draft privacy notice and terms (the owner reads them; a lawyer should too). **DONE (drafts in `docs/legal/`).**
-6. **BUILT on branch `feat/bank-balance`, NOT merged: needs the owner's OK to apply migration 0005 to Supabase first (then merge).** Store the bank balance (Rabobank "Saldo na trn", Revolut "Balance") so the Prognose can show a real saldo.
+6. **DONE: migration 0005 applied to Supabase and merged on 2026-10-16 with the owner's approval.** Store the bank balance (Rabobank "Saldo na trn", Revolut "Balance") so the Prognose can show a real saldo.
    Needs a migration: build it on a branch and ask the owner before applying it to Supabase or merging.
 7. Restore from a backup file (the export exists, the import does not). **DONE (Settings, replaces the data, ids renumbered, links kept).**
 8. App icon and web app manifest for the iPhone (the icon is a 404 today). **DONE.**
@@ -112,10 +112,8 @@ Work is paced by the 5-hour usage limit: stop at 70% (see memory), commit, repor
 
 ## Waiting on the owner (2026-10-16)
 
-- **Bank balance (item 6)** is built and tested on branch `feat/bank-balance` (parsers keep the balance after each
-  transaction, migration 0005 adds `transactions.balance_after`, the Prognose shows the real balance, export
-  version 3, restore keeps it). It is NOT merged: say "yes" and I apply migration 0005 to Supabase and merge. Only
-  transactions imported afterwards carry a balance; re-import a statement to get balances for older months.
+- **Bank balance (item 6)**: done (migration 0005 applied, merged). Only transactions imported from now on carry a
+  balance; re-import a statement to get balances for older months.
 - **End-to-end tests (item 11)** need Playwright and its browsers downloaded (about 150 MB): say yes to that.
 - **Dockerfile (item 12)** skipped: Docker is not installed on the owner's Mac.
 
