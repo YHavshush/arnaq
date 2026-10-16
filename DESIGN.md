@@ -68,7 +68,7 @@ Findings from testing it, which are rules:
 
 ## Glow (decided for now, easy to change)
 
-- **Light: F.** A soft shadow in the status colour straight under the ring, drawn as a `box-shadow` on a sibling element.
+- **Light: A (decided 2026-10-16).** No glow. F, a soft shadow in the status colour straight under the ring (a `box-shadow` on a sibling element), was the earlier choice and is in git history.
 - **Dark: D.** The conic gradient ring with a lit head cap and a tight glow.
 - Chosen per theme in `glowStyle` in `tokens.ts`. Alternatives that were built and compared: A (no glow), D in light, a frosted lens, a soft bloom, a lit inner well.
 - **Safari rule: never put a CSS `filter` on an SVG element.** iPhone Safari can clip it to the element box and show a hard edge. Use a div, a box-shadow, or a conic-gradient ring instead.
@@ -77,7 +77,7 @@ Findings from testing it, which are rules:
 ## Typography
 
 - **Display and sentences:** Newsreader, weights 400 and 500, italic for the number inside a sentence. Page titles and the hero sentence only.
-- **UI and numbers:** the system font (SF Pro on Apple devices) with Geist as fallback.
+- **UI and numbers:** the system font (SF Pro on Apple devices) with Geist as fallback. The big number in the ring is in this font too (not the serif), tight letter spacing (-0.035em), and shrinks to fit when it is long (`numberSize` in `hero.tsx`).
 - **Big number:** the same weight in both themes, medium (500) in light and one step lighter (400) in dark, because light type on a dark ground looks optically heavier. It was once bold in light and thin in dark by accident; do not reintroduce that.
 - Numbers use tabular figures everywhere they line up.
 - Fixed rem scale, ratio about 1.2 for UI; the hero number is about 52px and the page title about 40px on laptop.
@@ -88,7 +88,7 @@ Findings from testing it, which are rules:
 - **Ring:** 14px stroke at hero size, round caps, gradient from `ring-<tone>-from` to `-to`, track `track`. Never an SVG filter (see Glow).
 - **Rows:** icon chip (40px, 12px radius) + name + amount, with a thin status bar. Planned fixed costs show "komt 25 okt" instead of a spent amount.
 - **Status tiles:** label, one status word, short sub-line. Two across on phone, four on laptop.
-- **Charts:** every number a chart implies is printed on it. Forecast months are dashed. Tapping a month shows its details in a panel below. The saldo line shows the balance above each point and the monthly growth below.
+- **Charts:** every number a chart implies is printed on it. Forecast months are dashed. Tapping a month shows its details in a panel below. The Prognose chart has two views (Total, Per month). Total: a smooth line with a soft fill under it, the running total above each point and the growth of that month below it, green for plus and red for minus (true minus sign). The numbers are growth since the first month shown, not a bank balance (the parsers do not store balances yet).
 - **Navigation:** floating pill bar on phone, sidebar on laptop.
 - **Targets:** at least 44px. Focus is always visible. Charts have text alternatives.
 - **Selection, scrollbars, accent colour of native controls** follow the palette.
@@ -102,13 +102,13 @@ Findings from testing it, which are rules:
 
 ## Screens as built (milestone 7)
 
-| Route          | Screen      | Notes                                                                                                                                                                             |
-| -------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`            | Overzicht   | Ring = budget used or planned, centre = free to spend, status tiles, categories with bars. `?maand=YYYY-MM` steps through months                                                  |
-| `/prognose`    | Prognose    | Ring = share of forecast months in the plus. Chart of the running total (dashed = forecast), tap or arrow-key a month for its details. Horizon 3, 6, 12 or 24 months (`?months=`) |
-| `/fixed-costs` | Fixed costs | Ring = paid fixed costs. Suggestions (accept or never show again), missed payments, add, pause, delete                                                                            |
-| `/upload`      | Upload      | Ring = transactions sorted. Drop a CSV, then sort what is left (a choice can create a rule)                                                                                       |
-| `/budget`      | Budget      | Per category and optional total; a field saves when you leave it; copy the previous month                                                                                         |
+| Route          | Screen      | Notes                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`            | Overzicht   | Ring = budget used or planned, centre = free to spend, a line of explanation, an attention list with actions, four status tiles (budget, fixed costs, savings, income), pace of the month (one bar per day), where it went (top 5, bars by meaning: paid fixed cost green, fixed cost to come grey, over budget red), income, coming up. Two columns on a laptop. `?month=YYYY-MM` steps through months |
+| `/prognose`    | Prognose    | Ring = share of forecast months in the plus. Chart of the running total (dashed = forecast), tap or arrow-key a month for its details. Horizon 3, 6, 12 or 24 months (`?months=`)                                                                                                                                                                                                                       |
+| `/fixed-costs` | Fixed costs | Ring = paid fixed costs. Suggestions (accept or never show again), missed payments, add, pause, delete                                                                                                                                                                                                                                                                                                  |
+| `/upload`      | Upload      | Ring = transactions sorted. Drop a CSV, then sort what is left (a choice can create a rule)                                                                                                                                                                                                                                                                                                             |
+| `/budget`      | Budget      | Per category and optional total; a field saves when you leave it; copy the previous month                                                                                                                                                                                                                                                                                                               |
 
 - **Loading** is a calm skeleton with the hero's footprint (no spinner). **Empty** says what to do next with one action. **Error** never shows the raw error: "Er is niets kwijt".
 - **Glass** (`--glass-bg`, `--glass-border`, `--glass-shadow`, `--glass-nav`) is part of the tokens, per theme, so cards and the nav follow Light, Dark and Dark +.

@@ -32,6 +32,7 @@ function overview(
     },
     uncategorised: { expense: 0, income: 0, count: 0 },
     foreignCurrencyCount: 0,
+    transactionCount: 0,
   } satisfies MonthOverview;
 }
 
@@ -168,10 +169,15 @@ describe("buildOverzicht", () => {
       locale: "nl" as const,
     });
     expect(o.rows.map((r) => r.name)).toEqual(["Huur", "Boodschappen"]);
-    expect(o.rows[0]).toMatchObject({ planned: 90000, nextDate: "2026-10-25", state: "warn" });
+    expect(o.rows[0]).toMatchObject({
+      planned: 90000,
+      nextDate: "2026-10-25",
+      fixed: true,
+      state: "planned",
+    });
   });
 
-  it("tiles: fixed costs paid, income, and what still needs sorting", () => {
+  it("tiles: fixed costs paid, savings and income; what needs sorting moved to the attention list", () => {
     const o = buildOverzicht({
       overview: { ...overview(), uncategorised: { expense: 500, income: 0, count: 3 } },
       occurrences: [occ(1, "matched", 90000), occ(2, "expected", 30000)],
@@ -179,9 +185,12 @@ describe("buildOverzicht", () => {
       locale: "nl" as const,
     });
     expect(o.tiles.find((t) => t.key === "vast")?.word).toBe("1/2 betaald");
-    expect(o.tiles.find((t) => t.key === "sorteren")).toMatchObject({
-      word: "3 open",
-      tone: "warn",
+    expect(o.tiles.map((t) => t.key)).toEqual(["budget", "vast", "sparen", "inkomen"]);
+    expect(o.attention[0]).toMatchObject({
+      key: "uncategorised",
+      title: "3 transacties zonder categorie",
+      tone: "bad",
+      action: { href: "/upload", primary: true },
     });
     expect(
       o.rows.at(-1)?.name === "Zonder categorie" || o.rows.some((r) => r.categoryId === null),
@@ -198,5 +207,149 @@ describe("buildOverzicht", () => {
         locale: "nl" as const,
       }).hasActivity,
     ).toBe(false);
+  });
+});
+
+describe("buildOverzicht: the parts the design adds", () => {
+  const base = (over: Partial<Parameters<typeof buildOverzicht>[0]> = {}) =>
+    buildOverzicht({
+      overview: overview({}, [
+        line(1, "Huur", 90000, 90000),
+        line(2, "Boodschappen", 31000, 24000),
+      ]),
+      occurrences: [occ(1, "matched", 90000)],
+      today: "2026-10-22",
+      locale: "nl" as const,
+      ...over,
+    });
+
+  it("explains the sentence: percent used, days left, per day, what is over budget", () => {
+    const o = base();
+    expect(o.detail).toMatch(/^\d+% van je budget is besteed of al gepland, met 9 dagen te gaan/);
+    expect(o.detail).toMatch(/Eten|Boodschappen|zit boven budget/);
+    expect(base({ locale: "en" as const }).detail).toMatch(
+      /of your budget is spent or already planned, with 9 days to go/,
+    );
+    // Nothing to say without a budget.
+    expect(
+      base({ overview: overview({ totalBudget: null, totalRemaining: null }, []) }).detail,
+    ).toBeNull();
+  });
+
+  it("pace: spent against schedule, one bar per day, a threshold that follows the budget", () => {
+    const daily = new Array(31).fill(0);
+    daily[1] = 5400;
+    daily[8] = 6300;
+    const o = base({ daily });
+    expect(o.pace?.days).toHaveLength(31);
+    expect(o.pace?.days[21]).toMatchObject({ day: 22, state: "today" });
+    expect(o.pace?.days[22].state).toBe("future");
+    expect(o.pace?.days[0].state).toBe("past");
+    expect(o.pace?.threshold).toBeGreaterThanOrEqual(2000);
+    expect(o.pace!.threshold % 500).toBe(0);
+    expect(o.pace?.budget).not.toBeNull();
+    expect(o.pace?.schedule).toBeGreaterThan(0);
+    // No budget and no spending: no card.
+    expect(
+      base({ overview: overview({ totalBudget: null, totalRemaining: null }, []) }).pace,
+    ).toBeNull();
+  });
+
+  it("attention: income that did not show up, a missed payment, foreign rows; at most three", () => {
+    const o = base({
+      overview: {
+        ...overview(),
+        foreignCurrencyCount: 2,
+        uncategorised: { expense: 0, income: 0, count: 4 },
+      },
+      occurrences: [
+        occ(2, "expected", 14600, {
+          type: "income",
+          itemName: "Zorgtoeslag",
+          expectedDate: "2026-10-20",
+        }),
+        occ(3, "missed", 7950, { itemName: "Vattenfall", expectedDate: "2026-10-18" }),
+      ],
+    });
+    expect(o.attention).toHaveLength(3);
+    expect(o.attention.map((a) => a.key)).toEqual(["uncategorised", "late3", "late2"]);
+    expect(o.attention.find((a) => a.key === "late2")).toMatchObject({
+      title: "Zorgtoeslag nog niet binnen",
+      action: { href: "/fixed-costs", primary: false },
+    });
+  });
+
+  it("income: received first (biggest first), then what is expected or missing; other income grouped by category", () => {
+    const o = base({
+      occurrences: [
+        occ(2, "matched", 112000, {
+          type: "income",
+          itemName: "Salaris",
+          actualDate: "2026-10-05",
+        }),
+        occ(3, "expected", 14600, {
+          type: "income",
+          itemName: "Zorgtoeslag",
+          expectedDate: "2026-10-20",
+        }),
+        occ(4, "expected", 5000, {
+          type: "income",
+          itemName: "Toeslag",
+          expectedDate: "2026-10-28",
+        }),
+      ],
+      otherIncome: [
+        { categoryId: 9, name: "Familie / gift", amount: 5000, lastDate: "2026-10-12" },
+      ],
+    });
+    expect(o.income.map((r) => [r.name, r.status])).toEqual([
+      ["Salaris", "received"],
+      ["Familie / gift", "received"],
+      ["Zorgtoeslag", "missing"], // expected on the 20th, today is the 22nd
+      ["Toeslag", "expected"],
+    ]);
+  });
+
+  it("upcoming: the next three fixed costs from today, current month only", () => {
+    const occurrences = [
+      occ(1, "expected", 14630, { itemName: "A", expectedDate: "2026-10-25" }),
+      occ(2, "expected", 7950, { itemName: "B", expectedDate: "2026-10-28" }),
+      occ(3, "expected", 1000, { itemName: "C", expectedDate: "2026-10-21" }), // already past
+      occ(4, "matched", 5000, { itemName: "D", expectedDate: "2026-10-30" }),
+    ];
+    expect(base({ occurrences }).upcoming.map((u) => u.name)).toEqual(["A", "B"]);
+    expect(base({ occurrences, today: "2026-11-02" }).upcoming).toEqual([]);
+  });
+
+  it("bars mean something: paid fixed cost done, fixed cost to come planned, over budget bad", () => {
+    const o = base({
+      overview: overview({}, [
+        line(1, "Huur", 90000, 90000),
+        line(2, "Boodschappen", 31000, 24000),
+        line(3, "Sport", 1000, 5000),
+      ]),
+      occurrences: [occ(1, "matched", 90000)],
+    });
+    const state = (name: string) => o.rows.find((r) => r.name === name)?.state;
+    expect(state("Huur")).toBe("done");
+    expect(state("Boodschappen")).toBe("bad");
+    expect(state("Sport")).toBe("ok");
+  });
+
+  it("savings tile: reached, under way, saved, nothing yet", () => {
+    const tile = (rows: ReturnType<typeof line>[]) =>
+      buildOverzicht({
+        overview: overview({}, rows),
+        occurrences: [],
+        today: "2026-10-22",
+        locale: "nl" as const,
+      }).tiles.find((t) => t.key === "sparen")!;
+    expect(tile([line(5, "Sparen & beleggen", 10000, 10000)])).toMatchObject({
+      word: "Gehaald",
+      tone: "good",
+    });
+    expect(tile([line(5, "Sparen & beleggen", 4000, 10000)])).toMatchObject({ word: "Onderweg" });
+    expect(tile([line(5, "Sparen & beleggen", 4000, null)])).toMatchObject({ word: "Gespaard" });
+    expect(tile([line(1, "Huur", 90000, 90000)])).toMatchObject({ word: "Nog niets" });
   });
 });

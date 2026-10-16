@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
 import { Hero } from "@/components/kasboek/hero";
+import { MonthList } from "@/components/kasboek/month-list";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { PrognoseChart } from "@/components/kasboek/prognose-chart";
@@ -56,6 +57,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
             : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
         }
         sentence={p.sentence}
+        detail={p.detail}
       />
       {p.incomeMissing && (
         <div className="flex justify-center pb-2">
@@ -94,6 +96,16 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </p>
         )}
       </Section>
+      {!p.incomeMissing && (
+        <Section title={t.ui.chart.allMonths}>
+          <MonthList points={p.points} />
+        </Section>
+      )}
+      <div className="text-ink-muted mt-4 grid gap-1 px-1 text-[13px]">
+        {p.notes.map((note) => (
+          <p key={note}>{note}</p>
+        ))}
+      </div>
     </div>
   );
 }

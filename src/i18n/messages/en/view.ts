@@ -2,6 +2,11 @@ import type { Sentence } from "../../types";
 
 const plain = (text: string) => ({ text });
 const em = (text: string) => ({ text, em: true });
+/** A month name that starts a sentence: Dutch month names are lower case. */
+const cap = (text: string) => {
+  const s = String(text);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
 /** Sentences, words and labels built by the screen view models (src/lib/view). Amounts arrive formatted. */
 export const view = {
@@ -73,13 +78,41 @@ export const view = {
         subExpected: (amount: string) => `${amount} still expected`,
         subNone: "Nothing more expected",
       },
-      sorteren: {
-        label: "To sort",
-        word: (n: number) => `${n} open`,
-        wordNone: "All sorted",
-        sub: "transactions without a category",
-        subNone: "No loose transactions this month",
+      sparen: {
+        label: "Savings",
+        wordReached: "Reached",
+        wordUnderway: "Under way",
+        wordSaved: "Saved",
+        wordNone: "Nothing yet",
+        subOf: (amount: string, goal: string) => `${amount} of ${goal}`,
+        subMonth: (amount: string) => `${amount} this month`,
+        subNone: "Nothing set aside this month",
       },
+    },
+    attention: {
+      uncategorised: (n: number) =>
+        n === 1 ? "1 transaction without a category" : `${n} transactions without a category`,
+      uncategorisedSub: "Sort them and Kasboek remembers your choice",
+      incomeMissing: (name: string) => `${name} is not in yet`,
+      expenseMissing: (name: string) => `${name} has not been paid yet`,
+      expectedOn: (date: string) => `Expected on ${date}, not counted`,
+      foreign: (n: number) =>
+        n === 1
+          ? "1 row in another currency is not counted"
+          : `${n} rows in another currency are not counted`,
+      foreignSub: "Look at them in the list",
+      sort: "Sort",
+      view: "View",
+    },
+    detail: {
+      withPerDay: (pct: number, days: number, perDay: string) =>
+        `${pct}% of your budget is spent or already planned, with ${days} ${days === 1 ? "day" : "days"} to go (${perDay} per day free).`,
+      withoutPerDay: (pct: number, days: number) =>
+        `${pct}% of your budget is spent or already planned, with ${days} ${days === 1 ? "day" : "days"} to go.`,
+      overOne: (a: string) => `${a} is over budget.`,
+      overTwo: (a: string, b: string) => `${a} and ${b} are over budget.`,
+      overMany: (a: string, b: string, more: number) =>
+        `${a}, ${b} and ${more} more are over budget.`,
     },
   },
   prognose: {
@@ -95,17 +128,27 @@ export const view = {
     shortHistory: (n: number, wanted: number) =>
       `Only ${n} of the ${wanted} months of history are uploaded.`,
     single: (month: string, net: string): Sentence => [
-      plain(`${month} ends at `),
+      plain(`${cap(month)} ends at `),
       em(net),
       plain("."),
     ],
-    range: (tight: string, tightNet: string, best: string, bestNet: string): Sentence => [
-      plain("The tightest month is "),
-      em(tight),
-      plain(` (${tightNet}), the best `),
-      em(best),
-      plain(` (${bestNet}).`),
+    tightBest: (tight: string, best: string): Sentence => [
+      em(cap(tight)),
+      plain(" gets tight, "),
+      plain(`${best} is your best month.`),
     ],
+    bestTightest: (best: string, tight: string): Sentence => [
+      em(cap(best)),
+      plain(` is your best month, ${tight} the tightest.`),
+    ],
+    detailUp: (amount: string, month: string, plus: number, total: number) =>
+      `In total your money grows by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
+    detailDown: (amount: string, month: string, plus: number, total: number) =>
+      `In total your money shrinks by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
+    noteEstimate:
+      "Forecast months are an estimate: fixed costs and income as you set them up, plus your average everyday spending.",
+    noteMissed: (name: string, date: string) =>
+      `${name} (expected ${date}) has not been seen and is not counted.`,
   },
   vasteLasten: {
     label: {

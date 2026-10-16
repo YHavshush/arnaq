@@ -2,6 +2,55 @@
 
 Newest first. Decisions, research and state of the project that are not obvious from the code.
 
+## Open decisions and todos
+
+- **Light-mode ring glow: decided A (no glow), 2026-10-16, to be applied in the UI alignment pass.** The
+  owner asked for a decision based on current design practice. Reasons: 2026 guidance is restraint (glass
+  and effects as accents, legibility first, calm fintech UIs with a clear hierarchy); a status-coloured
+  shadow repeats what the ring colour already says, and `DESIGN.md` already treats a third status signal
+  as noise (the status wash was removed in light for that reason); depth already comes from the glass
+  cards; no Safari or hairline-gap risk. Close call: the research says nothing specific about ring glows.
+  Keep the switch in one place (`src/components/kasboek/ring.tsx`, the light shadow element, and
+  `glowStyle` in `tokens.ts`) so F can come back. Comparison page: `docs/design/ring-f-vs-a.html`.
+  Related finding for the same pass: the light end of the ring gradients (for example `#8fe0bd`) is far
+  below 3:1 against the page (WCAG non-text contrast); darken the light end of each light gradient.
+
+## UI alignment pass (started 2026-10-16, owner approved the Prognose advice)
+
+Method: per screen, app and the final mockup (`docs/design/ontwerp-v14.html`) side by side, a recommendation
+per difference, the owner chooses. Not copied blindly. Order: Prognose, Overzicht, Vaste lasten, Upload,
+then the dark themes.
+
+- **Prognose: done** (branch `feat/ui-prognose`): ring without glow in light and exactly on its edge (the
+  thin line is gone); sans number that shrinks to fit; ring left and sentence right on a laptop; sentence
+  and explanation as in the mockup; chart with a smooth line, a soft fill and the dashed forecast, total
+  above and coloured growth below each month, Total or Per month; month detail with coloured Growth;
+  list of all months; small print about what is not counted. One past month is shown (8 points), so every
+  value fits. Screens: `docs/design/compare/prognose-app-after-*.jpg`.
+  Deviation from the mockup: the mockup shows a bank saldo; the app has no balances yet, so it shows growth
+  since the first month shown (see the note in `DESIGN.md`). Storing balances is a backlog item.
+- **Fixed costs: done 2026-10-16** (branch `feat/ui-fixed-costs`): Expenses and Income stay separate; every
+  row has a status label (green with a check for paid, blue for due, rose for missed); what still needs
+  paying comes first, paid rows below.
+- **Upload: keep as is.** Report real problems first, change nothing silently.
+- **Overzicht: done 2026-10-16** (branch `feat/ui-overzicht`, all advice approved). Explanation under the
+  sentence; attention list with actions; tiles Budget, Fixed costs, Savings, Income ("To sort" moved to the
+  attention list); "Pace of the month" card (schedule tick, one bar per day, days above a threshold numbered);
+  "Where it went" with the top 5 and a link to all categories (bars by meaning: paid fixed cost green, fixed
+  cost to come grey, over budget red); Income and Coming up lists; two columns on a laptop; footnote. The
+  title stays "Overview" with the month above it (kept from the app, as advised). Screens:
+  `docs/design/compare/overzicht-app-after-*.jpg`. Savings is found by the default category name
+  ("Sparen & beleggen"); if someone renames it the tile shows "Nothing yet" (category slugs, planned in
+  `docs/plans/smart-categorisation.md`, will fix that).
+- **Open owner decision: ring contrast.** The light ring colours are decorative and far below 3:1 against
+  the page (best end of blue 2.3, green 2.5, warm 2.0; light ends about 1.1 to 1.5). Reaching 3:1 would
+  need much darker rings and change the approved pastel look. The information is also in the text, so
+  nothing depends on the ring colour alone. Decide: keep, or darken the strong end only.
+
+Parked until this is done: smart categorising (branch `feat/smart-categorising`, slice 1 of 8 committed,
+migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation.md`), then milestone 9
+(hosting).
+
 ## 2026-10-12: Research, "Sign in with ChatGPT" as an AI option
 
 **Why we looked.** Idea from the owner: let a user who has ChatGPT connect their own plan for the smart

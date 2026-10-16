@@ -17,8 +17,8 @@ const RING_MASK = (w: number) =>
 
 /**
  * The hero ring, as in docs/design/ontwerp-v14.html.
- * Light: gradient stroke with round caps and a tinted shadow straight under it (glow F, a box-shadow
- * on an element the size of the ring, so nothing is painted inside it).
+ * Light: gradient stroke with round caps, no glow (A, decided 2026-10-16; F, a tinted shadow
+ * underneath, is in git history).
  * Dark: a conic ring (colour runs along the arc) with a round start cap, a lit head, a soft glow
  * around it and a halo behind it (glow D).
  * Never a filter on an SVG element: iPhone Safari clips it. The dark glow is a filter on a div.
@@ -26,7 +26,7 @@ const RING_MASK = (w: number) =>
 export function Ring({ value, tone, size = 224, label, children }: RingProps) {
   const id = `ring${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const stroke = Math.max(6, Math.round(size * 0.0625));
-  const r = 50 - (stroke / size) * 50 - 0.5;
+  const r = 50 - (stroke / size) * 50; // outer edge exactly on the box; the svg overflows visibly so round caps are never clipped
   const v = Math.max(0, Math.min(value, 1));
   const cap = (stroke / size) * 100;
 
@@ -44,14 +44,6 @@ export function Ring({ value, tone, size = 224, label, children }: RingProps) {
 
   return (
     <div className="relative isolate shrink-0" style={{ width: size, height: size }}>
-      {/* Light: a tinted shadow under the ring, offset down. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 rounded-full dark:hidden"
-        style={{
-          boxShadow: `0 ${size * 0.07}px ${size * 0.1}px -${size * 0.035}px var(--glow-${tone})`,
-        }}
-      />
       {/* Dark: a halo behind the ring. */}
       <div
         aria-hidden

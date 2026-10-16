@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ring: glow F of A</title>
+<style>
+/* Values copied from src/design/tokens.ts (light theme). Throwaway comparison page, no app code. */
+:root {
+  --ink: #17202e; --muted: #4a5568; --track: rgba(23, 32, 46, .10);
+  --accent-from: #33c6ff; --accent-to: #7f8cff; --accent-glow: rgba(120, 170, 255, .55);
+  --good-from: #8fe0bd; --good-to: #23a371; --good-glow: rgba(60, 200, 150, .5);
+  --warn-from: #f9d39e; --warn-to: #e98859; --warn-glow: rgba(255, 170, 110, .55);
+  --bad-from: #f4aaa2; --bad-to: #d6493f; --bad-glow: rgba(255, 130, 120, .5);
+  --s: clamp(132px, 41vw, 224px);
+}
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body {
+  margin: 0; min-height: 100vh; color: var(--ink);
+  font: 16px/1.4 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed;
+  padding: 24px 16px 48px;
+}
+main { max-width: 520px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font: 500 30px/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+.lead { color: var(--muted); margin: 8px 0 0; font-size: 15px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; text-align: center; font-weight: 600; font-size: 14px; letter-spacing: .02em; }
+.cols small { display: block; font-weight: 400; color: var(--muted); }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; justify-items: center; }
+.tone { display: grid; gap: 10px; }
+.tone h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+
+.ring { position: relative; width: var(--s); height: var(--s); }
+.ring svg { position: absolute; inset: 0; overflow: visible; }
+.ring .in { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .big { font-size: calc(var(--s) * .232); font-weight: 500; letter-spacing: -.035em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ring .cap { font-size: calc(var(--s) * .0625); color: var(--muted); margin-top: calc(var(--s) * .03); }
+/* F: a tinted shadow under the ring, drawn on an element exactly the size of the ring (no gap, so no thin line). */
+.f .sh { position: absolute; inset: 0; border-radius: 50%;
+  box-shadow: 0 calc(var(--s) * .07) calc(var(--s) * .1) calc(var(--s) * -.035) var(--glow); }
+.note { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Lichte ring: glow F of A</h1>
+    <p class="lead">Links F, een gekleurde schaduw onder de ring. Rechts A, geen glow. Zelfde ringen, zelfde kleuren en achtergrond als in de app.</p>
+  </div>
+  <div class="cols"><div>F<small>schaduw eronder</small></div><div>A<small>geen glow</small></div></div>
+
+  <section class="tone" style="--from: var(--accent-from); --to: var(--accent-to); --glow: var(--accent-glow)">
+    <h2>Blauw: neutraal, voortgang</h2>
+    <div class="row" data-v="0.8" data-big="58" data-cap="nog te sorteren"></div>
+  </section>
+  <section class="tone" style="--from: var(--good-from); --to: var(--good-to); --glow: var(--good-glow)">
+    <h2>Groen: op schema</h2>
+    <div class="row" data-v="0.62" data-big="€476" data-cap="nog vrij"></div>
+  </section>
+  <section class="tone" style="--from: var(--warn-from); --to: var(--warn-to); --glow: var(--warn-glow)">
+    <h2>Oranje: bijna op</h2>
+    <div class="row" data-v="0.92" data-big="€83" data-cap="vrij te besteden"></div>
+  </section>
+  <section class="tone" style="--from: var(--bad-from); --to: var(--bad-to); --glow: var(--bad-glow)">
+    <h2>Rood: boven budget</h2>
+    <div class="row" data-v="1" data-big="– €56" data-cap="over budget"></div>
+  </section>
+
+  <p class="note">De ring in F eindigt hier precies op de rand van de schaduw. In de huidige app zit daar ongeveer 1 pixel ruimte tussen, en dat geeft de dunne lichte lijn die je zag.</p>
+</main>
+<script>
+  // Same geometry as src/components/kasboek/ring.tsx: stroke 6.25 of 100, round caps, diagonal gradient.
+  const stroke = 6.25, r = 50 - stroke / 2;
+  let n = 0;
+  const ring = (kind, v, big, cap) => {
+    const id = "g" + n++;
+    const arc = v > 0 ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#${id})" stroke-width="${stroke}" stroke-linecap="round" pathLength="100" stroke-dasharray="${v * 100} 100" transform="rotate(-90 50 50)"/>` : "";
+    return `<div class="ring ${kind}">
+      ${kind === "f" ? '<div class="sh"></div>' : ""}
+      <svg viewBox="0 0 100 100" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="var(--from)"/><stop offset="1" stop-color="var(--to)"/></linearGradient></defs>
+        <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--track)" stroke-width="${stroke}"/>${arc}</svg>
+      <div class="in"><div class="big">${big}</div><div class="cap">${cap}</div></div></div>`;
+  };
+  document.querySelectorAll(".row").forEach((row) => {
+    const { v, big, cap } = row.dataset;
+    row.innerHTML = ring("f", +v, big, cap) + ring("a", +v, big, cap);
+  });
+</script>
+</body>
+</html>

@@ -11,6 +11,10 @@ export interface Formatter {
   euroExact(cents: number): string;
   /** "+ € 120" / "− € 120": for growth and differences. */
   euroSigned(cents: number): string;
+  /** Whole euros without a currency sign, for compact labels on charts: "1.234". */
+  plain(cents: number): string;
+  /** Whole euros with a sign and no currency sign, for compact labels: "+44", "−54", "0". */
+  delta(cents: number): string;
   /** "2026-10" -> "oktober 2026" / "October 2026" */
   monthName(month: string): string;
   /** "2026-10" -> "okt" / "Oct" */
@@ -48,6 +52,15 @@ export function formatter(locale: Locale): Formatter {
     euroSigned(cents) {
       if (cents === 0) return f.euro(0);
       return `${cents > 0 ? "+" : "−"}${NBSP}${f.euro(Math.abs(cents))}`;
+    },
+    plain(cents) {
+      const rounded = Math.sign(cents) * Math.round(Math.abs(cents) / 100);
+      return `${rounded < 0 ? "−" : ""}${whole.format(Math.abs(rounded))}`;
+    },
+    delta(cents) {
+      const rounded = Math.sign(cents) * Math.round(Math.abs(cents) / 100);
+      if (rounded === 0) return "0";
+      return `${rounded > 0 ? "+" : "−"}${whole.format(Math.abs(rounded))}`;
     },
     monthName: (month) => long.format(at(`${month}-01`)),
     monthShort: (month) => trim(short.format(at(`${month}-01`))),
