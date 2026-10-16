@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { Download } from "lucide-react";
 import { Suspense } from "react";
 import { schema } from "@/db";
@@ -6,10 +7,12 @@ import { pageDb } from "@/lib/auth/request";
 import { currentUser } from "@/lib/auth/session";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
+import { LearnedShops } from "@/components/kasboek/learned-shops";
 import { RulesManager } from "@/components/kasboek/rules-manager";
 import { HeroSkeleton } from "@/components/kasboek/states";
 import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
+import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
 
 export default function SettingsPage() {
@@ -25,11 +28,12 @@ const download =
 
 async function Content() {
   await requestTime();
-  const { t } = await getI18n();
+  const { locale, t } = await getI18n();
   const s = t.ui.settings;
-  const [rules, categories] = await pageDb(async (db) => [
+  const [rules, categories, labels] = await pageDb(async (db) => [
     await db.select().from(schema.categorisationRules),
     await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
+    await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
   ]);
   const name = new Map(categories.map((c) => [c.id, c.name]));
   const user = await currentUser(); // pageDb above already sent anyone signed out to the login
@@ -61,17 +65,37 @@ async function Content() {
         </div>
       </Section>
 
-      <Section title={s.rules} aside={s.rulesAside(rules.length)}>
-        <RulesManager
-          rules={sortRules(rules).map((r) => ({
-            id: r.id,
-            pattern: r.pattern,
-            priority: r.priority,
-            categoryName: name.get(r.categoryId) ?? s.unknownCategory,
-          }))}
-          categories={categories.filter((c) => c.type !== "transfer")}
-        />
-      </Section>
+      <details className="group mt-8">
+        <summary className="font-display flex min-h-11 cursor-pointer list-none items-baseline justify-between gap-3 px-1 text-2xl font-medium tracking-tight">
+          {s.advanced}
+          <span className="text-ink-muted text-sm font-normal group-open:hidden">
+            {s.advancedHint}
+          </span>
+        </summary>
+        <Section title={s.rules} aside={s.rulesAside(rules.length)}>
+          <RulesManager
+            rules={sortRules(rules).map((r) => ({
+              id: r.id,
+              pattern: r.pattern,
+              priority: r.priority,
+              categoryName: name.get(r.categoryId) ?? s.unknownCategory,
+            }))}
+            categories={categories.filter((c) => c.type !== "transfer")}
+          />
+        </Section>
+        <Section title={s.learned.title} aside={s.learned.aside(labels.length)}>
+          <LearnedShops
+            shops={labels
+              .filter((l) => l.categoryId !== null)
+              .map((l) => ({
+                id: l.id,
+                key: l.merchantKey,
+                categoryName: name.get(l.categoryId!) ?? "",
+                categoryLabel: categoryLabel(name.get(l.categoryId!) ?? "", locale),
+              }))}
+          />
+        </Section>
+      </details>
     </div>
   );
 }

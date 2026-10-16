@@ -30,6 +30,7 @@ const ROUTES: Record<string, string[]> = {
   import: ["POST"],
   overview: ["GET"],
   recurring: ["GET", "POST"],
+  "merchant-labels/[id]": ["DELETE"],
   "recurring/[id]": ["GET", "PATCH", "DELETE"],
   "recurring/missed": ["GET"],
   "recurring/occurrences": ["GET"],

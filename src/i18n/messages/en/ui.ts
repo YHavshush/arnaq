@@ -283,6 +283,15 @@ export const ui = {
     backupCsv: "Transactions (CSV)",
     rules: "Sorting rules",
     rulesAside: (n: number) => `${n} rules`,
+    advanced: "Advanced",
+    advancedHint: "Sorting rules and the shops Kasboek has learned. You rarely need these.",
+    learned: {
+      title: "Learned shops",
+      aside: (n: number) => `${n} shops`,
+      none: 'Nothing yet. When you choose a category and keep "remember my choice", the shop shows up here.',
+      forget: "Forget",
+      forgetFor: (shop: string) => `Forget ${shop}`,
+    },
     unknownCategory: "Unknown",
     rule: {
       ifContains: "If the name or description contains",

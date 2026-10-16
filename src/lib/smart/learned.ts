@@ -143,3 +143,10 @@ export async function propagateLabel(
   if (ids.length > 0) await setCategory(db, ids, categoryId, "learned");
   return ids.length;
 }
+
+/** Forget a remembered shop. Only the person's own labels can be forgotten here. */
+export async function forgetLabel(db: Db, id: number): Promise<void> {
+  await db
+    .delete(schema.merchantLabels)
+    .where(and(eq(schema.merchantLabels.id, id), eq(schema.merchantLabels.source, "user")));
+}

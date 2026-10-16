@@ -290,6 +290,16 @@ export const ui: typeof en = {
     backupCsv: "Transacties (CSV)",
     rules: "Sorteerregels",
     rulesAside: (n: number) => `${n} regels`,
+    advanced: "Geavanceerd",
+    advancedHint:
+      "Sorteerregels en de winkels die Kasboek heeft geleerd. Je hebt deze zelden nodig.",
+    learned: {
+      title: "Geleerde winkels",
+      aside: (n: number) => `${n} winkels`,
+      none: 'Nog niets. Kies je een categorie en laat je "onthoud mijn keuze" aan staan, dan verschijnt de winkel hier.',
+      forget: "Vergeet",
+      forgetFor: (shop: string) => `Vergeet ${shop}`,
+    },
     unknownCategory: "Onbekend",
     rule: {
       ifContains: "Als de naam of omschrijving dit bevat",
