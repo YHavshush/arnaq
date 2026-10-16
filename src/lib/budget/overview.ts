@@ -6,6 +6,8 @@ import { assertMonth, getBudgetsByMonth, resolveTotalBudget } from "./budgets";
 export interface CategoryLine {
   categoryId: number | null;
   name: string;
+  /** Stable key of a default category (survives renaming); null for the user's own categories. */
+  slug: string | null;
   type: "expense" | "income";
   budget: number | null; // cents
   actual: number; // cents, positive: money spent (expense) or received (income)
@@ -129,6 +131,7 @@ export async function getMonthOverview(db: Db, month: string): Promise<MonthOver
     return {
       categoryId: c.id,
       name: c.name,
+      slug: c.slug,
       type,
       budget: b,
       actual,

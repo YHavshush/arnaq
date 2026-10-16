@@ -14,8 +14,8 @@ export type { Sentence };
 /** How a bar is drawn: `done` = a fixed cost that is paid, `planned` = still to come, `bad` = over budget. */
 export type BarKind = "none" | "ok" | "warn" | "bad" | "done" | "planned";
 
-/** The default savings category (stored under its Dutch name). */
-const SAVINGS_CATEGORY = "Sparen & beleggen";
+/** The default savings category, found by its stable slug so a renamed category still counts. */
+const SAVINGS_SLUG = "saving-investing";
 
 export interface OverzichtRow {
   categoryId: number | null;
@@ -198,7 +198,7 @@ function buildAttention({
 function sparenTile(overview: MonthOverview, locale: Locale): Tile {
   const t = messages[locale].view.overzicht.tiles.sparen;
   const { euro } = formatter(locale);
-  const line = overview.expenses.find((l) => l.name === SAVINGS_CATEGORY);
+  const line = overview.expenses.find((l) => l.slug === SAVINGS_SLUG);
   const actual = line?.actual ?? 0;
   const goal = line?.budget ?? null;
   const base = { key: "sparen" as const, label: t.label };

@@ -6,6 +6,7 @@ import { buildOverzicht } from "./overzicht";
 const line = (categoryId: number, name: string, actual: number, budget: number | null) => ({
   categoryId,
   name,
+  slug: name === "Sparen & beleggen" || name === "Mijn spaarpot" ? "saving-investing" : null,
   type: "expense" as const,
   budget,
   actual,
@@ -351,5 +352,7 @@ describe("buildOverzicht: the parts the design adds", () => {
     expect(tile([line(5, "Sparen & beleggen", 4000, 10000)])).toMatchObject({ word: "Onderweg" });
     expect(tile([line(5, "Sparen & beleggen", 4000, null)])).toMatchObject({ word: "Gespaard" });
     expect(tile([line(1, "Huur", 90000, 90000)])).toMatchObject({ word: "Nog niets" });
+    // Renamed by the owner: the slug still finds it.
+    expect(tile([line(5, "Mijn spaarpot", 10000, 10000)])).toMatchObject({ word: "Gehaald" });
   });
 });
