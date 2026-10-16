@@ -78,13 +78,41 @@ export const view = {
         subExpected: (amount: string) => `${amount} still expected`,
         subNone: "Nothing more expected",
       },
-      sorteren: {
-        label: "To sort",
-        word: (n: number) => `${n} open`,
-        wordNone: "All sorted",
-        sub: "transactions without a category",
-        subNone: "No loose transactions this month",
+      sparen: {
+        label: "Savings",
+        wordReached: "Reached",
+        wordUnderway: "Under way",
+        wordSaved: "Saved",
+        wordNone: "Nothing yet",
+        subOf: (amount: string, goal: string) => `${amount} of ${goal}`,
+        subMonth: (amount: string) => `${amount} this month`,
+        subNone: "Nothing set aside this month",
       },
+    },
+    attention: {
+      uncategorised: (n: number) =>
+        n === 1 ? "1 transaction without a category" : `${n} transactions without a category`,
+      uncategorisedSub: "Sort them and Kasboek remembers your choice",
+      incomeMissing: (name: string) => `${name} is not in yet`,
+      expenseMissing: (name: string) => `${name} has not been paid yet`,
+      expectedOn: (date: string) => `Expected on ${date}, not counted`,
+      foreign: (n: number) =>
+        n === 1
+          ? "1 row in another currency is not counted"
+          : `${n} rows in another currency are not counted`,
+      foreignSub: "Look at them in the list",
+      sort: "Sort",
+      view: "View",
+    },
+    detail: {
+      withPerDay: (pct: number, days: number, perDay: string) =>
+        `${pct}% of your budget is spent or already planned, with ${days} ${days === 1 ? "day" : "days"} to go (${perDay} per day free).`,
+      withoutPerDay: (pct: number, days: number) =>
+        `${pct}% of your budget is spent or already planned, with ${days} ${days === 1 ? "day" : "days"} to go.`,
+      overOne: (a: string) => `${a} is over budget.`,
+      overTwo: (a: string, b: string) => `${a} and ${b} are over budget.`,
+      overMany: (a: string, b: string, more: number) =>
+        `${a}, ${b} and ${more} more are over budget.`,
     },
   },
   prognose: {

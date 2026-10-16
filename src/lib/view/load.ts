@@ -1,7 +1,7 @@
 // Server-side data loading for the screens. Read-only: nothing here writes.
 import { and, desc, eq, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
-import { getMonthOverview } from "@/lib/budget/overview";
+import { getDailySpend, getMonthOverview, getOtherIncome } from "@/lib/budget/overview";
 import { getNeedsReview } from "@/lib/categories/categorise";
 import { getForecast } from "@/lib/forecast/forecast";
 import { addMonths } from "@/lib/recurring/dates";
@@ -27,12 +27,14 @@ export function parseHorizon(raw: string | string[] | undefined): number {
 }
 
 export async function loadOverzicht(db: Db, month: string, today: string, locale: Locale) {
-  const [overview, occurrences] = await Promise.all([
+  const [overview, occurrences, daily, otherIncome] = await Promise.all([
     getMonthOverview(db, month),
     getOccurrences(db, { from: month, to: month }),
+    getDailySpend(db, month),
+    getOtherIncome(db, month),
   ]);
   return {
-    ...buildOverzicht({ overview, occurrences, today, locale }),
+    ...buildOverzicht({ overview, occurrences, today, locale, daily, otherIncome }),
     prev: addMonths(month, -1),
     next: addMonths(month, 1),
   };

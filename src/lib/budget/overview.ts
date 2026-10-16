@@ -1,4 +1,5 @@
 import { and, eq, gte, isNull, lt, type SQL } from "drizzle-orm";
+import { daysInMonth } from "@/lib/recurring/dates";
 import { schema, type Db } from "@/db";
 import { addMonths } from "@/lib/recurring/dates";
 import { assertMonth, getBudgetsByMonth, resolveTotalBudget } from "./budgets";
@@ -28,6 +29,8 @@ export interface MonthOverview {
   uncategorised: { expense: number; income: number; count: number };
   /** Rows in a foreign currency, left out of every number above. */
   foreignCurrencyCount: number;
+  /** How many transactions the numbers above are made of. */
+  transactionCount: number;
 }
 
 export interface MonthSums {
@@ -37,6 +40,8 @@ export interface MonthSums {
   uncategorised: { expense: number; income: number; count: number };
   /** Rows in a foreign currency, left out of the sums. */
   foreignCurrencyCount: number;
+  /** Rows the sums are made of. */
+  counted: number;
 }
 
 export interface SumOptions {
@@ -87,16 +92,19 @@ export async function sumTransactions(db: Db, opts: SumOptions): Promise<Map<str
         byCategory: new Map(),
         uncategorised: { expense: 0, income: 0, count: 0 },
         foreignCurrencyCount: 0,
+        counted: 0,
       };
       out.set(month, m);
     }
     if (r.currency !== r.accountCurrency) {
       m.foreignCurrencyCount++;
     } else if (r.categoryId === null) {
+      m.counted++;
       m.uncategorised.count++;
       if (r.amount < 0) m.uncategorised.expense += -r.amount;
       else m.uncategorised.income += r.amount;
     } else {
+      m.counted++;
       m.byCategory.set(r.categoryId, (m.byCategory.get(r.categoryId) ?? 0) + r.amount);
     }
   }
@@ -153,5 +161,88 @@ export async function getMonthOverview(db: Db, month: string): Promise<MonthOver
     },
     uncategorised: { ...unc },
     foreignCurrencyCount: sums?.foreignCurrencyCount ?? 0,
+    transactionCount: sums?.counted ?? 0,
   };
+}
+
+/**
+ * Everyday spending per day of the month, in positive cents: money out that is not tied to a fixed
+ * cost, internal transfers and foreign-currency rows left out (the same basis as the overview).
+ * Index 0 is the 1st. Always as long as the month.
+ */
+export async function getDailySpend(db: Db, month: string): Promise<number[]> {
+  assertMonth(month);
+  const t = schema.transactions;
+  const rows = await db
+    .select({ date: t.date, amount: t.amount })
+    .from(t)
+    .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
+    .where(
+      and(
+        gte(t.date, `${month}-01`),
+        lt(t.date, `${addMonths(month, 1)}-01`),
+        eq(t.isInternalTransfer, false),
+        isNull(t.matchedOccurrenceId),
+        eq(t.currency, schema.accounts.currency),
+      ),
+    );
+  const days = new Array<number>(daysInMonth(month)).fill(0);
+  for (const r of rows) {
+    if (r.amount >= 0) continue;
+    const day = Number(r.date.slice(8, 10)) - 1;
+    if (day >= 0 && day < days.length) days[day] += -r.amount;
+  }
+  return days;
+}
+
+export interface IncomeLine {
+  categoryId: number | null;
+  /** Null: not categorised. */
+  name: string | null;
+  /** Positive cents received this month. */
+  amount: number;
+  /** Date of the latest of these payments. */
+  lastDate: string;
+}
+
+/**
+ * Money that came in this month and is not tied to a fixed income item (a gift, a refund, a one-off
+ * job), grouped by category. Internal transfers and foreign-currency rows left out.
+ */
+export async function getOtherIncome(db: Db, month: string): Promise<IncomeLine[]> {
+  assertMonth(month);
+  const t = schema.transactions;
+  const rows = await db
+    .select({
+      date: t.date,
+      amount: t.amount,
+      categoryId: t.categoryId,
+      name: schema.categories.name,
+    })
+    .from(t)
+    .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
+    .leftJoin(schema.categories, eq(schema.categories.id, t.categoryId))
+    .where(
+      and(
+        gte(t.date, `${month}-01`),
+        lt(t.date, `${addMonths(month, 1)}-01`),
+        eq(t.isInternalTransfer, false),
+        isNull(t.matchedOccurrenceId),
+        eq(t.currency, schema.accounts.currency),
+      ),
+    );
+  const byCategory = new Map<number | null, IncomeLine>();
+  for (const r of rows) {
+    if (r.amount <= 0) continue;
+    const line = byCategory.get(r.categoryId) ?? {
+      categoryId: r.categoryId,
+      name: r.name,
+      amount: 0,
+      lastDate: r.date,
+    };
+    line.amount += r.amount;
+    if (r.date > line.lastDate) line.lastDate = r.date;
+    byCategory.set(r.categoryId, line);
+  }
+  return [...byCategory.values()].sort((a, b) => b.amount - a.amount);
 }

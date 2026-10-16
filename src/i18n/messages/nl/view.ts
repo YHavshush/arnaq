@@ -74,13 +74,41 @@ export const view: typeof en = {
         subExpected: (amount: string) => `nog ${amount} verwacht`,
         subNone: "Niets meer verwacht",
       },
-      sorteren: {
-        label: "Te sorteren",
-        word: (n: number) => `${n} open`,
-        wordNone: "Alles gesorteerd",
-        sub: "transacties zonder categorie",
-        subNone: "Geen losse transacties deze maand",
+      sparen: {
+        label: "Sparen",
+        wordReached: "Gehaald",
+        wordUnderway: "Onderweg",
+        wordSaved: "Gespaard",
+        wordNone: "Nog niets",
+        subOf: (amount: string, goal: string) => `${amount} van ${goal}`,
+        subMonth: (amount: string) => `${amount} deze maand`,
+        subNone: "Deze maand niets opzijgezet",
       },
+    },
+    attention: {
+      uncategorised: (n: number) =>
+        n === 1 ? "1 transactie zonder categorie" : `${n} transacties zonder categorie`,
+      uncategorisedSub: "Sorteer ze en Kasboek onthoudt je keuze",
+      incomeMissing: (name: string) => `${name} nog niet binnen`,
+      expenseMissing: (name: string) => `${name} nog niet betaald`,
+      expectedOn: (date: string) => `Verwacht op ${date}, wordt niet meegeteld`,
+      foreign: (n: number) =>
+        n === 1
+          ? "1 regel in een andere munt telt niet mee"
+          : `${n} regels in een andere munt tellen niet mee`,
+      foreignSub: "Bekijk ze in de lijst",
+      sort: "Sorteren",
+      view: "Bekijk",
+    },
+    detail: {
+      withPerDay: (pct: number, days: number, perDay: string) =>
+        `${pct}% van je budget is besteed of al gepland, met ${days} ${days === 1 ? "dag" : "dagen"} te gaan (${perDay} per dag vrij).`,
+      withoutPerDay: (pct: number, days: number) =>
+        `${pct}% van je budget is besteed of al gepland, met ${days} ${days === 1 ? "dag" : "dagen"} te gaan.`,
+      overOne: (a: string) => `${a} zit boven budget.`,
+      overTwo: (a: string, b: string) => `${a} en ${b} zitten boven budget.`,
+      overMany: (a: string, b: string, more: number) =>
+        `${a}, ${b} en ${more} andere zitten boven budget.`,
     },
   },
   prognose: {
