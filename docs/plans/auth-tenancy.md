@@ -66,6 +66,10 @@ Done since: "Delete my data" in Settings (all of a person's data; the login itse
 because the app never holds an admin key). Security headers (nosniff, frame deny, referrer, permissions
 policy) are set; a CSP still needs a nonce setup.
 
+Done since: limits per address and per email on sign in, register and forgot password (`src/lib/auth/rate-limit.ts`,
+in memory per instance, so it slows an attacker down but does not stop a determined one; the address comes
+from `x-forwarded-for`, which only means something behind a proxy you trust).
+
 Not done yet, needed before registration is opened to strangers:
 
 - CAPTCHA (Turnstile) on the forms, and app-side rate limits per client IP and per email. All auth calls
