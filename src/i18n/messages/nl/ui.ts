@@ -290,6 +290,30 @@ export const ui: typeof en = {
     backupCsv: "Transacties (CSV)",
     rules: "Sorteerregels",
     rulesAside: (n: number) => `${n} regels`,
+    smart: {
+      title: "Slim sorteren",
+      intro:
+        "Kasboek sorteert wat het herkent altijd zelf. Slim sorteren kan ook een taalmodel vragen naar winkels die het niet kent. Standaard uit.",
+      off: "Uit",
+      offHint: "Er verlaat niets Kasboek.",
+      claude: "Kasboek AI",
+      claudeHint: "Vraagt Claude (Anthropic) naar onbekende winkels.",
+      chatgpt: "Je ChatGPT-abonnement",
+      chatgptHint: "Komt later.",
+      needsPlus: "Onderdeel van Kasboek Plus.",
+      notAvailable: "Nog niet beschikbaar.",
+      consentTitle: "Voordat je dit aanzet",
+      consentSends:
+        "Wat er wordt verstuurd: de naam van een winkel en een korte omschrijving waar cijfers, rekeningnummers en e-mailadressen uit zijn gehaald.",
+      consentNever:
+        "Wat nooit wordt verstuurd: bedragen, datums, rekeningnummers, je naam of betalingen van en naar personen.",
+      consentWho:
+        "Wie het ontvangt: Anthropic, het bedrijf achter Claude, buiten de EU. Je kunt dit altijd weer uitzetten.",
+      consentAgree: "Ik begrijp het en ga akkoord",
+      switchOn: "Zet aan",
+      switchedOn: "Slim sorteren staat aan.",
+      saved: "Opgeslagen.",
+    },
     advanced: "Geavanceerd",
     advancedHint:
       "Sorteerregels en de winkels die Kasboek heeft geleerd. Je hebt deze zelden nodig.",

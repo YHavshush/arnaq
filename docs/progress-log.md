@@ -27,9 +27,14 @@ Also built (on main, 2026-10-16): the first part of slice 6 and the run itself: 
 answer validation (only a category from the offered list can ever be applied), the privacy filter (shop key
 and a scrubbed description only; money to or from a person is never sent), and `runSmart` (lease, daily
 allowance, per-shop cache, batches with time limits; a timeout, an error or nonsense leaves everything as it
-was). Not built yet: slice 7 (the Claude provider with `@anthropic-ai/sdk`, the consent and the entitlement,
-the route that starts a run, the Settings switch), slice 8 (`smart:eval`) and the Opus security review. Nothing
-calls a model yet: there is no real provider and no way to switch it on.
+was). Also built (on main, 2026-10-16): smart settings (off by default; Kasboek AI needs the owner's consent to a
+versioned text and the right to use it, `KASBOEK_AI_USERS`; the ChatGPT option is shown as "coming later"),
+`PUT/GET /api/smart/settings`, `POST /api/categorise/smart` (starts a run when switched on) and the switch
+with the consent text in Settings. Still to build: the real Claude provider (`@anthropic-ai/sdk`, model
+`claude-haiku-5-5`, key in `ANTHROPIC_API_KEY`, server side only; needs the owner's API key to test),
+starting a run after an import and from a "sort the rest" button, `smart:eval` (calibration on the owner's
+own data, aggregate counts only), and the Opus security review. Until the Claude provider exists the switch
+shows "Not available yet": nothing calls a model and nothing is sent.
 Migration 0004 was applied to the Supabase project on 2026-10-16 with the owner's approval (14 of 14 tables
 with row level security and a policy, 24 default categories got their slug, the 40 already categorised
 transactions were marked as the owner's own choice) and the branch was merged into main.

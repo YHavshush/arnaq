@@ -283,6 +283,30 @@ export const ui = {
     backupCsv: "Transactions (CSV)",
     rules: "Sorting rules",
     rulesAside: (n: number) => `${n} rules`,
+    smart: {
+      title: "Smart sorting",
+      intro:
+        "Kasboek always sorts what it recognises by itself. Smart sorting can also ask a language model about shops it does not know. Off by default.",
+      off: "Off",
+      offHint: "Nothing leaves Kasboek.",
+      claude: "Kasboek AI",
+      claudeHint: "Asks Claude (Anthropic) about unknown shops.",
+      chatgpt: "Your ChatGPT plan",
+      chatgptHint: "Coming later.",
+      needsPlus: "Part of Kasboek Plus.",
+      notAvailable: "Not available yet.",
+      consentTitle: "Before you switch this on",
+      consentSends:
+        "What is sent: the name of a shop and a short description with numbers, account numbers and e-mail addresses removed.",
+      consentNever:
+        "What is never sent: amounts, dates, account numbers, your name, or payments to and from people.",
+      consentWho:
+        "Who receives it: Anthropic, which runs Claude, outside the EU. You can switch this off at any time.",
+      consentAgree: "I understand and agree",
+      switchOn: "Switch on",
+      switchedOn: "Smart sorting is on.",
+      saved: "Saved.",
+    },
     advanced: "Advanced",
     advancedHint: "Sorting rules and the shops Kasboek has learned. You rarely need these.",
     learned: {

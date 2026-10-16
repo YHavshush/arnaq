@@ -8,12 +8,15 @@ import { currentUser } from "@/lib/auth/session";
 import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { LearnedShops } from "@/components/kasboek/learned-shops";
+import { SmartSettings } from "@/components/kasboek/smart-settings";
 import { RulesManager } from "@/components/kasboek/rules-manager";
 import { HeroSkeleton } from "@/components/kasboek/states";
 import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
+import { PROVIDERS } from "@/lib/smart/providers";
+import { getSmartSettings, isEntitled } from "@/lib/smart/settings";
 
 export default function SettingsPage() {
   return (
@@ -30,10 +33,11 @@ async function Content() {
   await requestTime();
   const { locale, t } = await getI18n();
   const s = t.ui.settings;
-  const [rules, categories, labels] = await pageDb(async (db) => [
+  const [rules, categories, labels, smart] = await pageDb(async (db) => [
     await db.select().from(schema.categorisationRules),
     await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
     await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
+    await getSmartSettings(db),
   ]);
   const name = new Map(categories.map((c) => [c.id, c.name]));
   const user = await currentUser(); // pageDb above already sent anyone signed out to the login
@@ -63,6 +67,14 @@ async function Content() {
             <Download className="size-4" /> {s.backupCsv}
           </a>
         </div>
+      </Section>
+
+      <Section title={s.smart.title}>
+        <SmartSettings
+          provider={smart.provider}
+          entitled={isEntitled(user.id)}
+          available={PROVIDERS.claude !== undefined}
+        />
       </Section>
 
       <details className="group mt-8">
