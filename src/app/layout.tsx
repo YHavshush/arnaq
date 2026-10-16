@@ -15,6 +15,8 @@ const display = Newsreader({
 export const metadata: Metadata = {
   title: "Kasboek",
   description: "Personal budget overview",
+  // A static file, not a metadata route: in development a route made every page reload in a loop.
+  manifest: "/manifest.webmanifest",
   icons: { apple: "/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "Kasboek", statusBarStyle: "default" },
 };
