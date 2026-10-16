@@ -34,13 +34,17 @@ export interface Prognose {
   tone: Tone;
   mood: Mood;
   sentence: Sentence;
+  /** One or two lines under the sentence that explain it; null when there is nothing to add. */
+  detail: string | null;
+  /** Small print under the list: what the numbers do and do not count. */
+  notes: string[];
   lowConfidence: string | null;
 }
 
 /** Pure view model for the Prognose screen from a Forecast. */
 export function buildPrognose(f: Forecast, locale: Locale): Prognose {
   const t = messages[locale].view.prognose;
-  const { euroSigned, monthName, monthShort } = formatter(locale);
+  const { euro, euroSigned, dayLabel, monthName, monthShort } = formatter(locale);
   const points: PrognosePoint[] = f.months.map((m) => ({
     month: m.month,
     label: monthShort(m.month),
@@ -77,6 +81,7 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
           : "bad";
 
   let sentence: Sentence = [{ text: t.nothing }];
+  let detail: string | null = null;
   if (incomeMissing) {
     sentence = t.noIncome;
   } else if (ahead.length > 0) {
@@ -86,13 +91,20 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     sentence =
       tight.month === best.month
         ? t.single(monthName(tight.month), euroSigned(tight.net))
-        : t.range(
-            monthName(tight.month),
-            euroSigned(tight.net),
-            monthName(best.month),
-            euroSigned(best.net),
-          );
+        : tight.net < 0
+          ? t.tightBest(monthName(tight.month), monthName(best.month))
+          : t.bestTightest(monthName(best.month), monthName(tight.month));
+    const last = ahead[ahead.length - 1];
+    detail = (growth >= 0 ? t.detailUp : t.detailDown)(
+      euro(Math.abs(growth)),
+      monthName(last.month),
+      inThePlus,
+      ahead.length,
+    );
   }
+
+  const notes = [t.noteEstimate];
+  for (const o of f.missed.slice(0, 3)) notes.push(t.noteMissed(o.name, dayLabel(o.expectedDate)));
 
   return {
     hasForecast: ahead.length > 0,
@@ -105,6 +117,8 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     tone,
     mood: moodForTone(tone),
     sentence,
+    detail,
+    notes,
     lowConfidence: f.variableBasis.lowConfidence
       ? f.variableBasis.months.length === 0
         ? t.noHistory

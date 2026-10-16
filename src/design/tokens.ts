@@ -185,11 +185,11 @@ export const themes: Record<ThemeName, ThemeTokens> = {
 };
 
 /**
- * Which hero treatment each theme uses (see DESIGN.md "Glow"). Light uses a tinted shadow
- * underneath the ring (F); dark uses the lit conic ring (D). Changing this is a one-line decision.
+ * Which hero treatment each theme uses (see DESIGN.md "Glow"). Light has no glow (A, decided
+ * 2026-10-16); dark uses the lit conic ring (D). Changing this is a one-line decision.
  */
 export const glowStyle: Record<ThemeName, "shadow" | "lit-ring" | "none"> = {
-  light: "shadow",
+  light: "none",
   dark: "lit-ring",
   darkplus: "lit-ring",
 };

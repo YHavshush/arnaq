@@ -39,7 +39,9 @@ export async function loadOverzicht(db: Db, month: string, today: string, locale
 }
 
 export async function loadPrognose(db: Db, today: string, months: number, locale: Locale) {
-  return buildPrognose(await getForecast(db, { today, months }), locale);
+  // One past month for context keeps the chart to 8 points at the default horizon, so every value
+  // can be printed on it (see PrognoseChart).
+  return buildPrognose(await getForecast(db, { today, months, pastMonths: 1 }), locale);
 }
 
 export async function loadVasteLasten(db: Db, month: string, today: string, locale: Locale) {

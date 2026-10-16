@@ -2,6 +2,11 @@ import type { Sentence } from "../../types";
 
 const plain = (text: string) => ({ text });
 const em = (text: string) => ({ text, em: true });
+/** A month name that starts a sentence: Dutch month names are lower case. */
+const cap = (text: string) => {
+  const s = String(text);
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
 /** Sentences, words and labels built by the screen view models (src/lib/view). Amounts arrive formatted. */
 export const view = {
@@ -95,17 +100,27 @@ export const view = {
     shortHistory: (n: number, wanted: number) =>
       `Only ${n} of the ${wanted} months of history are uploaded.`,
     single: (month: string, net: string): Sentence => [
-      plain(`${month} ends at `),
+      plain(`${cap(month)} ends at `),
       em(net),
       plain("."),
     ],
-    range: (tight: string, tightNet: string, best: string, bestNet: string): Sentence => [
-      plain("The tightest month is "),
-      em(tight),
-      plain(` (${tightNet}), the best `),
-      em(best),
-      plain(` (${bestNet}).`),
+    tightBest: (tight: string, best: string): Sentence => [
+      em(cap(tight)),
+      plain(" gets tight, "),
+      plain(`${best} is your best month.`),
     ],
+    bestTightest: (best: string, tight: string): Sentence => [
+      em(cap(best)),
+      plain(` is your best month, ${tight} the tightest.`),
+    ],
+    detailUp: (amount: string, month: string, plus: number, total: number) =>
+      `In total your money grows by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
+    detailDown: (amount: string, month: string, plus: number, total: number) =>
+      `In total your money shrinks by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
+    noteEstimate:
+      "Forecast months are an estimate: fixed costs and income as you set them up, plus your average everyday spending.",
+    noteMissed: (name: string, date: string) =>
+      `${name} (expected ${date}) has not been seen and is not counted.`,
   },
   vasteLasten: {
     label: {

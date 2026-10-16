@@ -68,7 +68,7 @@ Findings from testing it, which are rules:
 
 ## Glow (decided for now, easy to change)
 
-- **Light: F.** A soft shadow in the status colour straight under the ring, drawn as a `box-shadow` on a sibling element.
+- **Light: A (decided 2026-10-16).** No glow. F, a soft shadow in the status colour straight under the ring (a `box-shadow` on a sibling element), was the earlier choice and is in git history.
 - **Dark: D.** The conic gradient ring with a lit head cap and a tight glow.
 - Chosen per theme in `glowStyle` in `tokens.ts`. Alternatives that were built and compared: A (no glow), D in light, a frosted lens, a soft bloom, a lit inner well.
 - **Safari rule: never put a CSS `filter` on an SVG element.** iPhone Safari can clip it to the element box and show a hard edge. Use a div, a box-shadow, or a conic-gradient ring instead.
@@ -77,7 +77,7 @@ Findings from testing it, which are rules:
 ## Typography
 
 - **Display and sentences:** Newsreader, weights 400 and 500, italic for the number inside a sentence. Page titles and the hero sentence only.
-- **UI and numbers:** the system font (SF Pro on Apple devices) with Geist as fallback.
+- **UI and numbers:** the system font (SF Pro on Apple devices) with Geist as fallback. The big number in the ring is in this font too (not the serif), tight letter spacing (-0.035em), and shrinks to fit when it is long (`numberSize` in `hero.tsx`).
 - **Big number:** the same weight in both themes, medium (500) in light and one step lighter (400) in dark, because light type on a dark ground looks optically heavier. It was once bold in light and thin in dark by accident; do not reintroduce that.
 - Numbers use tabular figures everywhere they line up.
 - Fixed rem scale, ratio about 1.2 for UI; the hero number is about 52px and the page title about 40px on laptop.
@@ -88,7 +88,7 @@ Findings from testing it, which are rules:
 - **Ring:** 14px stroke at hero size, round caps, gradient from `ring-<tone>-from` to `-to`, track `track`. Never an SVG filter (see Glow).
 - **Rows:** icon chip (40px, 12px radius) + name + amount, with a thin status bar. Planned fixed costs show "komt 25 okt" instead of a spent amount.
 - **Status tiles:** label, one status word, short sub-line. Two across on phone, four on laptop.
-- **Charts:** every number a chart implies is printed on it. Forecast months are dashed. Tapping a month shows its details in a panel below. The saldo line shows the balance above each point and the monthly growth below.
+- **Charts:** every number a chart implies is printed on it. Forecast months are dashed. Tapping a month shows its details in a panel below. The Prognose chart has two views (Total, Per month). Total: a smooth line with a soft fill under it, the running total above each point and the growth of that month below it, green for plus and red for minus (true minus sign). The numbers are growth since the first month shown, not a bank balance (the parsers do not store balances yet).
 - **Navigation:** floating pill bar on phone, sidebar on laptop.
 - **Targets:** at least 44px. Focus is always visible. Charts have text alternatives.
 - **Selection, scrollbars, accent colour of native controls** follow the palette.

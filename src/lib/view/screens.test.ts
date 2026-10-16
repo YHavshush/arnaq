@@ -74,9 +74,29 @@ describe("buildPrognose", () => {
     expect(p.growth).toBe(50000);
     expect(p.tone).toBe("warn");
     const text = p.sentence.map((s) => s.text).join("");
-    expect(text).toMatch(/krapste maand is november 2026/);
-    expect(text).toMatch(/beste december 2026/);
+    expect(text).toBe("November 2026 wordt krap, december 2026 is je beste maand.");
+    expect(p.detail).toMatch(
+      /groeit in totaal met .*500.* tot en met december 2026\. 2 van 3 maanden/,
+    );
     expect(p.points.map((x) => x.projected)).toEqual([false, true, true, true]);
+  });
+
+  it("with no month in the minus the sentence names the best month first; both languages", () => {
+    const months = [
+      fm("2026-10", "mixed", 100, 100),
+      fm("2026-11", "forecast", 5000, 5100),
+      fm("2026-12", "forecast", 20000, 25100),
+    ];
+    expect(
+      buildPrognose(forecast(months), "en")
+        .sentence.map((s) => s.text)
+        .join(""),
+    ).toBe("December 2026 is your best month, October 2026 the tightest.");
+    const nl = buildPrognose(forecast(months), "nl");
+    expect(nl.sentence.map((s) => s.text).join("")).toBe(
+      "December 2026 is je beste maand, oktober 2026 de krapste.",
+    );
+    expect(nl.notes[0]).toMatch(/schatting/);
   });
 
   it("all plus is good; negative growth is bad; nothing to forecast is neutral", () => {

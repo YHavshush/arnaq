@@ -15,33 +15,30 @@ Newest first. Decisions, research and state of the project that are not obvious 
   Related finding for the same pass: the light end of the ring gradients (for example `#8fe0bd`) is far
   below 3:1 against the page (WCAG non-text contrast); darken the light end of each light gradient.
 
-## Plan for when we continue: UI alignment pass (not started, waiting for the owner's go)
+## UI alignment pass (started 2026-10-16, owner approved the Prognose advice)
 
-Method: per screen, put the app and the final mockup (`docs/design/ontwerp-v14.html`) side by side in the
-browser (phone and laptop width), list every difference, say which version is better and why, and let the
-owner choose before anything changes. The mockup is not copied blindly: the owner likes parts of each.
-Order: Prognose, Overzicht, Vaste lasten, Upload, then the dark themes. Model: Sonnet 5.5.
+Method: per screen, app and the final mockup (`docs/design/ontwerp-v14.html`) side by side, a recommendation
+per difference, the owner chooses. Not copied blindly. Order: Prognose, Overzicht, Vaste lasten, Upload,
+then the dark themes.
 
-Differences found so far (2026-10-13), each still to be decided:
-
-- **Hero number font (all screens).** Mockup: system sans, weight 500, tight letter spacing. App: serif.
-  Serif stays for titles and the hero sentence.
-- **Ring, thin light line.** Likely a 1 px gap between the ring and the glow-F shadow element (the ring
-  sits about 1 px inside it). Fix by making the ring end exactly at the shadow's edge. Also see the open
-  glow decision above (F or A).
-- **Prognose sentence.** Mockup: "December wordt krap, februari is je beste maand." plus a paragraph with
-  the saldo from start to end and "6 van 7 maanden sluit je in de plus". App: "The tightest month is ...".
-- **Prognose chart.** Mockup: bigger smooth saldo line with a gradient under it, saldo in bold above each
-  point, month label, monthly growth below as coloured "+44" / "-54" (true minus), highlighted selected
-  month, toggle "Saldo | Per maand", month detail card. App: small chart, tiny labels, hollow points.
-  Owner wants: keep the forecast part dashed, but with the gradient under it; keep the live Income /
-  Expenses / Growth pills, and let Growth get colour back (green plus, red minus).
-- **Overzicht (mockup has, app lacks).** Attention list at the top ("4 transactions without category -
-  Sort", "Zorgtoeslag not in yet - View"); "Tempo van de maand" card (bar with schedule tick and one bar per
-  day); Inkomsten list with when each arrives; "Binnenkort" (what is still to pay); two-column layout on a
-  laptop. The app's Expenses list resembles "Waar het heen ging" but differs in detail.
-- The "a^'54" in the mockup is only a character-set glitch when the file is opened without a charset; the
-  app uses the real minus sign.
+- **Prognose: done** (branch `feat/ui-prognose`): ring without glow in light and exactly on its edge (the
+  thin line is gone); sans number that shrinks to fit; ring left and sentence right on a laptop; sentence
+  and explanation as in the mockup; chart with a smooth line, a soft fill and the dashed forecast, total
+  above and coloured growth below each month, Total or Per month; month detail with coloured Growth;
+  list of all months; small print about what is not counted. One past month is shown (8 points), so every
+  value fits. Screens: `docs/design/compare/prognose-app-after-*.jpg`.
+  Deviation from the mockup: the mockup shows a bank saldo; the app has no balances yet, so it shows growth
+  since the first month shown (see the note in `DESIGN.md`). Storing balances is a backlog item.
+- **Fixed costs: advice agreed, not built.** Keep the Expenses and Income sections. Show paid versus due:
+  a coloured label per row (blue "due 18 Oct", green with a check "paid 1 Oct"), due rows first.
+- **Upload: keep as is.** Report real problems first, change nothing silently.
+- **Overzicht (mockup has, app lacks), still to compare and decide:** attention list at the top; "Tempo van
+  de maand" card (bar with schedule tick and one bar per day); Inkomsten list with when each arrives;
+  "Binnenkort"; two-column layout on a laptop; the Expenses list versus "Waar het heen ging".
+- **Open owner decision: ring contrast.** The light ring colours are decorative and far below 3:1 against
+  the page (best end of blue 2.3, green 2.5, warm 2.0; light ends about 1.1 to 1.5). Reaching 3:1 would
+  need much darker rings and change the approved pastel look. The information is also in the text, so
+  nothing depends on the ring colour alone. Decide: keep, or darken the strong end only.
 
 Parked until this is done: smart categorising (branch `feat/smart-categorising`, slice 1 of 8 committed,
 migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation.md`), then milestone 9
