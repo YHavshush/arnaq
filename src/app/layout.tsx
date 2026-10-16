@@ -15,6 +15,8 @@ const display = Newsreader({
 export const metadata: Metadata = {
   title: "Kasboek",
   description: "Personal budget overview",
+  icons: { apple: "/apple-touch-icon.png" },
+  appleWebApp: { capable: true, title: "Kasboek", statusBarStyle: "default" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
