@@ -67,9 +67,12 @@ function curve(p: Pt[], t: number[], a: number, b: number): string {
 export function PrognoseChart({
   points,
   currentMonth,
+  balance = false,
 }: {
   points: PrognosePoint[];
   currentMonth: string;
+  /** The values are the person's real balance (the bank's figures), not growth since the first month. */
+  balance?: boolean;
 }) {
   const { locale, t } = useI18n();
   const { euro, euroSigned, delta, plain, monthName } = formatter(locale);
@@ -126,7 +129,11 @@ export function PrognoseChart({
               onClick={() => setView(v)}
               className="text-ink-muted aria-[pressed=true]:bg-surface aria-[pressed=true]:text-ink inline-flex min-h-9 items-center justify-center rounded-[10px] px-3 text-sm font-semibold"
             >
-              {v === "total" ? t.ui.chart.viewTotal : t.ui.chart.viewMonthly}
+              {v === "total"
+                ? balance
+                  ? t.ui.chart.viewBalance
+                  : t.ui.chart.viewTotal
+                : t.ui.chart.viewMonthly}
             </button>
           ))}
         </div>
@@ -349,7 +356,8 @@ export function PrognoseChart({
           className="mr-1 ml-4 inline-block h-0.5 w-5 border-t-2 border-dashed align-middle"
           style={{ borderColor: "var(--accent)" }}
         />
-        {t.ui.chart.legendForecast}. {t.ui.chart.legendHelp}
+        {t.ui.chart.legendForecast}.{" "}
+        {balance ? t.ui.chart.legendHelpBalance : t.ui.chart.legendHelp}
       </p>
 
       <div className="border-hair mx-2 mb-3 grid gap-1 border-t pt-4" aria-live="polite">

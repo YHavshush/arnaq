@@ -29,6 +29,13 @@ describe("importCsv", () => {
     expect(await count(db)).toBe(7);
   });
 
+  it("keeps the balance the bank states after each transaction", async () => {
+    const db = await createDb(":memory:");
+    await importCsv(db, { content: fixture("rabobank-sample.csv"), filename: "rabo.csv" });
+    const rows = await db.select().from(schema.transactions).orderBy(schema.transactions.id);
+    expect(rows.map((r) => r.balanceAfter).slice(0, 2)).toEqual([185000, 180763]);
+  });
+
   it("re-uploading the same month never double counts", async () => {
     const db = await createDb(":memory:");
     await importCsv(db, { content: fixture("rabobank-sample.csv"), filename: "rabo.csv" });

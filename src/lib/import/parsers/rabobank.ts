@@ -43,6 +43,13 @@ export const rabobankParser: BankParser = {
             .filter(Boolean)
             .join(" ") || null;
         const volgnr = clean(r["Volgnr"]);
+        const saldo = clean(r["Saldo na trn"]);
+        let balanceAfter: number | null = null;
+        try {
+          balanceAfter = saldo ? parseAmountToCents(saldo, ",") : null;
+        } catch {
+          balanceAfter = null; // a balance we cannot read is left out; the row itself is fine
+        }
         rows.push({
           date,
           amount,
@@ -51,6 +58,7 @@ export const rabobankParser: BankParser = {
           counterpartyIban: clean(r["Tegenrekening IBAN/BBAN"]),
           description,
           sourceKey: [iban, volgnr, date, clean(r["Transactiereferentie"])].join("|"),
+          balanceAfter,
         });
       } catch (e) {
         skipped.push({ line, reason: e instanceof Error ? e.message : String(e) });

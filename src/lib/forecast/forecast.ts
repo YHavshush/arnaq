@@ -1,3 +1,4 @@
+import { getOpeningBalance } from "./balance";
 import { asc, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getBudgetsByMonth, resolveTotalBudget, type MonthBudgets } from "@/lib/budget/budgets";
@@ -91,6 +92,8 @@ export interface Forecast {
   };
   /** Missed occurrences within the returned months (the full list: /api/recurring/missed). */
   missed: ForecastOccurrence[];
+  /** What the person had at the start of the first month shown, from the bank's own balances; null when unknown. */
+  openingBalance: number | null;
   months: ForecastMonth[];
 }
 
@@ -168,6 +171,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
       m.recurring.occurrences.filter((o) => o.status === "missed" && o.month === m.month),
     ),
     months,
+    openingBalance: await getOpeningBalance(db, first),
   };
 }
 

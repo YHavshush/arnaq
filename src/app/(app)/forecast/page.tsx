@@ -87,7 +87,11 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         }
       >
         <div className="glass p-3">
-          <PrognoseChart points={p.points} currentMonth={today.slice(0, 7)} />
+          <PrognoseChart
+            points={p.points}
+            currentMonth={today.slice(0, 7)}
+            balance={p.hasBalance}
+          />
         </div>
         {p.lowConfidence && (
           <p className="text-ink-muted mt-3 px-2 text-sm">

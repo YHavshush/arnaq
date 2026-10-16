@@ -203,6 +203,7 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
       "categorySource",
       "suggestedCategoryId",
       "merchantKey",
+      "balanceAfter",
     ],
     (r) => {
       const acct = mapped(account, r.accountId);

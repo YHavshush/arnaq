@@ -12,6 +12,8 @@ export interface ParsedRow {
   description: string | null;
   /** Stable per-row identity from the bank file, used for the dedupe hash. */
   sourceKey: string;
+  /** The account balance after this row, in cents, when the file says so (or it can be worked out). */
+  balanceAfter?: number | null;
 }
 
 export interface SkippedRow {
