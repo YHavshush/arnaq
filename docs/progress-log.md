@@ -110,6 +110,15 @@ approved, plus storing the bank balance:
 
 Work is paced by the 5-hour usage limit: stop at 70% (see memory), commit, report, bundle questions.
 
+## Waiting on the owner (2026-10-16)
+
+- **Bank balance (item 6)** is built and tested on branch `feat/bank-balance` (parsers keep the balance after each
+  transaction, migration 0005 adds `transactions.balance_after`, the Prognose shows the real balance, export
+  version 3, restore keeps it). It is NOT merged: say "yes" and I apply migration 0005 to Supabase and merge. Only
+  transactions imported afterwards carry a balance; re-import a statement to get balances for older months.
+- **End-to-end tests (item 11)** need Playwright and its browsers downloaded (about 150 MB): say yes to that.
+- **Dockerfile (item 12)** skipped: Docker is not installed on the owner's Mac.
+
 ## 2026-10-12: Research, "Sign in with ChatGPT" as an AI option
 
 **Why we looked.** Idea from the owner: let a user who has ChatGPT connect their own plan for the smart
