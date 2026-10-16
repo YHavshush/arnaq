@@ -1,0 +1,32 @@
+name: CI
+
+# Runs on every push and pull request: types, lint, tests and a production build.
+# No secrets are needed: the tests use an in-memory Postgres (PGlite) and fake Supabase settings.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          SUPABASE_URL: https://example.supabase.co
+          SUPABASE_PUBLISHABLE_KEY: sb_publishable_test
+          DATABASE_URL: postgres://kasboek_app:unused@localhost:5432/postgres
+      - run: npm audit --omit=dev --audit-level=high

@@ -51,7 +51,7 @@ describe("formatting follows the language", () => {
   it("euros: English 1,234 and Dutch 1.234; cents round half away from zero", () => {
     expect(en.euro(123456)).toBe("€1,235");
     expect(nl.euro(123456)).toBe("€ 1.235");
-    expect(en.euro(-50)).toBe("-€1");
+    expect(en.euro(-50)).toBe("−€1"); // a real minus sign, like everywhere else
     expect(en.euro(49)).toBe("€0");
     expect(en.euroExact(123456)).toBe("€1,234.56");
     expect(nl.euroExact(123456)).toBe("€ 1.234,56");

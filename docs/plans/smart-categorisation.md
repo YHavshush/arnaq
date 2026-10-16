@@ -17,16 +17,16 @@ purpose); the only place to edit a category today is the Upload review list.
 
 ## 1. Layers and decision rule (`src/lib/smart/decide.ts`, pure)
 
-| # | Layer | Result | Marked "automatic" |
-| --- | --- | --- | --- |
-| 0 | Internal transfer (existing `detectInternalTransfers`) | skip | no |
-| 1 | Learned label for the merchant key (the user's own earlier choice) | apply `learned` | no |
-| 2 | User rules (existing substring rules) | apply `rule` | no |
-| 3 | Recurring item category | apply `recurring` | no |
-| 4 | Bundled NL catalog (word match on the key, mapped by category slug) | apply `catalog` | yes |
-| 5 | History similarity (trigram similarity against the user's categorised keys) | strong: apply `history`; weak: candidate | yes |
-| 6 | Cached model label for the key, or a new model call | see below | yes |
-| 7 | Ask | review list | n/a |
+| #   | Layer                                                                       | Result                                   | Marked "automatic" |
+| --- | --------------------------------------------------------------------------- | ---------------------------------------- | ------------------ |
+| 0   | Internal transfer (existing `detectInternalTransfers`)                      | skip                                     | no                 |
+| 1   | Learned label for the merchant key (the user's own earlier choice)          | apply `learned`                          | no                 |
+| 2   | User rules (existing substring rules)                                       | apply `rule`                             | no                 |
+| 3   | Recurring item category                                                     | apply `recurring`                        | no                 |
+| 4   | Bundled NL catalog (word match on the key, mapped by category slug)         | apply `catalog`                          | yes                |
+| 5   | History similarity (trigram similarity against the user's categorised keys) | strong: apply `history`; weak: candidate | yes                |
+| 6   | Cached model label for the key, or a new model call                         | see below                                | yes                |
+| 7   | Ask                                                                         | review list                              | n/a                |
 
 - The catalog answers only for **unambiguous** merchants. bol.com, Amazon, PayPal, Action, HEMA are
   "no answer" and go on to the model or the user.

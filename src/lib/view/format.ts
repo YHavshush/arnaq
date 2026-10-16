@@ -44,10 +44,10 @@ export function formatter(locale: Locale): Formatter {
   const f: Formatter = {
     euro(cents) {
       const rounded = Math.sign(cents) * Math.round(Math.abs(cents) / 100);
-      return `${rounded < 0 ? "-" : ""}€${sep}${whole.format(Math.abs(rounded))}`;
+      return `${rounded < 0 ? "−" : ""}€${sep}${whole.format(Math.abs(rounded))}`;
     },
     euroExact(cents) {
-      return `${cents < 0 ? "-" : ""}€${sep}${exact.format(Math.abs(cents) / 100)}`;
+      return `${cents < 0 ? "−" : ""}€${sep}${exact.format(Math.abs(cents) / 100)}`;
     },
     euroSigned(cents) {
       if (cents === 0) return f.euro(0);
