@@ -7,12 +7,15 @@ const BAR: Record<string, string> = {
   warn: "var(--ring-warn-to)",
   bad: "var(--ring-bad-to)",
   done: "var(--ring-good-to)",
+  planned: "var(--ink-muted)",
 };
 
 interface RowProps {
   /** Category name for the icon chip (null: neutral). */
   icon: string | null;
   name: string;
+  /** A small word next to the name, e.g. "fixed". */
+  tag?: string;
   meta?: ReactNode;
   amount: ReactNode;
   amountSub?: ReactNode;
@@ -21,13 +24,16 @@ interface RowProps {
 }
 
 /** Icon chip + name + amount, with an optional thin status bar. */
-export function Row({ icon, name, meta, amount, amountSub, bar }: RowProps) {
+export function Row({ icon, name, tag, meta, amount, amountSub, bar }: RowProps) {
   const pct = (n: number) => `${Math.max(0, Math.min(n, 1)) * 100}%`;
   return (
     <li className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
       <CategoryIcon name={icon} />
       <div className="min-w-0">
-        <div className="truncate text-base leading-tight font-semibold">{name}</div>
+        <div className="truncate text-base leading-tight font-semibold">
+          {name}
+          {tag && <span className="text-ink-muted ml-1.5 text-[13px] font-normal">{tag}</span>}
+        </div>
         {meta && <div className="text-ink-muted mt-0.5 text-[13px]">{meta}</div>}
         {bar && (
           <div aria-hidden className="bg-track mt-2 flex h-1 overflow-hidden rounded-full">

@@ -66,6 +66,31 @@ export const ui: typeof en = {
     metaLeft: (amount: string) => `${amount} over`,
     subDue: (date: string) => `komt ${date}`,
     subOf: (budget: string) => `van ${budget}`,
+    subOver: (amount: string) => `${amount} te veel`,
+    whereTitle: "Waar het heen ging",
+    whereTotal: (spent: string, budget: string) => `${spent} van ${budget}`,
+    tagFixed: "vast",
+    allCategories: (n: number) => `Alle ${n} categorieën`,
+    paceTitle: "Tempo van de maand",
+    paceAside: "zonder vaste lasten",
+    paceOf: (budget: string) => `van ${budget}`,
+    paceAhead: (amount: string) => `${amount} voor op schema`,
+    paceBehind: (amount: string) => `${amount} achter op schema`,
+    paceSchedule: (amount: string) => `schema ${amount}`,
+    paceBars: (threshold: string) => `elke staaf is een dag, getal = dag boven ${threshold}`,
+    paceSummary: (n: number, threshold: string) =>
+      n === 0
+        ? `Tot nu toe geen dag boven ${threshold}.`
+        : `${n} ${n === 1 ? "dag" : "dagen"} boven ${threshold}.`,
+    incomeTitle: "Inkomsten",
+    incomeAside: (amount: string) => `${amount} binnen`,
+    incomeReceived: (date: string) => `binnen ${date}`,
+    incomeExpected: (date: string) => `verwacht ${date}`,
+    incomeMissing: "niet gezien",
+    upcomingTitle: "Binnenkort",
+    upcomingAll: "Alles",
+    footnote: (n: number) =>
+      `Gebaseerd op ${n} ${n === 1 ? "transactie" : "transacties"} deze maand. Overboekingen tussen je eigen rekeningen en regels in een andere munt zijn niet meegeteld. Vaste lasten die nog moeten komen staan al van het vrije bedrag af.`,
   },
   forecast: {
     title: "Prognose",
