@@ -23,9 +23,13 @@ guessed), slice 3 bundled catalog of Dutch shops (unambiguous names only), slice
 decision rule (a disagreement between catalog and the person's habit is asked, not applied), slice 5 UI
 (Upload: "Sorted automatically" with label, change, Undo and All correct; "Probably X?" with a Yes button;
 Settings: Advanced with sorting rules and learned shops).
-Not built yet: slice 6 (provider interface, fake provider, the two-phase run with caps, lease and cache),
-slice 7 (Claude provider, consent, entitlement), slice 8 (`smart:eval` calibration), and the Opus security
-review. Without slices 6 and 7 nothing leaves the app: the model layer does not exist yet.
+Also built (on main, 2026-10-16): the first part of slice 6 and the run itself: provider interface, fake provider,
+answer validation (only a category from the offered list can ever be applied), the privacy filter (shop key
+and a scrubbed description only; money to or from a person is never sent), and `runSmart` (lease, daily
+allowance, per-shop cache, batches with time limits; a timeout, an error or nonsense leaves everything as it
+was). Not built yet: slice 7 (the Claude provider with `@anthropic-ai/sdk`, the consent and the entitlement,
+the route that starts a run, the Settings switch), slice 8 (`smart:eval`) and the Opus security review. Nothing
+calls a model yet: there is no real provider and no way to switch it on.
 Migration 0004 was applied to the Supabase project on 2026-10-16 with the owner's approval (14 of 14 tables
 with row level security and a policy, 24 default categories got their slug, the 40 already categorised
 transactions were marked as the owner's own choice) and the branch was merged into main.
@@ -33,7 +37,7 @@ transactions were marked as the owner's own choice) and the branch was merged in
 Questions for the owner, collected while working autonomously:
 
 1. (Answered: migration applied and branch merged.)
-2. The starter rules were kept (the catalog only fills what is left) instead of retiring them, because the
+2. (Answered yes: the starter rules stay.) The starter rules were kept (the catalog only fills what is left) instead of retiring them, because the
    rules also match words in the description ("huur", "salaris") that the catalog's shop key does not. Is
    that fine? (The plan said to retire them.)
 3. Slices 4 and 6 are rated Opus work in `CLAUDE.md`; slice 4 was done on Sonnet. OK to review it with an Opus
