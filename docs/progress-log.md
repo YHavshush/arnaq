@@ -15,7 +15,7 @@ Newest first. Decisions, research and state of the project that are not obvious 
   Related finding for the same pass: the light end of the ring gradients (for example `#8fe0bd`) is far
   below 3:1 against the page (WCAG non-text contrast); darken the light end of each light gradient.
 
-## 2026-10-16: Smart categorising, state when work was paused (branch `feat/smart-categorising`, NOT merged)
+## 2026-10-16: Smart categorising, state when work was paused (merged into main on 2026-10-16)
 
 Built and tested on the branch (570 tests green): slice 1 schema (migration 0004), slice 2 merchant keys and
 learned shops (a correction with "remember" is applied to the same shop next time and replaces what a machine
@@ -26,12 +26,13 @@ Settings: Advanced with sorting rules and learned shops).
 Not built yet: slice 6 (provider interface, fake provider, the two-phase run with caps, lease and cache),
 slice 7 (Claude provider, consent, entitlement), slice 8 (`smart:eval` calibration), and the Opus security
 review. Without slices 6 and 7 nothing leaves the app: the model layer does not exist yet.
-The branch is NOT merged because migration 0004 is not applied to Supabase (the hosted app would break on the
-missing columns). Merge only after the migration is applied.
+Migration 0004 was applied to the Supabase project on 2026-10-16 with the owner's approval (14 of 14 tables
+with row level security and a policy, 24 default categories got their slug, the 40 already categorised
+transactions were marked as the owner's own choice) and the branch was merged into main.
 
 Questions for the owner, collected while working autonomously:
 
-1. May I apply migration 0004 to the Supabase project, then merge the branch? (A production change.)
+1. (Answered: migration applied and branch merged.)
 2. The starter rules were kept (the catalog only fills what is left) instead of retiring them, because the
    rules also match words in the description ("huur", "salaris") that the catalog's shop key does not. Is
    that fine? (The plan said to retire them.)
