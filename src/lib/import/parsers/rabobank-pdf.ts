@@ -253,6 +253,13 @@ export function parseRabobankStatement(pages: PdfItem[][]): StatementResult {
       "The statement could not be read reliably: the transactions do not match the totals and balances on the statement. Nothing was imported. Download the statement again or use the CSV export.",
     );
   }
+  // The statement lists its rows in order and adds up to the closing balance (checked above), so the
+  // balance after each row follows from the opening balance.
+  let running = opening;
+  for (const r of rows) {
+    running += r.amount;
+    r.balanceAfter = running;
+  }
   return { rows, skipped, accountIdentifier, period, currency };
 }
 

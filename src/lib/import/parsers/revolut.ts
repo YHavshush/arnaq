@@ -46,6 +46,13 @@ export const revolutParser: BankParser = {
         const amount = parseAmountToCents(r["Amount"] ?? "", ".") - fee;
         const currency = (r["Currency"] ?? "").trim().toUpperCase() || "EUR";
         const description = (r["Description"] ?? "").trim() || null;
+        const balanceRaw = (r["Balance"] ?? "").trim();
+        let balanceAfter: number | null = null;
+        try {
+          balanceAfter = balanceRaw === "" ? null : parseAmountToCents(balanceRaw, ".");
+        } catch {
+          balanceAfter = null;
+        }
         rows.push({
           date,
           amount,
@@ -56,6 +63,7 @@ export const revolutParser: BankParser = {
           sourceKey: [started, description, r["Amount"], r["Fee"], currency, r["Balance"]].join(
             "|",
           ),
+          balanceAfter,
         });
       } catch (e) {
         skipped.push({ line, reason: e instanceof Error ? e.message : String(e) });

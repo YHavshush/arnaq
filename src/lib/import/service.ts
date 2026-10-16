@@ -243,6 +243,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
                   row.counterparty === null ? null : cleanText(row.counterparty, 200),
                   row.description === null ? null : cleanText(row.description, 1000),
                 ),
+                balanceAfter: row.balanceAfter ?? null,
                 importHash: hashes[from + j],
               })),
             )

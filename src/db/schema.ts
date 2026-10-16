@@ -229,6 +229,8 @@ export const transactions = pgTable(
     suggestedCategoryId: integer("suggested_category_id"),
     /** Normalised counterparty, the key for learned labels and the history layer. Filled lazily. */
     merchantKey: text("merchant_key"),
+    /** The account balance after this transaction as the bank states it (cents); null when unknown. */
+    balanceAfter: cents("balance_after"),
   },
   (t): PgTableExtraConfigValue[] => [
     unique("transactions_user_id_id_unique").on(t.userId, t.id),

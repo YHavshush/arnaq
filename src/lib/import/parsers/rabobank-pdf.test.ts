@@ -114,6 +114,15 @@ describe("parseRabobankStatement", () => {
     expect(looksLikeRabobankStatement(statementPages({ rows }))).toBe(true);
   });
 
+  it("works out the balance after each row from the opening balance", () => {
+    const r = parseRabobankStatement(statementPages({ rows, openingCents: 100000 }));
+    let balance = 100000;
+    for (const row of r.rows) {
+      balance += row.amount;
+      expect(row.balanceAfter).toBe(balance);
+    }
+  });
+
   it("a negative opening balance (D) is handled", () => {
     const r = parseRabobankStatement(statementPages({ rows, openingCents: -5000 }));
     expect(r.rows).toHaveLength(5);

@@ -18,6 +18,14 @@ describe("rabobank parser", () => {
       -65000, -4237, 123456, -999, -20000, -450, -450,
     ]);
   });
+  it("reads the balance after each row (Saldo na trn) in cents", () => {
+    expect(result.rows[0].balanceAfter).toBe(185000);
+    expect(result.rows[1].balanceAfter).toBe(180763);
+    // The balances follow from the amounts: each row's balance minus its amount is the one before.
+    result.rows.slice(1).forEach((r, i) => {
+      expect(r.balanceAfter! - r.amount).toBe(result.rows[i].balanceAfter);
+    });
+  });
   it("reads counterparty, IBAN, joined description and own IBAN", () => {
     expect(result.accountIdentifier).toBe("NL00RABO0000000001");
     expect(result.rows[0]).toMatchObject({
@@ -47,6 +55,14 @@ describe("rabobank parser", () => {
   });
   it("rejects a file from another bank", () => {
     expect(() => rabobankParser.parse(fixture("revolut-sample.csv"))).toThrow(/Not a Rabobank/);
+  });
+});
+
+describe("revolut parser balances", () => {
+  it("reads the balance after each completed row", () => {
+    const rows = revolutParser.parse(fixture("revolut-sample.csv")).rows;
+    expect(rows[0].balanceAfter).toBe(21540);
+    expect(rows[1].balanceAfter).toBe(19195);
   });
 });
 
