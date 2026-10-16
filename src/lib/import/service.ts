@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { applyRules } from "@/lib/categories/categorise";
+import { applyCatalog } from "@/lib/smart/catalog";
 import { applyLearned } from "@/lib/smart/learned";
 import { merchantKey } from "@/lib/smart/merchant";
 import { detectInternalTransfers } from "@/lib/categories/transfers";
@@ -274,6 +275,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
     // What the person taught beats a rule, so remembered shops go first.
     await applyLearned(tx, { importId: imp.id });
     await applyRules(tx, { importId: imp.id });
+    await applyCatalog(tx, { importId: imp.id });
     // Then recurring items: plan through the newest data, match, and flag what is overdue.
     // Rules ran first, so an item's category only fills in what the rules left open.
     const recurring = await syncRecurring(tx, {
