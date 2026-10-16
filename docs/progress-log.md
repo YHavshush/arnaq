@@ -4,10 +4,16 @@ Newest first. Decisions, research and state of the project that are not obvious 
 
 ## Open decisions and todos
 
-- **Light-mode ring glow: F or A?** The owner is not sure yet whether the light ring keeps glow F (tinted
-  shadow underneath, current) or goes to A (no glow). Decide after seeing the finished screens on a phone;
-  the switch is one place (`src/components/kasboek/ring.tsx`, the light shadow element). See
-  `docs/design/ontwerp-v14.html` for both.
+- **Light-mode ring glow: decided A (no glow), 2026-10-16, to be applied in the UI alignment pass.** The
+  owner asked for a decision based on current design practice. Reasons: 2026 guidance is restraint (glass
+  and effects as accents, legibility first, calm fintech UIs with a clear hierarchy); a status-coloured
+  shadow repeats what the ring colour already says, and `DESIGN.md` already treats a third status signal
+  as noise (the status wash was removed in light for that reason); depth already comes from the glass
+  cards; no Safari or hairline-gap risk. Close call: the research says nothing specific about ring glows.
+  Keep the switch in one place (`src/components/kasboek/ring.tsx`, the light shadow element, and
+  `glowStyle` in `tokens.ts`) so F can come back. Comparison page: `docs/design/ring-f-vs-a.html`.
+  Related finding for the same pass: the light end of the ring gradients (for example `#8fe0bd`) is far
+  below 3:1 against the page (WCAG non-text contrast); darken the light end of each light gradient.
 
 ## Plan for when we continue: UI alignment pass (not started, waiting for the owner's go)
 
