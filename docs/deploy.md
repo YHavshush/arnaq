@@ -38,6 +38,13 @@ A small VPS in Germany or Finland (close to the Supabase region eu-central-1). I
 file used by the service, restart on boot (systemd). You own updates, backups of the server and the
 firewall. Check this outline against a real server before relying on it.
 
+## Content-Security-Policy
+
+In production the app sends the policy in `src/lib/csp.ts` as **report-only**: the browser logs what it would
+block to its developer console but blocks nothing. After the first deploy, open every page signed in (and
+the sign-in pages) with the console open; if there are no "Content-Security-Policy" messages, set
+`CSP_MODE=enforce`. If something is blocked, fix the policy (or the page) first. It is off in development.
+
 ## Before opening it to other people
 
 See "Open points from the security review" in `docs/plans/auth-tenancy.md`: CAPTCHA and rate limits per

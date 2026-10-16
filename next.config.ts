@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { cspHeader } from "./src/lib/csp";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -6,8 +7,10 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // PGlite loads its WASM and data files from its own package folder at runtime.
   serverExternalPackages: ["@electric-sql/pglite"],
-  // Headers every response gets. No CSP yet: the theme script and Next's own inline scripts need a nonce setup.
+  // Headers every response gets. The CSP is report-only in production until it has been checked on the
+  // real deployment (see src/lib/csp.ts and docs/deploy.md).
   async headers() {
+    const csp = cspHeader();
     return [
       {
         source: "/:path*",
@@ -19,6 +22,7 @@ const nextConfig: NextConfig = {
             key: "Permissions-Policy",
             value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
           },
+          ...(csp ? [csp] : []),
         ],
       },
     ];

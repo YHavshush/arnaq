@@ -78,6 +78,9 @@ same limits as sign in).
 
 Drafts of a privacy notice and terms are in `docs/legal/` (marked DRAFT; the owner and then a lawyer must read them).
 
+Done since: a Content-Security-Policy (no script nonce because of partial prerendering, so scripts allow
+`unsafe-inline`; everything else is closed). It is report-only in production until checked on the real deployment.
+
 Not done yet, needed before registration is opened to strangers:
 
 - CAPTCHA (Turnstile) on the forms, and app-side rate limits per client IP and per email. All auth calls
