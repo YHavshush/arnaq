@@ -110,6 +110,11 @@ approved, plus storing the bank balance:
 
 Work is paced by the 5-hour usage limit: stop at 70% (see memory), commit, report, bundle questions.
 
+## Where the code lives (2026-10-20)
+
+Private GitHub repository: https://github.com/YHavshush/budget-app (name without a space; the brand name is still to be decided).
+`main` is pushed; all other branches were already merged into it. Push new work with `git push`.
+
 ## Waiting on the owner (2026-10-16)
 
 - **Bank balance (item 6)**: done (migration 0005 applied, merged). Only transactions imported from now on carry a
