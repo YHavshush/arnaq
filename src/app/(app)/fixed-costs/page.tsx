@@ -110,20 +110,28 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
         </Section>
       )}
 
-      {v.suggestions.length > 0 && (
-        <Section title={f.suggestions} aside={f.suggestionsAside(v.suggestions.length)}>
-          <SuggestionList
-            suggestions={v.suggestions.map((s) => ({
-              key: s.key,
-              type: s.type,
-              name: s.name,
-              expectedAmount: s.expectedAmount,
-              dayOfMonth: s.dayOfMonth,
-              categoryName: nameOf(s.categoryId),
-              months: s.evidence.months.length,
-            }))}
-          />
-        </Section>
+      {(
+        [
+          [f.suggestionsCosts, v.suggestionsCosts],
+          [f.suggestionsIncome, v.suggestionsIncome],
+        ] as const
+      ).map(
+        ([title, list]) =>
+          list.length > 0 && (
+            <Section key={title} title={title} aside={f.suggestionsAside(list.length)}>
+              <SuggestionList
+                suggestions={list.map((s) => ({
+                  key: s.key,
+                  type: s.type,
+                  name: s.name,
+                  expectedAmount: s.expectedAmount,
+                  dayOfMonth: s.dayOfMonth,
+                  categoryName: nameOf(s.categoryId),
+                  months: s.evidence.months.length,
+                }))}
+              />
+            </Section>
+          ),
       )}
 
       <Section title={f.manage}>

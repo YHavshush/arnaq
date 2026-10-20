@@ -158,7 +158,7 @@ export const view = {
       missed: (date: string) => `missed, expected ${date}`,
       coming: (date: string) => `due ${date}`,
     },
-    none: "No fixed costs yet. Add them or accept a suggestion.",
+    none: "No fixed items yet. Add them or accept a suggestion.",
     allPaid: (): Sentence => [plain("All fixed costs this month are "), em("paid"), plain(".")],
     next: (toCome: string, name: string, date: string): Sentence => [
       plain("Still "),

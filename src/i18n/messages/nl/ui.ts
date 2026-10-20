@@ -10,7 +10,7 @@ export const ui: typeof en = {
     label: "Hoofdmenu",
     overview: "Overzicht",
     forecast: "Prognose",
-    fixedCosts: "Vaste lasten",
+    fixedCosts: "Vaste posten",
     upload: "Upload",
     settings: "Instellingen",
     toSort: (n: number) => `${n} te sorteren`,
@@ -35,7 +35,7 @@ export const ui: typeof en = {
     loading: {
       overview: "Overzicht wordt geladen",
       forecast: "Prognose wordt geladen",
-      fixedCosts: "Vaste lasten worden geladen",
+      fixedCosts: "Vaste posten worden geladen",
       upload: "Upload wordt geladen",
       budget: "Budget wordt geladen",
       settings: "Instellingen worden geladen",
@@ -92,7 +92,7 @@ export const ui: typeof en = {
     subRange: (n: number) => `De komende ${n} maanden`,
     emptyTitle: "Nog niets te voorspellen",
     emptyBody:
-      "Upload minstens een maand en voeg je vaste lasten toe. Daarna zie je hier hoe je geld zich ontwikkelt.",
+      "Upload minstens een maand en voeg je vaste posten toe. Daarna zie je hier hoe je geld zich ontwikkelt.",
     ring: (a: number, b: number) => `${a} van ${b} maanden eindigen in de plus`,
     caption: (label: string) => `groei tot en met ${label}`,
     captionSpend: (label: string) => `uitgaven tot en met ${label}`,
@@ -135,10 +135,10 @@ export const ui: typeof en = {
     table: { caption: "Prognose per maand", month: "Maand", total: "Totaal", growth: "Groei" },
   },
   fixed: {
-    title: "Vaste lasten",
+    title: "Vaste posten",
     ring: (paid: number, total: number) => `${paid} van ${total} vaste lasten betaald`,
     caption: "betaald",
-    emptyTitle: "Nog geen vaste lasten",
+    emptyTitle: "Nog geen vaste posten",
     emptyBody:
       "Voeg ze hieronder toe, of accepteer een suggestie zodra er genoeg maanden zijn geüpload.",
     expenses: "Uitgaven",
@@ -149,9 +149,10 @@ export const ui: typeof en = {
     missedLabel: "gemist",
     expectedOn: (date: string) => `verwacht ${date}`,
     missedNote:
-      "Geen betaling gevonden. Betaald met een ander bedrag of onder een andere naam? Pas de vaste last hieronder aan.",
-    suggestions: "Gevonden in je afschriften",
-    suggestionsAside: (n: number) => `${n} suggesties`,
+      "Geen betaling gevonden. Betaald met een ander bedrag of onder een andere naam? Pas de vaste post hieronder aan.",
+    suggestionsCosts: "Voorgestelde kosten",
+    suggestionsIncome: "Voorgesteld inkomen",
+    suggestionsAside: (n: number) => `${n} ${n === 1 ? "suggestie" : "suggesties"}`,
     manage: "Beheren",
     suggestion: {
       months: (n: number, day: number) => `${n} maanden achter elkaar, rond de ${day}e`,
@@ -168,7 +169,7 @@ export const ui: typeof en = {
     },
     freq: { monthly: "per maand", quarterly: "per kwartaal", yearly: "per jaar" },
     form: {
-      open: "Vaste last toevoegen",
+      open: "Vaste post toevoegen",
       kind: "Soort",
       expense: "Uitgave",
       income: "Inkomen",
@@ -188,7 +189,7 @@ export const ui: typeof en = {
       from: "Vanaf",
       save: "Opslaan",
       errAmount: "Vul een bedrag in, bijvoorbeeld 12,50.",
-      errName: "Geef de vaste last een naam.",
+      errName: "Geef de vaste post een naam.",
     },
   },
   upload: {
@@ -235,7 +236,7 @@ export const ui: typeof en = {
       statNew: "Nieuw",
       statKnown: "Al bekend",
       statSkipped: "Overgeslagen",
-      matched: (n: number) => `${n} vaste lasten gekoppeld.`,
+      matched: (n: number) => `${n} vaste posten gekoppeld.`,
       skippedLine: (line: number, reason: string) => `Regel ${line} overgeslagen: ${reason}`,
       skippedMore: (n: number) => `… en ${n} meer`,
     },

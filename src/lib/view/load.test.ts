@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { createDb } from "@/db";
 import { importCsv } from "@/lib/import/service";
+import { setup } from "@/lib/recurring/test-utils";
 import {
   HORIZONS,
   loadOverzicht,
@@ -62,5 +63,23 @@ describe("screen loaders on an imported month", () => {
     expect((await loadOverzicht(empty, "2026-09", "2026-09-20", "nl")).hasActivity).toBe(false);
     expect((await loadUpload(empty)).share).toBe(0);
     expect((await loadPrognose(empty, "2026-09-20", 6, "nl")).hasForecast).toBe(false);
+  });
+});
+
+describe("loadVasteLasten suggestions", () => {
+  it("keeps suggested costs and suggested income apart", async () => {
+    const h = await setup();
+    for (const [date, amount, counterparty] of [
+      ["2026-07-05", -1399, "Netflix"],
+      ["2026-08-05", -1399, "Netflix"],
+      ["2026-09-05", -1399, "Netflix"],
+      ["2026-07-25", 250000, "Voorbeeld Werkgever BV"],
+      ["2026-08-25", 250000, "Voorbeeld Werkgever BV"],
+      ["2026-09-25", 250000, "Voorbeeld Werkgever BV"],
+    ] as const)
+      await h.tx(date, amount, { counterparty });
+    const v = await loadVasteLasten(h.db, "2026-09", "2026-09-26", "en");
+    expect(v.suggestionsCosts.map((s) => s.key)).toEqual(["netflix"]);
+    expect(v.suggestionsIncome.map((s) => s.key)).toEqual(["voorbeeld werkgever bv"]);
   });
 });

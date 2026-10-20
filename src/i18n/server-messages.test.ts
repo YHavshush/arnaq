@@ -43,7 +43,7 @@ describe("localizeMessage", () => {
       "Start date must be between 1990-01-01 and 2100-12-31.",
       "De begindatum moet tussen 1990-01-01 en 2100-12-31 liggen.",
     ],
-    ["At most 500 recurring items are supported.", "Er kunnen maximaal 500 vaste lasten zijn."],
+    ["At most 500 recurring items are supported.", "Er kunnen maximaal 500 vaste posten zijn."],
     ["File too large (max 2 MB).", "Dit bestand is te groot (maximaal 2 MB)."],
   ])("translates %s", (english, dutch) => {
     expect(localizeMessage(english, "nl")).toBe(dutch);
