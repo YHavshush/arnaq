@@ -4,6 +4,15 @@ Newest first. Decisions, research and state of the project that are not obvious 
 
 ## Open decisions and todos
 
+- **TODO: test the brand with other people (added 2026-10-20).** The name is Arnaq. The wordmark shortlist is Comfortaa
+  thickened (the owner's preference), Outfit bold, Outfit semibold and the drawn word, all with the monogram (separated
+  blue a and purple q) as the app icon. The intro animation shortlist is rolling coin, rolling coin with a wobble, "the
+  stem joins" and ripple (page: `docs/design/logo-arnaq-kit.html`). Show 5 to 8 people who have not seen it, without
+  explaining: what does it say, do they notice the a and q in the icon, is it friendly, would they trust it with their
+  money; on a phone, which animation feels calm and which too long; check "reduce motion". Decide after that. Before
+  buying a domain: trademark check at BOIP and EUIPO, classes 9 and 36; the `.nl` names to check are arnaq.nl and
+  arnak.nl; mezumax.com was the only free `.com` among the finalists.
+
 - **Light-mode ring glow: decided A (no glow), 2026-10-16, to be applied in the UI alignment pass.** The
   owner asked for a decision based on current design practice. Reasons: 2026 guidance is restraint (glass
   and effects as accents, legibility first, calm fintech UIs with a clear hierarchy); a status-coloured
@@ -145,6 +154,25 @@ migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation
 - Brand: the name is **Arnaq**. The logo is being designed (docs/design/logo-arnaq-*.html); the intro animation
   shortlist is rolling coin, rolling coin with a wobble, "two letters meet" and ripple (not built yet).
 
+## 2026-10-20: Savings goal and the header icons (branch feat/savings-goal, NOT merged: needs migration 0006)
+
+- **Savings goal:** one total target plus an optional "already saved before the first upload". Progress = that start +
+  deposits - withdrawals in the Savings category (same-currency rows only), so taking money out lowers it. Settings has a
+  "Savings goal" form; the Overview "Savings" tile shows "Under way / Reached, EUR x of EUR y" with a goal, or this month's
+  net without one (falls back to the old budget-based tile when there are no Savings lines). The tile follows the month
+  shown. API: `GET/PUT /api/savings/settings` (domain errors answer 422, translated at the edge). Backups (export v4)
+  restore the goal and start (a damaged value is skipped) and add the Savings category to older backups.
+- **Migration 0006** adds `user_settings.savings_goal` (nullable) and `savings_start` (not null, default 0) plus a check.
+  It is **not applied to Supabase yet**: the owner must approve it, and it must be applied **before** merging (the new
+  code reads those columns on every Overview and Settings request, so deploying first would break both pages).
+- **Header:** the language and theme icons left the signed-in header and are now in Settings, "Language and theme"
+  (two lists of choices). The login pages keep their switchers. A small invisible `ThemeFollower` keeps the "System"
+  theme following the device.
+- Reviewed by the code-reviewer agent: no critical or high findings; its two medium findings (restore dropped the
+  goal; untranslated route errors) and a low one (month) are fixed.
+- Not done on purpose: the forecast does not yet account for planned savings deposits (they are outside income and
+  spending, like transfers). Worth a decision when the owner uses the goal for a while.
+
 ## Agreed work list (2026-10-16), to do without the owner, in this order
 
 The owner decided: the AI link (Claude provider), starting a run after an import / "sort the rest" and
@@ -253,3 +281,15 @@ allowed for categorising only, or only for chat-like products? What does a user 
   per-email rate limits, current password for password changes, `APP_URL` for redirects
   (see `docs/plans/auth-tenancy.md`).
 - Next: smart categorising (separate feature, before hosting), then milestone 9 (hosting).
+
+## 2026-10-20: Names and onboarding decided (design only, not built)
+
+- **Menu names: set C**, lowercase plain (today, ahead, fixed, saving, add; vandaag, vooruit, vast, sparen, toevoegen).
+- **Onboarding: variation B** (`docs/design/onboarding-b-final.html`), the owner's words: "track effortlessly." /
+  "see what's left." (with the ring) / "secure your goals." (dial and goal card, no "vault"), blue "Get Started", and a
+  "Try it with sample data" button. Earlier rounds: `onboarding-pasted.html`, `onboarding-variations.html`,
+  `feature-names-onboarding.html`.
+- **Open:** a and q colours in the onboarding monogram (flat like the icon, or the gradient); sample-data design (marker
+  and one-step removal, may need a migration); build after the Arnaq rename, en + nl, with tests.
+- **Blocked:** migration 0006 was NOT applied to Supabase (the tool call was denied by the permission check), so
+  `feat/savings-goal` is not merged. Tests (659), type-check and lint are green on the branch.

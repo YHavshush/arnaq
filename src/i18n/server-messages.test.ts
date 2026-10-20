@@ -45,6 +45,14 @@ describe("localizeMessage", () => {
     ],
     ["At most 500 recurring items are supported.", "Er kunnen maximaal 500 vaste posten zijn."],
     ["File too large (max 2 MB).", "Dit bestand is te groot (maximaal 2 MB)."],
+    [
+      "The savings goal must be a positive amount.",
+      "Het spaardoel moet een bedrag boven nul zijn.",
+    ],
+    [
+      "The amount already saved cannot be negative.",
+      "Het al gespaarde bedrag kan niet negatief zijn.",
+    ],
   ])("translates %s", (english, dutch) => {
     expect(localizeMessage(english, "nl")).toBe(dutch);
   });

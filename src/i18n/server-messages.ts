@@ -121,6 +121,15 @@ const NL: Rule[] = [
   [/^Transaction (\d+) does not exist\.$/, (m) => `Transactie ${m[1]} bestaat niet.`],
   [/^Category (\d+) does not exist\.$/, (m) => `Categorie ${m[1]} bestaat niet.`],
   [/^Cannot create a rule without a pattern\.$/, () => "Een regel heeft een zoektekst nodig."],
+  // savings
+  [
+    /^The savings goal must be a positive amount\.$/,
+    () => "Het spaardoel moet een bedrag boven nul zijn.",
+  ],
+  [
+    /^The amount already saved cannot be negative\.$/,
+    () => "Het al gespaarde bedrag kan niet negatief zijn.",
+  ],
   // fixed costs
   [/^Name is required\.$/, () => "Geef de vaste post een naam."],
   [/^Name is too long \(max (\d+)\)\.$/, (m) => `De naam is te lang (maximaal ${m[1]} tekens).`],

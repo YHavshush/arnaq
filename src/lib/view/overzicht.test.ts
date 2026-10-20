@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { MonthOverview } from "@/lib/budget/overview";
 import type { OccurrenceView } from "@/lib/recurring/occurrences";
+import type { SavingsSummary } from "@/lib/savings/summary";
 import { buildOverzicht } from "./overzicht";
 
 const line = (categoryId: number, name: string, actual: number, budget: number | null) => ({
@@ -354,5 +355,56 @@ describe("buildOverzicht: the parts the design adds", () => {
     expect(tile([line(1, "Huur", 90000, 90000)])).toMatchObject({ word: "Nog niets" });
     // Renamed by the owner: the slug still finds it.
     expect(tile([line(5, "Mijn spaarpot", 10000, 10000)])).toMatchObject({ word: "Gehaald" });
+  });
+
+  it("savings tile uses the Savings category and the goal when there is one", () => {
+    const summary = (over: Partial<SavingsSummary>): SavingsSummary => ({
+      goal: null,
+      start: 0,
+      saved: 0,
+      thisMonth: 0,
+      lines: 0,
+      ...over,
+    });
+    const tile = (savings: SavingsSummary, locale: "nl" | "en" = "nl") =>
+      buildOverzicht({
+        overview: overview(),
+        occurrences: [],
+        today: "2026-10-22",
+        locale,
+        savings,
+      }).tiles.find((t) => t.key === "sparen")!;
+    // With a goal: how far along.
+    expect(tile(summary({ goal: 500000, saved: 125000, lines: 4 }), "en")).toMatchObject({
+      word: "Under way",
+      sub: expect.stringContaining("€1,250"),
+      tone: "accent",
+    });
+    expect(tile(summary({ goal: 500000, saved: 500000, lines: 6 }))).toMatchObject({
+      word: "Gehaald",
+      tone: "good",
+    });
+    expect(tile(summary({ goal: 100000, saved: 130000, lines: 6 }))).toMatchObject({
+      word: "Gehaald",
+    });
+    // Withdrawals lower the progress, so a goal can be "under way" again after being reached.
+    expect(tile(summary({ goal: 500000, saved: 450000, lines: 7 }))).toMatchObject({
+      word: "Onderweg",
+    });
+    // Without a goal: this month's net, up or down.
+    expect(tile(summary({ saved: 90000, thisMonth: 10000, lines: 3 }))).toMatchObject({
+      word: "Gespaard",
+      tone: "good",
+    });
+    expect(tile(summary({ saved: 80000, thisMonth: -10000, lines: 3 }))).toMatchObject({
+      word: "Opgenomen",
+      tone: "warn",
+    });
+    expect(tile(summary({ saved: 90000, thisMonth: 0, lines: 3 }))).toMatchObject({
+      word: "Gespaard",
+      tone: "accent",
+    });
+    // No Savings lines and no goal: the old budget-based behaviour is unchanged.
+    expect(tile(summary({}))).toMatchObject({ word: "Nog niets" });
   });
 });

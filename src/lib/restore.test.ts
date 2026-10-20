@@ -80,6 +80,7 @@ async function seeded() {
       .insert(schema.merchantLabels)
       .values({ merchantKey: "spar", categoryId: food.id, source: "user" });
     await tx.insert(schema.merchantLabels).values({ merchantKey: "guess", source: "model" });
+    await tx.insert(schema.userSettings).values({ savingsGoal: 500000, savingsStart: 120000 });
   });
   const backup = JSON.parse(JSON.stringify(await withUser(db, A, (tx) => buildExport(tx))));
   return { db, backup };
@@ -155,7 +156,10 @@ describe("restoreFromBackup", () => {
     old.tables.transactions = [];
     await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, old));
     const cats = await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.categories));
-    expect(cats).toMatchObject([{ name: "Boodschappen", slug: "groceries" }]);
+    // The Savings category is added to any restore, since a backup from before it existed has none.
+    expect(cats.filter((c) => c.type !== "savings")).toMatchObject([
+      { name: "Boodschappen", slug: "groceries" },
+    ]);
   });
 
   it("refuses files that are not backups, and a refused file changes nothing", async () => {
@@ -178,5 +182,33 @@ describe("restoreFromBackup", () => {
       async (tx) => (await tx.select().from(schema.transactions)).length,
     );
     expect(n).toBe(2);
+  });
+
+  it("brings back the savings goal and the amount already saved, and skips a damaged value", async () => {
+    const { db, backup } = await seeded();
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
+    expect(
+      await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)),
+    ).toMatchObject([{ savingsGoal: 500000, savingsStart: 120000 }]);
+
+    const edited = JSON.parse(JSON.stringify(backup));
+    edited.tables.userSettings[0].savingsGoal = -5;
+    edited.tables.userSettings[0].savingsStart = 2500;
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, edited));
+    expect(
+      await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)),
+    ).toMatchObject([{ savingsGoal: null, savingsStart: 2500 }]);
+  });
+
+  it("gives a backup from before the Savings category the category", async () => {
+    const { db, backup } = await seeded();
+    backup.tables.categories = backup.tables.categories.filter(
+      (c: { type: string }) => c.type !== "savings",
+    );
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
+    const types = await withUser(db, TEST_USER_B, async (tx) =>
+      (await tx.select().from(schema.categories)).map((c) => c.type),
+    );
+    expect(types.filter((t) => t === "savings")).toHaveLength(1);
   });
 });

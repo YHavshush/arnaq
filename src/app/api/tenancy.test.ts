@@ -33,6 +33,7 @@ const ROUTES: Record<string, string[]> = {
   "merchant-labels/[id]": ["DELETE"],
   "recurring/[id]": ["GET", "PATCH", "DELETE"],
   "smart/settings": ["GET", "PUT"],
+  "savings/settings": ["GET", "PUT"],
   "categorise/smart": ["POST"],
   "account/delete": ["POST"],
   "account/restore": ["POST"],
@@ -431,5 +432,29 @@ describe("a signed-out visitor gets nothing", () => {
     const res = await call(key, method, req, key.includes("[id]") ? 1 : undefined);
     expect(res.status).toBe(401);
     expect(await res.text()).not.toContain(FIXTURE_NAME);
+  });
+});
+
+describe("savings settings are per person", () => {
+  it("B does not see A's goal, and A's stays", async () => {
+    const get = async () =>
+      await (
+        await call("savings/settings", "GET", new Request(url("/api/savings/settings")))
+      ).json();
+    setTestUser(TEST_USER_A);
+    expect(
+      (
+        await call(
+          "savings/settings",
+          "PUT",
+          json("PUT", "/api/savings/settings", { goal: 123456, start: 7000 }),
+        )
+      ).status,
+    ).toBe(200);
+    expect(await get()).toEqual({ goal: 123456, start: 7000 });
+    setTestUser(TEST_USER_B);
+    expect(await get()).toEqual({ goal: null, start: 0 });
+    setTestUser(TEST_USER_A);
+    expect(await get()).toEqual({ goal: 123456, start: 7000 });
   });
 });

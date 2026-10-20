@@ -10,6 +10,8 @@ import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { ChangePasswordForm } from "@/components/kasboek/auth-forms";
 import { EraseData } from "@/components/kasboek/erase-data";
 import { LearnedShops } from "@/components/kasboek/learned-shops";
+import { AppearanceSettings } from "@/components/kasboek/appearance-settings";
+import { SavingsGoal } from "@/components/kasboek/savings-goal";
 import { RestoreBackup } from "@/components/kasboek/restore-backup";
 import { SmartSettings } from "@/components/kasboek/smart-settings";
 import { RulesManager } from "@/components/kasboek/rules-manager";
@@ -18,6 +20,7 @@ import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
+import { getSavingsSettings } from "@/lib/savings/settings";
 import { splitLabelKey } from "@/lib/smart/learned";
 import { PROVIDERS } from "@/lib/smart/providers";
 import { getSmartSettings, isEntitled } from "@/lib/smart/settings";
@@ -37,11 +40,12 @@ async function Content() {
   await requestTime();
   const { locale, t } = await getI18n();
   const s = t.ui.settings;
-  const [rules, categories, labels, smart] = await pageDb(async (db) => [
+  const [rules, categories, labels, smart, savingsSettings] = await pageDb(async (db) => [
     await db.select().from(schema.categorisationRules),
     await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
     await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
     await getSmartSettings(db),
+    await getSavingsSettings(db),
   ]);
   const name = new Map(categories.map((c) => [c.id, c.name]));
   const user = await currentUser(); // pageDb above already sent anyone signed out to the login
@@ -79,6 +83,14 @@ async function Content() {
             <Download className="size-4" /> {s.backupCsv}
           </a>
         </div>
+      </Section>
+
+      <Section title={s.appearance}>
+        <AppearanceSettings />
+      </Section>
+
+      <Section title={s.savings.title}>
+        <SavingsGoal goal={savingsSettings.goal} start={savingsSettings.start} />
       </Section>
 
       <Section title={s.smart.title}>

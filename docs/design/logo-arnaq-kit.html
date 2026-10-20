@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arnaq logo kit: four wordmarks and the intro animations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Comfortaa:wght@700&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1000px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(26px, 5vw, 38px)/1.1 Georgia, "Times New Roman", serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 74ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.card { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 22px 12px; display: grid; place-items: center; gap: 14px; overflow: hidden; min-height: 120px; position: relative; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.stage { position: relative; }
+.label { position: absolute; top: 8px; left: 12px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+.word { white-space: nowrap; display: inline-flex; align-items: baseline; line-height: 1; position: relative; }
+.word > .ch { display: inline-block; }
+.word svg { overflow: visible; display: inline-block; }
+.typed { letter-spacing: -.02em; }
+.typed.fat .ch { -webkit-text-stroke: .0362em currentColor; paint-order: stroke fill; }
+.sizes { display: flex; align-items: center; gap: 14px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 3px 9px; margin-left: 8px; vertical-align: 2px; background: rgba(36, 59, 115, .12); color: #243b73; }
+.tag.fav { background: rgba(31, 122, 84, .18); color: #1f7a54; }
+.toolbar { display: flex; gap: 10px 18px; align-items: center; flex-wrap: wrap; }
+.toolbar label { display: inline-flex; gap: 8px; align-items: center; min-height: 44px; font-size: 14px; }
+button { font: inherit; font-weight: 600; font-size: 15px; border: 0; border-radius: 999px; min-height: 44px; padding: 0 20px; background: #243b73; color: #fff; cursor: pointer; }
+button.ghost { background: rgba(36, 59, 115, .12); color: #243b73; }
+button:focus-visible, input:focus-visible { outline: 3px solid #7f8cff; outline-offset: 2px; }
+.opt-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.todo { background: rgba(255, 255, 255, .75); border-radius: 18px; padding: 14px 18px; display: grid; gap: 6px; font-size: 14.5px; }
+.todo ul { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.warn { background: #fff3cd; color: #664d03; border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+@media (max-width: 520px) { .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>The four wordmarks, with the intro animations</h1>
+    <p class="lead">Your shortlist: <b>Comfortaa thickened</b> (your preference), <b>Outfit bold</b>, <b>Outfit semibold</b> and the <b>drawn word</b>. Each is "arna" plus a drawn gradient q whose ring and stem are sized from the letters. Further down, pick one and watch every intro animation play on it.</p>
+    <div id="warn"></div>
+  </div>
+  <div id="options" style="display:grid;gap:22px"></div>
+  <div class="todo"><b>To do: test with other people</b><ul>
+    <li>Show these four wordmarks to 5 to 8 people who have not seen them, without explaining. Ask: what does it say, do you notice the a and q in the icon, is it friendly, would you trust it with your money.</li>
+    <li>Show the animations on a phone. Ask which feels calm and which feels too long. Check "reduce motion" too.</li>
+    <li>Decide the wordmark and the animation after that. This is also in docs/progress-log.md.</li></ul></div>
+  <div>
+    <h2 style="font-size:20px">Intro animations</h2>
+    <p class="note">The glyph (the q) draws itself, then the letters arrive. About 2 seconds. With "reduce motion" on in the system, the finished word is shown without movement.</p>
+    <div class="toolbar" id="picker" style="margin-top:8px"></div>
+  </div>
+  <div id="anims" style="display:grid;gap:18px"></div>
+</main>
+<script>
+  const TH = { light: { ink: "#17202e", blue: "#33c6ff", purple: "#7f8cff" }, dark: { ink: "#eef1f5", blue: "#2ac9ff", purple: "#7d8bff" } };
+  const RING = 60;                                   // px: the ring is this tall in every version, so they compare fairly
+  // Sizes measured from each font (per 100 em). D = height of the round o, w = stem, tail = q stem below the ring.
+  const OPTS = {
+    cf: { name: "Comfortaa, thickened to the monogram's weight", fav: true, family: "Comfortaa", weight: 700, D: 62.7, ovs: 4.0, w: 17.6, tail: 23.0, fat: true, note: "The a has the short stem, like your logo. Softest and friendliest. Thickened by adding an outline, so the stroke matches the monogram (28%)." },
+    ob: { name: "Outfit bold", family: "Outfit", weight: 700, D: 50.8, ovs: 1.1, w: 15.75, tail: 19.4, note: "Round, single-story a with a full-height stem. Strong and neutral. Stroke 31%." },
+    os: { name: "Outfit semibold", family: "Outfit", weight: 600, D: 50.4, ovs: 1.05, w: 13.63, tail: 19.2, note: "The same, a little lighter and calmer. Stroke 27%." },
+    dr: { name: "The drawn word", drawn: true, D: 57, ovs: 0, w: 16, tail: 21, note: "Every letter drawn from the monogram's own strokes, with the logo's short-stem a. The exact weight, by construction." },
+  };
+  let uid = 0, current = "cf";
+  const arc = (cx, cy, r, a0, a1) => { const rad = (d) => ((d - 90) * Math.PI) / 180, p = (d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))]; const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  const px = (m) => (RING / m.D) * 100;              // font-size (px) that gives a ring of RING px
+
+  // The q: a ring (an arc whose gap is hidden by the stem) and a stem, in one gradient. A ghost ring is used by one animation.
+  const qSvg = (th, m) => { const c = TH[th], r = (m.D - m.w) / 2, cx = m.D / 2, cy = m.D / 2, H = m.D + m.tail, id = "q" + uid++, hh = m.w / 2, ringD = arc(cx, cy, r, 120, 420);
+    return `<svg class="g" height="${(H / 100).toFixed(3)}em" width="${(m.D / 100).toFixed(3)}em" viewBox="0 0 ${m.D} ${H}" style="position:relative;top:${((m.tail + m.ovs) / 100).toFixed(3)}em;margin-left:.02em" aria-hidden="true" data-cx="${cx}" data-cy="${cy}">
+      <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${m.D * .15}" x2="${m.D * .8}" y2="${H}"><stop offset="0" stop-color="${c.blue}"/><stop offset="1" stop-color="${c.purple}"/></linearGradient></defs>
+      <path class="ghost" d="${ringD}" fill="none" stroke="${c.purple}" stroke-width="${m.w}" stroke-linecap="round" opacity="0"/>
+      <path class="ring" d="${ringD}" fill="none" stroke="url(#${id})" stroke-width="${m.w}" stroke-linecap="round"/>
+      <line class="stem" x1="${cx + r}" y1="${hh}" x2="${cx + r}" y2="${m.D + m.tail - hh}" stroke="url(#${id})" stroke-width="${m.w}" stroke-linecap="round"/></svg>`; };
+
+  // Drawn letters (stroke primitives), each its own svg so they can move separately. Units 1/100 em, ring height 57, stroke 16.
+  const drawnLetter = (k, th) => { const c = TH[th], D = 57, w = 16, h = 8, S = `fill="none" stroke="${c.ink}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`, aTop = h + 0.45 * (D - w);
+    const shapes = { a: [57, `<circle cx="28.5" cy="28.5" r="20.5" ${S}/><line x1="49" y1="${aTop}" x2="49" y2="49" ${S}/>`],
+      r: [40, `<path d="M8 8 V49 M8 26 C8 14 16 8 32 8" ${S}/>`],
+      n: [57, `<path d="M8 8 V49 M8 26 C8 14 18 8 28.5 8 C39 8 49 14 49 26 V49" ${S}/>`] };
+    const [W, body] = shapes[k]; return `<svg class="ch" height=".57em" width="${(W / 100).toFixed(3)}em" viewBox="0 0 ${W} 57" style="margin-right:.09em" aria-hidden="true">${body}</svg>`; };
+
+  const word = (th, key) => { const m = OPTS[key], fs = px(m);
+    if (m.drawn) return `<span class="word" style="font-size:${fs}px">${["a", "r", "n", "a"].map((k) => drawnLetter(k, th)).join("")}${qSvg(th, m)}</span>`;
+    return `<span class="word typed${m.fat ? " fat" : ""}" style="font-family:'${m.family}',system-ui,sans-serif;font-weight:${m.weight};font-size:${fs}px">${["a", "r", "n", "a"].map((c) => `<span class="ch">${c}</span>`).join("")}${qSvg(th, m)}</span>`; };
+
+  // The monogram (the app icon): the blue a and purple q side by side.
+  const monoSvg = (th, s) => { const c = TH[th], D = 57, w = 16, h = 8, r = 20.5, gap = 7, W = 2 * D + gap, H = D + 21, aTop = h + 0.45 * (D - w), cxq = D + gap + 28.5;
+    const k = (s * .66) / W; return `<svg width="${(W * k).toFixed(1)}" height="${(H * k).toFixed(1)}" viewBox="-2 -2 ${W + 4} ${H + 4}" aria-hidden="true"><circle cx="28.5" cy="28.5" r="${r}" fill="none" stroke="${c.blue}" stroke-width="${w}"/><line x1="49" y1="${aTop}" x2="49" y2="49" stroke="${c.blue}" stroke-width="${w}" stroke-linecap="round"/><circle cx="${cxq}" cy="28.5" r="${r}" fill="none" stroke="${c.purple}" stroke-width="${w}"/><line x1="${cxq + r}" y1="${h}" x2="${cxq + r}" y2="${D + 21 - h}" stroke="${c.purple}" stroke-width="${w}" stroke-linecap="round"/></svg>`; };
+  const tile = (th, s) => `<div class="tile" style="width:${s}px;height:${s}px">${monoSvg(th, s)}</div>`;
+  const panels = (fn, cls = "") => `<div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th} ${cls}">${fn(th)}</div>`).join("")}</div>`;
+
+  // ---------------- options ----------------
+  document.getElementById("options").innerHTML = Object.entries(OPTS).map(([key, m]) => `
+    <section class="card"><div><h2>${m.name}${m.fav ? '<span class="tag fav">your preference</span>' : ""}</h2><p class="note">${m.note}</p></div>
+      ${panels((th) => word(th, key))}
+      ${panels((th) => `<div class="sizes">${tile(th, 76)}<span style="font-size:0">${""}</span>${word(th, key).replace(/font-size:[\d.]+px/, "font-size:" + (px(m) * .72).toFixed(0) + "px")}</div>`)}
+    </section>`).join("");
+
+  // ---------------- animations ----------------
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
+  const drawRing = (ring, delay, dur) => { const L = ring.getTotalLength(); A(ring, [{ strokeDasharray: `${L} ${L}`, strokeDashoffset: L }, { strokeDasharray: `${L} ${L}`, strokeDashoffset: 0 }], { delay, duration: dur, easing: "ease-out" }); };
+  const grow = (el, delay, dur) => { el.style.transformBox = "fill-box"; el.style.transformOrigin = "50% 0%"; A(el, [{ transform: "scaleY(0)", opacity: 0 }, { transform: "scaleY(1)", opacity: 1 }], { delay, duration: dur, easing: "cubic-bezier(.3,.9,.3,1.2)" }); };
+  const pop = (svg, delay) => A(svg, [{ transform: "scale(1)" }, { transform: "scale(1.12)", offset: .5 }, { transform: "scale(1)" }], { delay, duration: 420, easing: "ease-in-out" });
+  const ease = "cubic-bezier(.3,.8,.3,1)";
+  function ctx(stage, key) {
+    stage.getAnimations({ subtree: true }).forEach((a) => a.cancel()); stage.querySelectorAll(".ripple").forEach((e) => e.remove());
+    const word = stage.querySelector(".word"), svg = word.querySelector(".g"), chars = [...word.querySelectorAll(".ch")], m = OPTS[key];
+    const wr = word.getBoundingClientRect(), sr = svg.getBoundingClientRect(), fs = parseFloat(getComputedStyle(word).fontSize);
+    return { stage, word, svg, chars, ring: svg.querySelector(".ring"), ghost: svg.querySelector(".ghost"), stem: svg.querySelector(".stem"), wr, sr, lead: sr.left - wr.left, k: fs / 100, D: m.D, cx: svg.dataset.cx, cy: svg.dataset.cy };
+  }
+  // The glyph holds in the middle until `hold`, then the word slides back; the easing is on that second part only.
+  const centre = (c, hold, total) => A(c.word, [{ transform: `translateX(${-c.lead / 2}px)` }, { transform: `translateX(${-c.lead / 2}px)`, offset: hold / total, easing: ease }, { transform: "translateX(0)" }], { duration: total, easing: "linear" });
+  const draw = (c) => { drawRing(c.ring, 0, 520); grow(c.stem, 420, 320); pop(c.svg, 800); };
+  const order = (c, i) => c.chars.length - 1 - i;
+  function flyLetters(c, t0, o = {}) { c.chars.forEach((ch, i) => { const dx = c.sr.left - ch.getBoundingClientRect().left;
+    A(ch, o.kf ? o.kf(dx, i) : [{ transform: `translateX(${dx}px) scale(.4)`, opacity: 0 }, { transform: "translateX(0) scale(1)", opacity: 1 }], { delay: t0 + order(c, i) * (o.step ?? 100), duration: o.dur ?? 720, easing: o.easing ?? "cubic-bezier(.22,.9,.28,1.12)" }); }); }
+  function rolling(c, { wobble = false, ghost = false } = {}) {
+    const T = wobble ? 1000 : 950, t0 = 150, dist = c.lead / c.k + c.D * 0.9, turns = Math.round(((dist / (c.D / 2)) * 180 / Math.PI) / 360) * 360;
+    const rolls = ghost ? [c.ring, c.ghost] : [c.ring];
+    rolls.forEach((ring, j) => { ring.style.transformOrigin = `${c.cx}px ${c.cy}px`; const d = dist + j * 18;
+      const kf = wobble ? [{ transform: `translateX(${-d}px) rotate(0deg)` }, { transform: `translateX(${c.D * .28}px) rotate(${turns + 40}deg)`, offset: .78 }, { transform: `translateX(0) rotate(${turns}deg)` }] : [{ transform: `translateX(${-d}px) rotate(0deg)` }, { transform: `translateX(0) rotate(${turns}deg)` }];
+      A(ring, kf, { delay: t0 + j * 140, duration: T, easing: wobble ? "cubic-bezier(.4,.1,.3,1)" : "cubic-bezier(.45,.05,.3,1)" }); });
+    if (ghost) A(c.ghost, [{ opacity: 1 }, { opacity: 1, offset: .985 }, { opacity: 0 }], { duration: t0 + T + 400 });
+    const start = c.lead - dist * c.k + (c.D / 2) * c.k, end = c.lead + (c.D / 2) * c.k;
+    c.chars.forEach((ch) => { const r = ch.getBoundingClientRect(), mid = r.left - c.wr.left + r.width / 2, f = Math.min(1, Math.max(0, (mid - start) / (end - start)));
+      A(ch, [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "translateY(0)" }], { delay: t0 + T * f * .9, duration: 300, easing: "ease-out" }); });
+    const land = t0 + T + (ghost ? 140 : 0); grow(c.stem, land, 300); pop(c.svg, land + 360);
+  }
+  const ANIMS = [
+    ["Rolling coin", "your pick", "roll", "A ring rolls in from the left like a coin, and the letters appear as it passes. It lands, grows its stem, and becomes the q.", (c) => rolling(c)],
+    ["Rolling coin, with a wobble", "your pick", "wobble", "The coin rolls a little too far, rolls back and rocks to a stop.", (c) => rolling(c, { wobble: true })],
+    ["Two coins", "", "coins", "A second, purple coin rolls a beat behind the first and tucks in underneath it.", (c) => rolling(c, { ghost: true })],
+    ["Fly out", "", "fly", "The q draws itself, then the letters fly out from behind it to the left.", (c) => { draw(c); centre(c, 1000, 1900); flyLetters(c, 1050); }],
+    ["Fly out, springy", "", "spring", "The same with more spring: the letters spin out and the q breathes.", (c) => { draw(c); centre(c, 1000, 2000);
+      flyLetters(c, 1000, { step: 75, dur: 900, easing: "cubic-bezier(.2,.9,.3,1)", kf: (dx, i) => [{ transform: `translateX(${dx}px) rotate(${-30 + i * 8}deg) scale(.3)`, opacity: 0 }, { transform: "translateX(-16px) rotate(7deg) scale(1.1)", opacity: 1, offset: .62 }, { transform: "translateX(5px) rotate(-2deg) scale(.98)", offset: .82 }, { transform: "translateX(0) rotate(0) scale(1)", opacity: 1 }] });
+      A(c.svg, [{ transform: "scale(1)" }, { transform: "scale(1.22)", offset: .45 }, { transform: "scale(1)" }], { delay: 950, duration: 1000, easing: "ease-in-out" }); }],
+    ["The stem joins", "your pick", "join", "The ring appears alone, as an a. Then the stem drops down from above and turns it into a q. Then the letters fly out. The idea of your a and q meeting, in the new q.", (c) => { drawRing(c.ring, 0, 520);
+      c.stem.style.transformBox = "fill-box"; A(c.stem, [{ transform: "translateY(-60px)", opacity: 0 }, { transform: "translateY(0)", opacity: 1 }], { delay: 800, duration: 520, easing: "cubic-bezier(.3,.9,.3,1.25)" });
+      pop(c.svg, 1250); centre(c, 1500, 2500); flyLetters(c, 1550); }],
+    ["Coin flip", "", "flip", "The q spins like a flipped coin, and the letters unfold from it one by one.", (c) => { draw(c); centre(c, 1000, 2100);
+      A(c.svg, [{ transform: "perspective(500px) rotateY(0deg)" }, { transform: "perspective(500px) rotateY(720deg)" }], { delay: 1000, duration: 900, easing: "cubic-bezier(.4,0,.2,1)" });
+      c.chars.forEach((ch, i) => { ch.style.transformOrigin = "right center"; A(ch, [{ transform: "scaleX(0)", opacity: 0 }, { transform: "scaleX(1)", opacity: 1 }], { delay: 1150 + order(c, i) * 90, duration: 520, easing: "cubic-bezier(.2,.9,.3,1.1)" }); }); }],
+    ["Ripple", "your pick", "ripple", "Rings spread out from the q like a ripple on water, and the letters fade in, nearest first.", (c) => { draw(c); centre(c, 1100, 2000);
+      const col = getComputedStyle(c.stem).stroke, st = c.stage.getBoundingClientRect(), gx = c.sr.left + c.sr.width / 2 - c.lead / 2 - st.left, gy = c.sr.top + c.sr.height * .4 - st.top;
+      [0, 1, 2].forEach((i) => { const d = document.createElement("span"); d.className = "ripple"; d.style.cssText = `position:absolute;border-radius:50%;border:2px solid;pointer-events:none;left:${gx - 15}px;top:${gy - 15}px;width:30px;height:30px;border-color:${col}`; c.stage.appendChild(d);
+        A(d, [{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(.3)", opacity: .75, offset: .05 }, { transform: "scale(9)", opacity: 0 }], { delay: 950 + i * 230, duration: 1200, easing: "cubic-bezier(.2,.6,.3,1)" }); });
+      c.chars.forEach((ch, i) => A(ch, [{ opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0)" }], { delay: 1050 + order(c, i) * 110, duration: 700, easing: "ease-out" })); }],
+  ];
+  const play = (box) => box.querySelectorAll(".stage").forEach((st) => { const c = ctx(st, current); if (!reduce) ANIMS.find((a) => a[2] === box.dataset.key)[4](c); });
+  const playAll = () => document.querySelectorAll(".anim").forEach(play);
+  function renderAnims() {
+    document.getElementById("anims").innerHTML = ANIMS.map(([t, tag, key, d]) => `<section class="card anim" data-key="${key}"><div class="opt-head"><div><h2>${t}${tag ? `<span class="tag fav">${tag}</span>` : ""}</h2><p class="note">${d}</p></div><button class="ghost replay" type="button">Replay</button></div>${panels((th) => `<span class="label">${th}</span><div class="stage">${word(th, current)}</div>`)}</section>`).join("");
+    document.querySelectorAll(".anim").forEach((box) => box.querySelector(".replay").addEventListener("click", () => play(box)));
+    requestAnimationFrame(playAll);
+  }
+  document.getElementById("picker").innerHTML = `<strong style="font-size:14px">Wordmark:</strong>` + Object.entries(OPTS).map(([k, m]) => `<label><input type="radio" name="w" value="${k}"${k === current ? " checked" : ""}> ${m.name}</label>`).join("") + `<button id="all" type="button">Replay all</button>`;
+  document.querySelectorAll('input[name="w"]').forEach((r) => r.addEventListener("change", () => { current = r.value; renderAnims(); }));
+  document.getElementById("all").addEventListener("click", playAll);
+  Promise.all([document.fonts.load("700 20px Outfit"), document.fonts.load("700 20px Comfortaa")]).then(() => {
+    if (!document.fonts.check("700 20px Outfit") || !document.fonts.check("700 20px Comfortaa")) document.getElementById("warn").innerHTML = '<div class="warn">A font did not load in this viewer, so some typed letters are shown in a fallback font. Open the page in a normal browser, or tell me and I will embed the fonts.</div>';
+    renderAnims();
+  });
+</script>
+</body>
+</html>

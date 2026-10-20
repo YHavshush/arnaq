@@ -368,8 +368,18 @@ export const userSettings = pgTable(
     smartLeaseUntil: timestamp("smart_lease_until", { withTimezone: true, mode: "string" }),
     /** Version of the default categories and rules this user has been upgraded to. */
     defaultsVersion: integer("defaults_version").notNull().default(1),
+    /** The total the person wants to have saved (cents); null = no goal. */
+    savingsGoal: cents("savings_goal"),
+    /** What they had saved before their first upload (cents): progress starts here. */
+    savingsStart: cents("savings_start").notNull().default(0),
   },
-  () => [check("user_settings_provider_check", sql`smart_provider in ('off','claude','chatgpt')`)],
+  () => [
+    check("user_settings_provider_check", sql`smart_provider in ('off','claude','chatgpt')`),
+    check(
+      "user_settings_savings_check",
+      sql`(savings_goal is null or savings_goal > 0) and savings_start >= 0`,
+    ),
+  ],
 ).enableRLS();
 
 /** What the language model has been asked for, per user per day (caps and cost). */

@@ -43,6 +43,13 @@
       "when": 1792167675079,
       "tag": "0005_bank_balance",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1792522386150,
+      "tag": "0006_savings_goal",
+      "breakpoints": true
     }
   ]
 }
