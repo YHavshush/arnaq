@@ -154,7 +154,7 @@ export const view: typeof en = {
       missed: (date: string) => `gemist, verwacht ${date}`,
       coming: (date: string) => `komt ${date}`,
     },
-    none: "Nog geen vaste lasten. Voeg ze toe of accepteer een suggestie.",
+    none: "Nog geen vaste posten. Voeg ze toe of accepteer een suggestie.",
     allPaid: (): Sentence => [
       plain("Alle vaste lasten van deze maand zijn "),
       em("betaald"),

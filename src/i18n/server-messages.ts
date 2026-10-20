@@ -122,7 +122,7 @@ const NL: Rule[] = [
   [/^Category (\d+) does not exist\.$/, (m) => `Categorie ${m[1]} bestaat niet.`],
   [/^Cannot create a rule without a pattern\.$/, () => "Een regel heeft een zoektekst nodig."],
   // fixed costs
-  [/^Name is required\.$/, () => "Geef de vaste last een naam."],
+  [/^Name is required\.$/, () => "Geef de vaste post een naam."],
   [/^Name is too long \(max (\d+)\)\.$/, (m) => `De naam is te lang (maximaal ${m[1]} tekens).`],
   [/^Type must be "expense" or "income"\.$/, () => "Kies uitgave of inkomen."],
   [
@@ -164,9 +164,9 @@ const NL: Rule[] = [
   [/^active must be true or false\.$/, () => "Actief moet aan of uit zijn."],
   [
     /^At most (\d+) recurring items are supported\.$/,
-    (m) => `Er kunnen maximaal ${m[1]} vaste lasten zijn.`,
+    (m) => `Er kunnen maximaal ${m[1]} vaste posten zijn.`,
   ],
-  [/^Recurring item (\d+) does not exist\.$/, (m) => `Vaste last ${m[1]} bestaat niet.`],
+  [/^Recurring item (\d+) does not exist\.$/, (m) => `Vaste post ${m[1]} bestaat niet.`],
   [
     /^(Start|End) date must be between (\S+) and (\S+)\.$/,
     (m) =>

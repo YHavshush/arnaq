@@ -88,6 +88,22 @@ Parked until this is done: smart categorising (branch `feat/smart-categorising`,
 migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation.md`), then milestone 9
 (hosting).
 
+## 2026-10-20: Hosted on Vercel, Fixed items (branch feat/fixed-items)
+
+- The app runs on Vercel (Production) against Supabase; login and password reset work. Supabase needs custom
+  SMTP before the email templates can be edited (Gmail app password for now, a real sender before friends
+  register). Always open the app on the `APP_URL` address: the cross-site guard answers 403 on any other
+  Vercel alias (`budget-app-yonathan7.vercel.app` is the one in `APP_URL`).
+- "Fixed costs" is now "Fixed items" (nl: "Vaste posten") in the navigation, page title, form and messages,
+  because the page holds income as well. Sentences about the money still to pay keep "fixed costs". The URL
+  stays `/fixed-costs`.
+- The detected suggestions are shown in two lists, "Suggested costs" and "Suggested income"
+  (`suggestionsCosts` / `suggestionsIncome` from `loadVasteLasten`). The detection already found income; only
+  the page mixed the two. Open: income whose amount varies by more than 10% (hours-based pay) is still not
+  detected; changing that is an engine decision (Opus).
+- Next, agreed with the owner: choose the brand name and icon together (a modern, distinctive name, not a
+  descriptor), then buy the domain and go live.
+
 ## Agreed work list (2026-10-16), to do without the owner, in this order
 
 The owner decided: the AI link (Claude provider), starting a run after an import / "sort the rest" and
