@@ -21,6 +21,7 @@
   --b1:#cfe3fb; --b2:#e3d9f7; --b3:#f6e8d8; --b2a:#d4f0e6; --b3a:#e9eefb;
 }
 * { box-sizing:border-box; }
+[hidden] { display:none !important; }
 html { background:var(--page); }
 body { margin:0; color:var(--ink); min-height:100vh; font:15px/1.45 var(--sans); padding:28px 16px 72px; background:linear-gradient(180deg,var(--page),var(--page2)) fixed; }
 [data-look="light"] body { background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8) fixed; }
@@ -55,8 +56,8 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 .s1 .bg { background:linear-gradient(165deg,var(--b1),var(--b2) 55%,var(--b3)); }
 .s2 .bg { background:linear-gradient(165deg,var(--b2a),var(--b1) 60%,var(--b3a)); }
 .s3 .bg { background:linear-gradient(165deg,var(--b3a),var(--b2) 55%,var(--b1)); }
-.head { padding-top:66px; display:grid; gap:12px; }
-.head h2 { margin:0; font:400 52px/.98 var(--serif); letter-spacing:-.02em; }
+.head { padding-top:66px; display:grid; gap:12px; align-content:start; min-height:240px; }
+.head h2 { white-space:pre-line; margin:0; font:400 52px/.98 var(--serif); letter-spacing:-.02em; }
 .head p { margin:0; color:var(--muted); font-size:15px; max-width:31ch; }
 .stage { position:relative; display:grid; place-items:center; align-content:center; justify-items:center; transition:transform .55s cubic-bezier(.3,.8,.3,1); }
 .foot { display:grid; gap:10px; padding:10px 0 50px; }
@@ -67,6 +68,7 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 .tabs button { width:7px; height:7px; border-radius:99px; border:0; padding:0; background:var(--track); cursor:pointer; transition:width .3s, background .3s; }
 .tabs button[aria-current="true"] { width:22px; background:var(--blue); }
 .cta { font:600 16px/1 var(--sans); color:var(--cta-ink); background:var(--blue); border:0; border-radius:99px; padding:16px 20px; cursor:pointer; width:100%; box-shadow:0 10px 28px -10px rgba(51,198,255,.7); }
+.slot { height:44px; display:grid; place-items:center; }
 .ghostbtn { font:500 15px/1 var(--sans); color:var(--ink); background:var(--glass); border:1px solid var(--glassb); border-radius:99px; padding:14px 20px; cursor:pointer; width:100%; }
 .chip { display:inline-flex; gap:6px; align-items:center; font-size:12px; padding:4px 11px; border-radius:99px; background:var(--glass); border:1px solid var(--glassb); color:var(--muted); width:max-content; }
 .glow { position:absolute; border-radius:50%; background:radial-gradient(circle, rgba(51,198,255,.40), rgba(127,140,255,.20) 45%, transparent 70%); pointer-events:none; }
@@ -79,11 +81,11 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 .row { display:grid; gap:6px; }
 .row .top { display:flex; justify-content:space-between; font-size:13px; font-variant-numeric:tabular-nums; }
 .row .top span:last-child { color:var(--muted); }
-.ring { position:relative; width:232px; height:232px; display:grid; place-items:center; margin:0 auto; flex:none; }
+.ring { position:relative; width:170px; height:170px; display:grid; place-items:center; margin:0 auto; flex:none; }
 .ring svg { position:absolute; inset:0; }
 .ring .in { position:relative; display:grid; place-items:center; text-align:center; }
 .ring .in .lab { position:absolute; bottom:calc(100% + 4px); white-space:nowrap; }
-.card2 { width:100%; border-radius:22px; background:var(--glass); border:1px solid var(--glassb); padding:18px 18px; display:grid; gap:16px; backdrop-filter:blur(10px); box-shadow:0 18px 34px -22px rgba(0,0,0,.6); }
+.card2 { width:100%; border-radius:22px; background:var(--glass); border:1px solid var(--glassb); padding:14px 16px; display:grid; gap:12px; backdrop-filter:blur(10px); box-shadow:0 18px 34px -22px rgba(0,0,0,.6); }
 .coins { position:relative; width:260px; height:290px; display:grid; place-items:center; }
 .dial { position:absolute; top:0; width:200px; height:200px; }
 .goal { position:absolute; bottom:0; width:100%; border-radius:22px; background:var(--glass); border:1px solid var(--glassb); padding:16px; display:grid; gap:10px; backdrop-filter:blur(10px); }
@@ -95,14 +97,17 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 <main>
   <header>
     <h1>Onboarding B, your words</h1>
-    <p class="lead">Your three screens, exactly as you wrote them. The a and q now sit close together like in the app icon, the ring on screen 2 is centred, and the empty strip at the bottom is gone.</p>
+    <p class="lead">Your three screens, your words. Every heading is now two lines and the bottom of every screen has the same two-row footer, so the visual area is exactly the same size and place on all three screens. Use "all three, side by side" and "guide lines" to check it.</p>
   </header>
 
   <div class="bar">
     <span class="seg" role="group" aria-label="Look"><button type="button" data-look-btn="dark" aria-pressed="true">dark</button><button type="button" data-look-btn="light" aria-pressed="false">light</button></span>
-        <button type="button" class="btn" id="replay">replay</button>
+    <span class="seg" role="group" aria-label="View"><button type="button" data-view-btn="one" aria-pressed="true">one phone</button><button type="button" data-view-btn="all" aria-pressed="false">all three, side by side</button></span>
+    <button type="button" class="seg" id="guides" aria-pressed="false" style="font:inherit;font-size:13px;color:var(--muted);cursor:pointer;padding:6px 14px;background:var(--glass)">guide lines</button>
+    <button type="button" class="btn" id="replay">replay</button>
   </div>
 
+  <div id="sheet" hidden style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;zoom:.86"></div>
   <div class="layout">
     <div style="display:grid;gap:12px;justify-items:center">
       <span class="cap">Variation B</span>
@@ -121,13 +126,13 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
                   <g data-la><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
                   <g data-lq><circle cx="92.5" cy="28.5" r="20.5"/><line x1="113" y1="8" x2="113" y2="70"/></g></g></svg>
             </div>
-            <div class="foot" style="padding-bottom:40px"><div class="chip" data-c="chip1"></div></div>
+            <div class="foot"><button type="button" class="cta" data-next>Next</button><div class="slot"><span class="chip" data-c="chip1"></span></div></div>
           </section>
 
           <section class="screen s2" aria-label="2 of 3">
             <div class="bg"></div>
             <div class="head"><h2 data-c="h2"></h2><p data-c="p2"></p></div>
-            <div class="stage" data-stage style="gap:26px">
+            <div class="stage" data-stage style="gap:18px">
               <div class="ring" data-ringbox>
                 <svg viewBox="0 0 204 204" aria-hidden="true"><circle cx="102" cy="102" r="95" fill="none" stroke="var(--track)" stroke-width="10"/><circle data-ring cx="102" cy="102" r="95" fill="none" stroke="url(#ga)" stroke-width="10" stroke-linecap="round" transform="rotate(-90 102 102)"/></svg>
                 <div class="in"><span class="lab" data-c="lab2"></span><span class="num" data-n style="font-size:34px">€ 0</span></div>
@@ -137,7 +142,7 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
                 <div class="row"><div class="top"><span data-c="cap2"></span><span data-t2>€ 0 of € 200</span></div><div class="meter"><b data-m2></b></div></div>
               </div>
             </div>
-            <div class="foot" style="padding:0 0 30px"></div>
+            <div class="foot"><button type="button" class="cta" data-next>Next</button><div class="slot"><span class="chip" data-c="chip2"></span></div></div>
           </section>
 
           <section class="screen s3" aria-label="3 of 3">
@@ -190,9 +195,9 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 
   // ----- copy sets: every sentence is something the app really does -----
   const COPY = {
-    1: { h1: "track effortlessly.", p1: "Say goodbye to messy spreadsheets. Streamline your money in one clean space.", chip1: "no bank login needed",
-         h2: "see what's left.", p2: "See where your money goes and set spending budgets that keep you on track.", lab2: "free to spend", cap1: "dining budget", cap2: "shopping budget",
-         h3: "secure your goals.", p3: "Set a savings goal and watch it grow with every statement you add.", goal: "goal · japan trip" },
+    1: { h1: "track\neffortlessly.", p1: "Say goodbye to messy spreadsheets. Streamline your money in one clean space.", chip1: "no bank login needed", chip2: "export or delete your data anytime",
+         h2: "see what's\nleft.", p2: "See where your money goes and set spending budgets that keep you on track.", lab2: "free to spend", cap1: "dining budget", cap2: "shopping budget",
+         h3: "secure your\ngoals.", p3: "Set a savings goal and watch it grow with every statement you add.", goal: "goal · japan trip" },
   };
   let copyKey = "1";
   const applyCopy = () => { $$("[data-c]").forEach((el) => { el.textContent = COPY[copyKey][el.dataset.c]; }); $$("[data-copy-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.copyBtn === copyKey))); };
@@ -215,9 +220,9 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
   const rise = (el, delay, from = 28) => { if (!reduce) A(el, [{ opacity: 0, transform: `translateY(${from}px)` }, { opacity: 1, transform: "translateY(0)" }], { delay, duration: 700, easing: ease }); };
   const breathe = (el, t0, k = 1.03) => { if (!reduce) A(el, [{ transform: "scale(1)" }, { transform: `scale(${k})` }, { transform: "scale(1)" }], { delay: t0, duration: 3200, iterations: Infinity, easing: "ease-in-out" }); };
 
-  const pb = $("#pb");
+  function mount(pb, observe = true) {
   const ticks = $("[data-ticks]", pb);
-  for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, r1 = i % 6 === 0 ? 74 : 80, r2 = 88, l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  if (!ticks.childElementCount) for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, r1 = i % 6 === 0 ? 74 : 80, r2 = 88, l = document.createElementNS("http://www.w3.org/2000/svg", "line");
     l.setAttribute("x1", 100 + r1 * Math.cos(a)); l.setAttribute("y1", 100 + r1 * Math.sin(a)); l.setAttribute("x2", 100 + r2 * Math.cos(a)); l.setAttribute("y2", 100 + r2 * Math.sin(a));
     l.setAttribute("stroke", "var(--muted)"); l.setAttribute("stroke-width", i % 6 === 0 ? 3 : 1.5); l.setAttribute("stroke-linecap", "round"); ticks.appendChild(l); }
 
@@ -251,6 +256,7 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
     stages.forEach((st, k) => { st.style.transform = `translateX(${(k - i) * 60}px)`; }); $("[data-skip]", pb).hidden = i === 2;
   }
   $$("[data-tabs] button", pb).forEach((b, k) => b.addEventListener("click", () => go(k)));
+  $$("[data-next]", pb).forEach((b) => b.addEventListener("click", () => go(cur + 1)));
   $("[data-skip]", pb).addEventListener("click", () => go(2));
   pb.addEventListener("keydown", (e) => { if (e.key === "ArrowRight") go(cur + 1); if (e.key === "ArrowLeft") go(cur - 1); });
   let x0 = null, dx = 0;
@@ -260,11 +266,31 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
   track.addEventListener("pointerup", end); track.addEventListener("pointercancel", end);
   $("[data-start]", pb).addEventListener("click", (e) => { e.target.textContent = "Next: create your account"; });
   $("[data-sample]", pb).addEventListener("click", (e) => { e.target.textContent = "(opens the app with sample data)"; });
-  $("#replay").addEventListener("click", () => go(cur));
   go(0);
   let touched = false; $$("button", pb).forEach((b) => b.addEventListener("click", () => { touched = true; })); pb.addEventListener("pointerdown", () => { touched = true; });
   const io = new IntersectionObserver((en) => { if (en[0].isIntersecting) { if (!touched) go(0); io.disconnect(); } }, { threshold: .4 });
-  io.observe(pb);
+  if (observe) io.observe(pb);
+  return { go, get cur() { return cur; }, el: pb };
+  }
+
+  // ----- views: one phone, or all three screens side by side with guide lines -----
+  const phone = $("#pb"), main = mount(phone), sheet = $("#sheet"), layout = $(".layout");
+  $("#replay").addEventListener("click", () => { if (sheet.hidden) main.go(main.cur); else buildSheet(); });
+  let guides = false;
+  function buildSheet() {
+    sheet.innerHTML = "";
+    [0, 1, 2].forEach((i) => { const c = phone.cloneNode(true); c.removeAttribute("id"); c.querySelector(".track").style.transition = "none"; $$("[data-stage]", c).forEach((e) => { e.style.transition = "none"; }); sheet.appendChild(c); const m = mount(c, false); m.go(i); c.dataset.guide = guides ? "1" : "";
+      $$("[data-tabs],[data-skip],[data-pager]", c).forEach((e) => { e.style.display = "none"; });
+      if (guides) addGuides(c, i); });
+  }
+  function addGuides(c, i) {
+    const stage = $$("[data-stage]", c)[i], head = $$(".head", c)[i];
+    const line = (y, label, color) => { const d = document.createElement("div"); d.style.cssText = `position:absolute;left:0;right:0;top:${y}px;border-top:1px dashed ${color};z-index:9;pointer-events:none`; const t = document.createElement("span"); t.textContent = label; t.style.cssText = `position:absolute;right:10px;top:2px;font:10px ${getComputedStyle(document.body).fontFamily};color:${color}`; d.appendChild(t); c.appendChild(d); };
+    line(head.offsetTop + head.offsetHeight, "text ends", "#ffb347"); line(stage.offsetTop + stage.offsetHeight / 2, "centre of the visual area", "#ff5d8f");
+  }
+  const setView = (v) => { const all = v === "all"; sheet.hidden = !all; layout.hidden = all; $$("[data-view-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.viewBtn === v))); if (all) buildSheet(); };
+  $$("[data-view-btn]").forEach((b) => b.addEventListener("click", () => setView(b.dataset.viewBtn)));
+  $("#guides").addEventListener("click", (e) => { guides = !guides; e.target.setAttribute("aria-pressed", String(guides)); if (!sheet.hidden) buildSheet(); });
 })();
 </script>
 </body>
