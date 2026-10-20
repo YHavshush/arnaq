@@ -125,6 +125,26 @@ migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation
 - Naming (brand): the owner wants an international, modern name; candidate directions and domain checks were
   discussed in chat. Nothing decided; "Solam" and a Japanese-word direction (yutori, kakeibo) were mentioned.
 
+## 2026-10-20: Savings category and a fix for "remember" (branch feat/savings)
+
+- **Bug:** "remember" passed a correction on only to rows that already had their shop key. Rows imported before
+  keys existed (null `merchant_key`) were skipped, so the same lines kept coming back. `assignCategory` now fills in
+  the keys first (`ensureMerchantKeys`). Test: `learned.test.ts`, "older rows ... follow the correction".
+- **Savings:** a new category type `savings` (default category "Spaarrekening", shown as "Savings" / "Sparen"), neither
+  income, spending nor an own-accounts transfer. It sets `is_internal_transfer` like a transfer, so budgets, the
+  overview and the forecast already leave it out. Unlike a transfer it is remembered for **both directions** (a savings
+  pot is the same pot whichever way money moves); a transfer is still per direction. People who signed up earlier get
+  the category on their next request (`ensureSavingsCategory`, no migration: `type` is plain text).
+- The picker and the review chips offer Savings next to "Between my accounts"; rules and the model never choose it.
+  The Upload list is now "Transfers and savings", each row with its category and a Change button.
+- The old starter rule and catalog words for "spaarrekening" / "spaardoel" were removed: they filed savings under
+  the _expense_ category "Sparen & beleggen".
+- **Next (needs a migration, so the owner's approval):** the savings goal. Decided: one total target, progress = the
+  amount saved before the first upload (optional) + deposits - withdrawals from the Savings category; a withdrawal
+  reduces progress. Two settings columns on `user_settings`, a Settings form and a Savings card on the Overview.
+- Brand: the name is **Arnaq**. The logo is being designed (docs/design/logo-arnaq-*.html); the intro animation
+  shortlist is rolling coin, rolling coin with a wobble, "two letters meet" and ripple (not built yet).
+
 ## Agreed work list (2026-10-16), to do without the owner, in this order
 
 The owner decided: the AI link (Claude provider), starting a run after an import / "sort the rest" and

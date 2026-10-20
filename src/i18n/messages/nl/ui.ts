@@ -256,11 +256,12 @@ export const ui: typeof en = {
       close: "Sluiten",
       noMatch: "Geen categorie gevonden.",
       ownAccountsHint: "Telt niet mee als inkomen of uitgave",
+      savingsHint: "Telt als sparen, niet als inkomen of uitgave",
       current: "Huidig",
     },
     transfers: {
-      title: "Tussen je rekeningen",
-      aside: (n: number) => `${n} ${n === 1 ? "overboeking" : "overboekingen"}`,
+      title: "Overboekingen en sparen",
+      aside: (n: number) => `${n} ${n === 1 ? "regel" : "regels"}`,
       intro:
         "Deze tellen niet mee als inkomen of uitgave. Klopt er een niet, verander dan de categorie: het is toch een betaling.",
       found: "Automatisch gevonden",

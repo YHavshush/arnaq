@@ -112,7 +112,7 @@ async function Content() {
               priority: r.priority,
               categoryName: name.get(r.categoryId) ?? s.unknownCategory,
             }))}
-            categories={categories.filter((c) => c.type !== "transfer")}
+            categories={categories.filter((c) => c.type === "expense" || c.type === "income")}
           />
         </Section>
         <Section title={s.learned.title} aside={s.learned.aside(labels.length)}>

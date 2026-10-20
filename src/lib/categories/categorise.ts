@@ -1,8 +1,10 @@
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { merchantKey } from "@/lib/smart/merchant";
+import { isNonSpending } from "./defaults";
 import {
   directionOf,
+  ensureMerchantKeys,
   releaseLearnedTransfers,
   learnLabel,
   propagateLabel,
@@ -136,7 +138,7 @@ export async function assignCategory(
     .update(schema.transactions)
     .set({
       categoryId,
-      isInternalTransfer: category.type === "transfer",
+      isInternalTransfer: isNonSpending(category.type),
       categorySource: "user",
       suggestedCategoryId: null,
       merchantKey: key,
@@ -145,6 +147,8 @@ export async function assignCategory(
 
   let learned = 0;
   if (opts.learn && key) {
+    // Older rows may not have their shop key yet; without it the correction would skip them.
+    await ensureMerchantKeys(db);
     const direction = directionOf(t.amount);
     if (category.type === "transfer") {
       // Only this direction: a top-up from "Apple Pay" is not a purchase at "Apple Pay". Money of

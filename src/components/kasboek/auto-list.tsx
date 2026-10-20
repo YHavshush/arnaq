@@ -28,11 +28,11 @@ type Cat = PickerCategory;
 export function AutoList({
   items,
   categories,
-  transfer,
+  special,
 }: {
   items: Item[];
   categories: Cat[];
-  transfer: Cat | null;
+  special: Cat[];
 }) {
   const router = useRouter();
   const { locale, t: msg } = useI18n();
@@ -147,7 +147,7 @@ export function AutoList({
         open={sheetFor !== null}
         title={sheetFor ? m.review.pickTitle(nameOf(sheetFor)) : ""}
         categories={categories}
-        transfer={transfer}
+        special={special}
         direction={sheetFor && sheetFor.amount > 0 ? "in" : "out"}
         currentId={sheetFor?.categoryId}
         onPick={(id) => sheetFor && change(sheetFor, id)}

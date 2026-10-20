@@ -215,3 +215,16 @@ describe("teaching a transfer between the person's own accounts", () => {
     expect(await get(chosen.id)).toMatchObject({ isInternalTransfer: true, categoryId: transfer });
   });
 });
+
+describe("remembering reaches rows that have no shop key yet", () => {
+  it("older rows (imported before keys existed) follow the correction without a manual fix-up", async () => {
+    const { db, cat, tx, get } = await setup();
+    const transfer = await cat("Interne overboeking");
+    const first = await tx("From Instant Access Savings", { amount: 20000 });
+    const older = await tx("From Instant Access Savings", { amount: 15000, date: "2026-08-12" });
+    expect((await get(older.id)).merchantKey).toBeNull(); // as after the migration: no key yet
+    const result = await assignCategory(db, first.id, transfer, { learn: true });
+    expect(result.alsoCategorised).toBe(1);
+    expect(await get(older.id)).toMatchObject({ isInternalTransfer: true, categoryId: transfer });
+  });
+});

@@ -13,7 +13,7 @@ import { ErrorLine, Field, GhostButton, PrimaryButton, inputClass } from "./form
 interface Cat {
   id: number;
   name: string;
-  type: "expense" | "income" | "transfer";
+  type: "expense" | "income" | "transfer" | "savings";
 }
 
 interface SuggestionView {

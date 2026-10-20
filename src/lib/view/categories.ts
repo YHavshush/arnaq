@@ -50,6 +50,7 @@ const MAP: Record<string, { chip: Chip; icon: IconKey }> = {
   "Familie / gift": { chip: "rose", icon: "users" },
   "Overig inkomen": { chip: "gray", icon: "wallet" },
   "Interne overboeking": { chip: "gray", icon: "arrow-left-right" },
+  Spaarrekening: { chip: "mint", icon: "piggy-bank" },
 };
 
 /** Tint and icon for a category; unknown (user-added) categories get a neutral gray. */
@@ -86,9 +87,13 @@ const ENGLISH: Record<string, string> = {
   "Familie / gift": "Family / gift",
   "Overig inkomen": "Other income",
   "Interne overboeking": "Between my accounts",
+  Spaarrekening: "Savings",
 };
 
-const DUTCH: Record<string, string> = { "Interne overboeking": "Tussen mijn rekeningen" };
+const DUTCH: Record<string, string> = {
+  "Interne overboeking": "Tussen mijn rekeningen",
+  Spaarrekening: "Sparen",
+};
 
 export function categoryLabel(name: string, locale: Locale): string {
   return locale === "nl" ? (DUTCH[name] ?? name) : (ENGLISH[name] ?? name);

@@ -46,12 +46,13 @@ describe("screen loaders on an imported month", () => {
     expect(u.reviewCount + u.sorted).toBe(u.total);
     expect(u.share).toBeCloseTo(u.sorted / u.total);
     expect(u.imports).toHaveLength(1);
-    expect(u.categories.every((c) => c.type !== "transfer")).toBe(true);
+    expect(u.categories.every((c) => c.type === "expense" || c.type === "income")).toBe(true);
   });
 
   it("loadUpload: offers the own-accounts category and the usual categories per direction", async () => {
     const u = await loadUpload(await seeded());
-    expect(u.transferCategory).toMatchObject({ type: "transfer", name: "Interne overboeking" });
+    expect(u.special.map((c) => c.type)).toEqual(["transfer", "savings"]);
+    expect(u.categories.every((c) => c.type === "expense" || c.type === "income")).toBe(true);
     const type = new Map(u.categories.map((c) => [c.id, c.type]));
     expect(u.quick.expense).toHaveLength(3);
     expect(u.quick.income.length).toBeGreaterThan(0);

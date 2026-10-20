@@ -250,11 +250,12 @@ export const ui = {
       close: "Close",
       noMatch: "No category found.",
       ownAccountsHint: "Not counted as income or spending",
+      savingsHint: "Counts as savings, not income or spending",
       current: "Current",
     },
     transfers: {
-      title: "Between your accounts",
-      aside: (n: number) => `${n} ${n === 1 ? "transfer" : "transfers"}`,
+      title: "Transfers and savings",
+      aside: (n: number) => `${n} ${n === 1 ? "line" : "lines"}`,
       intro:
         "These are not counted as income or spending. If one is wrong, change its category: it is a payment after all.",
       found: "Found automatically",

@@ -26,7 +26,8 @@ import {
 // - Dates are ISO strings: "YYYY-MM-DD" for days, "YYYY-MM" for months.
 
 export const BANKS = ["rabobank", "revolut"] as const;
-export const CATEGORY_TYPES = ["expense", "income", "transfer"] as const;
+/** "transfer": a move between the person's own accounts. "savings": money into or out of savings. Neither is income or spending. */
+export const CATEGORY_TYPES = ["expense", "income", "transfer", "savings"] as const;
 export const RECURRING_TYPES = ["expense", "income"] as const;
 export const FREQUENCIES = ["monthly", "quarterly", "yearly"] as const;
 export const OCCURRENCE_STATUSES = ["expected", "matched", "missed"] as const;

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
+import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { CategorySheet, type PickerCategory } from "./category-picker";
@@ -17,6 +18,8 @@ interface Item {
   description: string | null;
   /** null: found by Kasboek itself; otherwise the person chose it (or taught it). */
   source: string | null;
+  /** The category it is in (own accounts or savings). */
+  categoryName: string | null;
 }
 
 /**
@@ -26,11 +29,11 @@ interface Item {
 export function TransferList({
   items,
   categories,
-  transfer,
+  special,
 }: {
   items: Item[];
   categories: PickerCategory[];
-  transfer: PickerCategory | null;
+  special: PickerCategory[];
 }) {
   const router = useRouter();
   const { locale, t: msg } = useI18n();
@@ -65,11 +68,13 @@ export function TransferList({
         {items.map((it) => (
           <li key={it.id} className="grid gap-2 px-4 py-3">
             <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3">
-              <CategoryIcon name={transfer?.name ?? null} />
+              <CategoryIcon name={it.categoryName} />
               <div className="min-w-0">
                 <div className="truncate font-semibold">{nameOf(it)}</div>
                 <div className="text-ink-muted text-[13px]">
-                  {dayLabel(it.date)}, {it.source === null ? m.transfers.found : m.transfers.chosen}
+                  {dayLabel(it.date)},{" "}
+                  {it.categoryName ? `${categoryLabel(it.categoryName, locale)}, ` : ""}
+                  {it.source === null ? m.transfers.found : m.transfers.chosen}
                 </div>
               </div>
               <div className="num font-semibold">{euroExact(it.amount)}</div>
@@ -96,7 +101,7 @@ export function TransferList({
         open={sheetFor !== null}
         title={sheetFor ? m.review.pickTitle(nameOf(sheetFor)) : ""}
         categories={categories}
-        transfer={null}
+        special={special}
         direction={sheetFor && sheetFor.amount > 0 ? "in" : "out"}
         onPick={(id) => sheetFor && change(sheetFor, id)}
         onClose={() => setSheetFor(null)}
