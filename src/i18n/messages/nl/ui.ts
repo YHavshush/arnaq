@@ -250,6 +250,24 @@ export const ui: typeof en = {
       inCurrency: (currency: string) => `in ${currency}`,
       probably: (name: string) => `Waarschijnlijk ${name}?`,
       yes: "Ja",
+      other: "Andere…",
+      pickTitle: (name: string) => `Categorie voor ${name}`,
+      search: "Zoek een categorie",
+      close: "Sluiten",
+      noMatch: "Geen categorie gevonden.",
+      ownAccountsHint: "Telt niet mee als inkomen of uitgave",
+      current: "Huidig",
+    },
+    transfers: {
+      title: "Tussen je rekeningen",
+      aside: (n: number) => `${n} ${n === 1 ? "overboeking" : "overboekingen"}`,
+      intro:
+        "Deze tellen niet mee als inkomen of uitgave. Klopt er een niet, verander dan de categorie: het is toch een betaling.",
+      found: "Automatisch gevonden",
+      chosen: "Door jou gekozen",
+      change: "Wijzigen",
+      changeFor: (name: string) => `Wijzig de categorie van ${name}`,
+      more: (shown: number) => `De ${shown} nieuwste staan hier.`,
     },
     auto: {
       title: "Automatisch gesorteerd",
@@ -339,6 +357,8 @@ export const ui: typeof en = {
       none: 'Nog niets. Kies je een categorie en laat je "onthoud mijn keuze" aan staan, dan verschijnt de winkel hier.',
       forget: "Vergeet",
       forgetFor: (shop: string) => `Vergeet ${shop}`,
+      meta: (category: string, way: "in" | "out" | null) =>
+        way === null ? category : `${category}, ${way === "in" ? "geld erbij" : "geld eraf"}`,
     },
     unknownCategory: "Onbekend",
     rule: {

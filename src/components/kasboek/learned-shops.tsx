@@ -12,6 +12,8 @@ interface Shop {
   key: string;
   categoryName: string;
   categoryLabel: string;
+  /** Which way the money moved, for a remembered transfer between the person's own accounts. */
+  direction: "in" | "out" | null;
 }
 
 /** The shops Kasboek has been taught: see them, forget one. */
@@ -34,7 +36,9 @@ export function LearnedShops({ shops }: { shops: Shop[] }) {
             <CategoryIcon name={shop.categoryName} />
             <div className="min-w-0">
               <div className="truncate font-semibold">{shop.key}</div>
-              <div className="text-ink-muted text-[13px]">{shop.categoryLabel}</div>
+              <div className="text-ink-muted text-[13px]">
+                {s.meta(shop.categoryLabel, shop.direction)}
+              </div>
             </div>
             <GhostButton
               type="button"

@@ -6,6 +6,7 @@ import { MoodSetter } from "@/components/kasboek/mood";
 import { PageHeader, Section } from "@/components/kasboek/page-header";
 import { AutoList } from "@/components/kasboek/auto-list";
 import { ReviewList } from "@/components/kasboek/review-list";
+import { TransferList } from "@/components/kasboek/transfer-list";
 import { HeroSkeleton } from "@/components/kasboek/states";
 import { UploadPanel } from "@/components/kasboek/upload-panel";
 import { getI18n } from "@/i18n/server";
@@ -65,6 +66,8 @@ async function Content() {
               suggestedCategoryId: r.suggestedCategoryId,
             }))}
             categories={u.categories}
+            transfer={u.transferCategory}
+            quick={u.quick}
           />
           {u.reviewCount > u.review.length && (
             <p className="text-ink-muted mt-2 px-2 text-sm">{m.sortMore(u.review.length)}</p>
@@ -84,10 +87,33 @@ async function Content() {
               categoryId: r.categoryId!,
             }))}
             categories={u.categories}
+            transfer={u.transferCategory}
           />
           {u.automatic.total > u.automatic.rows.length && (
             <p className="text-ink-muted mt-2 px-2 text-sm">
               {m.auto.more(u.automatic.rows.length)}
+            </p>
+          )}
+        </Section>
+      )}
+
+      {u.transfers.total > 0 && (
+        <Section title={m.transfers.title} aside={m.transfers.aside(u.transfers.total)}>
+          <TransferList
+            items={u.transfers.rows.map((r) => ({
+              id: r.id,
+              date: r.date,
+              amount: r.amount,
+              counterparty: r.counterparty,
+              description: r.description,
+              source: r.categorySource,
+            }))}
+            categories={u.categories}
+            transfer={u.transferCategory}
+          />
+          {u.transfers.total > u.transfers.rows.length && (
+            <p className="text-ink-muted mt-2 px-2 text-sm">
+              {m.transfers.more(u.transfers.rows.length)}
             </p>
           )}
         </Section>

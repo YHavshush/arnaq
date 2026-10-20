@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { one, createDb, schema } from "@/db";
-import { detectInternalTransfers } from "./transfers";
+import { detectInternalTransfers, listTransfers } from "./transfers";
 
 async function setup() {
   const db = await createDb(":memory:");
@@ -85,5 +85,18 @@ describe("detectInternalTransfers", () => {
     await tx(revo.id, "2026-09-12", 20000);
     await detectInternalTransfers(db);
     expect(await detectInternalTransfers(db)).toBe(0);
+  });
+});
+
+describe("listTransfers", () => {
+  it("lists the transfers newest first, with the total, and nothing else", async () => {
+    const { db, rabo, revo, tx } = await setup();
+    await tx(rabo.id, "2026-08-01", -5000); // an ordinary payment
+    const old = await tx(rabo.id, "2026-08-10", -1000, { isInternalTransfer: true });
+    const recent = await tx(revo.id, "2026-09-12", 2000, { isInternalTransfer: true });
+    const { rows, total } = await listTransfers(db, 1);
+    expect(total).toBe(2);
+    expect(rows.map((r) => r.id)).toEqual([recent!.id]);
+    expect((await listTransfers(db)).rows.map((r) => r.id)).toEqual([recent!.id, old!.id]);
   });
 });

@@ -7,7 +7,8 @@ import { useI18n } from "@/i18n/client";
 import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
-import { ErrorLine, inputClass } from "./form";
+import { CategorySheet, type PickerCategory } from "./category-picker";
+import { ErrorLine } from "./form";
 
 interface Item {
   id: number;
@@ -20,14 +21,27 @@ interface Item {
   /** A category worth offering ("Probably X?"). */
   suggestedCategoryId: number | null;
 }
-interface Cat {
-  id: number;
-  name: string;
-  type: string;
-}
+type Cat = PickerCategory;
 
-/** Transactions that need a category. Choosing one saves at once; "remember" teaches Kasboek the shop. */
-export function ReviewList({ items, categories }: { items: Item[]; categories: Cat[] }) {
+const chipClass =
+  "bg-soft border-hair text-ink inline-flex min-h-11 items-center rounded-full border px-4 text-[14px] font-semibold disabled:opacity-50";
+
+/**
+ * Transactions that need a category. The usual ones are one tap away, "Other…" opens the full list.
+ * Choosing saves at once; "remember" teaches Kasboek the shop (and, for a transfer between the
+ * person's own accounts, the direction).
+ */
+export function ReviewList({
+  items,
+  categories,
+  transfer,
+  quick,
+}: {
+  items: Item[];
+  categories: Cat[];
+  transfer: Cat | null;
+  quick: { expense: number[]; income: number[] };
+}) {
   const router = useRouter();
   const { locale, t: msg } = useI18n();
   const { dayLabel, euroExact } = formatter(locale);
@@ -35,22 +49,31 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<number | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sheetFor, setSheetFor] = useState<Item | null>(null);
 
   async function choose(item: Item, categoryId: number) {
-    if (!categoryId) return;
+    if (!categoryId || sending) return;
+    setSheetFor(null);
+    setSending(true);
     setError(null);
     const res = await api("PUT", `/api/transactions/${item.id}/category`, {
       categoryId,
       learn: remember && !!(item.counterparty || item.description),
     });
+    setSending(false);
     if (!res.ok) return setError(res.error);
     setSaved(item.id);
     startTransition(() => router.refresh());
   }
 
   const byId = new Map(categories.map((c) => [c.id, c]));
-  const expense = categories.filter((c) => c.type === "expense");
-  const income = categories.filter((c) => c.type === "income");
+  const nameOf = (t: Item) => t.counterparty ?? t.description ?? msg.ui.upload.review.transaction;
+  const chipsFor = (t: Item) =>
+    (t.amount > 0 ? quick.income : quick.expense)
+      .filter((id) => id !== t.suggestedCategoryId)
+      .map((id) => byId.get(id))
+      .filter((c): c is Cat => c !== undefined);
 
   return (
     <div className="glass overflow-hidden">
@@ -90,7 +113,7 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
                 </span>
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || sending}
                   onClick={() => choose(t, t.suggestedCategoryId!)}
                   className="bg-accent text-accent-ink inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold"
                 >
@@ -98,31 +121,38 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
                 </button>
               </div>
             )}
-            <select
-              aria-label={msg.ui.upload.review.category(
-                t.counterparty ?? t.description ?? msg.ui.upload.review.transaction,
+            <div className="flex flex-wrap gap-2">
+              {chipsFor(t).map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  disabled={busy || sending}
+                  className={chipClass}
+                  onClick={() => choose(t, c.id)}
+                >
+                  {categoryLabel(c.name, locale)}
+                </button>
+              ))}
+              {transfer && (
+                <button
+                  type="button"
+                  disabled={busy || sending}
+                  className={chipClass}
+                  onClick={() => choose(t, transfer.id)}
+                >
+                  {categoryLabel(transfer.name, locale)}
+                </button>
               )}
-              className={inputClass}
-              defaultValue=""
-              disabled={busy}
-              onChange={(e) => choose(t, Number(e.target.value))}
-            >
-              <option value="">{msg.ui.upload.review.choose}</option>
-              <optgroup label={msg.ui.upload.review.expenses}>
-                {expense.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {categoryLabel(c.name, locale)}
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label={msg.ui.upload.review.income}>
-                {income.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {categoryLabel(c.name, locale)}
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+              <button
+                type="button"
+                disabled={busy || sending}
+                className={chipClass}
+                aria-label={msg.ui.upload.review.category(nameOf(t))}
+                onClick={() => setSheetFor(t)}
+              >
+                {msg.ui.upload.review.other}
+              </button>
+            </div>
           </li>
         ))}
       </ul>
@@ -131,6 +161,15 @@ export function ReviewList({ items, categories }: { items: Item[]; categories: C
           <ErrorLine message={error} />
         </div>
       )}
+      <CategorySheet
+        open={sheetFor !== null}
+        title={sheetFor ? msg.ui.upload.review.pickTitle(nameOf(sheetFor)) : ""}
+        categories={categories}
+        transfer={transfer}
+        direction={sheetFor && sheetFor.amount > 0 ? "in" : "out"}
+        onPick={(id) => sheetFor && choose(sheetFor, id)}
+        onClose={() => setSheetFor(null)}
+      />
     </div>
   );
 }

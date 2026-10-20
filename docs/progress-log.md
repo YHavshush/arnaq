@@ -104,6 +104,27 @@ migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation
 - Next, agreed with the owner: choose the brand name and icon together (a modern, distinctive name, not a
   descriptor), then buy the domain and go live.
 
+## 2026-10-20: Category picker and transfers between own accounts (branch feat/category-picker)
+
+- The category `<select>` is replaced by chips for the usual categories (most used per direction), a
+  "Between my accounts" chip and "Other…", which opens a sheet (`category-picker.tsx`, native `<dialog>`:
+  bottom sheet on a phone) with icons and search. Used in the review list and the automatic list. This
+  follows the chips plus "Other…" pattern of the agreed mockup; only the plain dropdown behind "Other…" changed.
+- Choosing a category with "Remember" ticked learns the shop (a learned label, not a visible rule); see Settings,
+  Learned shops.
+- A transfer between the owner's own accounts can now be chosen by hand. It is remembered **per direction**
+  (the stored key gets a `|in` / `|out` suffix; normal keys never contain `|`), so a top-up from "Apple Pay" is a
+  transfer but a purchase at "Apple Pay" is not. `setCategory` now sets `is_internal_transfer` from the category
+  type. Zero-euro rows have no direction and are never flagged by a remembered transfer.
+- Upload page: a "Between your accounts" list (newest 20, found automatically or chosen by you) with a Change button
+  per row, so a wrong transfer can be put back. Putting one back also releases the other rows that were only
+  transfers because of the memory (`releaseLearnedTransfers`); rows chosen by hand stay.
+- Reviewed by the code-reviewer agent: no critical or high findings; its medium finding (no way back from a
+  mistaken transfer) is the list above. Open for the later Opus review of the smart part: the per-direction key
+  encoding in `merchant_labels`.
+- Naming (brand): the owner wants an international, modern name; candidate directions and domain checks were
+  discussed in chat. Nothing decided; "Solam" and a Japanese-word direction (yutori, kakeibo) were mentioned.
+
 ## Agreed work list (2026-10-16), to do without the owner, in this order
 
 The owner decided: the AI link (Claude provider), starting a run after an import / "sort the rest" and

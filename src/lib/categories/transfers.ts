@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { count, desc, eq, inArray } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { INTERNAL_TRANSFER_CATEGORY } from "./defaults";
 
@@ -82,4 +82,24 @@ export async function detectInternalTransfers(
       .where(inArray(schema.transactions.id, ids.slice(i, i + 500)));
   }
   return flagged.size;
+}
+
+/**
+ * The transactions treated as transfers between the person's own accounts, newest first, so a wrong
+ * one (found automatically or chosen by hand) can be put back. Returns the rows shown and the total.
+ */
+export async function listTransfers(db: Db, limit = 20) {
+  const [rows, [{ total }]] = await Promise.all([
+    db
+      .select()
+      .from(schema.transactions)
+      .where(eq(schema.transactions.isInternalTransfer, true))
+      .orderBy(desc(schema.transactions.date), desc(schema.transactions.id))
+      .limit(limit),
+    db
+      .select({ total: count() })
+      .from(schema.transactions)
+      .where(eq(schema.transactions.isInternalTransfer, true)),
+  ]);
+  return { rows, total };
 }

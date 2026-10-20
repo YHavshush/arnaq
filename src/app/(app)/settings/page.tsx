@@ -18,6 +18,7 @@ import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
+import { splitLabelKey } from "@/lib/smart/learned";
 import { PROVIDERS } from "@/lib/smart/providers";
 import { getSmartSettings, isEntitled } from "@/lib/smart/settings";
 
@@ -118,12 +119,16 @@ async function Content() {
           <LearnedShops
             shops={labels
               .filter((l) => l.categoryId !== null)
-              .map((l) => ({
-                id: l.id,
-                key: l.merchantKey,
-                categoryName: name.get(l.categoryId!) ?? "",
-                categoryLabel: categoryLabel(name.get(l.categoryId!) ?? "", locale),
-              }))}
+              .map((l) => {
+                const { key, direction } = splitLabelKey(l.merchantKey);
+                return {
+                  id: l.id,
+                  key,
+                  direction,
+                  categoryName: name.get(l.categoryId!) ?? "",
+                  categoryLabel: categoryLabel(name.get(l.categoryId!) ?? "", locale),
+                };
+              })}
           />
         </Section>
       </details>

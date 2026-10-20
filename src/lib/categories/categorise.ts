@@ -1,7 +1,13 @@
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { merchantKey } from "@/lib/smart/merchant";
-import { learnLabel, propagateLabel } from "@/lib/smart/learned";
+import {
+  directionOf,
+  releaseLearnedTransfers,
+  learnLabel,
+  propagateLabel,
+  transferKey,
+} from "@/lib/smart/learned";
 
 export interface Rule {
   id: number;
@@ -139,8 +145,20 @@ export async function assignCategory(
 
   let learned = 0;
   if (opts.learn && key) {
-    await learnLabel(db, key, categoryId);
-    learned = await propagateLabel(db, key, categoryId, transactionId);
+    const direction = directionOf(t.amount);
+    if (category.type === "transfer") {
+      // Only this direction: a top-up from "Apple Pay" is not a purchase at "Apple Pay". Money of
+      // zero euro has no direction, so nothing is remembered from it.
+      if (direction) {
+        await learnLabel(db, transferKey(key, direction), categoryId);
+        learned = await propagateLabel(db, key, categoryId, transactionId, direction);
+      }
+    } else {
+      if (direction)
+        learned += await releaseLearnedTransfers(db, key, direction, categoryId, transactionId);
+      await learnLabel(db, key, categoryId);
+      learned += await propagateLabel(db, key, categoryId, transactionId);
+    }
   }
   if (!opts.createRule) return { ruleId: null, alsoCategorised: learned };
 
