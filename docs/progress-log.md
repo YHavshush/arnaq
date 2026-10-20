@@ -281,3 +281,15 @@ allowed for categorising only, or only for chat-like products? What does a user 
   per-email rate limits, current password for password changes, `APP_URL` for redirects
   (see `docs/plans/auth-tenancy.md`).
 - Next: smart categorising (separate feature, before hosting), then milestone 9 (hosting).
+
+## 2026-10-20: Names and onboarding decided (design only, not built)
+
+- **Menu names: set C**, lowercase plain (today, ahead, fixed, saving, add; vandaag, vooruit, vast, sparen, toevoegen).
+- **Onboarding: variation B** (`docs/design/onboarding-b-final.html`), the owner's words: "track effortlessly." /
+  "see what's left." (with the ring) / "secure your goals." (dial and goal card, no "vault"), blue "Get Started", and a
+  "Try it with sample data" button. Earlier rounds: `onboarding-pasted.html`, `onboarding-variations.html`,
+  `feature-names-onboarding.html`.
+- **Open:** a and q colours in the onboarding monogram (flat like the icon, or the gradient); sample-data design (marker
+  and one-step removal, may need a migration); build after the Arnaq rename, en + nl, with tests.
+- **Blocked:** migration 0006 was NOT applied to Supabase (the tool call was denied by the permission check), so
+  `feat/savings-goal` is not merged. Tests (659), type-check and lint are green on the branch.

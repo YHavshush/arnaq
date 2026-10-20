@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arnaq: feature names and onboarding options</title>
+<style>
+/* Colours copied from src/design/tokens.ts. System fonts only, so it looks the same in any viewer. */
+:root { --ink:#17202e; --muted:#4a5568; --card:rgba(255,255,255,.62); --line:rgba(23,32,46,.12); --blue:#1aa8e6; --purple:#6a76f0; --good:#1f7a4d; --warn:#9a5b00; --bad:#a63a3a; --phone:#fbf7f3; }
+@media (prefers-color-scheme: dark) { :root { --ink:#eef1f5; --muted:#a9b3c3; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.14); --blue:#2ac9ff; --purple:#7d8bff; --good:#5fd39a; --warn:#f0b35a; --bad:#f08a8a; --phone:#141b27; } }
+* { box-sizing:border-box; }
+html { background:#f1e6dd; }
+body { margin:0; color:var(--ink); min-height:100vh; font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+  background:linear-gradient(180deg,#d9e5f5 0%,#f1e6dd 46%,#f6e8d8 100%) fixed; padding:28px 16px 72px; }
+@media (prefers-color-scheme: dark) { html { background:#0f141d; } body { background:linear-gradient(180deg,#1b2434,#0f141d) fixed; } }
+main { max-width:1040px; margin:0 auto; display:grid; gap:24px; }
+h1 { font:500 clamp(28px,5vw,40px)/1.1 Georgia,"Times New Roman",serif; margin:0; text-wrap:balance; }
+h2 { font:500 24px/1.2 Georgia,serif; margin:0; text-wrap:balance; }
+h3 { margin:0; font-size:16px; }
+p { margin:0; }
+.lead,.note { color:var(--muted); max-width:72ch; }
+.note { font-size:14px; }
+.card { background:var(--card); border-radius:22px; padding:20px; display:grid; gap:14px; min-width:0; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+@media (max-width:760px) { .grid2,.grid3 { grid-template-columns:1fr; } }
+.tag { display:inline-block; font-size:11px; letter-spacing:.08em; text-transform:uppercase; padding:2px 8px; border-radius:99px; border:1px solid var(--line); color:var(--muted); }
+.tag.rec { color:var(--good); border-color:var(--good); }
+.keep li::marker { color:var(--good); } .change li::marker { color:var(--bad); }
+ul { margin:0; padding-left:20px; display:grid; gap:4px; }
+.scroll { overflow-x:auto; }
+table { border-collapse:collapse; width:100%; min-width:640px; font-size:14px; }
+th,td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.ok { color:var(--good); font-weight:600; } .mid { color:var(--warn); font-weight:600; } .no { color:var(--bad); font-weight:600; }
+.set { border:1px solid var(--line); border-radius:16px; padding:14px; display:grid; gap:8px; align-content:start; }
+.pill { display:inline-block; padding:2px 10px; border-radius:99px; background:var(--card); border:1px solid var(--line); font-size:14px; margin:2px 4px 2px 0; }
+.flow { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+.phone { background:var(--phone); border-radius:26px; border:1px solid var(--line); padding:16px 14px; min-height:290px; display:grid; grid-template-rows:auto 1fr auto; gap:10px; box-shadow:0 8px 20px rgba(36,59,115,.12); }
+.phone .step { font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+.phone .body { display:grid; align-content:center; justify-items:start; gap:8px; }
+.phone .big { font:500 21px/1.15 Georgia,serif; }
+.phone .small { font-size:13px; color:var(--muted); }
+.phone .cta { background:linear-gradient(135deg,var(--blue),var(--purple)); color:#fff; border-radius:99px; text-align:center; padding:9px 12px; font-weight:600; font-size:14px; }
+.phone .ghost { text-align:center; font-size:13px; color:var(--muted); }
+.phone .num { font:600 34px/1 -apple-system,system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+.dots { display:flex; gap:5px; } .dots i { width:6px; height:6px; border-radius:50%; background:var(--line); } .dots i.on { background:var(--blue); }
+.chip { font-size:12px; padding:3px 9px; border-radius:99px; border:1px solid var(--line); }
+.bar { height:8px; border-radius:99px; background:var(--line); width:100%; overflow:hidden; } .bar b { display:block; height:100%; width:42%; background:linear-gradient(90deg,var(--blue),var(--purple)); }
+.rec-box { border:2px solid var(--good); border-radius:18px; padding:16px; display:grid; gap:8px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Arnaq: names for the features, and how the first minute could feel</h1>
+    <p class="lead" style="margin-top:8px">You asked me to take the other AI's version into account, check all the options, and add my own. Below: what I would keep from it, what I would change and why, five naming sets, and three onboarding flows with mock screens. Nothing is built yet. You choose.</p>
+  </header>
+
+  <section class="card">
+    <h2>1. The pasted version, read honestly</h2>
+    <div class="grid2">
+      <div class="set"><h3>Worth keeping</h3>
+        <ul class="keep">
+          <li>Three screens, short, one idea each. That matches what the research on onboarding shows (a short carousel, then quickly to first value).</li>
+          <li>Lowercase, quiet headlines. It fits the calm tone already in the app ("Your money, one calm number at a time").</li>
+          <li>One strong, simple button per screen, in the brand blue.</li>
+          <li>Giving the features a voice instead of "module" words.</li>
+        </ul></div>
+      <div class="set"><h3>I would change</h3>
+        <ul class="change">
+          <li><b>"AI-driven pulse", "intelligent caps", "autopilot", "effortless"</b> promise things Arnaq does not do. It reads uploaded statements (no bank link), and the sorting learns from your choices, it is not AI. A budgeting app lives on trust, so I would not claim it.</li>
+          <li><b>"Vaults"</b> is Revolut's word for its savings goals, and you use Revolut. People would think Arnaq is a Revolut add-on.</li>
+          <li><b>"Caps"</b> is ambiguous (limit? capital letters? a hat?) and has no natural Dutch word.</li>
+          <li><b>"Flow" and "pulse"</b> are used by many apps and say nothing concrete. A new user cannot guess what is behind them.</li>
+        </ul></div>
+    </div>
+    <p class="note">Claims check: what is actually true in Arnaq today.</p>
+    <div class="scroll"><table>
+      <tr><th>Pasted claim</th><th>What is true</th><th>Honest replacement</th></tr>
+      <tr><td>"track effortlessly"</td><td>You upload a statement (Rabobank PDF, Revolut CSV). Sorting learns after you teach it once.</td><td>"add a statement, we sort it, you correct once"</td></tr>
+      <tr><td>"master your flow"</td><td>Overview with a free-to-spend number, fixed items found automatically, a forecast.</td><td>"see what is left to spend, and what is coming"</td></tr>
+      <tr><td>"secure your vaults"</td><td>A savings goal and a Savings category. It does not move money.</td><td>"set a goal, watch it fill"</td></tr>
+      <tr><td>"AI-driven pulse"</td><td>Not built. The forecast is a calculation, not AI.</td><td>"a forecast you can check"</td></tr>
+      <tr><td>(unsaid, but true)</td><td>Your data is yours: export and delete at any time, separate per user.</td><td>"your statements stay yours"</td></tr>
+    </table></div>
+  </section>
+
+  <section class="card">
+    <h2>2. Five naming sets for the screens</h2>
+    <p class="note">What the five things in the app could be called. Current names: Overview, Forecast, Fixed items, Savings goal, Upload. Dutch in the second line.</p>
+    <div class="grid3">
+      <div class="set"><h3>A. Plain (today)</h3>
+        <div><span class="pill">Overview</span><span class="pill">Forecast</span><span class="pill">Fixed items</span><span class="pill">Savings</span><span class="pill">Upload</span></div>
+        <p class="note">Overzicht · Prognose · Vaste posten · Sparen · Upload</p>
+        <p class="note">Clear, translates perfectly, a little dull.</p></div>
+      <div class="set"><h3>B. The pasted set</h3>
+        <div><span class="pill">pulse</span><span class="pill">flow</span><span class="pill">caps</span><span class="pill">vaults</span><span class="pill">upload</span></div>
+        <p class="note">No natural Dutch. "Vaults" belongs to Revolut.</p>
+        <p class="note">Modern, but a new user cannot tell which is which.</p></div>
+      <div class="set"><h3>C. Lowercase plain <span class="tag rec">my pick</span></h3>
+        <div><span class="pill">today</span><span class="pill">ahead</span><span class="pill">fixed</span><span class="pill">saving</span><span class="pill">add</span></div>
+        <p class="note">vandaag · vooruit · vast · sparen · toevoegen</p>
+        <p class="note">Keeps the quiet lowercase voice of the pasted version, but every word still says what it is. "today" is your number now, "ahead" is the forecast.</p></div>
+      <div class="set"><h3>D. Dutch-first "potjes"</h3>
+        <div><span class="pill">Left</span><span class="pill">Ahead</span><span class="pill">Fixed</span><span class="pill">Pots</span><span class="pill">Upload</span></div>
+        <p class="note">Over · Vooruit · Vast · Potjes · Upload</p>
+        <p class="note">"Potjes" is how Dutch people talk about money buckets, warm and familiar. In English "Pots" is Monzo's word.</p></div>
+      <div class="set"><h3>E. Verbs</h3>
+        <div><span class="pill">See</span><span class="pill">Plan</span><span class="pill">Fixed</span><span class="pill">Save</span><span class="pill">Add</span></div>
+        <p class="note">Zien · Plannen · Vast · Sparen · Toevoegen</p>
+        <p class="note">Action-led, friendly. But "See" as a menu label is vague, and "Plan" over-promises for a forecast.</p></div>
+      <div class="set"><h3>F. Hybrid <span class="tag">option</span></h3>
+        <div><span class="pill">Overview</span><span class="pill">Ahead</span><span class="pill">Fixed items</span><span class="pill">Saving</span><span class="pill">Upload</span></div>
+        <p class="note">Overzicht · Vooruit · Vaste posten · Sparen · Upload</p>
+        <p class="note">Only rename what gains from it (Forecast → Ahead). Smallest change.</p></div>
+    </div>
+    <div class="scroll"><table>
+      <tr><th>Set</th><th>Clear to a new user</th><th>Works in Dutch</th><th>No clash with other apps</th><th>Honest</th><th>Fits the Arnaq voice</th></tr>
+      <tr><td>A. Plain</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="mid">neutral</td></tr>
+      <tr><td>B. Pasted</td><td class="no">no</td><td class="no">no</td><td class="no">Revolut</td><td class="mid">suggests AI</td><td class="ok">yes</td></tr>
+      <tr><td>C. Lowercase plain</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td></tr>
+      <tr><td>D. Potjes</td><td class="mid">mostly</td><td class="ok">very</td><td class="mid">Monzo in EN</td><td class="ok">yes</td><td class="ok">yes</td></tr>
+      <tr><td>E. Verbs</td><td class="mid">mostly</td><td class="ok">yes</td><td class="ok">yes</td><td class="mid">"Plan"</td><td class="mid">ok</td></tr>
+      <tr><td>F. Hybrid</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="mid">a bit</td></tr>
+    </table></div>
+    <div class="rec-box">
+      <h3>My recommendation</h3>
+      <p>Use <b>C (lowercase plain)</b> for the menu and headlines: it takes the best part of the pasted version, its calm lowercase voice, and drops the parts that are vague or borrowed. Put the personality in the <b>words around the features</b> (onboarding, empty states, the loading screen) rather than in the menu labels, because menu labels must be understood in half a second. If you prefer a more cautious step, F changes only one word.</p>
+      <p class="note">Either way, the pasted feature names stay out of the app; they can live on as marketing words later if you like, once the Revolut collision is considered.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>3. Onboarding flow 1: the pasted idea, made truthful</h2>
+    <p class="note">Three screens, then the app. Closest to what you pasted. Text uses set C. Can be skipped from any screen.</p>
+    <div class="flow">
+      <div class="phone"><span class="step">1 of 3</span><div class="body"><span class="big">see where it goes</span><span class="small">Add a bank statement. Arnaq sorts every payment, and learns from your corrections.</span></div><div><div class="cta">next</div></div></div>
+      <div class="phone"><span class="step">2 of 3</span><div class="body"><span class="big">know what is ahead</span><span class="small">Fixed items are found for you, and the forecast shows what stays free to spend.</span></div><div><div class="cta">next</div></div></div>
+      <div class="phone"><span class="step">3 of 3</span><div class="body"><span class="big">save on purpose</span><span class="small">Set a goal and watch it fill. Your statements stay yours: export or delete anytime.</span></div><div><div class="cta">get started</div></div></div>
+    </div>
+    <p class="note"><b>For:</b> familiar, quick to build. <b>Against:</b> the user still has to read three screens before anything useful happens, and carousels are the part people skip.</p>
+  </section>
+
+  <section class="card">
+    <h2>4. Onboarding flow 2: straight to your number <span class="tag rec">my pick</span></h2>
+    <p class="note">No carousel. A logo moment, then four short steps where the user does something real. The reward is the app's best thing: <i>one calm number</i>.</p>
+    <div class="flow">
+      <div class="phone"><span class="step">welcome</span><div class="body"><span class="big">arnaq</span><span class="small">your money, one calm number at a time.</span></div><div><div class="cta">start</div><p class="ghost" style="margin-top:6px">try with sample data</p></div></div>
+      <div class="phone"><span class="step">add</span><div class="body"><span class="big">add a statement</span><span class="small">Rabobank PDF or Revolut CSV. No bank login. It never leaves your account.</span><span><span class="chip">Rabobank</span> <span class="chip">Revolut</span></span></div><div><div class="cta">choose file</div><p class="ghost" style="margin-top:6px">later</p></div></div>
+      <div class="phone"><span class="step">goal (optional)</span><div class="body"><span class="big">saving for something?</span><span class="small">A goal turns Savings into a progress bar.</span><div class="bar"><b></b></div></div><div><div class="cta">set a goal</div><p class="ghost" style="margin-top:6px">skip</p></div></div>
+      <div class="phone"><span class="step">done</span><div class="body"><span class="small">free to spend this month</span><span class="num">€ 842</span><span class="small">3 payments need a quick look</span></div><div><div class="cta">sort them</div></div></div>
+    </div>
+    <p class="note"><b>For:</b> value in under a minute, honest, the user's own data makes it feel personal, skip at every step. The sample-data button lets someone look around without uploading anything. <b>Against:</b> needs a statement at hand; mitigated by "later" and the sample data. A little more to build than flow 1 (a sample-data mode and an empty-state).</p>
+  </section>
+
+  <section class="card">
+    <h2>5. Onboarding flow 3: no screens, a checklist</h2>
+    <p class="note">The app opens straight on the overview, empty but friendly, with a small checklist that ticks itself.</p>
+    <div class="grid2">
+      <div class="phone" style="min-height:0"><span class="step">overview</span><div class="body" style="justify-items:stretch">
+        <span class="big">welcome to arnaq</span>
+        <span class="small">three things to get your number:</span>
+        <div class="set" style="gap:6px"><span>◻ add a statement</span><span>◻ look at your fixed items</span><span>◻ set a savings goal <i class="small">(optional)</i></span></div>
+        </div><div></div></div>
+      <div class="set"><h3>Why consider it</h3>
+        <ul><li>Nothing to skip: the app is the tutorial.</li><li>Works for returning users who log in on a new phone.</li><li>Cheapest to build, and it doubles as the empty state.</li></ul>
+        <h3>Why not first choice</h3>
+        <ul><li>No "moment". A first-time user sees empty screens before they see value.</li><li>No place for the logo animation as a hook.</li></ul></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>6. My own ideas, any flow can take these</h2>
+    <div class="grid2">
+      <div class="set"><h3>Sample data mode</h3><p class="note">A button that fills a throwaway account with invented payments, so people can try before uploading anything. Also useful for your user testing with 5 to 8 people.</p></div>
+      <div class="set"><h3>A privacy line at the upload step</h3><p class="note">"No bank login. Your statement is read, sorted and kept in your own account. Export or delete anytime." It is true today, and it is the thing that makes people comfortable uploading.</p></div>
+      <div class="set"><h3>The logo animation as the only decoration</h3><p class="note">Use the animation you pick (rolling coin, the stem joins, ripple) once, on the welcome screen and while the first statement is being read. Never again after that.</p></div>
+      <div class="set"><h3>Dutch and English from the first screen</h3><p class="note">Pick the language from the phone, with a small switch on the welcome screen. All text goes through the catalogs, so both are done in one pass.</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>What I need from you</h2>
+    <ul>
+      <li>Naming: <b>C</b> (my pick), F, or something else from this page?</li>
+      <li>Onboarding: <b>flow 2</b> (my pick), flow 1, flow 3, or flow 2 with the three-line copy of flow 1?</li>
+      <li>Should I build sample-data mode with it? (my pick: yes)</li>
+    </ul>
+    <p class="note">Once you choose I build it on its own branch after the Arnaq rename, with tests and both languages. Until then nothing in the app changes.</p>
+  </section>
+</main>
+</body>
+</html>

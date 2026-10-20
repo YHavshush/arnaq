@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arnaq onboarding, as pasted</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts (dark = graphite, light = the dawn). Electric blue = the first colour of the logo gradient. */
+:root {
+  --page:#0b0f17; --page2:#141b28; --ink:#eef1f5; --muted:#a8b1bf; --hair:rgba(255,255,255,.10); --track:rgba(255,255,255,.09);
+  --glass:rgba(255,255,255,.055); --glassb:rgba(255,255,255,.10); --phone:#0f141d; --phoneb:rgba(255,255,255,.14);
+  --blue:#33c6ff; --purple:#7f8cff; --cta-ink:#06121c; --good:#5ee0a0; --warn:#f2b84b; --shadow:0 30px 70px -30px rgba(0,0,0,.9);
+  --serif:"Newsreader",Georgia,"Times New Roman",serif; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+}
+[data-look="light"] {
+  --page:#d9e5f5; --page2:#f1e6dd; --ink:#17202e; --muted:#4a5568; --hair:rgba(23,32,46,.12); --track:rgba(23,32,46,.10);
+  --glass:rgba(255,255,255,.62); --glassb:rgba(255,255,255,.85); --phone:#eef1f6; --phoneb:rgba(23,32,46,.14);
+  --good:#17714a; --warn:#8f5200; --shadow:0 30px 60px -34px rgba(30,45,80,.55);
+}
+* { box-sizing:border-box; }
+html { background:var(--page); }
+body { margin:0; color:var(--ink); min-height:100vh; font:15px/1.45 var(--sans); padding:28px 16px 72px;
+  background:linear-gradient(180deg,var(--page) 0%,var(--page2) 100%) fixed; }
+[data-look="light"] body { background:linear-gradient(180deg,#d9e5f5 0%,#f1e6dd 50%,#f6e8d8 100%) fixed; }
+main { max-width:1040px; margin:0 auto; display:grid; gap:28px; }
+h1 { font:500 clamp(26px,5vw,38px)/1.1 var(--serif); margin:0; text-wrap:balance; }
+.lead,.note { color:var(--muted); max-width:70ch; margin:6px 0 0; }
+.note { font-size:13px; }
+.bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.seg { display:inline-flex; border:1px solid var(--hair); border-radius:99px; padding:3px; background:var(--glass); }
+.seg button, .btn { font:inherit; font-size:13px; color:var(--muted); background:none; border:0; border-radius:99px; padding:6px 14px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--ink); color:var(--page); }
+.btn { border:1px solid var(--hair); background:var(--glass); color:var(--ink); }
+.stagewrap { display:grid; grid-template-columns:minmax(0,auto) minmax(0,1fr); gap:36px; align-items:start; justify-content:center; }
+@media (max-width:860px) { .stagewrap { grid-template-columns:minmax(0,1fr); justify-items:center; } }
+.col { display:grid; gap:14px; justify-items:center; }
+.cap { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+
+/* ---------- the phone ---------- */
+.phone { position:relative; width:min(360px,calc(100vw - 32px)); height:720px; border-radius:46px; background:var(--phone); border:1px solid var(--phoneb); box-shadow:var(--shadow); overflow:hidden; isolation:isolate; }
+.phone::before { content:""; position:absolute; inset:0; z-index:-1; background:
+  radial-gradient(120% 60% at 50% -10%, rgba(51,198,255,.20), transparent 60%),
+  radial-gradient(90% 50% at 100% 100%, rgba(127,140,255,.16), transparent 60%); }
+.track { display:flex; height:100%; width:100%; transition:transform .55s cubic-bezier(.3,.8,.3,1); touch-action:pan-y; }
+.screen { flex:none; width:100%; height:100%; display:grid; grid-template-rows:1fr auto 124px; padding:56px 26px 0; }
+.stage { position:relative; display:grid; place-items:center; min-height:0; }
+.copy { display:grid; gap:10px; padding-bottom:10px; }
+.copy h2 { margin:0; font:400 38px/1.02 var(--serif); letter-spacing:-.01em; }
+.copy p { margin:0; color:var(--muted); font-size:15px; max-width:30ch; }
+.act { display:grid; align-content:start; gap:12px; padding-top:14px; }
+.swipe { color:var(--muted); font-size:13px; display:flex; align-items:center; gap:8px; }
+.cta { font:600 16px/1 var(--sans); color:var(--cta-ink); background:var(--blue); border:0; border-radius:99px; padding:16px 20px; cursor:pointer; width:100%; box-shadow:0 10px 28px -10px rgba(51,198,255,.7); }
+.cta:focus-visible, .link:focus-visible, .skip:focus-visible, .dots button:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.link { font:inherit; font-size:14px; color:var(--muted); background:none; border:0; text-align:center; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+.skip { position:absolute; top:22px; right:24px; z-index:3; font:inherit; font-size:14px; color:var(--muted); background:none; border:0; cursor:pointer; padding:6px 4px; }
+.skip[hidden] { display:none; }
+.dots { position:absolute; left:0; right:0; bottom:16px; display:flex; justify-content:center; gap:8px; z-index:3; }
+.dots button { width:7px; height:7px; border-radius:99px; border:0; padding:0; background:var(--track); cursor:pointer; transition:width .3s, background .3s; }
+.dots button[aria-current="true"] { width:22px; background:var(--blue); }
+
+/* screen 1: logo */
+.glow { position:absolute; width:260px; height:260px; border-radius:50%; background:radial-gradient(circle, rgba(51,198,255,.42), rgba(127,140,255,.22) 45%, transparent 70%); }
+.ripple { position:absolute; width:150px; height:150px; border-radius:50%; border:1.5px solid rgba(127,200,255,.55); opacity:0; }
+.mono { position:relative; width:230px; display:block; overflow:visible; }
+
+/* screen 2: balance + caps */
+.card { width:100%; border-radius:24px; background:var(--glass); border:1px solid var(--glassb); padding:18px; display:grid; gap:14px; box-shadow:0 18px 40px -26px rgba(0,0,0,.6); backdrop-filter:blur(8px); }
+.lab { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.big { font:600 38px/1 var(--sans); letter-spacing:-.035em; font-variant-numeric:tabular-nums; }
+.delta { font-size:13px; color:var(--good); font-weight:500; }
+.row { display:grid; gap:6px; }
+.row .top { display:flex; justify-content:space-between; font-size:13px; font-variant-numeric:tabular-nums; }
+.row .top span:last-child { color:var(--muted); }
+.meter { height:8px; border-radius:99px; background:var(--track); overflow:hidden; }
+.meter b { display:block; height:100%; width:100%; transform-origin:left; border-radius:99px; background:linear-gradient(90deg,var(--blue),var(--purple)); }
+.meter b.warn { background:linear-gradient(90deg,#f9d39e,#e98859); }
+
+/* screen 3: vault */
+.vault { position:relative; width:230px; height:230px; display:grid; place-items:center; }
+.vault .num { position:absolute; bottom:46px; font:600 15px var(--sans); font-variant-numeric:tabular-nums; color:var(--ink); }
+.vcard { position:absolute; bottom:-8px; left:50%; transform:translateX(-50%); width:250px; }
+.chip { display:inline-flex; gap:6px; align-items:center; font-size:12px; padding:3px 10px; border-radius:99px; background:var(--glass); border:1px solid var(--glassb); color:var(--muted); width:max-content; }
+
+/* sample mode mock */
+.mini { width:min(300px,calc(100vw - 32px)); border-radius:36px; background:var(--phone); border:1px solid var(--phoneb); box-shadow:var(--shadow); overflow:hidden; padding:18px 18px 22px; display:grid; gap:14px; position:relative; isolation:isolate; }
+.mini::before { content:""; position:absolute; inset:0; z-index:-1; background:radial-gradient(120% 50% at 50% -10%, rgba(51,198,255,.18), transparent 60%); }
+.banner { display:flex; justify-content:space-between; gap:10px; align-items:center; background:rgba(242,184,75,.14); border:1px solid rgba(242,184,75,.45); color:var(--ink); border-radius:16px; padding:10px 12px; font-size:12.5px; line-height:1.3; }
+.banner button { font:600 12px var(--sans); color:var(--cta-ink); background:var(--blue); border:0; border-radius:99px; padding:7px 11px; white-space:nowrap; cursor:default; }
+.hero { display:grid; justify-items:center; gap:8px; padding:6px 0 2px; }
+.ringbox { position:relative; width:150px; height:150px; display:grid; place-items:center; }
+.ringbox svg { position:absolute; inset:0; }
+.ringbox .n { font:600 30px var(--sans); letter-spacing:-.035em; font-variant-numeric:tabular-nums; }
+.sent { font:400 17px/1.25 var(--serif); text-align:center; max-width:24ch; }
+.sent i { font-style:italic; }
+.sheet { display:grid; gap:6px; font-size:13px; }
+.sheet p { margin:0; padding-left:14px; position:relative; color:var(--muted); }
+.sheet p::before { content:""; position:absolute; left:0; top:.55em; width:6px; height:6px; border-radius:50%; background:var(--blue); }
+.sheet b { color:var(--ink); font-weight:600; }
+@media (prefers-reduced-motion: reduce) { .track { transition:none; } }
+</style>
+</head>
+<body data-look-root>
+<main>
+  <header>
+    <h1>The onboarding, exactly as pasted</h1>
+    <p class="lead">The texts, the three screens, the dark background, the gradient aq assembling itself, the balance with caps filling, the vault opening to 100%, and the solid electric-blue button: all as in the other AI's version. Drawn properly this time, and it really swipes. Plus the sample data entry you asked for.</p>
+  </header>
+
+  <div class="bar">
+    <span class="seg" role="group" aria-label="Look">
+      <button type="button" data-look-btn="dark" aria-pressed="true">dark, as pasted</button>
+      <button type="button" data-look-btn="light" aria-pressed="false">light, the app's dawn</button>
+    </span>
+    <button type="button" class="btn" id="replay">replay this screen</button>
+    <span class="note" style="margin:0">Swipe, use the dots, or press the arrow keys.</span>
+  </div>
+
+  <div class="stagewrap">
+    <div class="col">
+      <span class="cap">The three screens</span>
+      <div class="phone" id="phone" role="region" aria-roledescription="carousel" aria-label="Arnaq introduction" tabindex="0">
+        <button type="button" class="skip" id="skip">Skip</button>
+        <div class="track" id="track">
+
+          <section class="screen" aria-label="1 of 3">
+            <div class="stage">
+              <div class="glow" id="glow"></div>
+              <div class="ripple"></div><div class="ripple"></div><div class="ripple"></div>
+              <svg class="mono" id="mono" viewBox="-6 -6 133 90" aria-label="arnaq" role="img">
+                <defs><linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="121" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient></defs>
+                <g fill="none" stroke="url(#g)" stroke-width="16" stroke-linecap="round">
+                  <circle id="ra" cx="28.5" cy="28.5" r="20.5"/>
+                  <line id="sa" x1="49" y1="26.5" x2="49" y2="49"/>
+                  <circle id="rq" cx="92.5" cy="28.5" r="20.5"/>
+                  <line id="sq" x1="113" y1="8" x2="113" y2="70"/>
+                </g>
+              </svg>
+            </div>
+            <div class="copy"><h2>track effortlessly.</h2><p>Say goodbye to messy spreadsheets. Streamline your money in one clean space.</p></div>
+            <div class="act"><div class="swipe">swipe <span aria-hidden="true">→</span></div></div>
+          </section>
+
+          <section class="screen" aria-label="2 of 3">
+            <div class="stage">
+              <div class="card" id="flowcard">
+                <div style="display:flex;justify-content:space-between;align-items:flex-end">
+                  <div><div class="lab">balance, october</div><div class="big" id="bal">€ 0</div></div>
+                  <div class="delta">+ € 312</div>
+                </div>
+                <svg viewBox="0 0 280 74" width="100%" height="74" aria-hidden="true" style="overflow:visible">
+                  <defs><linearGradient id="lg" x1="0" x2="1"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>
+                    <linearGradient id="ag" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#33c6ff" stop-opacity=".28"/><stop offset="1" stop-color="#33c6ff" stop-opacity="0"/></linearGradient></defs>
+                  <path id="area" d="M0 58 C30 54 40 40 70 42 S112 58 140 40 S190 14 215 24 S258 8 280 6 V74 H0 Z" fill="url(#ag)"/>
+                  <path id="line" d="M0 58 C30 54 40 40 70 42 S112 58 140 40 S190 14 215 24 S258 8 280 6" fill="none" stroke="url(#lg)" stroke-width="3" stroke-linecap="round"/>
+                  <circle id="dot" cx="280" cy="6" r="5" fill="#7f8cff"/>
+                </svg>
+                <div class="row"><div class="top"><span>dining cap</span><span id="c1t">€ 0 of € 150</span></div><div class="meter"><b id="c1" class="warn"></b></div></div>
+                <div class="row"><div class="top"><span>shopping cap</span><span id="c2t">€ 0 of € 200</span></div><div class="meter"><b id="c2"></b></div></div>
+              </div>
+            </div>
+            <div class="copy"><h2>master your flow.</h2><p>See where your money goes instantly and set intelligent spending caps that protect your future.</p></div>
+            <div class="act"><div class="swipe">swipe <span aria-hidden="true">→</span></div></div>
+          </section>
+
+          <section class="screen" aria-label="3 of 3">
+            <div class="stage">
+              <div class="vault">
+                <div class="glow" id="vglow" style="width:240px;height:240px;opacity:0"></div>
+                <svg viewBox="0 0 200 200" width="230" height="230" aria-hidden="true" style="position:absolute;inset:0">
+                  <defs><linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient></defs>
+                  <circle cx="100" cy="100" r="84" fill="none" stroke="var(--track)" stroke-width="12"/>
+                  <circle id="vring" cx="100" cy="100" r="84" fill="none" stroke="url(#vg)" stroke-width="12" stroke-linecap="round" transform="rotate(-90 100 100)"/>
+                  <g id="lock">
+                    <path id="shackle" d="M82 92 V78 a18 18 0 0 1 36 0 V92" fill="none" stroke="var(--ink)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" style="transform-box:fill-box;transform-origin:100% 100%"/>
+                    <rect x="72" y="90" width="56" height="42" rx="12" fill="var(--ink)"/>
+                    <circle cx="100" cy="109" r="5" fill="var(--phone)"/><rect x="98" y="110" width="4" height="10" rx="2" fill="var(--phone)"/>
+                  </g>
+                </svg>
+                <div class="num" id="vnum">0%</div>
+              </div>
+            </div>
+            <div class="copy"><h2>secure your vaults.</h2><p>Put your savings on autopilot. Watch your targets grow effortlessly day by day.</p></div>
+            <div class="act">
+              <button type="button" class="cta" id="start">Get Started</button>
+              <button type="button" class="link" id="sample">or look around with sample data</button>
+            </div>
+          </section>
+
+        </div>
+        <div class="dots" id="dots" role="tablist" aria-label="Screens">
+          <button type="button" aria-label="Screen 1" aria-current="true"></button>
+          <button type="button" aria-label="Screen 2"></button>
+          <button type="button" aria-label="Screen 3"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="col">
+      <span class="cap">After "look around with sample data"</span>
+      <div class="mini">
+        <div class="banner"><span><b>Sample data.</b> Invented payments, nothing here is yours.</span><button type="button" tabindex="-1">Use my own</button></div>
+        <div class="hero">
+          <div class="ringbox">
+            <svg viewBox="0 0 150 150" aria-hidden="true"><defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient></defs>
+              <circle cx="75" cy="75" r="64" fill="none" stroke="var(--track)" stroke-width="11"/>
+              <circle cx="75" cy="75" r="64" fill="none" stroke="url(#hg)" stroke-width="11" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="150" transform="rotate(-90 75 75)"/></svg>
+            <div class="n">€ 842</div>
+          </div>
+          <div class="sent">free to spend, with <i>€ 640</i> of fixed items still to come.</div>
+        </div>
+        <div class="sheet">
+          <p><b>One tap in, one tap out.</b> Everything is filled with invented payments, fixed items, a forecast and a savings goal.</p>
+          <p><b>Always marked.</b> The banner stays on every screen until the user leaves sample mode.</p>
+          <p><b>Nothing mixes.</b> "Use my own" removes the sample data in one go and goes to the first statement.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <p class="note">Shown here: the pasted words exactly, including "intelligent caps", "autopilot" and "secure your vaults". The app's menu uses naming set C (today, ahead, fixed, saving, add), so "vaults" is a marketing word on these screens only. Say so if you want it to match.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const root = document.documentElement;
+  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
+  const ease = "cubic-bezier(.3,.8,.3,1)";
+  const money = (n) => "€ " + Math.round(n).toLocaleString("en-NL").replace(/,/g, ".");
+
+  // ----- look (dark as pasted, or the app's light dawn) -----
+  const setLook = (l) => { root.dataset.look = l; $$("[data-look-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lookBtn === l))); };
+  setLook("dark");
+  $$("[data-look-btn]").forEach((b) => b.addEventListener("click", () => setLook(b.dataset.lookBtn)));
+
+  // ----- helpers -----
+  function count(el, to, dur, delay, fmt) {
+    if (reduce) { el.textContent = fmt(to); return; }
+    const t0 = performance.now() + delay;
+    const f = (now) => { const p = Math.min(1, Math.max(0, (now - t0) / dur)), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(to * e); if (p < 1) requestAnimationFrame(f); };
+    el.textContent = fmt(0); requestAnimationFrame(f);
+  }
+  const dashDraw = (el, delay, dur) => { const L = el.getTotalLength(); el.style.strokeDasharray = `${L} ${L}`; if (reduce) { el.style.strokeDashoffset = 0; return; }
+    A(el, [{ strokeDashoffset: L }, { strokeDashoffset: 0 }], { delay, duration: dur, easing: ease }); };
+  const growX = (el, to, delay, dur) => { el.style.transform = `scaleX(${to})`; if (reduce) return; A(el, [{ transform: "scaleX(0)" }, { transform: `scaleX(${to})` }], { delay, duration: dur, easing: ease }); };
+
+  // ----- screen 1: the aq assembles, then breathes -----
+  function enter1() {
+    const mono = $("#mono"), rings = [$("#ra"), $("#rq")], stems = [$("#sa"), $("#sq")];
+    rings.forEach((r, i) => dashDraw(r, i * 140, 700));
+    stems.forEach((s, i) => { s.style.transformBox = "fill-box"; s.style.transformOrigin = "50% 0%"; if (!reduce) A(s, [{ transform: "scaleY(0)", opacity: 0 }, { transform: "scaleY(1)", opacity: 1 }], { delay: 600 + i * 140, duration: 420, easing: ease }); });
+    if (reduce) return;
+    A(mono, [{ transform: "scale(1)" }, { transform: "scale(1.09)", offset: .5 }, { transform: "scale(1)" }], { delay: 1250, duration: 600, easing: "ease-in-out" });
+    A(mono, [{ transform: "scale(1)" }, { transform: "scale(1.025)" }, { transform: "scale(1)" }], { delay: 2000, duration: 3200, iterations: Infinity, easing: "ease-in-out" });
+    A($("#glow"), [{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "scale(1)" }], { duration: 1200, easing: ease });
+    A($("#glow"), [{ transform: "scale(1)" }, { transform: "scale(1.12)" }, { transform: "scale(1)" }], { delay: 1200, duration: 3200, iterations: Infinity, easing: "ease-in-out" });
+    $$(".ripple").forEach((r, i) => A(r, [{ transform: "scale(.7)", opacity: .55 }, { transform: "scale(2.1)", opacity: 0 }], { delay: 1300 + i * 1100, duration: 3300, iterations: Infinity, easing: "ease-out" }));
+  }
+
+  // ----- screen 2: balance grows, line draws, caps fill -----
+  function enter2() {
+    count($("#bal"), 2480, 1100, 100, money);
+    dashDraw($("#line"), 150, 1300);
+    if (!reduce) { A($("#area"), [{ opacity: 0 }, { opacity: 1 }], { delay: 900, duration: 600 }); A($("#dot"), [{ opacity: 0, transform: "scale(0)" }, { opacity: 1, transform: "scale(1)" }], { delay: 1350, duration: 300, easing: ease }); }
+    $("#dot").style.transformBox = "fill-box"; $("#dot").style.transformOrigin = "center";
+    growX($("#c1"), .8, 500, 1100); count($("#c1t"), 120, 1100, 500, (v) => `${money(v)} of € 150`);
+    growX($("#c2"), .475, 650, 1100); count($("#c2t"), 95, 1100, 650, (v) => `${money(v)} of € 200`);
+  }
+
+  // ----- screen 3: the vault fills, unlocks, reaches 100% -----
+  function enter3() {
+    const ring = $("#vring"), L = ring.getTotalLength();
+    ring.style.strokeDasharray = `${L} ${L}`;
+    count($("#vnum"), 100, 2200, 200, (v) => Math.round(v) + "%");
+    if (reduce) { ring.style.strokeDashoffset = 0; $("#vglow").style.opacity = 1; $("#shackle").style.transform = "rotate(35deg) translate(8px,-6px)"; return; }
+    A(ring, [{ strokeDashoffset: L }, { strokeDashoffset: 0 }], { delay: 200, duration: 2200, easing: "cubic-bezier(.45,.05,.2,1)" });
+    A($("#shackle"), [{ transform: "rotate(0deg) translate(0,0)" }, { transform: "rotate(0deg) translate(0,0)", offset: .55 }, { transform: "rotate(38deg) translate(10px,-8px)" }], { delay: 200, duration: 2200, easing: ease });
+    A($("#lock"), [{ transform: "scale(1)" }, { transform: "scale(1)", offset: .6 }, { transform: "scale(1.07)", offset: .85 }, { transform: "scale(1)" }], { delay: 200, duration: 2200, easing: "ease-in-out" });
+    $("#lock").style.transformBox = "fill-box"; $("#lock").style.transformOrigin = "center";
+    A($("#vglow"), [{ opacity: 0, transform: "scale(.7)" }, { opacity: 0, offset: .6 }, { opacity: 1, transform: "scale(1)" }], { delay: 200, duration: 2400, easing: ease });
+  }
+
+  const enters = [enter1, enter2, enter3];
+  let cur = 0, anims = [];
+  function reset(i) { const s = $$(".screen")[i]; s.getAnimations({ subtree: true }).forEach((a) => a.cancel()); $$("[style*=stroke-dash]", s).forEach((e) => { e.style.strokeDasharray = ""; e.style.strokeDashoffset = ""; }); }
+  function go(i) {
+    i = Math.max(0, Math.min(2, i));
+    $("#track").style.transform = `translateX(${-i * 100}%)`;
+    $$("#dots button").forEach((b, k) => b.setAttribute("aria-current", String(k === i)));
+    $("#skip").hidden = i === 2;
+    if (i !== cur) reset(cur);
+    cur = i; reset(i); enters[i]();
+  }
+  $("#replay").addEventListener("click", () => go(cur));
+  $$("#dots button").forEach((b, k) => b.addEventListener("click", () => go(k)));
+  $("#skip").addEventListener("click", () => go(2));
+  $("#phone").addEventListener("keydown", (e) => { if (e.key === "ArrowRight") go(cur + 1); if (e.key === "ArrowLeft") go(cur - 1); });
+  $("#start").addEventListener("click", () => { $("#start").textContent = "Next: create your account"; });
+  $("#sample").addEventListener("click", () => { $("#sample").textContent = "(opens the app with sample data, see the right)"; });
+
+  // swipe (pointer events: touch, pen and mouse)
+  let x0 = null, dx = 0; const track = $("#track");
+  track.addEventListener("pointerdown", (e) => { if (e.target.closest("button")) return; x0 = e.clientX; dx = 0; track.setPointerCapture(e.pointerId); track.style.transition = "none"; });
+  track.addEventListener("pointermove", (e) => { if (x0 === null) return; dx = e.clientX - x0; track.style.transform = `translateX(calc(${-cur * 100}% + ${dx}px))`; });
+  const end = () => { if (x0 === null) return; track.style.transition = ""; const moved = dx; x0 = null; go(Math.abs(moved) > 50 ? cur + (moved < 0 ? 1 : -1) : cur); };
+  track.addEventListener("pointerup", end); track.addEventListener("pointercancel", end);
+
+  // start
+  go(0);
+  const io = new IntersectionObserver((en) => { if (en[0].isIntersecting) { go(0); io.disconnect(); } }, { threshold: .4 });
+  io.observe($("#phone"));
+})();
+</script>
+</body>
+</html>

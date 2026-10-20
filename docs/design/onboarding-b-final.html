@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arnaq onboarding B, with the ring</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Colours from src/design/tokens.ts. Electric blue = first colour of the logo gradient. No CSS filter on any SVG element. */
+:root {
+  --page:#0b0f17; --page2:#141b28; --ink:#eef1f5; --muted:#a8b1bf; --hair:rgba(255,255,255,.10); --track:rgba(255,255,255,.09);
+  --glass:rgba(255,255,255,.06); --glassb:rgba(255,255,255,.12); --phone:#0f141d; --phoneb:rgba(255,255,255,.14);
+  --blue:#33c6ff; --purple:#7f8cff; --cta-ink:#06121c; --good:#5ee0a0; --shadow:0 30px 70px -30px rgba(0,0,0,.9);
+  --b1:#12304f; --b2:#2a2f6e; --b3:#0f141d; --b2a:#103a44; --b3a:#0f1f2e;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+}
+[data-look="light"] {
+  --page:#d9e5f5; --page2:#f1e6dd; --ink:#17202e; --muted:#4a5568; --hair:rgba(23,32,46,.12); --track:rgba(23,32,46,.10);
+  --glass:rgba(255,255,255,.66); --glassb:rgba(255,255,255,.9); --phone:#eef1f6; --phoneb:rgba(23,32,46,.14);
+  --good:#17714a; --shadow:0 30px 60px -34px rgba(30,45,80,.55);
+  --b1:#cfe3fb; --b2:#e3d9f7; --b3:#f6e8d8; --b2a:#d4f0e6; --b3a:#e9eefb;
+}
+* { box-sizing:border-box; }
+html { background:var(--page); }
+body { margin:0; color:var(--ink); min-height:100vh; font:15px/1.45 var(--sans); padding:28px 16px 72px; background:linear-gradient(180deg,var(--page),var(--page2)) fixed; }
+[data-look="light"] body { background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8) fixed; }
+main { max-width:1000px; margin:0 auto; display:grid; gap:26px; }
+h1 { font:500 clamp(26px,5vw,38px)/1.1 var(--serif); margin:0; text-wrap:balance; }
+h2 { font:500 22px/1.2 var(--serif); margin:0; }
+.lead,.note { color:var(--muted); max-width:70ch; margin:6px 0 0; }
+.note { font-size:13px; }
+.bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.seg { display:inline-flex; border:1px solid var(--hair); border-radius:99px; padding:3px; background:var(--glass); flex-wrap:wrap; }
+.seg button, .btn { font:inherit; font-size:13px; color:var(--muted); background:none; border:0; border-radius:99px; padding:6px 14px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--ink); color:var(--page); }
+.btn { border:1px solid var(--hair); background:var(--glass); color:var(--ink); }
+.seg button:focus-visible,.btn:focus-visible,.cta:focus-visible,.ghostbtn:focus-visible,.skip:focus-visible,.tabs button:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.layout { display:grid; grid-template-columns:minmax(0,auto) minmax(0,1fr); gap:40px; align-items:start; justify-content:center; }
+@media (max-width:860px) { .layout { grid-template-columns:minmax(0,1fr); justify-items:center; } }
+.cap { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+.panel { display:grid; gap:14px; max-width:430px; }
+.panel .card { border:1px solid var(--glassb); background:var(--glass); border-radius:18px; padding:14px 16px; display:grid; gap:6px; font-size:14px; }
+.panel .card b { font-weight:600; }
+.panel .m { color:var(--muted); }
+table { border-collapse:collapse; width:100%; font-size:13px; }
+td,th { text-align:left; padding:6px 8px; border-bottom:1px solid var(--hair); vertical-align:top; }
+th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.old { color:var(--muted); text-decoration:line-through; text-decoration-color:rgba(200,80,80,.6); }
+
+/* ---------- the phone ---------- */
+.phone { position:relative; width:min(360px,calc(100vw - 32px)); height:720px; border-radius:46px; background:var(--phone); border:1px solid var(--phoneb); box-shadow:var(--shadow); overflow:hidden; isolation:isolate; }
+.track { display:flex; height:100%; width:100%; transition:transform .55s cubic-bezier(.3,.8,.3,1); touch-action:pan-y; }
+.screen { flex:none; width:100%; height:100%; position:relative; padding:0 24px; display:grid; grid-template-rows:auto 1fr auto; }
+.bg { position:absolute; inset:0; z-index:-1; }
+.s1 .bg { background:linear-gradient(165deg,var(--b1),var(--b2) 55%,var(--b3)); }
+.s2 .bg { background:linear-gradient(165deg,var(--b2a),var(--b1) 60%,var(--b3a)); }
+.s3 .bg { background:linear-gradient(165deg,var(--b3a),var(--b2) 55%,var(--b1)); }
+.head { padding-top:66px; display:grid; gap:12px; }
+.head h2 { margin:0; font:400 52px/.98 var(--serif); letter-spacing:-.02em; }
+.head p { margin:0; color:var(--muted); font-size:15px; max-width:31ch; }
+.stage { position:relative; display:grid; place-items:center; align-content:center; justify-items:center; transition:transform .55s cubic-bezier(.3,.8,.3,1); }
+.foot { display:grid; gap:10px; padding:10px 0 50px; }
+.pager { position:absolute; left:24px; top:26px; z-index:4; font:500 12px var(--sans); letter-spacing:.08em; color:var(--muted); font-variant-numeric:tabular-nums; }
+.skip { position:absolute; top:22px; right:22px; z-index:4; font:inherit; font-size:14px; color:var(--muted); background:none; border:0; cursor:pointer; padding:6px 4px; }
+.skip[hidden] { display:none; }
+.tabs { position:absolute; left:0; right:0; bottom:18px; display:flex; justify-content:center; gap:8px; z-index:4; }
+.tabs button { width:7px; height:7px; border-radius:99px; border:0; padding:0; background:var(--track); cursor:pointer; transition:width .3s, background .3s; }
+.tabs button[aria-current="true"] { width:22px; background:var(--blue); }
+.cta { font:600 16px/1 var(--sans); color:var(--cta-ink); background:var(--blue); border:0; border-radius:99px; padding:16px 20px; cursor:pointer; width:100%; box-shadow:0 10px 28px -10px rgba(51,198,255,.7); }
+.ghostbtn { font:500 15px/1 var(--sans); color:var(--ink); background:var(--glass); border:1px solid var(--glassb); border-radius:99px; padding:14px 20px; cursor:pointer; width:100%; }
+.chip { display:inline-flex; gap:6px; align-items:center; font-size:12px; padding:4px 11px; border-radius:99px; background:var(--glass); border:1px solid var(--glassb); color:var(--muted); width:max-content; }
+.glow { position:absolute; border-radius:50%; background:radial-gradient(circle, rgba(51,198,255,.40), rgba(127,140,255,.20) 45%, transparent 70%); pointer-events:none; }
+.ripple { position:absolute; border-radius:50%; border:1.5px solid rgba(127,200,255,.5); opacity:0; pointer-events:none; }
+.meter { height:8px; border-radius:99px; background:var(--track); overflow:hidden; }
+.meter b { display:block; height:100%; width:100%; transform-origin:left; border-radius:99px; background:linear-gradient(90deg,var(--blue),var(--purple)); }
+.meter b.warn { background:linear-gradient(90deg,#f9d39e,#e98859); }
+.lab { font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.num { font:600 34px/1 var(--sans); letter-spacing:-.035em; font-variant-numeric:tabular-nums; }
+.row { display:grid; gap:6px; }
+.row .top { display:flex; justify-content:space-between; font-size:13px; font-variant-numeric:tabular-nums; }
+.row .top span:last-child { color:var(--muted); }
+.ring { position:relative; width:232px; height:232px; display:grid; place-items:center; margin:0 auto; flex:none; }
+.ring svg { position:absolute; inset:0; }
+.ring .in { position:relative; display:grid; place-items:center; text-align:center; }
+.ring .in .lab { position:absolute; bottom:calc(100% + 4px); white-space:nowrap; }
+.card2 { width:100%; border-radius:22px; background:var(--glass); border:1px solid var(--glassb); padding:18px 18px; display:grid; gap:16px; backdrop-filter:blur(10px); box-shadow:0 18px 34px -22px rgba(0,0,0,.6); }
+.coins { position:relative; width:260px; height:290px; display:grid; place-items:center; }
+.dial { position:absolute; top:0; width:200px; height:200px; }
+.goal { position:absolute; bottom:0; width:100%; border-radius:22px; background:var(--glass); border:1px solid var(--glassb); padding:16px; display:grid; gap:10px; backdrop-filter:blur(10px); }
+.tick { position:absolute; right:14px; top:14px; width:26px; height:26px; border-radius:50%; background:var(--good); display:grid; place-items:center; color:#06121c; font-weight:700; font-size:14px; }
+@media (prefers-reduced-motion: reduce) { .track, .stage { transition:none; } }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Onboarding B, your words</h1>
+    <p class="lead">Your three screens, exactly as you wrote them. The a and q now sit close together like in the app icon, the ring on screen 2 is centred, and the empty strip at the bottom is gone.</p>
+  </header>
+
+  <div class="bar">
+    <span class="seg" role="group" aria-label="Look"><button type="button" data-look-btn="dark" aria-pressed="true">dark</button><button type="button" data-look-btn="light" aria-pressed="false">light</button></span>
+        <button type="button" class="btn" id="replay">replay</button>
+  </div>
+
+  <div class="layout">
+    <div style="display:grid;gap:12px;justify-items:center">
+      <span class="cap">Variation B</span>
+      <div class="phone" id="pb" tabindex="0" role="region" aria-roledescription="carousel" aria-label="Onboarding">
+        <button type="button" class="skip" data-skip>Skip</button>
+        <span class="pager" data-pager>01 / 03</span>
+        <div class="track">
+
+          <section class="screen s1" aria-label="1 of 3">
+            <div class="bg"></div>
+            <div class="head"><h2 data-c="h1"></h2><p data-c="p1"></p></div>
+            <div class="stage" data-stage>
+              <div class="glow" style="width:320px;height:320px" data-glow></div>
+              <div class="ripple" style="width:190px;height:190px"></div><div class="ripple" style="width:190px;height:190px"></div>
+              <svg class="mono" data-mono width="262" viewBox="-6 -6 133 90" role="img" aria-label="arnaq" style="position:relative;overflow:visible"><g fill="none" stroke="url(#ga2)" stroke-width="16" stroke-linecap="round">
+                  <g data-la><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
+                  <g data-lq><circle cx="92.5" cy="28.5" r="20.5"/><line x1="113" y1="8" x2="113" y2="70"/></g></g></svg>
+            </div>
+            <div class="foot" style="padding-bottom:40px"><div class="chip" data-c="chip1"></div></div>
+          </section>
+
+          <section class="screen s2" aria-label="2 of 3">
+            <div class="bg"></div>
+            <div class="head"><h2 data-c="h2"></h2><p data-c="p2"></p></div>
+            <div class="stage" data-stage style="gap:26px">
+              <div class="ring" data-ringbox>
+                <svg viewBox="0 0 204 204" aria-hidden="true"><circle cx="102" cy="102" r="95" fill="none" stroke="var(--track)" stroke-width="10"/><circle data-ring cx="102" cy="102" r="95" fill="none" stroke="url(#ga)" stroke-width="10" stroke-linecap="round" transform="rotate(-90 102 102)"/></svg>
+                <div class="in"><span class="lab" data-c="lab2"></span><span class="num" data-n style="font-size:34px">€ 0</span></div>
+              </div>
+              <div class="card2" data-card2>
+                <div class="row"><div class="top"><span data-c="cap1"></span><span data-t1>€ 0 of € 150</span></div><div class="meter"><b data-m1 class="warn"></b></div></div>
+                <div class="row"><div class="top"><span data-c="cap2"></span><span data-t2>€ 0 of € 200</span></div><div class="meter"><b data-m2></b></div></div>
+              </div>
+            </div>
+            <div class="foot" style="padding:0 0 30px"></div>
+          </section>
+
+          <section class="screen s3" aria-label="3 of 3">
+            <div class="bg"></div>
+            <div class="head"><h2 data-c="h3"></h2><p data-c="p3"></p></div>
+            <div class="stage" data-stage>
+              <div class="glow" style="width:320px;height:320px;opacity:0" data-vglow></div>
+              <div class="coins">
+                <svg class="dial" data-dial viewBox="0 0 200 200" aria-hidden="true"><circle cx="100" cy="100" r="92" fill="var(--glass)" stroke="var(--glassb)" stroke-width="2"/><circle cx="100" cy="100" r="64" fill="none" stroke="var(--track)" stroke-width="2"/><g data-ticks></g><circle cx="100" cy="100" r="14" fill="url(#gb)"/></svg>
+                <div class="goal" data-goal>
+                  <span class="tick" data-tick style="opacity:0">✓</span>
+                  <div><div class="lab" data-c="goal"></div><div class="num" data-n style="font-size:26px">0%</div></div>
+                  <div class="meter"><b data-m1></b></div>
+                  <span style="font-size:12.5px;color:var(--muted)" data-t1>€ 0 of € 1.800</span>
+                </div>
+              </div>
+            </div>
+            <div class="foot"><button type="button" class="cta" data-start>Get Started</button><button type="button" class="ghostbtn" data-sample>Try it with sample data</button></div>
+          </section>
+        </div>
+        <div class="tabs" data-tabs role="tablist" aria-label="Screens"><button type="button" aria-label="Screen 1" aria-current="true"></button><button type="button" aria-label="Screen 2"></button><button type="button" aria-label="Screen 3"></button></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="cap">What changed in this round</span>
+      <div class="card"><b>Screen 1</b><span class="m">The a and q are one monogram again, with the same small gap as the app icon. They still fly in from the sides and meet.</span></div>
+      <div class="card"><b>Screen 2</b><span class="m">The ring is a single centred block and a little larger. Its number is exactly in the middle of the ring and the ring in the middle of the phone.</span></div>
+      <div class="card"><b>Bottom of screens 1 and 2</b><span class="m">The empty strip is gone. Only the dots remain, and the content uses the space.</span></div>
+      <div class="card"><b>Words</b><span class="m">Exactly yours. Two small labels I added are true to the app: "no bank login needed" on screen 1, and "goal · japan trip" on screen 3.</span></div>
+    </div>
+  </div>
+
+  <svg width="2" height="2" style="position:absolute;left:0;top:0;overflow:hidden;pointer-events:none" aria-hidden="true" focusable="false"><defs>
+    <linearGradient id="ga" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>
+    <linearGradient id="ga2" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="121" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>
+    <linearGradient id="gb" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#5f9bff"/></linearGradient>
+    <linearGradient id="gb2" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#6d96ff"/><stop offset="1" stop-color="#9a7bff"/></linearGradient>
+  </defs></svg>
+</main>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const root = document.documentElement;
+  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
+  const ease = "cubic-bezier(.3,.8,.3,1)";
+  const money = (n) => "€ " + Math.round(n).toLocaleString("nl-NL");
+
+  // ----- copy sets: every sentence is something the app really does -----
+  const COPY = {
+    1: { h1: "track effortlessly.", p1: "Say goodbye to messy spreadsheets. Streamline your money in one clean space.", chip1: "no bank login needed",
+         h2: "see what's left.", p2: "See where your money goes and set spending budgets that keep you on track.", lab2: "free to spend", cap1: "dining budget", cap2: "shopping budget",
+         h3: "secure your goals.", p3: "Set a savings goal and watch it grow with every statement you add.", goal: "goal · japan trip" },
+  };
+  let copyKey = "1";
+  const applyCopy = () => { $$("[data-c]").forEach((el) => { el.textContent = COPY[copyKey][el.dataset.c]; }); $$("[data-copy-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.copyBtn === copyKey))); };
+  $$("[data-copy-btn]").forEach((b) => b.addEventListener("click", () => { copyKey = b.dataset.copyBtn; applyCopy(); }));
+  applyCopy();
+
+  const setLook = (l) => { root.dataset.look = l; $$("[data-look-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lookBtn === l))); };
+  setLook("dark");
+  $$("[data-look-btn]").forEach((b) => b.addEventListener("click", () => setLook(b.dataset.lookBtn)));
+
+  function count(el, to, dur, delay, fmt) {
+    if (!el) return; if (reduce) { el.textContent = fmt(to); return; }
+    const t0 = performance.now() + delay;
+    const f = (now) => { const p = Math.min(1, Math.max(0, (now - t0) / dur)), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(to * e); if (p < 1) requestAnimationFrame(f); };
+    el.textContent = fmt(0); requestAnimationFrame(f);
+  }
+  const dash = (el, to, delay, dur) => { const L = el.getTotalLength(); el.style.strokeDasharray = `${L} ${L}`; el.style.strokeDashoffset = L * (1 - to);
+    if (!reduce) A(el, [{ strokeDashoffset: L }, { strokeDashoffset: L * (1 - to) }], { delay, duration: dur, easing: "cubic-bezier(.45,.05,.2,1)" }); };
+  const meter = (el, to, delay, dur) => { el.style.transform = `scaleX(${to})`; if (!reduce) A(el, [{ transform: "scaleX(0)" }, { transform: `scaleX(${to})` }], { delay, duration: dur, easing: ease }); };
+  const rise = (el, delay, from = 28) => { if (!reduce) A(el, [{ opacity: 0, transform: `translateY(${from}px)` }, { opacity: 1, transform: "translateY(0)" }], { delay, duration: 700, easing: ease }); };
+  const breathe = (el, t0, k = 1.03) => { if (!reduce) A(el, [{ transform: "scale(1)" }, { transform: `scale(${k})` }, { transform: "scale(1)" }], { delay: t0, duration: 3200, iterations: Infinity, easing: "ease-in-out" }); };
+
+  const pb = $("#pb");
+  const ticks = $("[data-ticks]", pb);
+  for (let i = 0; i < 24; i++) { const a = (i / 24) * Math.PI * 2, r1 = i % 6 === 0 ? 74 : 80, r2 = 88, l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    l.setAttribute("x1", 100 + r1 * Math.cos(a)); l.setAttribute("y1", 100 + r1 * Math.sin(a)); l.setAttribute("x2", 100 + r2 * Math.cos(a)); l.setAttribute("y2", 100 + r2 * Math.sin(a));
+    l.setAttribute("stroke", "var(--muted)"); l.setAttribute("stroke-width", i % 6 === 0 ? 3 : 1.5); l.setAttribute("stroke-linecap", "round"); ticks.appendChild(l); }
+
+  const enters = [
+    (s) => { const la = $("[data-la]", s), lq = $("[data-lq]", s);
+      if (!reduce) { [la, lq].forEach((g) => { g.style.transformBox = "fill-box"; g.style.transformOrigin = "center"; });
+        A(la, [{ transform: "translateX(-70px) rotate(-200deg)", opacity: 0 }, { transform: "translateX(0) rotate(0)", opacity: 1 }], { duration: 1100, easing: ease }); A(lq, [{ transform: "translateX(70px) rotate(200deg)", opacity: 0 }, { transform: "translateX(0) rotate(0)", opacity: 1 }], { duration: 1100, easing: ease });
+        const row = $("[data-mono]", s); A(row, [{ transform: "scale(1)" }, { transform: "scale(1.1)", offset: .5 }, { transform: "scale(1)" }], { delay: 1100, duration: 600, easing: "ease-in-out" }); breathe(row, 1800);
+        const g = $("[data-glow]", s); A(g, [{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "scale(1)" }], { delay: 400, duration: 1200, easing: ease }); breathe(g, 1600, 1.12);
+        $$(".ripple", s).forEach((r, i) => A(r, [{ transform: "scale(.7)", opacity: .5 }, { transform: "scale(2.2)", opacity: 0 }], { delay: 1200 + i * 1200, duration: 3400, iterations: Infinity, easing: "ease-out" })); }
+      rise($(".foot", s), 900, 14); },
+    (s) => { dash($("[data-ring]", s), .68, 150, 1500); count($("[data-n]", s), 842, 1300, 150, money); rise($("[data-card2]", s), 350, 40);
+      meter($("[data-m1]", s), .8, 800, 1100); count($("[data-t1]", s), 120, 1100, 800, (v) => `${money(v)} of € 150`);
+      meter($("[data-m2]", s), .475, 950, 1100); count($("[data-t2]", s), 95, 1100, 950, (v) => `${money(v)} of € 200`);
+      const rb = $("[data-ringbox]", s); if (!reduce) A(rb, [{ transform: "scale(.9)", opacity: 0 }, { transform: "scale(1)", opacity: 1 }], { duration: 800, easing: ease }); },
+    (s) => { const d = $("[data-dial]", s), g = $("[data-goal]", s), tk = $("[data-tick]", s), gl = $("[data-vglow]", s);
+      if (reduce) { d.style.opacity = .35; tk.style.opacity = 1; gl.style.opacity = 1; } else {
+        A(d, [{ transform: "rotate(0deg) scale(.85)", opacity: 0 }, { transform: "rotate(260deg) scale(1)", opacity: 1, offset: .55 }, { transform: "rotate(360deg) scale(1)", opacity: .35 }], { duration: 2000, easing: "cubic-bezier(.45,.05,.2,1)" });
+        A(g, [{ opacity: 0, transform: "translateY(60px)" }, { opacity: 0, transform: "translateY(60px)", offset: .4 }, { opacity: 1, transform: "translateY(0)" }], { duration: 1500, easing: ease });
+        A(tk, [{ opacity: 0, transform: "scale(0)" }, { opacity: 0, transform: "scale(0)", offset: .85 }, { opacity: 1, transform: "scale(1.25)", offset: .93 }, { opacity: 1, transform: "scale(1)" }], { delay: 1200, duration: 1500, easing: "ease-out" });
+        A(gl, [{ opacity: 0 }, { opacity: 0, offset: .6 }, { opacity: 1 }], { delay: 600, duration: 2300 }); }
+      meter($("[data-m1]", s), 1, 900, 1700); count($("[data-n]", s), 100, 1700, 900, (v) => Math.round(v) + "%"); count($("[data-t1]", s), 1800, 1700, 900, (v) => `${money(v)} of € 1.800`); },
+  ];
+
+  const track = $(".track", pb), screens = $$(".screen", pb), stages = $$("[data-stage]", pb); let cur = 0;
+  const reset = (i) => { screens[i].getAnimations({ subtree: true }).forEach((a) => a.cancel()); $$("[style*=stroke-dash]", screens[i]).forEach((e) => { e.style.strokeDasharray = ""; e.style.strokeDashoffset = ""; }); };
+  function go(i) {
+    i = Math.max(0, Math.min(2, i)); track.style.transform = `translateX(${-i * 100}%)`;
+    if (i !== cur) reset(cur); cur = i; reset(i); enters[i](screens[i]);
+    $("[data-pager]", pb).textContent = `0${i + 1} / 03`; $$("[data-tabs] button", pb).forEach((b, k) => b.setAttribute("aria-current", String(k === i)));
+    stages.forEach((st, k) => { st.style.transform = `translateX(${(k - i) * 60}px)`; }); $("[data-skip]", pb).hidden = i === 2;
+  }
+  $$("[data-tabs] button", pb).forEach((b, k) => b.addEventListener("click", () => go(k)));
+  $("[data-skip]", pb).addEventListener("click", () => go(2));
+  pb.addEventListener("keydown", (e) => { if (e.key === "ArrowRight") go(cur + 1); if (e.key === "ArrowLeft") go(cur - 1); });
+  let x0 = null, dx = 0;
+  track.addEventListener("pointerdown", (e) => { if (e.target.closest("button")) return; x0 = e.clientX; dx = 0; track.setPointerCapture(e.pointerId); track.style.transition = "none"; });
+  track.addEventListener("pointermove", (e) => { if (x0 === null) return; dx = e.clientX - x0; track.style.transform = `translateX(calc(${-cur * 100}% + ${dx}px))`; });
+  const end = () => { if (x0 === null) return; track.style.transition = ""; const m = dx; x0 = null; go(Math.abs(m) > 50 ? cur + (m < 0 ? 1 : -1) : cur); };
+  track.addEventListener("pointerup", end); track.addEventListener("pointercancel", end);
+  $("[data-start]", pb).addEventListener("click", (e) => { e.target.textContent = "Next: create your account"; });
+  $("[data-sample]", pb).addEventListener("click", (e) => { e.target.textContent = "(opens the app with sample data)"; });
+  $("#replay").addEventListener("click", () => go(cur));
+  go(0);
+  let touched = false; $$("button", pb).forEach((b) => b.addEventListener("click", () => { touched = true; })); pb.addEventListener("pointerdown", () => { touched = true; });
+  const io = new IntersectionObserver((en) => { if (en[0].isIntersecting) { if (!touched) go(0); io.disconnect(); } }, { threshold: .4 });
+  io.observe(pb);
+})();
+</script>
+</body>
+</html>
