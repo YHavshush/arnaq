@@ -9,8 +9,16 @@ import { ForecastError } from "@/lib/forecast/errors";
 import { ImportError } from "@/lib/import/service";
 import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { RecurringError } from "@/lib/recurring/errors";
+import { SavingsError } from "@/lib/savings/settings";
 
-const DOMAIN_ERRORS = [BudgetError, CategoriseError, ForecastError, ImportError, RecurringError];
+const DOMAIN_ERRORS = [
+  BudgetError,
+  CategoriseError,
+  ForecastError,
+  ImportError,
+  RecurringError,
+  SavingsError,
+];
 
 /**
  * Postgres reports integrity violations (foreign key, unique, not null, check) as SQLSTATE class

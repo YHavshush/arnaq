@@ -4,6 +4,7 @@ import { schema, type Db } from "@/db";
 import { getDailySpend, getMonthOverview, getOtherIncome } from "@/lib/budget/overview";
 import { getNeedsReview } from "@/lib/categories/categorise";
 import { listTransfers } from "@/lib/categories/transfers";
+import { getSavingsSummary } from "@/lib/savings/summary";
 import { getForecast } from "@/lib/forecast/forecast";
 import { addMonths } from "@/lib/recurring/dates";
 import { getAutomatic } from "@/lib/smart/review";
@@ -29,14 +30,15 @@ export function parseHorizon(raw: string | string[] | undefined): number {
 }
 
 export async function loadOverzicht(db: Db, month: string, today: string, locale: Locale) {
-  const [overview, occurrences, daily, otherIncome] = await Promise.all([
+  const [overview, occurrences, daily, otherIncome, savings] = await Promise.all([
     getMonthOverview(db, month),
     getOccurrences(db, { from: month, to: month }),
     getDailySpend(db, month),
     getOtherIncome(db, month),
+    getSavingsSummary(db, { today, month }),
   ]);
   return {
-    ...buildOverzicht({ overview, occurrences, today, locale, daily, otherIncome }),
+    ...buildOverzicht({ overview, occurrences, today, locale, daily, otherIncome, savings }),
     prev: addMonths(month, -1),
     next: addMonths(month, 1),
   };

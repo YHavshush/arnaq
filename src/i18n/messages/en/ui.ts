@@ -298,6 +298,20 @@ export const ui = {
       "Keep a copy of everything Kasboek knows about you. The backup is one file you store yourself; the list of transactions fits in a spreadsheet.",
     backupFull: "Full backup (JSON)",
     backupCsv: "Transactions (CSV)",
+    appearance: "Language and theme",
+    savings: {
+      title: "Savings goal",
+      intro:
+        "Money you put into savings counts towards your goal, and money you take out of savings counts against it. Mark those lines as Savings when you sort them.",
+      goalLabel: "Savings goal (€)",
+      goalHint: "The total you want to have saved. Leave empty for no goal.",
+      goalPlaceholder: "5000",
+      startLabel: "Already saved before your first upload (€)",
+      startHint: "Your progress starts from this amount. Leave empty if you started from zero.",
+      save: "Save",
+      saved: "Saved",
+      errAmount: "Enter an amount, for example 1250 or 1250.50.",
+    },
     rules: "Sorting rules",
     rulesAside: (n: number) => `${n} rules`,
     smart: {

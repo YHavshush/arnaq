@@ -1,9 +1,10 @@
 import { eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { wipeMyData } from "@/lib/account";
-import { seedDefaults } from "@/lib/categories/seed";
+import { ensureSavingsCategory, seedDefaults } from "@/lib/categories/seed";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/defaults";
 import { EXPORT_VERSION } from "@/lib/export";
+import { SavingsError, setSavingsSettings } from "@/lib/savings/settings";
 
 export class RestoreError extends Error {}
 
@@ -65,7 +66,7 @@ async function insertMapped(
  * Replace what the current person has with the contents of a backup made by "Full backup" (version 1 or
  * 2). All ids are renumbered; links between rows (a payment and its fixed cost, a transaction and its
  * category) are kept. The smart-sorting settings and consent are not restored: those are a choice to make
- * again. Runs in one transaction (the caller's), so a broken file changes nothing.
+ * again. The savings goal and the amount already saved are the person's own, so they are. Runs in one transaction (the caller's), so a broken file changes nothing.
  */
 export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record<string, number>> {
   const b = backup as { app?: unknown; version?: unknown; tables?: unknown } | null;
@@ -249,6 +250,24 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
     ["merchantKey", "categoryId", "source"],
     withRef("categoryId", category, true),
   );
+
+  // The savings goal and starting amount. A hand-edited or damaged value is skipped, not fatal.
+  const settings = rowsOf(t, "userSettings")[0];
+  if (settings) {
+    const cents = (v: unknown) => (typeof v === "number" ? v : undefined);
+    for (const change of [
+      { start: cents(settings.savingsStart) },
+      { goal: settings.savingsGoal === null ? null : cents(settings.savingsGoal) },
+    ]) {
+      try {
+        await setSavingsSettings(db, change);
+      } catch (e) {
+        if (!(e instanceof SavingsError)) throw e;
+      }
+    }
+  }
+  // A backup from before the Savings category existed does not have it.
+  await ensureSavingsCategory(db);
 
   return Object.fromEntries([
     ["accounts", account.size],

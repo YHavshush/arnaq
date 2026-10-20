@@ -5,9 +5,8 @@ import { userDb } from "@/lib/auth/request";
 import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { getNeedsReview } from "@/lib/categories/categorise";
-import { LanguageSwitcher } from "./language-switcher";
 import { Nav } from "./nav";
-import { ThemeSwitcher } from "./theme-switcher";
+import { ThemeFollower } from "./theme-follower";
 
 /** Open items on Upload: transactions that still need a category. Hidden at zero. */
 async function ReviewBadge() {
@@ -35,6 +34,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   const { t } = await getI18n();
   return (
     <div className="@container/app min-h-dvh">
+      <ThemeFollower />
       <a
         href="#main"
         className="bg-accent text-accent-ink sr-only z-40 rounded-full px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -62,8 +62,6 @@ export async function AppShell({ children }: { children: ReactNode }) {
               >
                 <Settings className="size-[18px]" />
               </Link>
-              <LanguageSwitcher />
-              <ThemeSwitcher />
             </div>
           </div>
           <main id="main">{children}</main>

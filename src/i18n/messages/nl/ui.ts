@@ -305,6 +305,20 @@ export const ui: typeof en = {
       "Bewaar een kopie van alles wat Kasboek van je weet. De back-up is één bestand dat je zelf bewaart; de lijst met transacties past in een spreadsheet.",
     backupFull: "Volledige back-up (JSON)",
     backupCsv: "Transacties (CSV)",
+    appearance: "Taal en thema",
+    savings: {
+      title: "Spaardoel",
+      intro:
+        "Geld dat je op sparen zet telt mee voor je doel, en geld dat je van je spaargeld haalt gaat eraf. Zet die regels op Sparen als je ze sorteert.",
+      goalLabel: "Spaardoel (€)",
+      goalHint: "Het totaal dat je gespaard wilt hebben. Laat leeg als je geen doel hebt.",
+      goalPlaceholder: "5000",
+      startLabel: "Al gespaard voor je eerste upload (€)",
+      startHint: "Je voortgang begint bij dit bedrag. Laat leeg als je bij nul begon.",
+      save: "Opslaan",
+      saved: "Opgeslagen",
+      errAmount: "Vul een bedrag in, bijvoorbeeld 1250 of 1250,50.",
+    },
     rules: "Sorteerregels",
     rulesAside: (n: number) => `${n} regels`,
     smart: {

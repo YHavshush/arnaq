@@ -1,5 +1,6 @@
 import type { Mood, Tone } from "@/design/tokens";
 import type { Locale } from "@/i18n/config";
+import type { SavingsSummary } from "@/lib/savings/summary";
 import { messages } from "@/i18n/messages";
 import type { Sentence } from "@/i18n/types";
 import type { IncomeLine, MonthOverview } from "@/lib/budget/overview";
@@ -119,6 +120,8 @@ interface Input {
   daily?: number[];
   /** Money in that is not tied to a fixed income item, see getOtherIncome. */
   otherIncome?: IncomeLine[];
+  /** Money in and out of savings, and the goal, see getSavingsSummary. */
+  savings?: SavingsSummary | null;
 }
 
 function sentenceFor(o: {
@@ -195,9 +198,36 @@ function buildAttention({
   return out.slice(0, 3);
 }
 
-function sparenTile(overview: MonthOverview, locale: Locale): Tile {
+function sparenTile(
+  overview: MonthOverview,
+  locale: Locale,
+  savings?: SavingsSummary | null,
+): Tile {
   const t = messages[locale].view.overzicht.tiles.sparen;
   const { euro } = formatter(locale);
+  const own = { key: "sparen" as const, label: t.label };
+  // Real savings (the Savings category) and the goal come first: a deposit raises the progress, a withdrawal lowers it.
+  if (savings && savings.goal !== null) {
+    const reached = savings.saved >= savings.goal;
+    return {
+      ...own,
+      word: reached ? t.wordReached : t.wordUnderway,
+      sub: t.subOf(euro(savings.saved), euro(savings.goal)),
+      tone: reached ? "good" : "accent",
+    };
+  }
+  if (savings && savings.lines > 0) {
+    if (savings.thisMonth > 0)
+      return { ...own, word: t.wordSaved, sub: t.subMonth(euro(savings.thisMonth)), tone: "good" };
+    if (savings.thisMonth < 0)
+      return {
+        ...own,
+        word: t.wordTaken,
+        sub: t.subMonthTaken(euro(-savings.thisMonth)),
+        tone: "warn",
+      };
+    return { ...own, word: t.wordSaved, sub: t.subTotal(euro(savings.saved)), tone: "accent" };
+  }
   const line = overview.expenses.find((l) => l.slug === SAVINGS_SLUG);
   const actual = line?.actual ?? 0;
   const goal = line?.budget ?? null;
@@ -225,6 +255,7 @@ export function buildOverzicht({
   locale,
   daily = [],
   otherIncome = [],
+  savings = null,
 }: Input): Overzicht {
   const t = messages[locale].view.overzicht;
   const { euro } = formatter(locale);
@@ -317,7 +348,7 @@ export function buildOverzicht({
             : t.tiles.vast.subNone,
       tone: "accent",
     },
-    sparenTile(overview, locale),
+    sparenTile(overview, locale, savings),
     {
       key: "inkomen",
       label: t.tiles.inkomen.label,
