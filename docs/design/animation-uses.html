@@ -172,10 +172,10 @@ svg { display:block; overflow:visible; max-width:100%; }
     if (reduce) { fr.style.strokeDashoffset = 0; $("#fillNum").textContent = "100%"; dr.style.strokeDashoffset = 0; dt.style.strokeDashoffset = 0; return; }
     const t0 = performance.now();
     const f = (now) => { const t = ((now - t0) % 4200) / 4200, p = Math.min(1, t / .72), e = 1 - Math.pow(1 - p, 2.2);
-      fr.style.strokeDashoffset = fl * (1 - e); $("#fillNum").textContent = Math.round(e * 100) + "%";
+      fr.style.strokeDashoffset = fl * (1 - e); fr.style.opacity = e > .004 ? 1 : 0; $("#fillNum").textContent = Math.round(e * 100) + "%";
       const done = t > .78; $("#fillTick").style.opacity = done ? 1 : 0; $("#fillNum").style.opacity = done ? 0 : 1;
       const q = ((now - t0) % 3600) / 3600, ring = Math.min(1, q / .45), tick = Math.min(1, Math.max(0, (q - .4) / .3)), eo = 1 - Math.pow(1 - ring, 3);
-      dr.style.strokeDashoffset = dl * (1 - eo); dt.style.strokeDashoffset = dtl * (1 - (1 - Math.pow(1 - tick, 3)));
+      dr.style.strokeDashoffset = dl * (1 - eo); dr.style.opacity = eo > .004 ? 1 : 0; const te = 1 - Math.pow(1 - tick, 3); dt.style.strokeDashoffset = dtl * (1 - te); dt.style.opacity = te > .004 ? 1 : 0;
       requestAnimationFrame(f); };
     requestAnimationFrame(f);
   }
