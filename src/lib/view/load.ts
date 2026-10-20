@@ -1,8 +1,9 @@
 // Server-side data loading for the screens. Read-only: nothing here writes.
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getDailySpend, getMonthOverview, getOtherIncome } from "@/lib/budget/overview";
 import { getNeedsReview } from "@/lib/categories/categorise";
+import { listTransfers } from "@/lib/categories/transfers";
 import { getForecast } from "@/lib/forecast/forecast";
 import { addMonths } from "@/lib/recurring/dates";
 import { getAutomatic } from "@/lib/smart/review";
@@ -68,39 +69,64 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
 }
 
 export async function loadUpload(db: Db) {
-  const [accounts, categories, review, imports, [counts], automatic] = await Promise.all([
-    db.select().from(schema.accounts),
-    db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
-    getNeedsReview(db),
-    db
-      .select({
-        id: schema.imports.id,
-        filename: schema.imports.filename,
-        month: schema.imports.month,
-        periodFrom: schema.imports.periodFrom,
-        periodTo: schema.imports.periodTo,
-        uploadedAt: schema.imports.uploadedAt,
-        rowsImported: schema.imports.rowsImported,
-        rowsDuplicate: schema.imports.rowsDuplicate,
-        rowsSkipped: schema.imports.rowsSkipped,
-        account: schema.accounts.name,
-      })
-      .from(schema.imports)
-      .innerJoin(schema.accounts, eq(schema.accounts.id, schema.imports.accountId))
-      .orderBy(desc(schema.imports.id))
-      .limit(5),
-    db
-      .select({ total: sql<number>`count(*)`.mapWith(Number) })
-      .from(schema.transactions)
-      .where(and(eq(schema.transactions.isInternalTransfer, false))),
-    getAutomatic(db),
-  ]);
+  const [accounts, categories, review, imports, [counts], automatic, transfers] = await Promise.all(
+    [
+      db.select().from(schema.accounts),
+      db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
+      getNeedsReview(db),
+      db
+        .select({
+          id: schema.imports.id,
+          filename: schema.imports.filename,
+          month: schema.imports.month,
+          periodFrom: schema.imports.periodFrom,
+          periodTo: schema.imports.periodTo,
+          uploadedAt: schema.imports.uploadedAt,
+          rowsImported: schema.imports.rowsImported,
+          rowsDuplicate: schema.imports.rowsDuplicate,
+          rowsSkipped: schema.imports.rowsSkipped,
+          account: schema.accounts.name,
+        })
+        .from(schema.imports)
+        .innerJoin(schema.accounts, eq(schema.accounts.id, schema.imports.accountId))
+        .orderBy(desc(schema.imports.id))
+        .limit(5),
+      db
+        .select({ total: sql<number>`count(*)`.mapWith(Number) })
+        .from(schema.transactions)
+        .where(and(eq(schema.transactions.isInternalTransfer, false))),
+      getAutomatic(db),
+      listTransfers(db),
+    ],
+  );
   const left = review.length;
   const total = counts?.total ?? 0;
+  const used = new Map(
+    (
+      await db
+        .select({
+          id: schema.transactions.categoryId,
+          n: sql<number>`count(*)`.mapWith(Number),
+        })
+        .from(schema.transactions)
+        .where(isNotNull(schema.transactions.categoryId))
+        .groupBy(schema.transactions.categoryId)
+    ).map((r) => [r.id, r.n]),
+  );
+  // The person's most used categories first (the list is already in display order for ties).
+  const usual = (type: "expense" | "income") =>
+    categories
+      .filter((c) => c.type === type)
+      .sort((a, b) => (used.get(b.id) ?? 0) - (used.get(a.id) ?? 0))
+      .slice(0, 3)
+      .map((c) => c.id);
   return {
     accounts,
     categories: categories.filter((c) => c.type !== "transfer"),
+    transferCategory: categories.find((c) => c.type === "transfer") ?? null,
+    quick: { expense: usual("expense"), income: usual("income") },
     automatic,
+    transfers,
     review: review.slice(0, 50),
     reviewCount: left,
     imports,

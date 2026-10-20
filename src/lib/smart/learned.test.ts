@@ -128,3 +128,90 @@ describe("teaching a shop", () => {
     expect(await get(t.id)).toMatchObject({ categorySource: "rule" });
   });
 });
+
+describe("teaching a transfer between the person's own accounts", () => {
+  it("is remembered per direction: a top-up is a transfer, a purchase from the same name is not", async () => {
+    const { db, cat, tx, get } = await setup();
+    const transfer = await cat("Interne overboeking");
+    const topUp = await tx("Apple Pay", { amount: 20000 });
+    await assignCategory(db, topUp.id, transfer, { learn: true });
+    expect(await get(topUp.id)).toMatchObject({ isInternalTransfer: true, categoryId: transfer });
+
+    const nextTopUp = await tx("Apple Pay", { amount: 5000, date: "2026-11-02" });
+    const purchase = await tx("Apple Pay", { amount: -1099, date: "2026-11-03" });
+    expect(await applyLearned(db)).toBe(1);
+    expect(await get(nextTopUp.id)).toMatchObject({
+      isInternalTransfer: true,
+      categoryId: transfer,
+      categorySource: "learned",
+    });
+    expect(await get(purchase.id)).toMatchObject({ isInternalTransfer: false, categoryId: null });
+  });
+
+  it("also moves the other open transactions of the same direction, and leaves the other direction", async () => {
+    const { db, cat, tx, get } = await setup();
+    const transfer = await cat("Interne overboeking");
+    const first = await tx("Apple Pay", { amount: 20000 });
+    const sameWay = await tx("Apple Pay", { amount: 7000, date: "2026-10-09" });
+    const otherWay = await tx("Apple Pay", { amount: -700, date: "2026-10-10" });
+    await ensureMerchantKeys(db);
+    const result = await assignCategory(db, first.id, transfer, { learn: true });
+    expect(result.alsoCategorised).toBe(1);
+    expect(await get(sameWay.id)).toMatchObject({ isInternalTransfer: true, categoryId: transfer });
+    expect(await get(otherWay.id)).toMatchObject({ isInternalTransfer: false, categoryId: null });
+  });
+
+  it("choosing another category for that direction later replaces the transfer memory", async () => {
+    const { db, cat, tx, get } = await setup();
+    const transfer = await cat("Interne overboeking");
+    const salary = await cat("Salaris / bijbaan");
+    const a = await tx("Werkgever BV", { amount: 150000 });
+    await assignCategory(db, a.id, transfer, { learn: true });
+    const b = await tx("Werkgever BV", { amount: 150000, date: "2026-11-01" });
+    await assignCategory(db, b.id, salary, { learn: true });
+    expect(await get(b.id)).toMatchObject({ isInternalTransfer: false, categoryId: salary });
+
+    const c = await tx("Werkgever BV", { amount: 150000, date: "2026-12-01" });
+    expect(await applyLearned(db)).toBe(1);
+    expect(await get(c.id)).toMatchObject({ isInternalTransfer: false, categoryId: salary });
+  });
+
+  it("without learn, only that transaction is a transfer", async () => {
+    const { db, cat, tx, get } = await setup();
+    const transfer = await cat("Interne overboeking");
+    const a = await tx("Revolut", { amount: -20000 });
+    await assignCategory(db, a.id, transfer);
+    const b = await tx("Revolut", { amount: -20000, date: "2026-11-01" });
+    expect(await applyLearned(db)).toBe(0);
+    expect(await get(b.id)).toMatchObject({ isInternalTransfer: false, categoryId: null });
+    expect((await getLearnedLabels(db)).size).toBe(0);
+  });
+
+  it("a transaction of zero euro has no direction and is never flagged by a remembered transfer", async () => {
+    const { db, cat, tx, get } = await setup();
+    const transfer = await cat("Interne overboeking");
+    const first = await tx("Apple Pay", { amount: -500 });
+    await assignCategory(db, first.id, transfer, { learn: true });
+    const check = await tx("Apple Pay", { amount: 0, date: "2026-11-01" });
+    expect(await applyLearned(db)).toBe(0);
+    expect(await get(check.id)).toMatchObject({ isInternalTransfer: false, categoryId: null });
+  });
+
+  it("putting one back also releases the others that were only transfers because of the memory", async () => {
+    const { db, cat, tx, get } = await setup();
+    const transfer = await cat("Interne overboeking");
+    const salary = await cat("Salaris / bijbaan");
+    const a = await tx("Werkgever BV", { amount: 150000 });
+    const b = await tx("Werkgever BV", { amount: 150000, date: "2026-11-01" });
+    const chosen = await tx("Werkgever BV", { amount: 150000, date: "2026-12-01" });
+    await ensureMerchantKeys(db);
+    await assignCategory(db, chosen.id, transfer); // chosen by hand, no memory
+    await assignCategory(db, a.id, transfer, { learn: true }); // b follows through the memory
+    expect(await get(b.id)).toMatchObject({ isInternalTransfer: true, categorySource: "learned" });
+
+    await assignCategory(db, a.id, salary, { learn: true });
+    expect(await get(a.id)).toMatchObject({ isInternalTransfer: false, categoryId: salary });
+    expect(await get(b.id)).toMatchObject({ isInternalTransfer: false, categoryId: salary });
+    expect(await get(chosen.id)).toMatchObject({ isInternalTransfer: true, categoryId: transfer });
+  });
+});

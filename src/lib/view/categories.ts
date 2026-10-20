@@ -85,9 +85,11 @@ const ENGLISH: Record<string, string> = {
   Huurtoeslag: "Rent allowance",
   "Familie / gift": "Family / gift",
   "Overig inkomen": "Other income",
-  "Interne overboeking": "Internal transfer",
+  "Interne overboeking": "Between my accounts",
 };
 
+const DUTCH: Record<string, string> = { "Interne overboeking": "Tussen mijn rekeningen" };
+
 export function categoryLabel(name: string, locale: Locale): string {
-  return locale === "nl" ? name : (ENGLISH[name] ?? name);
+  return locale === "nl" ? (DUTCH[name] ?? name) : (ENGLISH[name] ?? name);
 }

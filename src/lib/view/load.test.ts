@@ -49,6 +49,16 @@ describe("screen loaders on an imported month", () => {
     expect(u.categories.every((c) => c.type !== "transfer")).toBe(true);
   });
 
+  it("loadUpload: offers the own-accounts category and the usual categories per direction", async () => {
+    const u = await loadUpload(await seeded());
+    expect(u.transferCategory).toMatchObject({ type: "transfer", name: "Interne overboeking" });
+    const type = new Map(u.categories.map((c) => [c.id, c.type]));
+    expect(u.quick.expense).toHaveLength(3);
+    expect(u.quick.income.length).toBeGreaterThan(0);
+    for (const id of u.quick.expense) expect(type.get(id)).toBe("expense");
+    for (const id of u.quick.income) expect(type.get(id)).toBe("income");
+  });
+
   it("loadOverzicht, loadVasteLasten and loadPrognose run on real data and an empty database", async () => {
     const db = await seeded();
     const o = await loadOverzicht(db, "2026-09", "2026-09-20", "nl");

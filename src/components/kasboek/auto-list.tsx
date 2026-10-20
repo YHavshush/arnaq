@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkles } from "lucide-react";
+import { ChevronDown, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { api } from "@/lib/client/api";
@@ -8,7 +8,8 @@ import { useI18n } from "@/i18n/client";
 import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
-import { ErrorLine, GhostButton, inputClass } from "./form";
+import { CategorySheet, type PickerCategory } from "./category-picker";
+import { ErrorLine, GhostButton } from "./form";
 
 interface Item {
   id: number;
@@ -18,17 +19,21 @@ interface Item {
   description: string | null;
   categoryId: number;
 }
-interface Cat {
-  id: number;
-  name: string;
-  type: string;
-}
+type Cat = PickerCategory;
 
 /**
  * What Kasboek categorised by itself, for the person to check. Each row says so ("Automatic"), has
  * the category to change and an Undo; "All correct" approves the lot. A correction is remembered.
  */
-export function AutoList({ items, categories }: { items: Item[]; categories: Cat[] }) {
+export function AutoList({
+  items,
+  categories,
+  transfer,
+}: {
+  items: Item[];
+  categories: Cat[];
+  transfer: Cat | null;
+}) {
   const router = useRouter();
   const { locale, t: msg } = useI18n();
   const m = msg.ui.upload;
@@ -36,6 +41,8 @@ export function AutoList({ items, categories }: { items: Item[]; categories: Cat
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  const [sheetFor, setSheetFor] = useState<Item | null>(null);
+  const [sending, setSending] = useState(false);
   const byId = new Map(categories.map((c) => [c.id, c]));
 
   const done = (res: { ok: boolean; error?: string }) => {
@@ -44,7 +51,9 @@ export function AutoList({ items, categories }: { items: Item[]; categories: Cat
   };
 
   async function change(item: Item, categoryId: number) {
-    if (!categoryId || categoryId === item.categoryId) return;
+    setSheetFor(null);
+    if (!categoryId || categoryId === item.categoryId || sending) return;
+    setSending(true);
     setError(null);
     const res = await api<{ alsoCategorised: number }>(
       "PUT",
@@ -54,14 +63,14 @@ export function AutoList({ items, categories }: { items: Item[]; categories: Cat
         learn: true,
       },
     );
+    setSending(false);
     if (res.ok && res.data.alsoCategorised > 0)
       setNote(m.auto.alsoChanged(res.data.alsoCategorised));
     else setNote(null);
     done(res);
   }
 
-  const expense = categories.filter((c) => c.type === "expense");
-  const income = categories.filter((c) => c.type === "income");
+  const nameOf = (it: Item) => it.counterparty || it.description || msg.ui.common.unknown;
 
   return (
     <div className="glass overflow-hidden">
@@ -87,31 +96,19 @@ export function AutoList({ items, categories }: { items: Item[]; categories: Cat
                 <div className="num font-semibold">{euroExact(it.amount)}</div>
               </div>
               <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                <select
+                <button
+                  type="button"
                   aria-label={m.review.category(name)}
-                  className={inputClass}
-                  value={it.categoryId}
-                  disabled={busy}
-                  onChange={(e) => change(it, Number(e.target.value))}
+                  className="bg-soft border-hair flex min-h-11 w-full min-w-0 items-center justify-between gap-2 rounded-xl border px-3 text-left text-base disabled:opacity-50"
+                  disabled={busy || sending}
+                  onClick={() => setSheetFor(it)}
                 >
-                  <optgroup label={m.review.expenses}>
-                    {expense.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {categoryLabel(c.name, locale)}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label={m.review.income}>
-                    {income.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {categoryLabel(c.name, locale)}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
+                  <span className="truncate">{categoryLabel(cat?.name ?? "", locale)}</span>
+                  <ChevronDown aria-hidden className="text-ink-muted size-4 shrink-0" />
+                </button>
                 <GhostButton
                   type="button"
-                  disabled={busy}
+                  disabled={busy || sending}
                   aria-label={m.auto.undoFor(name)}
                   onClick={async () => {
                     setError(null);
@@ -132,7 +129,7 @@ export function AutoList({ items, categories }: { items: Item[]; categories: Cat
         </span>
         <GhostButton
           type="button"
-          disabled={busy}
+          disabled={busy || sending}
           onClick={async () => {
             setError(null);
             done(await api("POST", "/api/transactions/confirm", { ids: items.map((i) => i.id) }));
@@ -146,6 +143,16 @@ export function AutoList({ items, categories }: { items: Item[]; categories: Cat
           <ErrorLine message={error} />
         </div>
       )}
+      <CategorySheet
+        open={sheetFor !== null}
+        title={sheetFor ? m.review.pickTitle(nameOf(sheetFor)) : ""}
+        categories={categories}
+        transfer={transfer}
+        direction={sheetFor && sheetFor.amount > 0 ? "in" : "out"}
+        currentId={sheetFor?.categoryId}
+        onPick={(id) => sheetFor && change(sheetFor, id)}
+        onClose={() => setSheetFor(null)}
+      />
     </div>
   );
 }

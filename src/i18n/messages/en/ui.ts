@@ -244,6 +244,24 @@ export const ui = {
       inCurrency: (currency: string) => `in ${currency}`,
       probably: (name: string) => `Probably ${name}?`,
       yes: "Yes",
+      other: "Other…",
+      pickTitle: (name: string) => `Category for ${name}`,
+      search: "Search categories",
+      close: "Close",
+      noMatch: "No category found.",
+      ownAccountsHint: "Not counted as income or spending",
+      current: "Current",
+    },
+    transfers: {
+      title: "Between your accounts",
+      aside: (n: number) => `${n} ${n === 1 ? "transfer" : "transfers"}`,
+      intro:
+        "These are not counted as income or spending. If one is wrong, change its category: it is a payment after all.",
+      found: "Found automatically",
+      chosen: "Chosen by you",
+      change: "Change",
+      changeFor: (name: string) => `Change the category of ${name}`,
+      more: (shown: number) => `The ${shown} newest are shown here.`,
     },
     auto: {
       title: "Sorted automatically",
@@ -331,6 +349,8 @@ export const ui = {
       none: 'Nothing yet. When you choose a category and keep "remember my choice", the shop shows up here.',
       forget: "Forget",
       forgetFor: (shop: string) => `Forget ${shop}`,
+      meta: (category: string, way: "in" | "out" | null) =>
+        way === null ? category : `${category}, ${way === "in" ? "money in" : "money out"}`,
     },
     unknownCategory: "Unknown",
     rule: {
