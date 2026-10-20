@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arnaq signature animation, two versions</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Colours from src/design/tokens.ts. No CSS filter on any SVG element. */
+:root {
+  --page:#0b0f17; --page2:#141b28; --ink:#eef1f5; --muted:#a8b1bf; --hair:rgba(255,255,255,.10);
+  --glass:rgba(255,255,255,.06); --glassb:rgba(255,255,255,.12); --blue:#33c6ff; --purple:#7f8cff;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+}
+[data-look="light"] { --page:#d9e5f5; --page2:#f1e6dd; --ink:#17202e; --muted:#4a5568; --hair:rgba(23,32,46,.12); --glass:rgba(255,255,255,.66); --glassb:rgba(255,255,255,.9); }
+* { box-sizing:border-box; }
+html { background:var(--page); }
+body { margin:0; color:var(--ink); min-height:100vh; font:15px/1.45 var(--sans); padding:28px 16px 72px; background:linear-gradient(180deg,var(--page),var(--page2)) fixed; }
+[data-look="light"] body { background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8) fixed; }
+main { max-width:1000px; margin:0 auto; display:grid; gap:24px; }
+h1 { font:500 clamp(26px,5vw,38px)/1.1 var(--serif); margin:0; text-wrap:balance; }
+h2 { font:500 22px/1.2 var(--serif); margin:0; }
+p { margin:0; }
+.lead,.note { color:var(--muted); max-width:70ch; }
+.note { font-size:13px; }
+.bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.seg { display:inline-flex; border:1px solid var(--hair); border-radius:99px; padding:3px; background:var(--glass); }
+.seg button,.btn { font:inherit; font-size:13px; color:var(--muted); background:none; border:0; border-radius:99px; padding:6px 14px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--ink); color:var(--page); }
+.btn { border:1px solid var(--hair); background:var(--glass); color:var(--ink); }
+.seg button:focus-visible,.btn:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+@media (max-width:820px) { .pair { grid-template-columns:minmax(0,1fr); } }
+.card { border:1px solid var(--glassb); background:var(--glass); border-radius:22px; padding:18px; display:grid; gap:12px; min-width:0; align-content:start; }
+.hero { height:210px; display:grid; place-items:center; border-radius:16px; background:linear-gradient(165deg,rgba(51,198,255,.10),rgba(127,140,255,.10)); overflow:hidden; padding:0 10px; }
+.tag { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+ul { margin:0; padding-left:18px; display:grid; gap:3px; font-size:14px; color:var(--muted); }
+svg { display:block; overflow:visible; max-width:100%; }
+.time { font-variant-numeric:tabular-nums; font-size:12px; color:var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>The signature, two ways</h1>
+    <p class="lead">Both start from the icon and end on the same finished word. Play them one after the other or together and see which one feels more like Arnaq.</p>
+  </header>
+
+  <div class="bar">
+    <span class="seg" role="group" aria-label="Look"><button type="button" data-look-btn="dark" aria-pressed="true">dark</button><button type="button" data-look-btn="light" aria-pressed="false">light</button></span>
+    <button type="button" class="btn" id="both">play both together</button>
+    <span class="seg" role="group" aria-label="Speed"><button type="button" data-speed="1" aria-pressed="true">normal</button><button type="button" data-speed="2.2" aria-pressed="false">slow (to study)</button></span>
+  </div>
+
+  <div class="pair">
+    <section class="card">
+      <span class="tag">A. the turn</span>
+      <h2>The a and q roll apart</h2>
+      <div class="hero" id="heroA"></div>
+      <div class="bar"><button type="button" class="btn" id="playA">replay</button><span class="time">about 2 s</span></div>
+      <ul><li>The a rolls left and the q right, each a full turn.</li><li>r, n and a are drawn between them.</li><li>Energetic, a bit playful, the coin feel of the first idea.</li></ul>
+    </section>
+    <section class="card">
+      <span class="tag">B. the pen</span>
+      <h2>A glowing pen writes the middle</h2>
+      <div class="hero" id="heroB"></div>
+      <div class="bar"><button type="button" class="btn" id="playB">replay</button><span class="time">about 3 s</span></div>
+      <ul><li>The a and q slide apart without turning.</li><li>A point of light writes r, n and a, lifting between letters.</li><li>Calmer, more like a signature. A little longer.</li></ul>
+    </section>
+  </div>
+  <p class="note">Both end as the same wordmark: ink letters and a gradient q, with a small pop at the end. Nothing is built in the app yet. With "reduce motion" on, either one shows the finished word.</p>
+</main>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const root = document.documentElement;
+  const setLook = (l) => { root.dataset.look = l; $$("[data-look-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lookBtn === l))); };
+  setLook("dark"); $$("[data-look-btn]").forEach((b) => b.addEventListener("click", () => setLook(b.dataset.lookBtn)));
+  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
+  const ease = "cubic-bezier(.45,.05,.2,1)";
+  const clamp = (x) => Math.min(1, Math.max(0, x));
+  const eio = (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+  const eout = (p) => 1 - Math.pow(1 - p, 3);
+  let speed = 1; const DX = 91.5;
+
+  // one wordmark, drawn from the logo's own strokes (ring height 57, stroke 16)
+  const word = (id) => `<svg id="${id}" width="min(560px,100%)" viewBox="-6 -6 316 90" role="img" aria-label="arnaq">
+    <defs><linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>
+    <radialGradient id="${id}t"><stop offset="0" stop-color="#33c6ff" stop-opacity=".65"/><stop offset="1" stop-color="#33c6ff" stop-opacity="0"/></radialGradient></defs>
+    <g fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+      <g transform="translate(0 0)"><g class="roll la">
+        <g class="c1" stroke="#33c6ff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
+        <g class="c2" stroke="var(--ink)"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g></g></g>
+      <g transform="translate(66 0)" stroke="var(--ink)" class="ltr"><path d="M8 8 V49 M8 26 C8 14 16 8 32 8"/></g>
+      <g transform="translate(115 0)" stroke="var(--ink)" class="ltr"><path d="M8 8 V49 M8 26 C8 14 18 8 28.5 8 C39 8 49 14 49 26 V49"/></g>
+      <g transform="translate(181 0)" stroke="var(--ink)" class="ltr"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
+      <g transform="translate(247 0)"><g class="roll lq">
+        <g class="c1" stroke="#7f8cff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/></g>
+        <g class="c2" stroke="url(#${id}g)"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/></g></g></g>
+    </g>
+    <g class="tip" style="opacity:0"><circle r="20" fill="url(#${id}t)"/><circle r="5.5" fill="#33c6ff"/></g></svg>`;
+  $("#heroA").innerHTML = word("sa"); $("#heroB").innerHTML = word("sb");
+  const prep = (svg) => { $$(".roll", svg).forEach((g) => { g.style.transformBox = "fill-box"; g.style.transformOrigin = "20.5px 20.5px"; });
+    $$(".ltr path,.ltr circle,.ltr line", svg).forEach((e) => { e._L = e.getTotalLength(); e.style.strokeDasharray = `${e._L} ${e._L}`; }); };
+  prep($("#sa")); prep($("#sb"));
+  const finished = (svg) => { $$(".c1", svg).forEach((e) => { e.style.opacity = 0; }); $$(".c2", svg).forEach((e) => { e.style.opacity = 1; }); $$(".ltr", svg).forEach((g) => { g.style.opacity = 1; });
+    $$(".ltr path,.ltr circle,.ltr line", svg).forEach((e) => { e.style.strokeDashoffset = 0; e.style.opacity = 1; }); $$(".roll", svg).forEach((g) => { g.style.transform = "none"; }); $(".tip", svg).style.opacity = 0; svg.style.transform = "none"; };
+
+  // ---------- A: the turn (Web Animations) ----------
+  function playA() {
+    const svg = $("#sa"); svg.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    if (reduce) { finished(svg); return; }
+    const T = (ms) => ms * speed, la = $(".la", svg), lq = $(".lq", svg);
+    $$(".ltr", svg).forEach((g) => { g.style.opacity = 0; }); $$(".ltr path,.ltr circle,.ltr line", svg).forEach((e) => { e.style.strokeDashoffset = e._L; });
+    const roll = { delay: T(500), duration: T(1250), easing: ease };
+    A(la, [{ transform: `translateX(${DX}px) rotate(0deg)` }, { transform: "translateX(0) rotate(-360deg)" }], roll);
+    A(lq, [{ transform: `translateX(${-DX}px) rotate(0deg)` }, { transform: "translateX(0) rotate(360deg)" }], roll);
+    [la, lq].forEach((g) => { A($(".c1", g), [{ opacity: 1 }, { opacity: 0 }], { delay: T(600), duration: T(1000) }); A($(".c2", g), [{ opacity: 0 }, { opacity: 1 }], { delay: T(600), duration: T(1000) }); });
+    $$(".ltr", svg).forEach((g, i) => { const d = 850 + i * 170; A(g, [{ opacity: 0 }, { opacity: 1 }], { delay: T(d), duration: T(60) });
+      $$("path,circle,line", g).forEach((e, k) => A(e, [{ strokeDashoffset: e._L }, { strokeDashoffset: 0 }], { delay: T(d + k * 120), duration: T(520), easing: "cubic-bezier(.3,.8,.3,1)" })); });
+    A(svg, [{ transform: "scale(1)" }, { transform: "scale(1.035)", offset: .5 }, { transform: "scale(1)" }], { delay: T(1900), duration: T(520), easing: "ease-in-out" });
+  }
+
+  // ---------- B: the pen (drawn frame by frame from one clock, so it can be seeked) ----------
+  const svgB = $("#sb"), la = $(".la", svgB), lq = $(".lq", svgB), tip = $(".tip", svgB), ltrs = $$(".ltr", svgB);
+  const STROKES = [ // [element, letter x offset, start ms, duration ms]
+    [$("path", ltrs[0]), 66, 1100, 420], [$("path", ltrs[1]), 115, 1560, 520], [$("circle", ltrs[2]), 181, 2120, 420], [$("line", ltrs[2]), 181, 2580, 220],
+  ];
+  const END = 2850;
+  function renderB(t) {
+    const s = eio(clamp((t - 400) / 700));                                     // slide apart
+    la.style.transform = `translateX(${DX * (1 - s)}px)`; lq.style.transform = `translateX(${-DX * (1 - s)}px)`;
+    [la, lq].forEach((g) => { const o = clamp((t - 450) / 700); $(".c1", g).style.opacity = 1 - o; $(".c2", g).style.opacity = o; });
+    let active = null;
+    STROKES.forEach(([el, x0, st, du]) => { const p = clamp((t - st) / du), e = eout(p), g = el.parentNode;
+      el.style.opacity = p > 0 ? 1 : 0; g.style.opacity = 1; el.style.strokeDashoffset = el._L * (1 - e);
+      if (p > 0 && p < 1) active = [el, x0, e]; });
+    if (active) { const [el, x0, e] = active, pt = el.getPointAtLength(Math.max(.01, el._L * e)); tip.setAttribute("transform", `translate(${x0 + pt.x} ${pt.y})`); tip.style.opacity = 1; } else tip.style.opacity = 0;
+    const pop = clamp((t - END) / 520); svgB.style.transform = `scale(${1 + .035 * Math.sin(Math.PI * pop)})`;
+  }
+  let raf = 0;
+  function playB() {
+    cancelAnimationFrame(raf);
+    if (reduce) { finished(svgB); return; }
+    const t0 = performance.now();
+    const f = (now) => { const t = (now - t0) / speed; renderB(t); if (t < END + 600) raf = requestAnimationFrame(f); else finished(svgB); };
+    raf = requestAnimationFrame(f);
+  }
+  window.__seekB = (t) => { cancelAnimationFrame(raf); renderB(t); };
+
+  $("#playA").addEventListener("click", playA); $("#playB").addEventListener("click", playB);
+  $("#both").addEventListener("click", () => { playA(); playB(); });
+  $$("[data-speed]").forEach((b) => b.addEventListener("click", () => { speed = Number(b.dataset.speed); $$("[data-speed]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); playA(); playB(); }));
+  playA(); playB();
+})();
+</script>
+</body>
+</html>

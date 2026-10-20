@@ -9,10 +9,10 @@
 /* Colours from src/design/tokens.ts. No CSS filter on any SVG element. */
 :root {
   --page:#0b0f17; --page2:#141b28; --ink:#eef1f5; --muted:#a8b1bf; --hair:rgba(255,255,255,.10); --track:rgba(255,255,255,.12);
-  --glass:rgba(255,255,255,.06); --glassb:rgba(255,255,255,.12); --blue:#33c6ff; --purple:#7f8cff; --good:#5ee0a0;
+  --glass:rgba(255,255,255,.06); --glassb:rgba(255,255,255,.12); --blue:#33c6ff; --purple:#7f8cff; --good:#5ee0a0; --done:#5ee0a0;
   --serif:"Newsreader",Georgia,"Times New Roman",serif; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
 }
-[data-look="light"] { --page:#d9e5f5; --page2:#f1e6dd; --ink:#17202e; --muted:#4a5568; --hair:rgba(23,32,46,.12); --track:rgba(23,32,46,.12); --glass:rgba(255,255,255,.66); --glassb:rgba(255,255,255,.9); --good:#17714a; }
+[data-look="light"] { --page:#d9e5f5; --page2:#f1e6dd; --ink:#17202e; --muted:#4a5568; --hair:rgba(23,32,46,.12); --track:rgba(23,32,46,.12); --glass:rgba(255,255,255,.66); --glassb:rgba(255,255,255,.9); --good:#17714a; --done:#2fbf85; }
 * { box-sizing:border-box; }
 [hidden] { display:none !important; }
 html { background:var(--page); }
@@ -103,15 +103,15 @@ svg { display:block; overflow:visible; max-width:100%; }
       <div class="demo"><div class="stagebox"><div style="position:relative;width:104px;height:104px;display:grid;place-items:center">
         <svg width="104" height="104" viewBox="0 0 104 104" style="position:absolute;inset:0" aria-hidden="true"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--track)" stroke-width="7"/><circle id="fillRing" cx="52" cy="52" r="46" fill="none" stroke="url(#gq2)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 52 52)"/></svg>
         <span id="fillNum" style="font:600 22px var(--sans);letter-spacing:-.03em;font-variant-numeric:tabular-nums">0%</span>
-        <svg id="fillTick" width="44" height="44" viewBox="0 0 44 44" style="position:absolute;opacity:0" aria-hidden="true"><path d="M10 23 L19 32 L35 13" fill="none" stroke="var(--good)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+        <svg id="fillTick" width="44" height="44" viewBox="0 0 44 44" style="position:absolute;opacity:0" aria-hidden="true"><path d="M10 23 L19 32 L35 13" fill="none" stroke="var(--done)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
         <h3>fill</h3><span class="use">reading a statement</span><p class="note">The app's own ring, filling with the real progress, then a tick. Honest, because it shows how far along it is.</p></div>
 
       <div class="demo"><div class="stagebox" style="padding:0 22px"><div style="display:grid;gap:12px;width:100%"><div class="sk" style="width:70%"></div><div class="sk"></div><div class="sk" style="width:85%"></div></div></div>
         <h3>shimmer</h3><span class="use">lists and cards while they load</span><p class="note">Placeholder lines with a blue highlight sweeping across. Standard, cheap and recognisable.</p></div>
 
       <div class="demo"><div class="stagebox"><div style="position:relative;width:104px;height:104px;display:grid;place-items:center">
-        <svg width="104" height="104" viewBox="0 0 104 104" style="position:absolute;inset:0" aria-hidden="true"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--track)" stroke-width="7"/><circle id="doneRing" cx="52" cy="52" r="46" fill="none" stroke="var(--good)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 52 52)"/></svg>
-        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><path id="doneTick" d="M10 23 L19 32 L35 13" fill="none" stroke="var(--good)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+        <svg width="104" height="104" viewBox="0 0 104 104" style="position:absolute;inset:0" aria-hidden="true"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--track)" stroke-width="7"/><circle id="doneRing" cx="52" cy="52" r="46" fill="none" stroke="var(--done)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 52 52)"/></svg>
+        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><path id="doneTick" d="M10 23 L19 32 L35 13" fill="none" stroke="var(--done)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
         <h3>done</h3><span class="use">saved, imported, goal reached</span><p class="note">The ring closes in green and the tick draws itself. Plays once.</p></div>
     </div>
   </section>
