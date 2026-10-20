@@ -122,8 +122,11 @@ export async function loadUpload(db: Db) {
       .map((c) => c.id);
   return {
     accounts,
-    categories: categories.filter((c) => c.type !== "transfer"),
-    transferCategory: categories.find((c) => c.type === "transfer") ?? null,
+    categories: categories.filter((c) => c.type === "expense" || c.type === "income"),
+    // Neither income nor spending: a move between the person's own accounts, and money into or out of savings.
+    special: (["transfer", "savings"] as const).flatMap((t) =>
+      categories.filter((c) => c.type === t),
+    ),
     quick: { expense: usual("expense"), income: usual("income") },
     automatic,
     transfers,

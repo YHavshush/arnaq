@@ -1,5 +1,6 @@
 import { and, eq, gt, inArray, isNull, lt, or } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
+import { isNonSpending } from "@/lib/categories/defaults";
 import { merchantKey } from "./merchant";
 
 const BATCH = 500;
@@ -96,7 +97,7 @@ async function setCategory(db: Db, ids: number[], categoryId: number, source: st
       .update(schema.transactions)
       .set({
         categoryId,
-        isInternalTransfer: category?.type === "transfer",
+        isInternalTransfer: category ? isNonSpending(category.type) : false,
         categorySource: source as (typeof schema.CATEGORY_SOURCES)[number],
         suggestedCategoryId: null,
       })

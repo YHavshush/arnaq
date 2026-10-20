@@ -3,6 +3,10 @@ import type { CATEGORY_TYPES } from "@/db/schema";
 type CategoryType = (typeof CATEGORY_TYPES)[number];
 
 export const INTERNAL_TRANSFER_CATEGORY = "Interne overboeking";
+export const SAVINGS_CATEGORY = "Spaarrekening";
+
+/** Types whose transactions are neither income nor spending. */
+export const isNonSpending = (type: CategoryType) => type === "transfer" || type === "savings";
 
 /** Default categories (student, no kids, renting). Order here becomes sort order. */
 export const DEFAULT_CATEGORIES: { slug: string; name: string; type: CategoryType }[] = [
@@ -30,6 +34,7 @@ export const DEFAULT_CATEGORIES: { slug: string; name: string; type: CategoryTyp
   { slug: "family-gift", name: "Familie / gift", type: "income" },
   { slug: "other-income", name: "Overig inkomen", type: "income" },
   { slug: "internal-transfer", name: INTERNAL_TRANSFER_CATEGORY, type: "transfer" },
+  { slug: "savings", name: SAVINGS_CATEGORY, type: "savings" },
 ];
 
 /**
@@ -85,7 +90,6 @@ export const DEFAULT_RULES: { pattern: string; category: string; priority: numbe
   { pattern: "klm", category: "Reizen & vakantie", priority: 10 },
   { pattern: "ryanair", category: "Reizen & vakantie", priority: 10 },
   { pattern: "degiro", category: "Sparen & beleggen", priority: 10 },
-  { pattern: "spaarrekening", category: "Sparen & beleggen", priority: 10 },
   { pattern: "collegegeld", category: "Studie", priority: 30 },
   { pattern: "dienst uitvoering onderwijs", category: "Studiefinanciering (DUO)", priority: 10 },
   { pattern: "studiefinanciering", category: "Studiefinanciering (DUO)", priority: 10 },

@@ -307,7 +307,6 @@ export const CATALOG_NL: Record<string, string[]> = {
   ],
   "saving-investing": [
     "degiro",
-    "spaarrekening",
     "bux",
     "trading 212",
     "bitvavo",
@@ -315,7 +314,6 @@ export const CATALOG_NL: Record<string, string[]> = {
     "binance",
     "meesman",
     "brand new day",
-    "spaardoel",
     "beleggen",
   ],
   rent: [

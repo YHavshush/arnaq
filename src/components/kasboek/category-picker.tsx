@@ -17,8 +17,8 @@ interface SheetProps {
   /** What is being sorted, for the title ("Category for Albert Heijn"). */
   title: string;
   categories: PickerCategory[];
-  /** The "between my own accounts" category; offered first because it is neither income nor spending. */
-  transfer: PickerCategory | null;
+  /** Neither income nor spending: "between my own accounts" and "savings". Offered first. */
+  special: PickerCategory[];
   /** Money coming in lists income first, money going out lists expenses first. */
   direction: "in" | "out";
   currentId?: number | null;
@@ -61,7 +61,7 @@ export function CategorySheet(props: SheetProps) {
 function SheetBody({
   title,
   categories,
-  transfer,
+  special,
   direction,
   currentId,
   onPick,
@@ -87,8 +87,8 @@ function SheetBody({
           [m.income, income],
         ]
   ) as [string, PickerCategory[]][];
-  const showTransfer = transfer !== null && matches(transfer);
-  const empty = !showTransfer && expenses.length === 0 && income.length === 0;
+  const shownSpecial = special.filter(matches);
+  const empty = shownSpecial.length === 0 && expenses.length === 0 && income.length === 0;
 
   const row = (c: PickerCategory, hint?: string) => (
     <li key={c.id}>
@@ -140,8 +140,12 @@ function SheetBody({
         </label>
       </div>
       <div className="overflow-y-auto pb-4">
-        {showTransfer && (
-          <ul className="border-hair border-b py-1">{row(transfer, m.ownAccountsHint)}</ul>
+        {shownSpecial.length > 0 && (
+          <ul className="border-hair border-b py-1">
+            {shownSpecial.map((c) =>
+              row(c, c.type === "savings" ? m.savingsHint : m.ownAccountsHint),
+            )}
+          </ul>
         )}
         {groups.map(
           ([label, list]) =>

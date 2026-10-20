@@ -66,7 +66,7 @@ async function Content() {
               suggestedCategoryId: r.suggestedCategoryId,
             }))}
             categories={u.categories}
-            transfer={u.transferCategory}
+            special={u.special}
             quick={u.quick}
           />
           {u.reviewCount > u.review.length && (
@@ -87,7 +87,7 @@ async function Content() {
               categoryId: r.categoryId!,
             }))}
             categories={u.categories}
-            transfer={u.transferCategory}
+            special={u.special}
           />
           {u.automatic.total > u.automatic.rows.length && (
             <p className="text-ink-muted mt-2 px-2 text-sm">
@@ -107,9 +107,10 @@ async function Content() {
               counterparty: r.counterparty,
               description: r.description,
               source: r.categorySource,
+              categoryName: u.special.find((c) => c.id === r.categoryId)?.name ?? null,
             }))}
             categories={u.categories}
-            transfer={u.transferCategory}
+            special={u.special}
           />
           {u.transfers.total > u.transfers.rows.length && (
             <p className="text-ink-muted mt-2 px-2 text-sm">

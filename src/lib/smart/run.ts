@@ -90,7 +90,7 @@ export async function runSmart(
       });
 
     const categories = (await db.select().from(schema.categories)).filter(
-      (c) => c.type !== "transfer",
+      (c) => c.type === "expense" || c.type === "income", // never a transfer or savings: the person decides those
     );
     const optionsHash = hashOptions(categories.map((c) => c.id));
     const [usage] = await db

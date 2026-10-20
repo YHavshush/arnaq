@@ -34,12 +34,12 @@ const chipClass =
 export function ReviewList({
   items,
   categories,
-  transfer,
+  special,
   quick,
 }: {
   items: Item[];
   categories: Cat[];
-  transfer: Cat | null;
+  special: Cat[];
   quick: { expense: number[]; income: number[] };
 }) {
   const router = useRouter();
@@ -133,16 +133,17 @@ export function ReviewList({
                   {categoryLabel(c.name, locale)}
                 </button>
               ))}
-              {transfer && (
+              {special.map((c) => (
                 <button
+                  key={c.id}
                   type="button"
                   disabled={busy || sending}
                   className={chipClass}
-                  onClick={() => choose(t, transfer.id)}
+                  onClick={() => choose(t, c.id)}
                 >
-                  {categoryLabel(transfer.name, locale)}
+                  {categoryLabel(c.name, locale)}
                 </button>
-              )}
+              ))}
               <button
                 type="button"
                 disabled={busy || sending}
@@ -165,7 +166,7 @@ export function ReviewList({
         open={sheetFor !== null}
         title={sheetFor ? msg.ui.upload.review.pickTitle(nameOf(sheetFor)) : ""}
         categories={categories}
-        transfer={transfer}
+        special={special}
         direction={sheetFor && sheetFor.amount > 0 ? "in" : "out"}
         onPick={(id) => sheetFor && choose(sheetFor, id)}
         onClose={() => setSheetFor(null)}
