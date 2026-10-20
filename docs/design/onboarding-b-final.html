@@ -56,20 +56,20 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 .s1 .bg { background:linear-gradient(165deg,var(--b1),var(--b2) 55%,var(--b3)); }
 .s2 .bg { background:linear-gradient(165deg,var(--b2a),var(--b1) 60%,var(--b3a)); }
 .s3 .bg { background:linear-gradient(165deg,var(--b3a),var(--b2) 55%,var(--b1)); }
-.head { padding-top:66px; display:grid; gap:12px; align-content:start; min-height:240px; }
+.head { padding-top:60px; display:grid; gap:12px; align-content:start; min-height:226px; }
 .head h2 { white-space:pre-line; margin:0; font:400 52px/.98 var(--serif); letter-spacing:-.02em; }
 .head p { margin:0; color:var(--muted); font-size:15px; max-width:31ch; }
 .stage { position:relative; display:grid; place-items:center; align-content:center; justify-items:center; transition:transform .55s cubic-bezier(.3,.8,.3,1); }
-.foot { display:grid; gap:10px; padding:10px 0 50px; }
+.foot { display:grid; gap:10px; height:140px; padding:0 0 34px; align-content:end; }
 .pager { position:absolute; left:24px; top:26px; z-index:4; font:500 12px var(--sans); letter-spacing:.08em; color:var(--muted); font-variant-numeric:tabular-nums; }
 .skip { position:absolute; top:22px; right:22px; z-index:4; font:inherit; font-size:14px; color:var(--muted); background:none; border:0; cursor:pointer; padding:6px 4px; }
 .skip[hidden] { display:none; }
-.tabs { position:absolute; left:0; right:0; bottom:18px; display:flex; justify-content:center; gap:8px; z-index:4; }
+.tabs { position:absolute; left:0; right:0; bottom:16px; display:flex; justify-content:center; gap:8px; z-index:4; }
 .tabs button { width:7px; height:7px; border-radius:99px; border:0; padding:0; background:var(--track); cursor:pointer; transition:width .3s, background .3s; }
 .tabs button[aria-current="true"] { width:22px; background:var(--blue); }
 .cta { font:600 16px/1 var(--sans); color:var(--cta-ink); background:var(--blue); border:0; border-radius:99px; padding:16px 20px; cursor:pointer; width:100%; box-shadow:0 10px 28px -10px rgba(51,198,255,.7); }
 .slot { height:44px; display:grid; place-items:center; }
-.ghostbtn { font:500 15px/1 var(--sans); color:var(--ink); background:var(--glass); border:1px solid var(--glassb); border-radius:99px; padding:14px 20px; cursor:pointer; width:100%; }
+.ghostbtn { font:500 15px/1 var(--sans); color:var(--ink); background:var(--glass); border:1px solid var(--glassb); border-radius:99px; padding:12px 20px; cursor:pointer; width:100%; }
 .chip { display:inline-flex; gap:6px; align-items:center; font-size:12px; padding:4px 11px; border-radius:99px; background:var(--glass); border:1px solid var(--glassb); color:var(--muted); width:max-content; }
 .glow { position:absolute; border-radius:50%; background:radial-gradient(circle, rgba(51,198,255,.40), rgba(127,140,255,.20) 45%, transparent 70%); pointer-events:none; }
 .ripple { position:absolute; border-radius:50%; border:1.5px solid rgba(127,200,255,.5); opacity:0; pointer-events:none; }
@@ -81,7 +81,7 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 .row { display:grid; gap:6px; }
 .row .top { display:flex; justify-content:space-between; font-size:13px; font-variant-numeric:tabular-nums; }
 .row .top span:last-child { color:var(--muted); }
-.ring { position:relative; width:170px; height:170px; display:grid; place-items:center; margin:0 auto; flex:none; }
+.ring { position:relative; width:176px; height:176px; display:grid; place-items:center; margin:0 auto; flex:none; }
 .ring svg { position:absolute; inset:0; }
 .ring .in { position:relative; display:grid; place-items:center; text-align:center; }
 .ring .in .lab { position:absolute; bottom:calc(100% + 4px); white-space:nowrap; }
@@ -97,7 +97,7 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 <main>
   <header>
     <h1>Onboarding B, your words</h1>
-    <p class="lead">Your three screens, your words. Every heading is now two lines and the bottom of every screen has the same two-row footer, so the visual area is exactly the same size and place on all three screens. Use "all three, side by side" and "guide lines" to check it.</p>
+    <p class="lead">Your words, two-line headings, flat aq, the ring aligned, swipe only on screens 1 and 2. Use "all three, side by side" and "guide lines" to check the alignment.</p>
   </header>
 
   <div class="bar">
@@ -126,7 +126,7 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
                   <g data-la stroke="#33c6ff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
                   <g data-lq stroke="#7f8cff"><circle cx="92.5" cy="28.5" r="20.5"/><line x1="113" y1="8" x2="113" y2="70"/></g></g></svg>
             </div>
-            <div class="foot"><button type="button" class="cta" data-next>Next</button><div class="slot"><span class="chip" data-c="chip1"></span></div></div>
+            <div class="foot"></div>
           </section>
 
           <section class="screen s2" aria-label="2 of 3">
@@ -142,7 +142,7 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
                 <div class="row"><div class="top"><span data-c="cap2"></span><span data-t2>€ 0 of € 200</span></div><div class="meter"><b data-m2></b></div></div>
               </div>
             </div>
-            <div class="foot"><button type="button" class="cta" data-next>Next</button><div class="slot"><span class="chip" data-c="chip2"></span></div></div>
+            <div class="foot"></div>
           </section>
 
           <section class="screen s3" aria-label="3 of 3">
@@ -168,11 +168,11 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
     </div>
 
     <div class="panel">
-      <span class="cap">What changed in this round</span>
-      <div class="card"><b>Screen 1</b><span class="m">The a and q are one monogram again, with the same small gap as the app icon. They still fly in from the sides and meet.</span></div>
-      <div class="card"><b>Screen 2</b><span class="m">The ring is a single centred block and a little larger. Its number is exactly in the middle of the ring and the ring in the middle of the phone.</span></div>
-      <div class="card"><b>Bottom of screens 1 and 2</b><span class="m">The empty strip is gone. Only the dots remain, and the content uses the space.</span></div>
-      <div class="card"><b>Words</b><span class="m">Exactly yours. Two small labels I added are true to the app: "no bank login needed" on screen 1, and "goal · japan trip" on screen 3.</span></div>
+      <span class="cap">This round</span>
+      <div class="card"><b>Screens 1 and 2</b><span class="m">Swipe only, no buttons and no callouts, as in the previous version. The dots stay.</span></div>
+      <div class="card"><b>Screen 3</b><span class="m">"Get Started" and "Try it with sample data", as before.</span></div>
+      <div class="card"><b>Alignment</b><span class="m">Every heading is two lines and every screen has the same footer height, so the visual area is identical on all three. The ring is centred in the phone and its number in the ring.</span></div>
+      <div class="card"><b>Monogram</b><span class="m">Flat blue a and purple q, like the icon.</span></div>
     </div>
   </div>
 
@@ -256,7 +256,6 @@ th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(-
     stages.forEach((st, k) => { st.style.transform = `translateX(${(k - i) * 60}px)`; }); $("[data-skip]", pb).hidden = i === 2;
   }
   $$("[data-tabs] button", pb).forEach((b, k) => b.addEventListener("click", () => go(k)));
-  $$("[data-next]", pb).forEach((b) => b.addEventListener("click", () => go(cur + 1)));
   $("[data-skip]", pb).addEventListener("click", () => go(2));
   pb.addEventListener("keydown", (e) => { if (e.key === "ArrowRight") go(cur + 1); if (e.key === "ArrowLeft") go(cur - 1); });
   let x0 = null, dx = 0;
