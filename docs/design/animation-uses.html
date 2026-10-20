@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arnaq animations and where they go</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Colours from src/design/tokens.ts. No CSS filter on any SVG element. */
+:root {
+  --page:#0b0f17; --page2:#141b28; --ink:#eef1f5; --muted:#a8b1bf; --hair:rgba(255,255,255,.10); --track:rgba(255,255,255,.12);
+  --glass:rgba(255,255,255,.06); --glassb:rgba(255,255,255,.12); --blue:#33c6ff; --purple:#7f8cff; --good:#5ee0a0;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+}
+[data-look="light"] { --page:#d9e5f5; --page2:#f1e6dd; --ink:#17202e; --muted:#4a5568; --hair:rgba(23,32,46,.12); --track:rgba(23,32,46,.12); --glass:rgba(255,255,255,.66); --glassb:rgba(255,255,255,.9); --good:#17714a; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+html { background:var(--page); }
+body { margin:0; color:var(--ink); min-height:100vh; font:15px/1.45 var(--sans); padding:28px 16px 72px; background:linear-gradient(180deg,var(--page),var(--page2)) fixed; }
+[data-look="light"] body { background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8) fixed; }
+main { max-width:1000px; margin:0 auto; display:grid; gap:26px; }
+h1 { font:500 clamp(26px,5vw,38px)/1.1 var(--serif); margin:0; text-wrap:balance; }
+h2 { font:500 22px/1.2 var(--serif); margin:0; }
+h3 { margin:0; font-size:15px; }
+p { margin:0; }
+.lead,.note { color:var(--muted); max-width:70ch; }
+.note { font-size:13px; }
+.bar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+.seg { display:inline-flex; border:1px solid var(--hair); border-radius:99px; padding:3px; background:var(--glass); }
+.seg button,.btn { font:inherit; font-size:13px; color:var(--muted); background:none; border:0; border-radius:99px; padding:6px 14px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--ink); color:var(--page); }
+.btn { border:1px solid var(--hair); background:var(--glass); color:var(--ink); }
+.seg button:focus-visible,.btn:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
+.card { border:1px solid var(--glassb); background:var(--glass); border-radius:22px; padding:18px; display:grid; gap:14px; min-width:0; }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:14px; }
+.demo { border:1px solid var(--glassb); background:var(--glass); border-radius:20px; padding:16px; display:grid; gap:10px; align-content:start; }
+.stagebox { height:150px; display:grid; place-items:center; border-radius:14px; background:rgba(127,140,255,.07); }
+.hero { height:230px; display:grid; place-items:center; border-radius:16px; background:linear-gradient(165deg,rgba(51,198,255,.10),rgba(127,140,255,.10)); overflow:hidden; }
+.use { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.row2 { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:18px; align-items:start; }
+@media (max-width:780px) { .row2 { grid-template-columns:minmax(0,1fr); } }
+table { border-collapse:collapse; width:100%; font-size:14px; }
+td,th { text-align:left; padding:8px 10px; border-bottom:1px solid var(--hair); vertical-align:top; }
+th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.tablewrap { overflow-x:auto; }
+svg { display:block; overflow:visible; max-width:100%; }
+
+/* loading animations (CSS) */
+@keyframes spin { to { transform:rotate(360deg); } }
+.chase { transform-box:fill-box; transform-origin:center; animation:spin 1.1s linear infinite; }
+@keyframes swapOrbit { 0%,12% { transform:rotate(0); } 62%,100% { transform:rotate(180deg); } }
+@keyframes swapKeep { 0%,12% { transform:rotate(0); } 62%,100% { transform:rotate(-180deg); } }
+.orbit { transform-box:view-box; transform-origin:66.5px 34.5px; animation:swapOrbit 2.2s cubic-bezier(.6,0,.3,1) infinite; }
+.keep { transform-box:fill-box; transform-origin:20.5px 20.5px; animation:swapKeep 2.2s cubic-bezier(.6,0,.3,1) infinite; }
+@keyframes shimmer { from { background-position:-200px 0; } to { background-position:200px 0; } }
+.sk { height:12px; border-radius:99px; background:linear-gradient(90deg,var(--track) 0,rgba(51,198,255,.35) 50%,var(--track) 100%) 0 0/200px 100% repeat-x, var(--track); animation:shimmer 1.3s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .chase,.orbit,.keep,.sk { animation:none; } }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>Where each animation goes</h1>
+    <p class="lead">I picked the uses so you don't have to. The one you like in the onboarding stays there. The a and q turning and the word coming out of the logo becomes the signature animation for opening the app. Then a small family of loading animations built from the same ring and stem. The basic ones from the first shortlist are gone.</p>
+  </header>
+
+  <div class="bar">
+    <span class="seg" role="group" aria-label="Look"><button type="button" data-look-btn="dark" aria-pressed="true">dark</button><button type="button" data-look-btn="light" aria-pressed="false">light</button></span>
+  </div>
+
+  <section class="card">
+    <div><h2>The signature: aq turns, arnaq comes out</h2><p class="note" style="margin-top:4px">The a rolls left and the q rolls right, each turning a full circle, while r, n and a are drawn between them. The a turns from blue to ink and the q gets its gradient. The word starts and ends with the same two letters as the icon, so the logo literally opens into the name.</p></div>
+    <div class="hero"><svg id="sig" width="min(560px,100%)" viewBox="-6 -6 316 90" role="img" aria-label="arnaq">
+      <defs><linearGradient id="gq" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient></defs>
+      <g fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+        <g transform="translate(0 0)"><g class="roll" id="la">
+          <g class="c1" stroke="#33c6ff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
+          <g class="c2" stroke="var(--ink)"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g></g></g>
+        <g transform="translate(66 0)" stroke="var(--ink)" class="ltr"><path d="M8 8 V49 M8 26 C8 14 16 8 32 8"/></g>
+        <g transform="translate(115 0)" stroke="var(--ink)" class="ltr"><path d="M8 8 V49 M8 26 C8 14 18 8 28.5 8 C39 8 49 14 49 26 V49"/></g>
+        <g transform="translate(181 0)" stroke="var(--ink)" class="ltr"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
+        <g transform="translate(247 0)"><g class="roll" id="lq">
+          <g class="c1" stroke="#7f8cff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/></g>
+          <g class="c2" stroke="url(#gq)"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/></g></g></g>
+      </g></svg></div>
+    <div class="bar"><button type="button" class="btn" id="replaySig">replay</button><span class="seg" role="group" aria-label="Speed"><button type="button" data-speed="1" aria-pressed="true">normal</button><button type="button" data-speed="2.2" aria-pressed="false">slow (to study it)</button></span></div>
+    <p class="note">Plays once when the app opens or the login page loads, about 2 seconds in total, then fades into the screen. Not on every page, and shown as the finished word when the device asks for reduced motion.</p>
+  </section>
+
+  <section class="card">
+    <div><h2>The loading family</h2><p class="note" style="margin-top:4px">Five small ones, all made from the logo's ring and stem, so waiting also feels like Arnaq. Each has one job.</p></div>
+    <div class="grid">
+      <div class="demo"><div class="stagebox">
+        <svg width="64" height="64" viewBox="-8 -8 73 73" aria-label="Loading"><circle cx="28.5" cy="28.5" r="20.5" fill="none" stroke="var(--track)" stroke-width="10"/><g class="chase"><circle cx="28.5" cy="28.5" r="20.5" fill="none" stroke="url(#gq2)" stroke-width="10" stroke-linecap="round" stroke-dasharray="46 83"/></g><defs><linearGradient id="gq2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient></defs></svg></div>
+        <h3>chase</h3><span class="use">quick waits, buttons, page changes</span><p class="note">The a's ring with a gradient arc running round it. Small and quiet.</p></div>
+
+      <div class="demo"><div class="stagebox">
+        <svg width="150" viewBox="-6 -6 133 92" aria-label="Loading"><g fill="none" stroke-width="16" stroke-linecap="round"><g class="orbit">
+          <g transform="translate(0 0)"><g class="keep" stroke="#33c6ff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g></g>
+          <g transform="translate(64 0)"><g class="keep" stroke="#7f8cff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/></g></g></g></g></svg></div>
+        <h3>swap</h3><span class="use">longer waits with no known length</span><p class="note">The a and q trade places and stay upright. The logo itself, waiting.</p></div>
+
+      <div class="demo"><div class="stagebox"><div style="position:relative;width:104px;height:104px;display:grid;place-items:center">
+        <svg width="104" height="104" viewBox="0 0 104 104" style="position:absolute;inset:0" aria-hidden="true"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--track)" stroke-width="7"/><circle id="fillRing" cx="52" cy="52" r="46" fill="none" stroke="url(#gq2)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 52 52)"/></svg>
+        <span id="fillNum" style="font:600 22px var(--sans);letter-spacing:-.03em;font-variant-numeric:tabular-nums">0%</span>
+        <svg id="fillTick" width="44" height="44" viewBox="0 0 44 44" style="position:absolute;opacity:0" aria-hidden="true"><path d="M10 23 L19 32 L35 13" fill="none" stroke="var(--good)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+        <h3>fill</h3><span class="use">reading a statement</span><p class="note">The app's own ring, filling with the real progress, then a tick. Honest, because it shows how far along it is.</p></div>
+
+      <div class="demo"><div class="stagebox" style="padding:0 22px"><div style="display:grid;gap:12px;width:100%"><div class="sk" style="width:70%"></div><div class="sk"></div><div class="sk" style="width:85%"></div></div></div>
+        <h3>shimmer</h3><span class="use">lists and cards while they load</span><p class="note">Placeholder lines with a blue highlight sweeping across. Standard, cheap and recognisable.</p></div>
+
+      <div class="demo"><div class="stagebox"><div style="position:relative;width:104px;height:104px;display:grid;place-items:center">
+        <svg width="104" height="104" viewBox="0 0 104 104" style="position:absolute;inset:0" aria-hidden="true"><circle cx="52" cy="52" r="46" fill="none" stroke="var(--track)" stroke-width="7"/><circle id="doneRing" cx="52" cy="52" r="46" fill="none" stroke="var(--good)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 52 52)"/></svg>
+        <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true"><path id="doneTick" d="M10 23 L19 32 L35 13" fill="none" stroke="var(--good)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>
+        <h3>done</h3><span class="use">saved, imported, goal reached</span><p class="note">The ring closes in green and the tick draws itself. Plays once.</p></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Summary: what I picked</h2>
+    <div class="tablewrap"><table>
+      <tr><th>Moment</th><th>Animation</th><th>Why</th></tr>
+      <tr><td>Onboarding, screen 1</td><td>a and q fly in and meet (the one you like, flat colours)</td><td>It is already in the onboarding and you like it</td></tr>
+      <tr><td>Opening the app, login page</td><td><b>The signature</b>: aq turns, arnaq comes out</td><td>The brand moment, once, about 2 s</td></tr>
+      <tr><td>Quick waits and buttons</td><td>chase</td><td>Small and quiet</td></tr>
+      <tr><td>Longer waits without a known length</td><td>swap</td><td>Our logo doing something, not a generic spinner</td></tr>
+      <tr><td>Reading a statement</td><td>fill, then done</td><td>Shows real progress with the app's own ring</td></tr>
+      <tr><td>Lists and cards loading</td><td>shimmer</td><td>People recognise it instantly</td></tr>
+      <tr><td>Dropped</td><td>rolling coin, ripple, stem joins</td><td>Too basic, you said so</td></tr>
+    </table></div>
+    <p class="note">All of it respects "reduce motion": a still logo or the final state is shown instead. Nothing here is built into the app yet; it comes with the Arnaq rename.</p>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const root = document.documentElement;
+  const setLook = (l) => { root.dataset.look = l; $$("[data-look-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lookBtn === l))); };
+  setLook("dark"); $$("[data-look-btn]").forEach((b) => b.addEventListener("click", () => setLook(b.dataset.lookBtn)));
+  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
+  const ease = "cubic-bezier(.45,.05,.2,1)";
+
+  // ---------- the signature ----------
+  let speed = 1;
+  const DX = 91.5;                                 // the monogram is centred; each letter travels this far to its place
+  function signature() {
+    const svg = $("#sig"); svg.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    const T = (ms) => ms * speed;
+    const la = $("#la"), lq = $("#lq"), ltrs = $$(".ltr", svg);
+    [la, lq].forEach((g) => { g.style.transformBox = "fill-box"; g.style.transformOrigin = "20.5px 20.5px"; });
+    $$(".ltr path, .ltr circle, .ltr line", svg).forEach((e) => { const L = e.getTotalLength(); e.style.strokeDasharray = `${L} ${L}`; e.style.strokeDashoffset = reduce ? 0 : L; });
+    $$(".ltr", svg).forEach((g) => { g.style.opacity = reduce ? 1 : 0; });
+    if (reduce) { $$(".c1", svg).forEach((e) => { e.style.opacity = 0; }); $$(".c2", svg).forEach((e) => { e.style.opacity = 1; }); la.style.transform = lq.style.transform = "none"; return; }
+    const roll = { delay: T(500), duration: T(1250), easing: ease };
+    A(la, [{ transform: `translateX(${DX}px) rotate(0deg)` }, { transform: "translateX(0) rotate(-360deg)" }], roll);
+    A(lq, [{ transform: `translateX(${-DX}px) rotate(0deg)` }, { transform: "translateX(0) rotate(360deg)" }], roll);
+    [la, lq].forEach((g) => { A($(".c1", g), [{ opacity: 1 }, { opacity: 0 }], { delay: T(600), duration: T(1000) }); A($(".c2", g), [{ opacity: 0 }, { opacity: 1 }], { delay: T(600), duration: T(1000) }); });
+    ltrs.forEach((g, i) => { const d = 850 + i * 170; A(g, [{ opacity: 0 }, { opacity: 1 }], { delay: T(d), duration: T(60) });
+      $$("path, circle, line", g).forEach((e, k) => { const L = e.getTotalLength(); A(e, [{ strokeDashoffset: L }, { strokeDashoffset: 0 }], { delay: T(d + k * 120), duration: T(520), easing: "cubic-bezier(.3,.8,.3,1)" }); }); });
+    A(svg, [{ transform: "scale(1)" }, { transform: "scale(1.035)", offset: .5 }, { transform: "scale(1)" }], { delay: T(1900), duration: T(520), easing: "ease-in-out" });
+  }
+  $("#replaySig").addEventListener("click", signature);
+  $$("[data-speed]").forEach((b) => b.addEventListener("click", () => { speed = Number(b.dataset.speed); $$("[data-speed]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); signature(); }));
+
+  // ---------- fill (determinate) and done, on a loop for the demo ----------
+  const fr = $("#fillRing"), fl = fr.getTotalLength(); fr.style.strokeDasharray = `${fl} ${fl}`;
+  const dr = $("#doneRing"), dl = dr.getTotalLength(); dr.style.strokeDasharray = `${dl} ${dl}`;
+  const dt = $("#doneTick"), dtl = dt.getTotalLength(); dt.style.strokeDasharray = `${dtl} ${dtl}`;
+  function loops() {
+    if (reduce) { fr.style.strokeDashoffset = 0; $("#fillNum").textContent = "100%"; dr.style.strokeDashoffset = 0; dt.style.strokeDashoffset = 0; return; }
+    const t0 = performance.now();
+    const f = (now) => { const t = ((now - t0) % 4200) / 4200, p = Math.min(1, t / .72), e = 1 - Math.pow(1 - p, 2.2);
+      fr.style.strokeDashoffset = fl * (1 - e); $("#fillNum").textContent = Math.round(e * 100) + "%";
+      const done = t > .78; $("#fillTick").style.opacity = done ? 1 : 0; $("#fillNum").style.opacity = done ? 0 : 1;
+      const q = ((now - t0) % 3600) / 3600, ring = Math.min(1, q / .45), tick = Math.min(1, Math.max(0, (q - .4) / .3)), eo = 1 - Math.pow(1 - ring, 3);
+      dr.style.strokeDashoffset = dl * (1 - eo); dt.style.strokeDashoffset = dtl * (1 - (1 - Math.pow(1 - tick, 3)));
+      requestAnimationFrame(f); };
+    requestAnimationFrame(f);
+  }
+  loops();
+  signature();
+  const io = new IntersectionObserver((en) => { if (en[0].isIntersecting) { signature(); io.disconnect(); } }, { threshold: .6 }); io.observe($("#sig"));
+})();
+</script>
+</body>
+</html>
