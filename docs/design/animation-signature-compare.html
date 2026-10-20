@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Arnaq signature animation, two versions</title>
+<title>Arnaq signature animation, four versions</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;1,400&display=swap">
 <style>
 /* Colours from src/design/tokens.ts. No CSS filter on any SVG element. */
@@ -19,7 +19,7 @@ body { margin:0; color:var(--ink); min-height:100vh; font:15px/1.45 var(--sans);
 [data-look="light"] body { background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8) fixed; }
 main { max-width:1000px; margin:0 auto; display:grid; gap:24px; }
 h1 { font:500 clamp(26px,5vw,38px)/1.1 var(--serif); margin:0; text-wrap:balance; }
-h2 { font:500 22px/1.2 var(--serif); margin:0; }
+h2 { font:500 21px/1.2 var(--serif); margin:0; }
 p { margin:0; }
 .lead,.note { color:var(--muted); max-width:70ch; }
 .note { font-size:13px; }
@@ -29,10 +29,10 @@ p { margin:0; }
 .seg button[aria-pressed="true"] { background:var(--ink); color:var(--page); }
 .btn { border:1px solid var(--hair); background:var(--glass); color:var(--ink); }
 .seg button:focus-visible,.btn:focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
-.pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
-@media (max-width:820px) { .pair { grid-template-columns:minmax(0,1fr); } }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+@media (max-width:820px) { .grid { grid-template-columns:minmax(0,1fr); } }
 .card { border:1px solid var(--glassb); background:var(--glass); border-radius:22px; padding:18px; display:grid; gap:12px; min-width:0; align-content:start; }
-.hero { height:210px; display:grid; place-items:center; border-radius:16px; background:linear-gradient(165deg,rgba(51,198,255,.10),rgba(127,140,255,.10)); overflow:hidden; padding:0 10px; }
+.hero { height:200px; display:grid; place-items:center; border-radius:16px; background:linear-gradient(165deg,rgba(51,198,255,.10),rgba(127,140,255,.10)); overflow:hidden; padding:0 10px; }
 .tag { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
 ul { margin:0; padding-left:18px; display:grid; gap:3px; font-size:14px; color:var(--muted); }
 svg { display:block; overflow:visible; max-width:100%; }
@@ -42,118 +42,156 @@ svg { display:block; overflow:visible; max-width:100%; }
 <body>
 <main>
   <header style="display:grid;gap:8px">
-    <h1>The signature, two ways</h1>
-    <p class="lead">Both start from the icon and end on the same finished word. Play them one after the other or together and see which one feels more like Arnaq.</p>
+    <h1>The signature, four ways</h1>
+    <p class="lead">The pen is gone. Here are the turn you already know next to the other three ideas: the orbit, the split-flap and the light wipe. All of them start from the icon and end on the same finished word. Press "play all together" and watch them side by side.</p>
   </header>
 
   <div class="bar">
     <span class="seg" role="group" aria-label="Look"><button type="button" data-look-btn="dark" aria-pressed="true">dark</button><button type="button" data-look-btn="light" aria-pressed="false">light</button></span>
-    <button type="button" class="btn" id="both">play both together</button>
+    <button type="button" class="btn" id="all">play all together</button>
     <span class="seg" role="group" aria-label="Speed"><button type="button" data-speed="1" aria-pressed="true">normal</button><button type="button" data-speed="2.2" aria-pressed="false">slow (to study)</button></span>
   </div>
 
-  <div class="pair">
-    <section class="card">
-      <span class="tag">A. the turn</span>
-      <h2>The a and q roll apart</h2>
-      <div class="hero" id="heroA"></div>
-      <div class="bar"><button type="button" class="btn" id="playA">replay</button><span class="time">about 2 s</span></div>
-      <ul><li>The a rolls left and the q right, each a full turn.</li><li>r, n and a are drawn between them.</li><li>Energetic, a bit playful, the coin feel of the first idea.</li></ul>
-    </section>
-    <section class="card">
-      <span class="tag">B. the pen</span>
-      <h2>A glowing pen writes the middle</h2>
-      <div class="hero" id="heroB"></div>
-      <div class="bar"><button type="button" class="btn" id="playB">replay</button><span class="time">about 3 s</span></div>
-      <ul><li>The a and q slide apart without turning.</li><li>A point of light writes r, n and a, lifting between letters.</li><li>Calmer, more like a signature. A little longer.</li></ul>
-    </section>
+  <div class="grid">
+    <section class="card"><span class="tag">A. the turn</span><h2>The a and q roll apart</h2><div class="hero" id="heroA"></div>
+      <div class="bar"><button type="button" class="btn" data-play="A">replay</button><span class="time">about 2 s</span></div>
+      <ul><li>The a rolls left and the q right, each a full turn.</li><li>r, n and a are drawn between them.</li><li>Playful, the coin feel.</li></ul></section>
+    <section class="card"><span class="tag">C. the orbit</span><h2>The a and q circle each other</h2><div class="hero" id="heroC"></div>
+      <div class="bar"><button type="button" class="btn" data-play="C">replay</button><span class="time">about 3 s</span></div>
+      <ul><li>They orbit like two coins, faster and faster, with a little depth.</li><li>Then they are slung apart and the word draws in between.</li><li>The most energetic one.</li></ul></section>
+    <section class="card"><span class="tag">D. the split-flap</span><h2>Letters flip into place</h2><div class="hero" id="heroD"></div>
+      <div class="bar"><button type="button" class="btn" data-play="D">replay</button><span class="time">about 2.5 s</span></div>
+      <ul><li>The a and q slide apart.</li><li>r, n and a flip in like an old departure board, cycling through other letters first.</li><li>Mechanical and precise, which suits money.</li></ul></section>
+    <section class="card"><span class="tag">E. the light wipe</span><h2>A light sweeps the word in</h2><div class="hero" id="heroE"></div>
+      <div class="bar"><button type="button" class="btn" data-play="E">replay</button><span class="time">about 2.5 s</span></div>
+      <ul><li>The a and q slide apart.</li><li>A band of blue and purple light sweeps across and leaves the letters in ink behind it.</li><li>A glow on the q at the end. Calm and premium.</li></ul></section>
   </div>
-  <p class="note">Both end as the same wordmark: ink letters and a gradient q, with a small pop at the end. Nothing is built in the app yet. With "reduce motion" on, either one shows the finished word.</p>
+  <p class="note">All four end as the same wordmark: ink letters and a gradient q, with a small pop. Nothing is built in the app yet. With "reduce motion" on, any of them shows the finished word.</p>
 </main>
 
 <script>
 (() => {
   const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const root = document.documentElement;
+  const root = document.documentElement, NS = "http://www.w3.org/2000/svg";
   const setLook = (l) => { root.dataset.look = l; $$("[data-look-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lookBtn === l))); };
   setLook("dark"); $$("[data-look-btn]").forEach((b) => b.addEventListener("click", () => setLook(b.dataset.lookBtn)));
-  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
-  const ease = "cubic-bezier(.45,.05,.2,1)";
   const clamp = (x) => Math.min(1, Math.max(0, x));
   const eio = (p) => (p < .5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
   const eout = (p) => 1 - Math.pow(1 - p, 3);
-  let speed = 1; const DX = 91.5;
+  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
+  const ease = "cubic-bezier(.45,.05,.2,1)";
+  let speed = 1; const DX = 91.5;                    // the monogram is centred; each outer letter travels this far to its place
 
-  // one wordmark, drawn from the logo's own strokes (ring height 57, stroke 16)
-  const word = (id) => `<svg id="${id}" width="min(560px,100%)" viewBox="-6 -6 316 90" role="img" aria-label="arnaq">
-    <defs><linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>
-    <radialGradient id="${id}t"><stop offset="0" stop-color="#33c6ff" stop-opacity=".65"/><stop offset="1" stop-color="#33c6ff" stop-opacity="0"/></radialGradient></defs>
-    <g fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
-      <g transform="translate(0 0)"><g class="roll la">
-        <g class="c1" stroke="#33c6ff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
-        <g class="c2" stroke="var(--ink)"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g></g></g>
-      <g transform="translate(66 0)" stroke="var(--ink)" class="ltr"><path d="M8 8 V49 M8 26 C8 14 16 8 32 8"/></g>
-      <g transform="translate(115 0)" stroke="var(--ink)" class="ltr"><path d="M8 8 V49 M8 26 C8 14 18 8 28.5 8 C39 8 49 14 49 26 V49"/></g>
-      <g transform="translate(181 0)" stroke="var(--ink)" class="ltr"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/></g>
-      <g transform="translate(247 0)"><g class="roll lq">
-        <g class="c1" stroke="#7f8cff"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/></g>
-        <g class="c2" stroke="url(#${id}g)"><circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/></g></g></g>
-    </g>
-    <g class="tip" style="opacity:0"><circle r="20" fill="url(#${id}t)"/><circle r="5.5" fill="#33c6ff"/></g></svg>`;
-  $("#heroA").innerHTML = word("sa"); $("#heroB").innerHTML = word("sb");
-  const prep = (svg) => { $$(".roll", svg).forEach((g) => { g.style.transformBox = "fill-box"; g.style.transformOrigin = "20.5px 20.5px"; });
-    $$(".ltr path,.ltr circle,.ltr line", svg).forEach((e) => { e._L = e.getTotalLength(); e.style.strokeDasharray = `${e._L} ${e._L}`; }); };
-  prep($("#sa")); prep($("#sb"));
-  const finished = (svg) => { $$(".c1", svg).forEach((e) => { e.style.opacity = 0; }); $$(".c2", svg).forEach((e) => { e.style.opacity = 1; }); $$(".ltr", svg).forEach((g) => { g.style.opacity = 1; });
-    $$(".ltr path,.ltr circle,.ltr line", svg).forEach((e) => { e.style.strokeDashoffset = 0; e.style.opacity = 1; }); $$(".roll", svg).forEach((g) => { g.style.transform = "none"; }); $(".tip", svg).style.opacity = 0; svg.style.transform = "none"; };
+  // ---- the letters, drawn from the logo's strokes (ring height 57, stroke 16). x0: where each letter sits in the word ----
+  const G = {
+    a: `<circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/>`,
+    r: `<path d="M8 8 V49 M8 26 C8 14 16 8 32 8"/>`,
+    n: `<path d="M8 8 V49 M8 26 C8 14 18 8 28.5 8 C39 8 49 14 49 26 V49"/>`,
+    q: `<circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/>`,
+  };
+  const X0 = { r: 66, n: 115, a2: 181 };
 
-  // ---------- A: the turn (Web Animations) ----------
+  // the shared pieces: the outer a and q (monogram colours fading to ink / gradient), each rolling about its ring centre
+  const outer = (id) => `<g transform="translate(0 0)"><g class="roll la">
+      <g class="c1" stroke="#33c6ff">${G.a}</g><g class="c2" stroke="var(--ink)">${G.a}</g></g></g>
+    <g transform="translate(247 0)"><g class="roll lq">
+      <g class="c1" stroke="#7f8cff">${G.q}</g><g class="c2" stroke="url(#${id}g)">${G.q}</g></g></g>`;
+  const defsBase = (id) => `<linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>`;
+  const frame = (id, defs, body, extra = "") => `<svg id="${id}" width="min(540px,100%)" viewBox="-6 -6 316 90" role="img" aria-label="arnaq"><defs>${defsBase(id)}${defs}</defs>${body}${extra}</svg>`;
+  const prepRoll = (svg) => $$(".roll", svg).forEach((g) => { g.style.transformBox = "fill-box"; g.style.transformOrigin = "20.5px 20.5px"; });
+  const fade = (svg, o) => $$(".roll", svg).forEach((g) => { $(".c1", g).style.opacity = 1 - o; $(".c2", g).style.opacity = o; });
+  const place = (svg, dxA, dyA, sA, dxQ, dyQ, sQ) => { $(".la", svg).style.transform = `translate(${dxA}px,${dyA}px) scale(${sA})`; $(".lq", svg).style.transform = `translate(${dxQ}px,${dyQ}px) scale(${sQ})`; };
+  const pop = (svg, t, end) => { const p = clamp((t - end) / 520); svg.style.transform = `scale(${1 + .035 * Math.sin(Math.PI * p)})`; };
+
+  // letters drawn with a dash, in order; L is measured once
+  const strokes = (svg) => { const out = []; $$(".ltr", svg).forEach((g) => $$("path,circle,line", g).forEach((e) => { e._L = e.getTotalLength(); e.style.strokeDasharray = `${e._L} ${e._L}`; out.push(e); })); return out; };
+  const drawStrokes = (els, t, starts, dur) => els.forEach((e, i) => { const p = clamp((t - starts[i]) / dur); e.style.opacity = p > 0 ? 1 : 0; e.style.strokeDashoffset = e._L * (1 - eout(p)); });
+  const inkLetters = `<g class="ltrs" fill="none" stroke="var(--ink)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+      <g transform="translate(66 0)" class="ltr">${G.r}</g><g transform="translate(115 0)" class="ltr">${G.n}</g><g transform="translate(181 0)" class="ltr">${G.a}</g></g>`;
+  const outerWrap = (id) => `<g fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">${outer(id)}</g>`;
+
+  // =============== A. the turn (Web Animations) ===============
+  const hA = $("#heroA"); hA.innerHTML = frame("sa", "", inkLetters.replace('class="ltrs"', 'class="ltrs"') + outerWrap("sa"));
+  const svgA = $("#sa"); prepRoll(svgA); strokes(svgA);
   function playA() {
-    const svg = $("#sa"); svg.getAnimations({ subtree: true }).forEach((a) => a.cancel());
-    if (reduce) { finished(svg); return; }
-    const T = (ms) => ms * speed, la = $(".la", svg), lq = $(".lq", svg);
-    $$(".ltr", svg).forEach((g) => { g.style.opacity = 0; }); $$(".ltr path,.ltr circle,.ltr line", svg).forEach((e) => { e.style.strokeDashoffset = e._L; });
+    svgA.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    if (reduce) { fade(svgA, 1); $$(".roll", svgA).forEach((g) => { g.style.transform = "none"; }); $$(".ltr path,.ltr circle,.ltr line", svgA).forEach((e) => { e.style.strokeDashoffset = 0; e.style.opacity = 1; }); return; }
+    const T = (ms) => ms * speed, la = $(".la", svgA), lq = $(".lq", svgA);
+    $$(".ltr path,.ltr circle,.ltr line", svgA).forEach((e) => { e.style.opacity = 0; e.style.strokeDashoffset = e._L; });
     const roll = { delay: T(500), duration: T(1250), easing: ease };
     A(la, [{ transform: `translateX(${DX}px) rotate(0deg)` }, { transform: "translateX(0) rotate(-360deg)" }], roll);
     A(lq, [{ transform: `translateX(${-DX}px) rotate(0deg)` }, { transform: "translateX(0) rotate(360deg)" }], roll);
     [la, lq].forEach((g) => { A($(".c1", g), [{ opacity: 1 }, { opacity: 0 }], { delay: T(600), duration: T(1000) }); A($(".c2", g), [{ opacity: 0 }, { opacity: 1 }], { delay: T(600), duration: T(1000) }); });
-    $$(".ltr", svg).forEach((g, i) => { const d = 850 + i * 170; A(g, [{ opacity: 0 }, { opacity: 1 }], { delay: T(d), duration: T(60) });
-      $$("path,circle,line", g).forEach((e, k) => A(e, [{ strokeDashoffset: e._L }, { strokeDashoffset: 0 }], { delay: T(d + k * 120), duration: T(520), easing: "cubic-bezier(.3,.8,.3,1)" })); });
-    A(svg, [{ transform: "scale(1)" }, { transform: "scale(1.035)", offset: .5 }, { transform: "scale(1)" }], { delay: T(1900), duration: T(520), easing: "ease-in-out" });
+    $$(".ltr", svgA).forEach((g, i) => { const d = 850 + i * 170;
+      $$("path,circle,line", g).forEach((e, k) => { A(e, [{ opacity: 0 }, { opacity: 1 }], { delay: T(d + k * 120), duration: T(40) }); A(e, [{ strokeDashoffset: e._L }, { strokeDashoffset: 0 }], { delay: T(d + k * 120), duration: T(520), easing: "cubic-bezier(.3,.8,.3,1)" }); }); });
+    A(svgA, [{ transform: "scale(1)" }, { transform: "scale(1.035)", offset: .5 }, { transform: "scale(1)" }], { delay: T(1900), duration: T(520), easing: "ease-in-out" });
   }
 
-  // ---------- B: the pen (drawn frame by frame from one clock, so it can be seeked) ----------
-  const svgB = $("#sb"), la = $(".la", svgB), lq = $(".lq", svgB), tip = $(".tip", svgB), ltrs = $$(".ltr", svgB);
-  const STROKES = [ // [element, letter x offset, start ms, duration ms]
-    [$("path", ltrs[0]), 66, 1100, 420], [$("path", ltrs[1]), 115, 1560, 520], [$("circle", ltrs[2]), 181, 2120, 420], [$("line", ltrs[2]), 181, 2580, 220],
-  ];
-  const END = 2850;
-  function renderB(t) {
-    const s = eio(clamp((t - 400) / 700));                                     // slide apart
-    la.style.transform = `translateX(${DX * (1 - s)}px)`; lq.style.transform = `translateX(${-DX * (1 - s)}px)`;
-    [la, lq].forEach((g) => { const o = clamp((t - 450) / 700); $(".c1", g).style.opacity = 1 - o; $(".c2", g).style.opacity = o; });
-    let active = null;
-    STROKES.forEach(([el, x0, st, du]) => { const p = clamp((t - st) / du), e = eout(p), g = el.parentNode;
-      el.style.opacity = p > 0 ? 1 : 0; g.style.opacity = 1; el.style.strokeDashoffset = el._L * (1 - e);
-      if (p > 0 && p < 1) active = [el, x0, e]; });
-    if (active) { const [el, x0, e] = active, pt = el.getPointAtLength(Math.max(.01, el._L * e)); tip.setAttribute("transform", `translate(${x0 + pt.x} ${pt.y})`); tip.style.opacity = 1; } else tip.style.opacity = 0;
-    const pop = clamp((t - END) / 520); svgB.style.transform = `scale(${1 + .035 * Math.sin(Math.PI * pop)})`;
-  }
-  let raf = 0;
-  function playB() {
-    cancelAnimationFrame(raf);
-    if (reduce) { finished(svgB); return; }
-    const t0 = performance.now();
-    const f = (now) => { const t = (now - t0) / speed; renderB(t); if (t < END + 600) raf = requestAnimationFrame(f); else finished(svgB); };
-    raf = requestAnimationFrame(f);
-  }
-  window.__seekB = (t) => { cancelAnimationFrame(raf); renderB(t); };
+  // =============== a clock-driven renderer for C, D and E, so each can be played or seeked to any time ===============
+  const V = {};
+  const run = (key) => { const v = V[key]; cancelAnimationFrame(v.raf); if (reduce) { v.render(1e9); return; }
+    const t0 = performance.now(); const f = (now) => { const t = (now - t0) / speed; v.render(t); if (t < v.end + 700) v.raf = requestAnimationFrame(f); else v.render(1e9); }; v.raf = requestAnimationFrame(f); };
+  window.__seek = (key, t) => { cancelAnimationFrame(V[key].raf); V[key].render(t); };
 
-  $("#playA").addEventListener("click", playA); $("#playB").addEventListener("click", playB);
-  $("#both").addEventListener("click", () => { playA(); playB(); });
-  $$("[data-speed]").forEach((b) => b.addEventListener("click", () => { speed = Number(b.dataset.speed); $$("[data-speed]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); playA(); playB(); }));
-  playA(); playB();
+  // ---- C. the orbit ----
+  $("#heroC").innerHTML = frame("sc", "", inkLetters + outerWrap("sc"));
+  { const svg = $("#sc"); prepRoll(svg); const els = strokes(svg); const st = [1750, 1900, 2050, 2200, 2350, 2500].slice(0, els.length);
+    V.C = { end: 2750, raf: 0, render(t) {
+      const s1 = clamp((t - 300) / 1150), th = 4 * Math.PI * s1 * s1, s2 = eout(clamp((t - 1450) / 650)), orbiting = t < 1450;
+      if (orbiting) { const pa = Math.PI + th, pq = th, ax = 152 + 32 * Math.cos(pa), ay = 28.5 + 14 * Math.sin(pa), qx = 152 + 32 * Math.cos(pq), qy = 28.5 + 14 * Math.sin(pq);
+        place(svg, ax - 28.5, ay - 28.5, 1 + .16 * Math.sin(pa), qx - 275.5, qy - 28.5, 1 + .16 * Math.sin(pq));
+        const front = Math.sin(pq) > Math.sin(pa) ? $(".lq", svg).parentNode : $(".la", svg).parentNode, back = front === $(".lq", svg).parentNode ? $(".la", svg) : $(".lq", svg);
+        front.parentNode.appendChild(front); $(".la", svg).style.opacity = Math.sin(pa) > Math.sin(pq) ? 1 : .72; $(".lq", svg).style.opacity = Math.sin(pq) > Math.sin(pa) ? 1 : .72; }
+      else { place(svg, DX * (1 - s2), 0, 1, -DX * (1 - s2), 0, 1); $(".la", svg).style.opacity = 1; $(".lq", svg).style.opacity = 1; }
+      fade(svg, clamp((t - 1500) / 600)); drawStrokes(els, t, st.length ? st : [], 480); pop(svg, t, 2700); } }; }
+
+  // ---- D. the split-flap ----
+  { const defs = `<clipPath id="sdT" clipPathUnits="userSpaceOnUse"><rect x="-30" y="-40" width="140" height="68.5"/></clipPath><clipPath id="sdB" clipPathUnits="userSpaceOnUse"><rect x="-30" y="28.5" width="140" height="90"/></clipPath>
+      <g id="sd_blank"></g>` + Object.keys(G).map((k) => `<g id="sd_${k}">${G[k]}</g>`).join("");
+    $("#heroD").innerHTML = frame("sd", defs, `<g class="slots" fill="none" stroke="var(--ink)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"></g>` + outerWrap("sd"));
+    const svg = $("#sd"); prepRoll(svg); const slots = [];
+    [["r", ["n", "q", "r"], 66], ["n", ["r", "a", "n"], 115], ["a", ["q", "r", "a"], 181]].forEach(([target, seq, x0]) => {
+      const g = document.createElementNS(NS, "g"); g.setAttribute("transform", `translate(${x0} 0)`);
+      g.innerHTML = `<g clip-path="url(#sdT)"><use class="nt"/></g><g clip-path="url(#sdB)"><use class="ob"/></g>
+        <g class="ft"><g clip-path="url(#sdT)"><use class="ot"/></g></g><g class="fb"><g clip-path="url(#sdB)"><use class="nb"/></g></g>`;
+      $(".slots", svg).appendChild(g); slots.push({ g, seq: seq.map((c) => c === "a" && target === "a" ? "a" : c), target }); });
+    const flap = (el, s) => el.setAttribute("transform", `translate(0 28.5) scale(1 ${Math.max(0, s)}) translate(0 -28.5)`);
+    const href = (el, k) => el.setAttribute("href", `#sd_${k}`);
+    const STEP = 170;
+    V.D = { end: 2150, raf: 0, render(t) {
+      const s = eio(clamp((t - 300) / 500)); place(svg, DX * (1 - s), 0, 1, -DX * (1 - s), 0, 1); fade(svg, clamp((t - 350) / 500));
+      slots.forEach((sl, i) => { const lt = t - (850 + i * 200), n = sl.seq.length, k = Math.floor(lt / STEP), p = (lt - k * STEP) / STEP, g = sl.g;
+        const q = (c) => $(c, g);
+        if (lt < 0) { ["nt", "ob", "ot", "nb"].forEach((c) => href(q("." + c), "blank")); flap(q(".ft"), 0); flap(q(".fb"), 0); return; }
+        if (k >= n) { ["nt", "ob", "ot", "nb"].forEach((c) => href(q("." + c), sl.target)); flap(q(".ft"), 0); flap(q(".fb"), 0); return; }
+        const oldL = k === 0 ? "blank" : sl.seq[k - 1], newL = sl.seq[k];
+        href(q(".nt"), newL); href(q(".ob"), oldL); href(q(".ot"), oldL); href(q(".nb"), newL);
+        flap(q(".ft"), p < .5 ? 1 - 2 * p : 0); flap(q(".fb"), p < .5 ? 0 : 2 * (p - .5)); });
+      pop(svg, t, 2000); } }; }
+
+  // ---- E. the light wipe ----
+  { const defs = `<linearGradient id="seWord" gradientUnits="userSpaceOnUse" x1="60" y1="0" x2="250" y2="0"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>
+      <linearGradient id="seM1" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+      <linearGradient id="seM2" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000"/><stop offset=".3" stop-color="#fff"/><stop offset=".85" stop-color="#fff"/><stop offset="1" stop-color="#000"/></linearGradient>
+      <mask id="seMa" maskUnits="userSpaceOnUse" x="-60" y="-30" width="440" height="140"><rect x="-60" y="-30" width="440" height="140" fill="url(#seM1)"/></mask>
+      <mask id="seMb" maskUnits="userSpaceOnUse" x="-60" y="-30" width="440" height="140"><rect x="-60" y="-30" width="440" height="140" fill="url(#seM2)"/></mask>
+      <radialGradient id="seGlow"><stop offset="0" stop-color="#7f8cff" stop-opacity=".6"/><stop offset="1" stop-color="#7f8cff" stop-opacity="0"/></radialGradient>`;
+    const letters = (stroke) => `<g fill="none" stroke="${stroke}" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(66 0)">${G.r}</g><g transform="translate(115 0)">${G.n}</g><g transform="translate(181 0)">${G.a}</g></g>`;
+    $("#heroE").innerHTML = frame("se", defs, `<circle class="glow" cx="275.5" cy="28.5" r="46" fill="url(#seGlow)" style="opacity:0"/><g mask="url(#seMb)">${letters("url(#seWord)")}</g><g mask="url(#seMa)">${letters("var(--ink)")}</g>` + outerWrap("se"));
+    const svg = $("#se"), m1 = $("#seM1"), m2 = $("#seM2"), glow = $(".glow", svg); prepRoll(svg);
+    V.E = { end: 2400, raf: 0, render(t) {
+      const s = eio(clamp((t - 300) / 650)); place(svg, DX * (1 - s), 0, 1, -DX * (1 - s), 0, 1); fade(svg, clamp((t - 800) / 900));
+      const X = 20 + 400 * eio(clamp((t - 700) / 1300));
+      m1.setAttribute("x1", X - 110); m1.setAttribute("x2", X - 40); m2.setAttribute("x1", X - 130); m2.setAttribute("x2", X);
+      glow.style.opacity = clamp(Math.sin(Math.PI * clamp((t - 1650) / 800))); pop(svg, t, 2250); } }; }
+
+  const play = { A: playA, C: () => run("C"), D: () => run("D"), E: () => run("E") };
+  $$("[data-play]").forEach((b) => b.addEventListener("click", () => play[b.dataset.play]()));
+  const all = () => Object.values(play).forEach((f) => f());
+  $("#all").addEventListener("click", all);
+  $$("[data-speed]").forEach((b) => b.addEventListener("click", () => { speed = Number(b.dataset.speed); $$("[data-speed]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); all(); }));
+  all();
 })();
 </script>
 </body>
