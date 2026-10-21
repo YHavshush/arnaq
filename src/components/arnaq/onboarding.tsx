@@ -113,6 +113,71 @@ function useOnActive(
 
 const q = <T extends Element>(el: HTMLElement, sel: string) => el.querySelector(sel) as T | null;
 
+/**
+ * The glow behind the visuals: two soft layers (blue, and a larger violet one) that rise slowly into view, then
+ * breathe and drift a little, out of step with each other, so the light feels alive and never repeats exactly.
+ * Both fade to nothing at their edge. Under reduced motion they just sit there.
+ */
+function Glow() {
+  return (
+    <>
+      <div
+        data-glow
+        aria-hidden
+        className="absolute size-[340px] rounded-full opacity-0"
+        style={{ background: "var(--onb-glow)" }}
+      />
+      <div
+        data-glow2
+        aria-hidden
+        className="absolute size-[430px] rounded-full opacity-0"
+        style={{ background: "var(--onb-glow-2)" }}
+      />
+    </>
+  );
+}
+function glowStops(el: HTMLElement): Stop[] {
+  const main = q(el, "[data-glow]");
+  const wide = q(el, "[data-glow2]");
+  if (reducedMotion()) {
+    for (const g of [main, wide]) if (g) (g as HTMLElement).style.opacity = "1";
+    return [];
+  }
+  const loop = { iterations: Infinity, direction: "alternate" as const, easing: "ease-in-out" };
+  return [
+    play(
+      main,
+      [
+        { opacity: 0, transform: "scale(.7)" },
+        { opacity: 1, transform: "scale(1)" },
+      ],
+      { delay: 200, duration: 2400, easing: "ease-in-out" },
+    ),
+    play(
+      wide,
+      [
+        { opacity: 0, transform: "scale(.7)" },
+        { opacity: 1, transform: "scale(1)" },
+      ],
+      { delay: 700, duration: 2800, easing: "ease-in-out" },
+    ),
+    // After the rise: a slow breath, and a slow drift of the wide layer, out of step.
+    play(main, [{ transform: "scale(1)" }, { transform: "scale(1.09)" }], {
+      delay: 2600,
+      duration: 6000,
+      ...loop,
+    }),
+    play(
+      wide,
+      [
+        { transform: "translate(-16px, 10px) scale(1)", opacity: 1 },
+        { transform: "translate(16px, -10px) scale(1.1)", opacity: 0.7 },
+      ],
+      { delay: 3500, duration: 9000, ...loop },
+    ),
+  ];
+}
+
 /** Screen 1: the a and q fly in, meet, and breathe. */
 function Hook({ active }: { active: boolean }) {
   const root = useRef<HTMLDivElement>(null);
@@ -149,15 +214,7 @@ function Hook({ active }: { active: boolean }) {
         { delay: 1100, duration: 600, easing: "ease-in-out" },
       ),
       breathe(mono, 1800, 1.03),
-      play(
-        q(el, "[data-glow]"),
-        [
-          { opacity: 0, transform: "scale(.6)" },
-          { opacity: 1, transform: "scale(1)" },
-        ],
-        { delay: 400, duration: 1200, easing: EASE },
-      ),
-      breathe(q(el, "[data-glow]"), 1600, 1.12),
+      ...glowStops(el),
       ...[0, 1].map((i) =>
         play(
           el.querySelectorAll("[data-ripple]")[i],
@@ -179,11 +236,7 @@ function Hook({ active }: { active: boolean }) {
   const ring: CSSProperties = { borderColor: "var(--onb-ripple)" };
   return (
     <div ref={root} className="relative grid place-items-center">
-      <div
-        data-glow
-        className="absolute size-[340px] rounded-full"
-        style={{ background: "var(--onb-glow)" }}
-      />
+      <Glow />
       {[0, 1].map((i) => (
         <div
           key={i}
@@ -224,6 +277,7 @@ const PACE_TODAY = PACE_DAYS.length;
 const PACE_THRESHOLD = 40;
 const PACE_MAX = Math.max(...PACE_DAYS);
 /** The same demo numbers as the overview: spent, the budget for everyday spending, and where an even pace would be today. */
+const RING_VALUE = 0.72; // 72 per cent of the budget is spent or planned, as in the overview
 const PACE_SPENT = 258;
 const PACE_BUDGET = 752;
 const PACE_SCHEDULE = 509;
@@ -272,6 +326,28 @@ function Flow({ active }: { active: boolean }) {
     ],
     [locale],
   );
+  // The ring fills from nothing up to where it stands, each time this screen comes into view. While the screen
+  // is away it rests at zero, so there is no flash of a full ring on the way in.
+  const [fill, setFill] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    let raf = 0;
+    if (reducedMotion()) {
+      raf = requestAnimationFrame(() => setFill(RING_VALUE));
+    } else {
+      const t0 = performance.now() + 250;
+      const step = (now: number) => {
+        const p = Math.min(1, Math.max(0, (now - t0) / 1600));
+        setFill(RING_VALUE * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) raf = requestAnimationFrame(step);
+      };
+      raf = requestAnimationFrame(step);
+    }
+    return () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setFill(0));
+    };
+  }, [active]);
   const month = "2026-10";
   return (
     <div
@@ -279,7 +355,7 @@ function Flow({ active }: { active: boolean }) {
       className="grid h-full w-full content-evenly justify-items-center gap-6 px-0 pb-4"
     >
       <div data-ringbox className="[@media(max-height:760px)]:[zoom:.82]">
-        <Ring value={0.72} tone="good" size={200} label={w.freeToSpend}>
+        <Ring value={fill} tone="good" size={200} label={w.freeToSpend}>
           <div
             data-n
             className="num text-[42px] leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
@@ -378,15 +454,11 @@ function Goals({ active }: { active: boolean }) {
     root,
     (el) => {
       const reduced = reducedMotion();
-      const arc = q<SVGCircleElement>(el, "[data-arc]");
-      if (arc) arc.style.strokeDashoffset = reduced ? "0" : "100";
       if (reduced) {
         const d = q<HTMLElement>(el, "[data-dial]");
         if (d) d.style.opacity = "0.35";
         const k = q<HTMLElement>(el, "[data-tick]");
         if (k) k.style.opacity = "1";
-        const g = q<HTMLElement>(el, "[data-vglow]");
-        if (g) g.style.opacity = "1";
       }
       return [
         play(
@@ -417,31 +489,8 @@ function Goals({ active }: { active: boolean }) {
           ],
           { delay: 1200, duration: 1500, easing: "ease-out" },
         ),
-        // The glow rises slowly with the dial turning and then stays: no jump at the end of the animation.
-        play(q(el, "[data-vglow]"), [{ opacity: 0 }, { opacity: 1 }], {
-          delay: 200,
-          duration: 2600,
-          easing: "ease-in-out",
-        }),
-        // A ring round the dial fills as the goal does, and a soft pulse marks the moment it is reached.
-        play(
-          arc,
-          [
-            { strokeDashoffset: 100, opacity: 0 },
-            { strokeDashoffset: 100, opacity: 1, offset: 0.02 },
-            { strokeDashoffset: 0, opacity: 1 },
-          ],
-          { delay: 900, duration: 1700, easing: "cubic-bezier(.45,.05,.2,1)" },
-        ),
-        play(
-          q(el, "[data-burst]"),
-          [
-            { opacity: 0, transform: "scale(1)" },
-            { opacity: 0.6, transform: "scale(1.02)", offset: 0.02 },
-            { opacity: 0, transform: "scale(1.5)" },
-          ],
-          { delay: 2600, duration: 1000, easing: "ease-out" },
-        ),
+        // The glow rises slowly with the dial turning, then keeps breathing: no jump at the end of the animation.
+        ...glowStops(el),
         meter(q(el, "[data-m]"), 1, 900, 1700),
         count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
         count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
@@ -469,11 +518,7 @@ function Goals({ active }: { active: boolean }) {
       ref={root}
       className="relative grid h-[290px] w-[min(260px,70vw)] -translate-y-7 place-items-center"
     >
-      <div
-        data-vglow
-        className="absolute size-[340px] rounded-full opacity-0"
-        style={{ background: "var(--onb-glow)" }}
-      />
+      <Glow />
       <svg data-dial viewBox="0 0 200 200" className="absolute top-0 size-[200px]" aria-hidden>
         <circle
           cx="100"
@@ -504,38 +549,6 @@ function Goals({ active }: { active: boolean }) {
         ))}
         <circle cx="100" cy="100" r="14" style={{ fill: "var(--ring-accent-from)" }} />
       </svg>
-      <svg
-        viewBox="0 0 200 200"
-        className="pointer-events-none absolute top-0 size-[200px]"
-        fill="none"
-        aria-hidden
-      >
-        <defs>
-          <linearGradient id="onb-arc" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" style={{ stopColor: "var(--ring-accent-from)" }} />
-            <stop offset="1" style={{ stopColor: "var(--ring-accent-to)" }} />
-          </linearGradient>
-        </defs>
-        <circle
-          data-arc
-          cx="100"
-          cy="100"
-          r="97"
-          strokeWidth="4"
-          strokeLinecap="round"
-          pathLength={100}
-          strokeDasharray="100 100"
-          transform="rotate(-90 100 100)"
-          stroke="url(#onb-arc)"
-          style={{ strokeDashoffset: 100, opacity: 0 }}
-        />
-      </svg>
-      <div
-        data-burst
-        aria-hidden
-        className="pointer-events-none absolute top-0 size-[200px] rounded-full border-2 opacity-0"
-        style={{ borderColor: "var(--ring-accent-from)" }}
-      />
       <div data-goal className="glass absolute bottom-0 grid w-full gap-2.5 p-4">
         <span
           data-tick
