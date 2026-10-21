@@ -138,9 +138,9 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     track: "rgba(23,32,46,.10)",
     accent: "#243b73",
     accentInk: "#ffffff",
-    action: "#243b73",
-    actionInk: "#ffffff",
-    select: "#243b73",
+    action: "#8fd0ff", // the same pale sky as dark: one button colour in the app (the onboarding keeps the logo cyan)
+    actionInk: "#06121c",
+    select: "#8fd0ff",
     soft: "rgba(36,59,115,.08)",
     good: "#17714a",
     warn: "#8f5200",

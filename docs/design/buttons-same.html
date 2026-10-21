@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq one button colour for light and dark</title>
+<style>
+/* Colours are the app's own: before = the old accent, after = the new action colour (src/design/tokens.ts). */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1180px; margin:0 auto; display:grid; gap:24px; }
+h1 { font:500 clamp(26px,5vw,36px)/1.1 Georgia,serif; margin:0; }
+h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .lead,.note { color:var(--muted); max-width:78ch; } .note { font-size:13px; }
+.sec { display:grid; gap:10px; padding-top:16px; border-top:1px solid var(--line); }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,330px)); gap:14px 18px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,minmax(0,330px)); gap:14px 18px; }
+@media (max-width:1100px) { .grid3 { grid-template-columns:repeat(2,minmax(0,330px)); } }
+@media (max-width:720px) { .grid,.grid3 { grid-template-columns:minmax(0,330px); } }
+.cap { font-size:12px; color:var(--muted); margin-bottom:5px; letter-spacing:.04em; text-transform:uppercase; }
+
+.scene { position:relative; width:100%; border-radius:22px; padding:16px; display:grid; gap:12px; align-content:start; overflow:hidden; }
+.scene.light { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.62); --hair:rgba(23,32,46,.12); --nav:rgba(255,255,255,.76); --shadow:0 14px 40px -22px rgba(30,45,80,.45);
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8); }
+.scene.dark { --ink:#eef1f5; --muted:#a8b1bf; --soft:rgba(143,208,255,.10); --card:rgba(255,255,255,.07); --hair:rgba(255,255,255,.12); --nav:rgba(18,22,30,.80); --shadow:0 18px 44px -24px rgba(0,0,0,.8);
+  color:#eef1f5; background:linear-gradient(165deg,color-mix(in oklab,#2ac9ff 26%,#141b28),color-mix(in oklab,#7d8bff 22%,#141b28) 55%,#141b28); }
+.card { border-radius:18px; background:var(--card); padding:12px 14px; display:grid; gap:10px; border:1px solid color-mix(in oklab,var(--hair) 70%,transparent); }
+.card h3 { margin:0; font-size:13px; color:var(--muted); font-weight:600; letter-spacing:.02em; }
+.row { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.btn { min-height:44px; padding:0 20px; border-radius:999px; border:0; font:600 15px/1 inherit; font-family:inherit; display:inline-flex; align-items:center; }
+.btn.soft { background:var(--soft); color:var(--ink); font-weight:600; font-size:14px; padding:0 16px; }
+.btn.fill { background:var(--fill); color:var(--fillInk); }
+.radio { display:flex; align-items:center; gap:10px; font-size:14px; }
+.dot { width:20px; height:20px; border-radius:50%; border:2px solid var(--hair); display:grid; place-items:center; flex:none; }
+.dot.on { border-color:var(--sel); } .dot.on::after { content:""; width:10px; height:10px; border-radius:50%; background:var(--sel); }
+.link { color:var(--accent); font-weight:600; font-size:14px; }
+
+/* the bottom bar, as it is in the app now (clear glass, 14% fill) */
+.bar { position:relative; display:grid; grid-template-columns:repeat(4,1fr); padding:6px; border-radius:999px; background:color-mix(in oklab,var(--nav) 14%,transparent);
+  border:1px solid rgb(255 255 255/.6); -webkit-backdrop-filter:blur(26px) saturate(2.1); backdrop-filter:blur(26px) saturate(2.1);
+  box-shadow:inset 0 1.5px 1px rgb(255 255 255/.8),inset 0 -1.5px 1px rgb(255 255 255/.2),inset 0 0 18px rgb(255 255 255/.16),var(--shadow); }
+.dark .bar { border-color:rgb(255 255 255/.2); box-shadow:inset 0 1.5px 1px rgb(255 255 255/.28),inset 0 -1.5px 1px rgb(255 255 255/.06),inset 0 0 18px rgb(255 255 255/.05),var(--shadow); }
+.bar::before { content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none; background:linear-gradient(155deg,rgb(255 255 255/.5) 0%,rgb(255 255 255/0) 42%,rgb(255 255 255/0) 70%,rgb(255 255 255/.16) 100%); }
+.dark .bar::before { background:linear-gradient(155deg,rgb(255 255 255/.16) 0%,rgb(255 255 255/0) 42%,rgb(255 255 255/0) 70%,rgb(255 255 255/.05) 100%); }
+.pill { position:absolute; top:6px; bottom:6px; left:6px; width:calc((100% - 12px)/4); border-radius:999px; background:rgb(255 255 255/.55); border:1px solid rgb(255 255 255/.9); }
+.dark .pill { background:rgb(255 255 255/.14); border-color:rgb(255 255 255/.3); }
+.cell { position:relative; z-index:2; display:grid; place-content:center; justify-items:center; gap:2px; min-height:48px; font-size:11.5px; font-weight:600; color:var(--lab); }
+.cell.on { color:var(--ink); }
+.cell svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.badge { position:absolute; top:3px; left:calc(50% + 6px); font-size:10.5px; font-weight:700; line-height:16px; padding:0 6px; border-radius:99px; background:var(--badge); color:var(--badgeInk); }
+.badge9 { margin-left:auto; font-size:10.5px; font-weight:700; line-height:16px; padding:0 6px; border-radius:99px; background:var(--accent); color:#fff; } .dark .badge9 { color:#06121c; }
+.under { display:grid; gap:6px; } .under i { display:block; height:12px; border-radius:99px; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>One button colour for light and dark</h1>
+    <p class="lead">The proposal: light mode uses dark's pale blue (#8fd0ff) with the same dark text. Light, dark and the onboarding's "Get Started" (cyan #33c6ff in light, #2ac9ff in dark) then sit in one blue family, next to the logo's "a". The navy "9" badge stays in light. The selected dot of a radio button is a deeper blue in light, because a pale dot would be hard to see on the white card.</p>
+  </header>
+  <section class="sec"><h2>Compare</h2><div class="grid3" id="cmp"></div><p class="note" id="nums"></p></section>
+</main>
+<script>
+const lin = (c) => { c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); };
+const lum = (h) => { const n = parseInt(h.slice(1), 16); return .2126 * lin(n >> 16) + .7152 * lin((n >> 8) & 255) + .0722 * lin(n & 255); };
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return ((Math.max(x, y) + .05) / (Math.min(x, y) + .05)).toFixed(1); };
+const settings = (theme, c) => `<div class="scene ${theme}" style="--fill:${c.fill};--fillInk:${c.ink};--sel:${c.sel};--accent:${theme === "dark" ? "#8fd0ff" : "#243b73"}">
+    <div class="card"><h3>Settings</h3>
+      <div class="row"><button class="btn fill">Save</button><button class="btn soft">Change</button><button class="btn soft">Remove</button></div>
+      <div class="row"><button class="btn fill">Add a fixed item</button></div></div>
+    <div class="card"><h3>Language</h3>
+      <div class="radio"><span class="dot on"></span>English</div>
+      <div class="radio"><span class="dot"></span>Nederlands</div>
+      <div class="row"><span class="link">Set budget</span><span class="badge9">9</span></div></div>
+  </div>`;
+const onboarding = (theme) => `<div class="scene ${theme}" style="min-height:330px;align-content:end;gap:14px;padding:22px 18px">
+    <div style="font:400 30px/1 Georgia,serif;letter-spacing:-.02em">secure your<br>goals.</div>
+    <div style="font-size:13px;color:var(--muted);max-width:26ch">Set a savings goal and watch it grow with every statement you add.</div>
+    <button class="btn" style="justify-content:center;width:100%;background:${theme === "dark" ? "#2ac9ff" : "#33c6ff"};color:${theme === "dark" ? "#141b28" : "#17202e"};box-shadow:0 10px 28px -10px ${theme === "dark" ? "#2ac9ff" : "#33c6ff"}">Get Started</button>
+  </div>`;
+document.getElementById("cmp").innerHTML =
+  `<div><div class="cap">light · app (proposal)</div>${settings("light", { fill: "#8fd0ff", ink: "#06121c", sel: "#2a63b8" })}</div>
+   <div><div class="cap">dark · app (as it is)</div>${settings("dark", { fill: "#8fd0ff", ink: "#06121c", sel: "#8fd0ff" })}</div>
+   <div><div class="cap">light · onboarding (for reference)</div>${onboarding("light")}</div>`;
+document.getElementById("nums").textContent = "Button text on #8fd0ff: " + ratio("#06121c", "#8fd0ff") + " to 1 (passes). Selected dot #2a63b8 on the white card: " + ratio("#2a63b8", "#faf6f2") + " to 1 (needs 3).";
+</script>
+</body>
+</html>

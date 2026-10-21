@@ -26,7 +26,7 @@ async function ReviewBadge() {
   return (
     <span
       aria-label={t.ui.nav.toSort(count)}
-      className="num absolute top-0 left-[calc(50%+6px)] rounded-full bg-[var(--badge-bg)] px-1.5 text-[10.5px] leading-4 font-semibold text-[color:var(--badge-ink)] @min-[900px]/app:static @min-[900px]/app:ml-auto"
+      className="num bg-accent text-accent-ink absolute top-0 left-[calc(50%+6px)] rounded-full px-1.5 text-[10.5px] leading-4 font-semibold @min-[900px]/app:static @min-[900px]/app:ml-auto"
     >
       {count > 99 ? "99+" : count}
     </span>
