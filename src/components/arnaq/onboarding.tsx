@@ -565,7 +565,7 @@ function PreviewThemeToggle() {
     <button
       type="button"
       onClick={() => applyTheme(dark ? "light" : "dark")}
-      className="glass text-ink-muted absolute bottom-3 left-4 z-10 inline-flex min-h-9 items-center gap-1.5 !rounded-full px-3 text-xs"
+      className="glass text-ink-muted absolute bottom-3 right-4 z-10 inline-flex min-h-9 items-center gap-1.5 !rounded-full px-3 text-xs"
     >
       {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
       {dark ? "light" : "dark"} (test)
