@@ -60,6 +60,8 @@ const row = (title, note, cells) => `<section class="sec"><h2>${title}</h2><p cl
 const L = THEME.light, D = THEME.dark;
 const lightOnbToday = (s) => recipe(L, s, [L.canvas, L.canvas, L.canvas]);
 const lightOnbDawn = (s) => `linear-gradient(165deg, ${mix(L[s.a], 24, L.dawn[0])}, ${mix(L[s.c], 18, L.dawn[1])} 55%, ${L.dawn[2]})`;
+// peach only at the very end: today's tints over the light grey for most of the screen, then easing into the app's peach
+const lightOnbGentle = (s) => `linear-gradient(165deg, ${mix(L[s.a], 26, L.canvas)}, ${mix(L[s.c], 22, L.canvas)} 62%, ${L.dawn[2]})`;
 const darkOnb = (s) => recipe(D, s, [D.canvas, D.canvas, D.canvas]);
 // my proposal for the dark app: the same recipe as the onboarding's first screen, on every screen
 const darkAppProposal = darkOnb(SCREENS[0]);
@@ -68,6 +70,8 @@ document.getElementById("rows").innerHTML = [
     [app(L, `linear-gradient(180deg,${L.dawn.join(",")})`), ...SCREENS.map((s) => onb(L, s, lightOnbToday(s)))]),
   row("Light, if the onboarding sits on the dawn gradient", "The same tints over the app's own dawn, so the onboarding ends in the peach like the app does. A small change; the app does not change at all.",
     [app(L, `linear-gradient(180deg,${L.dawn.join(",")})`), ...SCREENS.map((s) => onb(L, s, lightOnbDawn(s)))]),
+  row("Light, a gentler version: peach only at the very bottom", "Today's onboarding colours for most of the screen, easing into the app's peach only in the last part. Cleaner than the previous row, still ends like the app.",
+    [app(L, `linear-gradient(180deg,${L.dawn.join(",")})`), ...SCREENS.map((s) => onb(L, s, lightOnbGentle(s)))]),
   row("Dark today", "The app is flat graphite, the onboarding has blue, mint and violet tints. They do not look related.",
     [app(D, `linear-gradient(180deg,${D.graphite.join(",")})`), ...SCREENS.map((s) => onb(D, s, darkOnb(s)))]),
   row("Dark, my proposal: the app made like the onboarding", "The app's page background is the onboarding's first screen (blue into violet over the deep navy), the same on every screen. The onboarding does not change.",
