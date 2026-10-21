@@ -52,7 +52,7 @@ Contrast results are enforced by tests, not by this table. Two real findings fro
 
 ## Status wash
 
-**Decision (owner): off in light, on in dark and Dark +.** It is one flag per theme: `statusWash` in `tokens.ts`, then `npm run tokens`. Everything below explains how it works if it is turned on again, and why it is off in light.
+**Decision (owner, updated 2026-10-21): off in every theme.** The dark themes used to have it on; the glow changed colour per screen and read as uneven colours, so the page background is now one calm gradient everywhere, like light. It is one flag per theme: `statusWash` in `tokens.ts`, then `npm run tokens`. Everything below explains how it works if it is turned on again, and why it is off in light.
 
 The top of the page is lightly tinted by the **active screen's** tone (set `data-mood="neutral|good|warn|bad"` on `<html>` per screen). Amber on Overzicht when the month is tight, green on a healthy Prognose, blue (neutral) on Vaste lasten and Upload.
 
@@ -95,7 +95,7 @@ Findings from testing it, which are rules:
 
 ## Open decisions and known limits
 
-- Status wash: off in light (owner decision), on in dark and Dark + (unconfirmed, say if it should go there too).
+- Status wash: off in every theme (owner decision, 2026-10-21).
 - Dark vs Dark +: both ship; the owner has not chosen a default.
 - The balance chart assumes the CSV parsers store the running balance (Rabobank "Saldo na trn", Revolut "Balance"). They do not yet; that comes with the database port.
 - All prototypes use demo data. The parsers are unverified against real bank exports.

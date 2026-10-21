@@ -94,10 +94,10 @@
     --glass-border: rgba(255,255,255,.10);
     --glass-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 44px -24px rgba(0,0,0,.8);
     --glass-nav: rgba(18,22,30,.80);
-    --page-bg-neutral: radial-gradient(900px 540px at 50% -6%, rgba(125,139,255,0.26), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-    --page-bg-good: radial-gradient(900px 540px at 50% -6%, rgba(31,201,143,0.22), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-    --page-bg-warn: radial-gradient(900px 540px at 50% -6%, rgba(242,184,75,0.2), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-    --page-bg-bad: radial-gradient(900px 540px at 50% -6%, rgba(255,123,110,0.26), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+    --page-bg-neutral: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+    --page-bg-good: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+    --page-bg-warn: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+    --page-bg-bad: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
   }
 }
 
@@ -195,10 +195,10 @@
   --glass-border: rgba(255,255,255,.10);
   --glass-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 44px -24px rgba(0,0,0,.8);
   --glass-nav: rgba(18,22,30,.80);
-  --page-bg-neutral: radial-gradient(900px 540px at 50% -6%, rgba(125,139,255,0.26), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-  --page-bg-good: radial-gradient(900px 540px at 50% -6%, rgba(31,201,143,0.22), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-  --page-bg-warn: radial-gradient(900px 540px at 50% -6%, rgba(242,184,75,0.2), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-  --page-bg-bad: radial-gradient(900px 540px at 50% -6%, rgba(255,123,110,0.26), transparent 68%), linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+  --page-bg-neutral: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+  --page-bg-good: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+  --page-bg-warn: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+  --page-bg-bad: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
 }
 
 :root[data-theme="darkplus"] {
@@ -245,8 +245,8 @@
   --glass-border: rgba(255,255,255,.14);
   --glass-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 18px 44px -24px rgba(0,0,0,.6);
   --glass-nav: rgba(31,42,64,.82);
-  --page-bg-neutral: radial-gradient(900px 540px at 50% -6%, rgba(125,139,255,0.22), transparent 68%), linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
-  --page-bg-good: radial-gradient(900px 540px at 50% -6%, rgba(31,201,143,0.18), transparent 68%), linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
-  --page-bg-warn: radial-gradient(900px 540px at 50% -6%, rgba(242,184,75,0.16), transparent 68%), linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
-  --page-bg-bad: radial-gradient(900px 540px at 50% -6%, rgba(255,123,110,0.22), transparent 68%), linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
+  --page-bg-neutral: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
+  --page-bg-good: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
+  --page-bg-warn: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
+  --page-bg-bad: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
 }
