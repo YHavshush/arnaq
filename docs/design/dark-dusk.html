@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq dark dusk mockup</title>
+<style>
+/* Values for Light and Dark come from src/design/tokens.ts. The two "dusk" columns are the proposal. */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1120px; margin:0 auto; display:grid; gap:22px; }
+h1 { font:500 clamp(26px,5vw,36px)/1.1 Georgia,serif; margin:0; }
+p { margin:0; } .lead,.note { color:var(--muted); max-width:74ch; } .note { font-size:13px; }
+.grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; }
+@media (max-width:980px) { .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:520px) { .grid { grid-template-columns:minmax(0,1fr); } }
+.col { display:grid; gap:8px; align-content:start; min-width:0; }
+.col h2 { margin:0; font-size:15px; } .col .sub { color:var(--muted); font-size:12.5px; min-height:34px; }
+.panel { border-radius:22px; padding:16px; height:470px; display:grid; align-content:start; gap:12px; overflow:hidden; }
+.panel .t { font:500 28px/1.1 Georgia,serif; }
+.panel .s { font-size:12px; }
+.ring { width:118px; height:118px; border-radius:50%; display:grid; place-items:center; margin:2px auto; }
+.ring span { border-radius:50%; width:96px; height:96px; display:grid; place-items:center; font:600 24px -apple-system,system-ui,sans-serif; letter-spacing:-.03em; }
+.card { border-radius:18px; padding:12px; display:grid; gap:4px; font-size:14px; }
+.card small { font-size:12.5px; }
+.stops { display:flex; gap:6px; align-items:center; flex-wrap:wrap; font-size:12px; }
+.sw { width:18px; height:18px; border-radius:5px; border:1px solid var(--line); }
+.pass { font-size:12px; }
+.ok { color:#1f8a58; font-weight:600; } .bad { color:#c0392b; font-weight:600; }
+@media (prefers-color-scheme: dark) { .ok { color:#5ee0a0; } .bad { color:#ff7b6e; } }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>One dark mode with a dusk gradient</h1>
+    <p class="lead">Left to right: today's Light and Dark, then two ways to give dark the same blue-to-warm idea as light. Each panel is a real page background with the same screen on it. Under each panel are the colours and whether the small grey text stays readable on them.</p>
+  </header>
+  <div class="grid" id="grid"></div>
+  <p class="note">"Readable" means the muted grey text on a card keeps a contrast of at least 4.5 to 1 at the top, the middle and the bottom of the page, which is the rule the app's tests already enforce. The cards are see-through, so their colour follows the page behind them.</p>
+</main>
+<script>
+const COLS = [
+  { key: "Light", sub: "Today. Cool blue to warm peach.", stops: ["#d9e5f5", "#f1e6dd", "#f6e8d8"], glass: [255, 255, 255, .58], border: "rgba(255,255,255,.8)", ink: "#17202e", muted: "#4a5568", ringA: "#33c6ff", ringB: "#7d8bff", track: "rgba(23,32,46,.10)", inner: "#ece9f0" },
+  { key: "Dark today", sub: "One blue-grey, only darker towards the bottom.", stops: ["#1b2434", "#141b28", "#0f141d"], glass: [255, 255, 255, .055], border: "rgba(255,255,255,.10)", ink: "#eef1f5", muted: "#a8b1bf", ringA: "#2ac9ff", ringB: "#7d8bff", track: "rgba(255,255,255,.075)", inner: "#141b28" },
+  { key: "Dusk A (my pick)", sub: "Deep indigo at the top, warm graphite at the bottom. Quiet.", stops: ["#1f2b47", "#262a3d", "#2b2522"], glass: [255, 255, 255, .06], border: "rgba(255,255,255,.11)", ink: "#eef1f5", muted: "#b2bac8", ringA: "#2ac9ff", ringB: "#7d8bff", track: "rgba(255,255,255,.085)", inner: "#252a3f" },
+  { key: "Dusk B", sub: "The same, lighter and warmer. Replaces Dark +.", stops: ["#2b3a5c", "#2e3148", "#3a2f2c"], glass: [255, 255, 255, .07], border: "rgba(255,255,255,.14)", ink: "#eef1f5", muted: "#c0c8d6", ringA: "#2ac9ff", ringB: "#7d8bff", track: "rgba(255,255,255,.10)", inner: "#2f3550" },
+];
+const rgb = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+const lin = (c) => { c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); };
+const lum = ([r, g, b]) => .2126 * lin(r) + .7152 * lin(g) + .0722 * lin(b);
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+const over = (bg, [r, g, b, a]) => bg.map((v, i) => v * (1 - a) + [r, g, b][i] * a);
+const lightness = (h) => { const [r, g, b] = rgb(h).map((v) => v / 255); return Math.round(((Math.max(r, g, b) + Math.min(r, g, b)) / 2) * 100); };
+document.getElementById("grid").innerHTML = COLS.map((c) => {
+  const worst = Math.min(...c.stops.map((s) => ratio(rgb(c.muted), over(rgb(s), c.glass))));
+  const pass = worst >= 4.5;
+  return `<div class="col"><h2>${c.key}</h2><span class="sub">${c.sub}</span>
+  <div class="panel" style="background:linear-gradient(180deg,${c.stops.join(",")});color:${c.ink}">
+    <div><div class="s" style="color:${c.muted}">October 2026</div><div class="t">today</div></div>
+    <div class="ring" style="background:conic-gradient(from -90deg,${c.ringA},${c.ringB} 72%,${c.track} 72%)"><span style="background:${c.inner}">€494</span></div>
+    <div class="card" style="background:rgba(${c.glass[0]},${c.glass[1]},${c.glass[2]},${c.glass[3]});border:1px solid ${c.border}"><b>Budget</b><small style="color:${c.muted}">€1,256 of €1,750</small></div>
+    <div class="card" style="background:rgba(${c.glass[0]},${c.glass[1]},${c.glass[2]},${c.glass[3]});border:1px solid ${c.border}"><b>Fixed costs</b><small style="color:${c.muted}">4/5 paid, €35 still to come</small></div>
+    <div class="card" style="background:rgba(${c.glass[0]},${c.glass[1]},${c.glass[2]},${c.glass[3]});border:1px solid ${c.border}"><b>Savings</b><small style="color:${c.muted}">Under way, €1,353 of €5,000</small></div>
+  </div>
+  <div class="stops">${c.stops.map((s) => `<span class="sw" style="background:${s}"></span><code>${s}</code>`).join(" ")}</div>
+  <div class="pass">Grey text contrast: <b class="${pass ? "ok" : "bad"}">${worst.toFixed(1)} to 1 ${pass ? "readable" : "too low"}</b> · lightness ${lightness(c.stops[0])} to ${lightness(c.stops[2])}</div></div>`;
+}).join("");
+</script>
+</body>
+</html>
