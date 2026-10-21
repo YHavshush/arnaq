@@ -118,20 +118,20 @@ const q = <T extends Element>(el: HTMLElement, sel: string) => el.querySelector(
  * breathe and drift a little, out of step with each other, so the light feels alive and never repeats exactly.
  * Both fade to nothing at their edge. Under reduced motion they just sit there.
  */
-function Glow() {
+function Glow({ vault = false }: { vault?: boolean }) {
   return (
     <>
       <div
         data-glow
         aria-hidden
         className="absolute size-[340px] rounded-full opacity-0"
-        style={{ background: "var(--onb-glow)" }}
+        style={{ background: vault ? "var(--onb-glow-vault)" : "var(--onb-glow)" }}
       />
       <div
         data-glow2
         aria-hidden
         className="absolute size-[430px] rounded-full opacity-0"
-        style={{ background: "var(--onb-glow-2)" }}
+        style={{ background: vault ? "var(--onb-glow-vault-2)" : "var(--onb-glow-2)" }}
       />
     </>
   );
@@ -171,7 +171,9 @@ function glowStops(el: HTMLElement, lag = 0): Stop[] {
     play(
       wide,
       [
-        { transform: "translate(-16px, 10px) scale(1)", opacity: 1 },
+        // No opacity on the first keyframe: held during the delay it would show the layer at full strength
+        // before the rise (which sets opacity) has even started.
+        { transform: "translate(-16px, 10px) scale(1)" },
         { transform: "translate(16px, -10px) scale(1.1)", opacity: 0.7 },
       ],
       { delay: lag + 3500, duration: 9000, ...loop },
@@ -521,7 +523,7 @@ function Goals({ active }: { active: boolean }) {
       ref={root}
       className="relative grid h-[290px] w-[min(260px,70vw)] -translate-y-7 place-items-center"
     >
-      <Glow />
+      <Glow vault />
       <svg data-dial viewBox="0 0 200 200" className="absolute top-0 size-[200px]" aria-hidden>
         <circle
           cx="100"
