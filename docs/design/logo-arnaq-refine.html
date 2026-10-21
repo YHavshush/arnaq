@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq: refining the stem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1100px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 70ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; }
+.card { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 18px 10px; display: grid; place-items: center; gap: 14px; overflow: hidden; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.sans { font: 800 54px/1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; display: inline-flex; align-items: baseline; }
+.sans > span, .sans > svg { display: inline-block; }
+.sans svg { overflow: visible; }
+.sizes { display: flex; align-items: center; gap: 10px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+@media (max-width: 460px) { .sans { font-size: 38px; } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Refining the stem</h1>
+    <p class="lead">The stem a little smaller, in steps: its length (the part below the ring) and its thickness. Shown for the variant where only the q's stem is on top of the a (the cleanest). Each card has the wordmark (with the a and q overlaid in the last letter), then the app icon, which stays the separated blue a and purple q, on the cream tile and on the brand colour with a white pair, which is bolder on a home screen. The last card uses slightly deeper colours for the light theme so the logo has more contrast.</p>
+  </div>
+  <div id="grid" class="grid"></div>
+</main>
+<script>
+  const TH = { light: { blue: "#33c6ff", purple: "#7f8cff" }, dark: { blue: "#2ac9ff", purple: "#7d8bff" } };
+  let M;
+  async function measure() {
+    await document.fonts.load('800 100px Manrope'); await document.fonts.ready;
+    const c = document.createElement("canvas").getContext("2d"); c.font = '800 100px Manrope, sans-serif';
+    const o = c.measureText("o");
+    M = { D: o.actualBoundingBoxAscent + o.actualBoundingBoxDescent, ovs: o.actualBoundingBoxDescent, w: 16, desc: 34 };
+  }
+  const S = (w) => `stroke-width="${w}" stroke-linecap="round"`;
+  const ring = (cx, cy, r, stroke, w) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${stroke}" ${S(w)}/>`;
+  const line = (x, y1, y2, stroke, w) => `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${stroke}" ${S(w)}/>`;
+
+  // tail = how far the q's stem runs below the ring; sw = the stem's thickness; the q's stem is drawn over a whole blue a.
+  const DEEP = { blue: "#0889cc", purple: "#5a66e6" };
+  const build = (th, { tail = 34, sw = 16, deep = false, white = false }) => { const { D, w } = M, r = (D - w) / 2, cx = D / 2, cy = D / 2, aTop = 0.45;
+    const c = white ? { blue: "#ffffff", purple: "rgba(255,255,255,.72)" } : (deep && th === "light" ? DEEP : TH[th]);
+    const W = D, H = D + tail, aStemTop = cy - r + aTop * 2 * r;
+    const qStem = line(cx + r, cy - r, D + tail - sw / 2, c.purple, sw);
+    const aRing = ring(cx, cy, r, c.blue, w), aStem = line(cx + r, aStemTop, cy + r, c.blue, w);
+    return { W, H, tail, body: aRing + aStem + qStem };
+  };
+  // The logo / app icon: the original separated pair, the blue a and the purple q side by side, with the q's long stem.
+  const buildPair = (th, { tail = 34, sw = 16, deep = false, white = false }) => { const { D, w } = M, r = (D - w) / 2, gap = 0.14 * D, cyy = D / 2, aTop = 0.45;
+    const c = white ? { blue: "#ffffff", purple: "rgba(255,255,255,.78)" } : (deep && th === "light" ? DEEP : TH[th]);
+    const cxa = D / 2, cxq = D + gap + D / 2, W = 2 * D + gap, H = D + tail, aStemTop = cyy - r + aTop * 2 * r;
+    return { W, H, tail, body: ring(cxa, cyy, r, c.blue, w) + line(cxa + r, aStemTop, cyy + r, c.blue, w) + ring(cxq, cyy, r, c.purple, w) + line(cxq + r, cyy - r, D + tail - sw / 2, c.purple, sw) };
+  };
+  const wordSvg = (g) => `<svg height="${(g.H / 100).toFixed(3)}em" width="${(g.W / 100).toFixed(3)}em" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" style="position:relative;top:${((g.tail + M.ovs) / 100).toFixed(3)}em;margin-left:.015em" aria-hidden="true">${g.body}</svg>`;
+  const iconSvg = (g, px) => { const s = Math.min((px * .66) / g.W, (px * .74) / g.H); return `<svg width="${(g.W * s).toFixed(1)}" height="${(g.H * s).toFixed(1)}" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" aria-hidden="true">${g.body}</svg>`; };
+  const tile = (inner, s) => `<div class="tile" style="width:${s}px;height:${s}px">${inner(s)}</div>`;
+
+  const VARIANTS = [
+    { t: "Now: long, thick stem", d: "What you have: the stem runs 34 units below the ring (about 60% of the ring height), as thick as the ring.", p: { tail: 34, sw: 16 }, word: "arna" },
+    { t: "Shorter stem", d: "20% shorter: 27 units. Still clearly a q, but less top-heavy next to the letters.", p: { tail: 27, sw: 16 }, word: "arna" },
+    { t: "Shortest stem: like the font's own q", d: "21 units, the length of a normal q in this font. The most natural next to the letters, but the long stem is the logo's signature, so it is less distinctive.", p: { tail: 21, sw: 16 }, word: "arna" },
+    { t: "Shorter and thinner stem", d: "27 units long and 13 thick (the ring stays 16): the stem is lighter than the ring, so the ring is the hero.", p: { tail: 27, sw: 13 }, word: "arna" },
+    { t: "Shorter stem, deeper colours in light mode", d: "Same as the second card, with a deeper blue and purple on the light theme (about 3:1 contrast with the page instead of about 1.6:1 for the blue). Dark mode is unchanged.", p: { tail: 27, sw: 16, deep: true }, word: "arna" },
+  ];
+
+  const brand = (p, s) => `<div class="tile" style="width:${s}px;height:${s}px;background:linear-gradient(135deg,#33c6ff,#7f8cff);box-shadow:0 8px 18px rgba(36,59,115,.25);border:0">${iconSvg(buildPair("light", { ...p, white: true }), s)}</div>`;
+  function render() {
+    document.getElementById("grid").innerHTML = VARIANTS.map((v) => {
+      const g = (th) => build(th, v.p);
+      return `<section class="card"><div><h2>${v.t}</h2><p class="note">${v.d}</p></div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}"><span class="sans">${v.word.split("").map((c) => `<span>${c}</span>`).join("")}${wordSvg(g(th))}</span></div>`).join("")}</div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${tile((s) => iconSvg(buildPair(th, v.p), s), 96)}<div class="sizes">${tile((s) => iconSvg(buildPair(th, v.p), s), 44)}${tile((s) => iconSvg(buildPair(th, v.p), s), 22)}</div></div>`).join("")}</div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${brand(v.p, 96)}<div class="sizes">${brand(v.p, 44)}${brand(v.p, 22)}</div></div>`).join("")}</div></section>`;
+    }).join("");
+  }
+  measure().then(render);
+</script>
+</body>
+</html>

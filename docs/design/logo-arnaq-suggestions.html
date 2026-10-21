@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq: other logo suggestions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1100px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 70ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; }
+.card { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 16px 10px; display: grid; place-items: center; gap: 12px; overflow: hidden; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.sans { font: 800 54px/1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; display: inline-flex; align-items: baseline; }
+.sans > span, .sans > svg { display: inline-block; }
+.sans svg { overflow: visible; }
+.sizes { display: flex; align-items: center; gap: 10px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+@media (max-width: 460px) { .sans { font-size: 38px; } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Other ways to join the a and the q</h1>
+    <p class="lead">Six different ideas, not variations of the overlay. Each is shown in the wordmark (measured from the font, so it sits on the baseline like a real letter) and as an app icon at three sizes, in light and dark. The rings are chunky with an empty middle, and the q has a long stem.</p>
+  </div>
+  <div id="grid" class="grid"></div>
+</main>
+<script>
+  const TH = { light: { blue: "#33c6ff", purple: "#7f8cff" }, dark: { blue: "#2ac9ff", purple: "#7d8bff" } };
+  let M, uid = 0;
+  async function measure() {
+    await document.fonts.load('800 100px Manrope'); await document.fonts.ready;
+    const c = document.createElement("canvas").getContext("2d"); c.font = '800 100px Manrope, sans-serif';
+    const o = c.measureText("o");
+    M = { D: o.actualBoundingBoxAscent + o.actualBoundingBoxDescent, ovs: o.actualBoundingBoxDescent, w: 16, desc: 34 };
+  }
+  const S = (w, extra = "") => `stroke-width="${w}" stroke-linecap="round" ${extra}`;
+  const ring = (cx, cy, r, stroke, w) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${stroke}" ${S(w)}/>`;
+  const line = (x, y1, y2, stroke, w) => `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${stroke}" ${S(w)}/>`;
+  const rad = (d) => ((d - 90) * Math.PI) / 180;
+  const arcP = (cx, cy, r, a0, a1) => { const p = (d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))]; const [x0, y0] = p(a0), [x1, y1] = p(a1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+
+  // Each concept: width/height in units (1 unit = 1/100 em), and the drawing. Ring top is y = 0.
+  const CONCEPTS = [
+    { t: "1. Just colour the letters", d: "No special glyph at all. The last a is blue, the q is purple, in the same bold font, so it reads as a normal word. The q's own tail is the long stem.",
+      text: (th) => `<span class="ch">a</span><span class="ch">r</span><span class="ch">n</span><span class="ch" style="color:${TH[th].blue}">a</span><span class="ch" style="color:${TH[th].purple}">q</span>`,
+      icon: (th, g) => `<svg width="${g}" height="${g}" viewBox="0 0 100 100"><text x="50" y="62" text-anchor="middle" font-family="Manrope" font-weight="800" font-size="52" letter-spacing="-2"><tspan fill="${TH[th].blue}">a</tspan><tspan fill="${TH[th].purple}">q</tspan></text></svg>` },
+    { t: "2. One flowing ligature", d: "The a and the q are joined: the a's stem is the left side of the q's ring, so they share one stroke. Compact, like a single custom letter. The word is arn + this.",
+      word: "arn", build: (th, m) => { const { D, w, desc } = m, c = TH[th], r = (D - w) / 2, cxq = D - w / 2 + r, top = w / 2 + 0, W = 2 * D - w, H = D + desc;
+        return { W, H, body: ring(cxq, D / 2, r, c.purple, w) + line(cxq + r, D / 2 - r, D + desc - w / 2, c.purple, w) + ring(D / 2, D / 2, r, c.blue, w) + line(D - w / 2, D / 2 - r * .1, D / 2 + r, c.blue, w) }; } },
+    { t: "3. Split ring", d: "A single q-shaped ring, half blue (the a) and half purple (the q), with a long purple stem. One clean shape that carries both colours. The word is arna + this.",
+      word: "arna", build: (th, m) => { const { D, w, desc } = m, c = TH[th], r = (D - w) / 2, W = D, H = D + desc;
+        return { W, H, body: `<path d="${arcP(D / 2, D / 2, r, 200, 380)}" fill="none" stroke="${c.blue}" ${S(w)}/><path d="${arcP(D / 2, D / 2, r, 20, 200)}" fill="none" stroke="${c.purple}" ${S(w)}/>` + line(D - w / 2, D / 2 - r, D + desc - w / 2, c.purple, w) }; } },
+    { t: "4. Gradient q", d: "A single q whose ring fades from blue to purple, with a long purple stem. The simplest shape, the colours carry the a and the q. The word is arna + this.",
+      word: "arna", build: (th, m) => { const { D, w, desc } = m, c = TH[th], r = (D - w) / 2, id = "g" + uid++, W = D + 6, H = D + desc;
+        return { W, H, body: `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="${D}" y2="${D}"><stop offset="0" stop-color="${c.blue}"/><stop offset="1" stop-color="${c.purple}"/></linearGradient></defs>` + ring(D / 2, D / 2, r, `url(#${id})`, w) + line(D - w / 2, D / 2 - r, D + desc - w / 2, c.purple, w) }; } },
+    { t: "5. Stacked ligature (icon)", d: "The a above the q, sharing the stroke where the rings meet, with the long q stem on the right. Too tall for the wordmark, so this one is an icon only, and the wordmark is the plain letters from idea 1.",
+      iconOnly: true, build: (th, m) => { const { D, w, desc } = m, c = TH[th], r = (D - w) / 2, gap = D - w, W = D, H = D + gap + desc;
+        return { W, H, body: ring(D / 2, D / 2 + gap, r, c.purple, w) + line(D - w / 2, D / 2 + gap - r, H - w / 2, c.purple, w) + ring(D / 2, D / 2, r, c.blue, w) + line(D - w / 2, D / 2 - r * .1, D / 2 + r, c.blue, w) }; } },
+    { t: "6. Your overlay (for comparison)", d: "The current one: the blue a exactly on top of the purple q.",
+      word: "arna", build: (th, m) => { const { D, w, desc } = m, c = TH[th], r = (D - w) / 2, W = D, H = D + desc, aT = D / 2 - r + 0.45 * 2 * r;
+        return { W, H, body: ring(D / 2, D / 2, r, c.purple, w) + line(D - w / 2, D / 2 - r, D + desc - w / 2, c.purple, w) + ring(D / 2, D / 2, r, c.blue, w) + line(D - w / 2, aT, D / 2 + r, c.blue, w) }; } },
+  ];
+
+  const wordSvg = (g) => `<svg height="${(g.H / 100).toFixed(3)}em" width="${(g.W / 100).toFixed(3)}em" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" style="position:relative;top:${((M.desc + M.ovs) / 100).toFixed(3)}em;margin-left:.015em" aria-hidden="true">${g.body}</svg>`;
+  const iconSvg = (g, px) => { const s = Math.min((px * .62) / g.W, (px * .72) / g.H); return `<svg width="${(g.W * s).toFixed(1)}" height="${(g.H * s).toFixed(1)}" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" aria-hidden="true">${g.body}</svg>`; };
+  const tile = (th, inner, s) => `<div class="tile" style="width:${s}px;height:${s}px">${inner(s)}</div>`;
+
+  function render() {
+    document.getElementById("grid").innerHTML = CONCEPTS.map((cn) => {
+      const word = (th) => cn.text ? `<span class="sans">${["a", "r", "n"].map((c) => `<span class="ch">${c}</span>`).join("")}${cn.text(th).replace(/<span class="ch">a<\/span><span class="ch">r<\/span><span class="ch">n<\/span>/, "")}</span>`
+        : cn.iconOnly ? `<span class="sans">${["a", "r", "n", "a", "q"].map((c, i) => `<span class="ch" style="color:${i === 3 ? TH[th].blue : i === 4 ? TH[th].purple : "inherit"}">${c}</span>`).join("")}</span>`
+        : `<span class="sans">${cn.word.split("").map((c) => `<span class="ch">${c}</span>`).join("")}${wordSvg(cn.build(th, M))}</span>`;
+      const icon = (th) => (s) => cn.icon ? cn.icon(th, Math.round(s * .72)) : iconSvg(cn.build(th, M), s);
+      return `<section class="card"><div><h2>${cn.t}</h2><p class="note">${cn.d}</p></div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${word(th)}</div>`).join("")}</div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${tile(th, icon(th), 96)}<div class="sizes">${tile(th, icon(th), 44)}${tile(th, icon(th), 22)}</div></div>`).join("")}</div></section>`;
+    }).join("");
+  }
+  measure().then(render);
+</script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brand finalists: arnaq, Arnax, Qesef, Mezumax, Qianbao</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway comparison page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; --hair: rgba(23, 32, 46, .12); --card: rgba(255, 255, 255, .62); --good: #1f7a54; --warn: #a65a1f; --bad: #b3362d; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 56px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+.lead { color: var(--muted); margin: 8px 0 0; max-width: 66ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
+.card { background: var(--card); border: 1px solid rgba(255, 255, 255, .7); border-radius: 24px; padding: 18px; display: grid; gap: 14px; box-shadow: 0 10px 30px rgba(36, 59, 115, .08); min-width: 0; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.name { font: 500 28px/1 "Newsreader", Georgia, serif; margin: 0; }
+.tag { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 4px 10px; }
+.tag.good { background: rgba(31, 122, 84, .14); color: var(--good); }
+.tag.warn { background: rgba(166, 90, 31, .14); color: var(--warn); }
+.tag.bad { background: rgba(179, 54, 45, .12); color: var(--bad); }
+.panel { border-radius: 18px; padding: 16px; display: grid; gap: 14px; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.word { font: 500 46px/1.1 "Newsreader", Georgia, serif; letter-spacing: -.01em; white-space: nowrap; }
+.word svg { display: inline-block; overflow: visible; }
+.row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.tile { width: 72px; height: 72px; border-radius: 22%; display: grid; place-items: center; flex: none; }
+.tile.small { width: 36px; height: 36px; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 6px 16px rgba(36, 59, 115, .18); }
+.panel.dark .tile { background: linear-gradient(160deg, #1b2434, #0f141d); box-shadow: 0 6px 16px rgba(0, 0, 0, .5); border: 1px solid rgba(255, 255, 255, .08); }
+dl { margin: 0; display: grid; gap: 9px; }
+dl div { display: grid; grid-template-columns: 6.8rem 1fr; gap: 10px; font-size: 14.5px; }
+dt { color: var(--muted); } dd { margin: 0; }
+.note { color: var(--muted); font-size: 14px; margin: 0; }
+.verdict { background: rgba(255, 255, 255, .7); border-radius: 18px; padding: 16px 18px; display: grid; gap: 6px; }
+.verdict h2 { margin: 0; font: 500 24px/1.1 "Newsreader", Georgia, serif; }
+@media (max-width: 420px) { dl div { grid-template-columns: 1fr; gap: 2px; } .word { font-size: 38px; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Five names, five logo sketches</h1>
+    <p class="lead">The app's ring becomes part of the name: the Q in Qesef and Qianbao, the q in arnaq, a crossing of two arcs for the x in Arnax and Mezumax. Same colours as the app, in the light and dark theme. These are first sketches to judge the names by sight, not final logos.</p>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div class="verdict">
+    <h2>My read</h2>
+    <p class="note"><b>Sounds best:</b> arnaq (two crisp syllables, ar-NAK) and Mezumax (meh-ZOO-max, rolls off the tongue). <b>Safest to own:</b> Mezumax, the only one with a free .com and an easy spelling. <b>Weakest:</b> Qianbao, because English speakers will not know how to say it and several Chinese finance apps already use the word.</p>
+  </div>
+</main>
+<script>
+  let n = 0;
+  const grad = (id, a, b) => `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="80" y2="80"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>`;
+  const T = { light: ["#33c6ff", "#7f8cff", "rgba(23,32,46,.10)"], dark: ["#2ac9ff", "#7d8bff", "rgba(255,255,255,.12)"] };
+
+  // Capital Q: the ring with a short tail.
+  const Q = (em, th) => { const [a, b] = T[th], id = "g" + n++;
+    return `<svg height="${em}em" width="${em}em" viewBox="0 0 70 70" style="vertical-align:-.08em" aria-hidden="true">${grad(id, a, b)}
+      <circle cx="33" cy="33" r="27" fill="none" stroke="url(#${id})" stroke-width="10" stroke-linecap="round" stroke-dasharray="150 30" transform="rotate(-60 33 33)"/>
+      <line x1="48" y1="48" x2="64" y2="64" stroke="${b}" stroke-width="10" stroke-linecap="round"/></svg>`; };
+  // Lowercase q: the ring with a stem down the right side.
+  const q = (th) => { const [a, b] = T[th], id = "g" + n++;
+    return `<svg height=".7em" width=".54em" viewBox="0 0 64 84" style="vertical-align:-.17em" aria-hidden="true">${grad(id, a, b)}
+      <circle cx="29" cy="30" r="23" fill="none" stroke="url(#${id})" stroke-width="13" stroke-linecap="round" stroke-dasharray="140 20" transform="rotate(-90 30 30)"/>
+      <line x1="54" y1="8" x2="54" y2="76" stroke="${b}" stroke-width="13" stroke-linecap="round"/></svg>`; };
+  // x: two crossing arcs.
+  const X = (th, size = ".5em") => { const [a, b] = T[th], id = "g" + n++;
+    return `<svg height="${size}" width="${size}" viewBox="0 0 80 80" style="vertical-align:-.0em" aria-hidden="true">${grad(id, a, b)}
+      <path d="M14 14 Q40 36 66 66" fill="none" stroke="url(#${id})" stroke-width="15" stroke-linecap="round"/>
+      <path d="M66 14 Q40 40 14 66" fill="none" stroke="${b}" stroke-width="15" stroke-linecap="round"/></svg>`; };
+  // Icon marks (for the app tile).
+  const iconRing = (th, s, tail) => { const [a, b, track] = T[th], id = "g" + n++;
+    return `<svg width="${s}" height="${s}" viewBox="0 0 100 100" aria-hidden="true">${grad(id, a, b)}
+      <circle cx="50" cy="50" r="30" fill="none" stroke="${track}" stroke-width="12"/>
+      <circle cx="50" cy="50" r="30" fill="none" stroke="url(#${id})" stroke-width="12" stroke-linecap="round" stroke-dasharray="150 40" transform="rotate(-70 50 50)"/>
+      ${tail ? `<line x1="68" y1="68" x2="86" y2="86" stroke="${b}" stroke-width="12" stroke-linecap="round"/>` : ""}</svg>`; };
+  const iconX = (th, s) => X(th, s + "px");
+
+  const names = [
+    { name: "arnaq", say: "ar-NAK", tag: ["good", "Strong"], word: (th) => `arna${q(th)}`, icon: (th, s) => iconRing(th, s, false),
+      meaning: "ארנק, Hebrew for wallet, with a q for k.", spell: "Medium: people will type arnak. The q is the memorable twist, but you would own arnak.nl too.",
+      dom: ".nl free · .com taken", exist: "No company found." },
+    { name: "Arnax", say: "ar-NAX", tag: ["good", "Strong"], word: (th) => `arna${X(th, ".52em")}`, icon: (th, s) => iconX(th, s),
+      meaning: "The same Hebrew wallet, ending in x.", spell: "Easier than arnaq: x is a natural ending. Sounds more tech and fintech.",
+      dom: ".nl free · .com taken", exist: "No company found." },
+    { name: "Qesef", say: "KEH-sef", tag: ["warn", "Q is risky"], word: (th) => `${Q(.72, th)}esef`, icon: (th, s) => iconRing(th, s, true),
+      meaning: "כסף, Hebrew for money (and silver).", spell: "Hard: a Q start. Many will say kwesef or type kesef. Very striking logo.",
+      dom: ".nl free · .com taken", exist: "No company found." },
+    { name: "Mezumax", say: "meh-ZOO-max", tag: ["good", "Only .com"], word: (th) => `mezuma${X(th, ".52em")}`, icon: (th, s) => iconX(th, s),
+      meaning: "מזומן, Hebrew for cash, plus max.", spell: "Easy: it spells how it sounds. Reads like a product, a bit generic.",
+      dom: ".com free · .nl free", exist: "No company found. (Mezu, an unrelated Cleveland payments company, is close in sound only.)" },
+    { name: "Qianbao", say: "chyen-BOW", tag: ["bad", "Hard to own"], word: (th) => `${Q(.72, th)}ianbao`, icon: (th, s) => iconRing(th, s, true),
+      meaning: "钱包, Chinese for wallet. A real, common word.", spell: "Hard for English and Dutch speakers: they read it as kee-an-bao.",
+      dom: ".nl free · .com taken", exist: "The word is used by several Chinese finance apps (QianbaoCard, Yiqianbao, Yongqianbao)." },
+  ];
+  const panel = (x, th) => `
+    <div class="panel ${th}">
+      <div class="word">${x.word(th)}</div>
+      <div class="row"><div class="tile">${x.icon(th, 46)}</div><div class="tile small">${x.icon(th, 22)}</div></div>
+    </div>`;
+  document.getElementById("grid").innerHTML = names.map((x) => `
+    <section class="card">
+      <div class="head"><h2 class="name">${x.name}</h2><span class="tag ${x.tag[0]}">${x.tag[1]}</span></div>
+      ${panel(x, "light")}${panel(x, "dark")}
+      <dl>
+        <div><dt>Sounds like</dt><dd>${x.say}</dd></div>
+        <div><dt>Meaning</dt><dd>${x.meaning}</dd></div>
+        <div><dt>Spelling</dt><dd>${x.spell}</dd></div>
+        <div><dt>Domains</dt><dd>${x.dom}</dd></div>
+        <div><dt>Existing use</dt><dd>${x.exist}</dd></div>
+      </dl>
+    </section>`).join("");
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq: monogram and a wordmark that matches its weight</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1000px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 74ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.card { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; }
+.panel { border-radius: 16px; padding: 22px 12px; display: grid; place-items: center; gap: 14px; overflow: hidden; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.word { font-family: "Outfit", system-ui, sans-serif; letter-spacing: -.02em; white-space: nowrap; display: inline-flex; align-items: baseline; font-size: 52px; line-height: 1; }
+.word > span, .word > svg { display: inline-block; }
+.word svg { overflow: visible; }
+.sizes { display: flex; align-items: center; gap: 14px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+.how { background: rgba(255, 255, 255, .7); border-radius: 18px; padding: 16px 18px; display: grid; gap: 8px; }
+.how ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14.5px; }
+@media (max-width: 480px) { .word { font-size: 44px; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>The monogram as you chose it, and a wordmark that matches its weight</h1>
+    <p class="lead">The monogram is your previous row 1, unchanged: the blue a and the purple q, extra bold, ring stroke 16, empty center. The wordmark is set in Outfit (round, single-story a). Outfit is a variable font, so I measured the weight at which its letters are exactly as heavy, in proportion to their height, as the monogram's rings, instead of guessing.</p>
+  </div>
+  <div id="out" class="main" style="display:grid;gap:22px"></div>
+</main>
+<script>
+  const TH = { light: { blue: "#33c6ff", purple: "#7f8cff" }, dark: { blue: "#2ac9ff", purple: "#7d8bff" } };
+  // The monogram, exactly as before (1/100 em units): ring height 57, stroke 16, stem 21 below the ring, short a stem.
+  const MONO = { D: 57, ovs: 1.5, w: 16, tail: 21 };
+  const RATIO = MONO.w / MONO.D;       // stroke as a share of ring height: the weight to match
+  let FONT;                            // measured: the Outfit weight whose stem has that same share, and its metrics
+  async function measure() {
+    await document.fonts.load("700 100px Outfit"); await document.fonts.ready;
+    const c = document.createElement("canvas").getContext("2d"); let best = null;
+    for (let w = 400; w <= 900; w += 5) {
+      c.font = `${w} 100px Outfit, sans-serif`;
+      const o = c.measureText("o"), l = c.measureText("l"), stem = l.actualBoundingBoxLeft + l.actualBoundingBoxRight, D = o.actualBoundingBoxAscent + o.actualBoundingBoxDescent;
+      const diff = Math.abs(stem / D - RATIO);
+      if (!best || diff < best.diff) best = { weight: w, diff, stem, D, ovs: o.actualBoundingBoxDescent, qdesc: c.measureText("q").actualBoundingBoxDescent, ratio: stem / D };
+    }
+    FONT = best;
+  }
+  let uid = 0;
+  const cap = `stroke-linecap="round"`;
+  const ring = (cx, cy, r, stroke, w) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${stroke}" stroke-width="${w}" ${cap}/>`;
+  const line = (x, y1, y2, stroke, w) => `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${stroke}" stroke-width="${w}" ${cap}/>`;
+
+  // The monogram pair (the app icon). m = { D, w, tail }.
+  const pair = (th, m, { white = false } = {}) => { const { D, w, tail } = m, r = (D - w) / 2, gap = 0.12 * D, cy = D / 2, c = white ? { blue: "#fff", purple: "rgba(255,255,255,.8)" } : TH[th];
+    const cxa = D / 2, cxq = D + gap + D / 2, W = 2 * D + gap, H = D + tail, aTop = cy - r + 0.45 * 2 * r;
+    return { W, H, tail, body: ring(cxa, cy, r, c.blue, w) + line(cxa + r, aTop, cy + r, c.blue, w) + ring(cxq, cy, r, c.purple, w) + line(cxq + r, cy - r, D + tail - w / 2, c.purple, w) }; };
+  // The q of the wordmark: ring and stem in one gradient; overlay adds the whole blue a inside it.
+  const qGlyph = (th, m, { overlay = false } = {}) => { const { D, w, tail } = m, r = (D - w) / 2, cx = D / 2, cy = D / 2, W = D, H = D + tail, c = TH[th], id = "g" + uid++;
+    const g = `<defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${D * .15}" x2="${D * .8}" y2="${H}"><stop offset="0" stop-color="${c.blue}"/><stop offset="1" stop-color="${c.purple}"/></linearGradient></defs>`;
+    const aTop = cy - r + 0.45 * 2 * r;
+    return { W, H, tail, body: g + ring(cx, cy, r, `url(#${id})`, w) + (overlay ? line(cx + r, aTop, cy + r, `url(#${id})`, w) : "") + line(cx + r, cy - r, D + tail - w / 2, `url(#${id})`, w) }; };
+
+  const wordSvg = (g, ovs) => `<svg height="${(g.H / 100).toFixed(3)}em" width="${(g.W / 100).toFixed(3)}em" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" style="position:relative;top:${((g.tail + ovs) / 100).toFixed(3)}em;margin-left:.02em" aria-hidden="true">${g.body}</svg>`;
+  const iconSvg = (g, px) => { const s = Math.min((px * .66) / g.W, (px * .72) / g.H); return `<svg width="${(g.W * s).toFixed(1)}" height="${(g.H * s).toFixed(1)}" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" aria-hidden="true">${g.body}</svg>`; };
+  const tile = (inner, s, extra = "") => `<div class="tile" style="width:${s}px;height:${s}px;${extra}">${inner(s)}</div>`;
+  const BRAND = "background:linear-gradient(135deg,#33c6ff,#7f8cff);box-shadow:0 8px 18px rgba(36,59,115,.25);border:0";
+  const panels = (fn) => `<div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${fn(th)}</div>`).join("")}</div>`;
+
+  function render() {
+    const f = FONT, m = { D: f.D, w: f.stem, tail: Math.max(10, f.qdesc - f.ovs) }, hole = Math.round(((f.D - 2 * f.stem) / f.D) * 100), monoHole = Math.round(((MONO.D - 2 * MONO.w) / MONO.D) * 100);
+    const letters = "arna".split("").map((c) => `<span>${c}</span>`).join("");
+    const word = (th, overlay) => `<span class="word" style="font-weight:${f.weight}">${letters}${wordSvg(qGlyph(th, m, { overlay }), f.ovs)}</span>`;
+    const lock = (th) => `<div class="sizes" style="gap:18px">${tile((s) => iconSvg(pair(th, MONO), s), 84)}<span class="word" style="font-weight:${f.weight};font-size:56px">${letters}${wordSvg(qGlyph(th, m), f.ovs)}</span></div>`;
+    document.getElementById("out").innerHTML =
+      `<section class="card"><div><h2>1. The monogram: your previous row 1</h2><p class="note">Extra bold, ring stroke 16, empty center (${monoHole}% of the ring), the shortest stem. On the cream tile and on the brand colour.</p></div>` +
+      panels((th) => `<div class="sizes">${tile((s) => iconSvg(pair(th, MONO), s), 110)}${tile((s) => iconSvg(pair(th, MONO, { white: true }), s), 110, BRAND)}</div><div class="sizes">${tile((s) => iconSvg(pair(th, MONO), s), 48)}${tile((s) => iconSvg(pair(th, MONO, { white: true }), s), 48, BRAND)}${tile((s) => iconSvg(pair(th, MONO), s), 24)}</div>`) + `</section>` +
+      `<section class="card"><div><h2>2. The wordmark, Outfit at weight ${f.weight}</h2><p class="note">At this weight a letter's stroke is ${(f.ratio * 100).toFixed(1)}% of its height; the monogram's is ${(RATIO * 100).toFixed(1)}%. The q's ring uses the font's own stroke, so its center is ${hole}% open (the monogram: ${monoHole}%). Left: only the q in the gradient. Right: the blue a inside the q.</p></div>` +
+      `<div class="pair" style="grid-template-columns:1fr 1fr">${["light", "dark"].map((th) => `<div class="panel ${th}">${word(th, false)}</div>`).join("")}${["light", "dark"].map((th) => `<div class="panel ${th}">${word(th, true)}</div>`).join("")}</div></section>` +
+      `<section class="card"><div><h2>3. Together: the monogram next to the wordmark</h2><p class="note">The a in the monogram and the a's in the word are now the same round letter at the same weight.</p></div>${panels(lock)}</section>` +
+      `<div class="how"><h2>How hard is it?</h2><ul>
+        <li><b>The matching is easy and exact.</b> Outfit is a variable font, so its weight can be set to any number from 100 to 900. I measured the weight (${f.weight}) where its stroke-to-height ratio equals the monogram's. No guessing, and it can be redone if the monogram changes.</li>
+        <li><b>The q is the real work.</b> The font's own q does not have the gradient or the stem we want, so the last letter is drawn by hand (here, in code) to match the font's ring size, stroke and descender. That is a one-off, and it is what makes it look like part of the word. I would still fine-tune the spacing around it by eye.</li>
+        <li><b>The monogram and the wordmark are different drawings.</b> The monogram's ring is slightly taller than the font's o (ring height 57 against ${f.D.toFixed(0)}), because it stands alone. Matching stroke ratio, not size, is what makes them feel like one family.</li>
+        <li><b>Licence and delivery.</b> Outfit is open source (free for commercial use). For the final logo I would convert the letters to outlines, so the wordmark does not depend on the font loading.</li>
+        <li><b>A professional would redraw the letters.</b> Doing that by hand gives the most distinctive result, but it is days of work. For an app like this, a measured font plus a custom q is the sensible level.</li></ul></div>`;
+  }
+  measure().then(render);
+</script>
+</body>
+</html>

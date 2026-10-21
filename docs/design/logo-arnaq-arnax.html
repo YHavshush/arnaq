@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Logo directions: arnaq and Arnax</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; --card: rgba(255, 255, 255, .62); }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 28px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { font: 500 30px/1.1 "Newsreader", Georgia, serif; margin: 0; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 68ch; }
+.note { font-size: 14px; margin: 0; }
+.section { display: grid; gap: 14px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; align-items: start; }
+.card { background: var(--card); border: 1px solid rgba(255, 255, 255, .7); border-radius: 22px; padding: 14px; display: grid; gap: 12px; box-shadow: 0 10px 30px rgba(36, 59, 115, .08); min-width: 0; }
+.card h3 { margin: 0; font-size: 15px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.card h3 small { font-weight: 400; color: var(--muted); font-size: 13px; text-align: right; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 14px 10px; display: grid; gap: 10px; justify-items: center; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+.sizes { display: flex; align-items: center; gap: 10px; }
+.words { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.wm { border-radius: 18px; padding: 22px 18px; display: grid; gap: 4px; }
+.wm.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.wm.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.wm small { opacity: .65; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.serif { font: 500 54px/1.1 "Newsreader", Georgia, serif; letter-spacing: -.01em; white-space: nowrap; }
+.sans { font: 700 50px/1.1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; }
+.serif svg, .sans svg { display: inline-block; overflow: visible; }
+@media (max-width: 420px) { .serif { font-size: 42px; } .sans { font-size: 40px; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Logo directions: arnaq and Arnax</h1>
+    <p class="lead">Four icon directions per name, each shown as an app icon in light and dark, then small, then as a favicon. After them, the wordmark in the app's serif and in a modern sans. Colours are the app's own blue-to-violet gradient. These are design directions to choose from, not final artwork.</p>
+  </div>
+  <div id="out" class="section"></div>
+</main>
+<script>
+  let uid = 0;
+  const TH = { light: ["#33c6ff", "#7f8cff", "rgba(23,32,46,.12)"], dark: ["#2ac9ff", "#7d8bff", "rgba(255,255,255,.14)"] };
+  const rad = (d) => ((d - 90) * Math.PI) / 180; // 0 degrees = 12 o'clock, clockwise
+  const pt = (cx, cy, r, d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+  const arc = (cx, cy, r, a0, a1) => { const [x0, y0] = pt(cx, cy, r, a0), [x1, y1] = pt(cx, cy, r, a1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  const svg = (th, body, size, vb = "0 0 100 100", extra = "") => { const [a, b] = TH[th], id = "g" + uid++;
+    return `<svg ${size ? `width="${size}" height="${size}"` : ""} viewBox="${vb}" ${extra} aria-hidden="true"><defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="10" y1="10" x2="90" y2="90"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>${body(`url(#${id})`, b, TH[th][2])}</svg>`; };
+  const S = (w) => `stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+
+  // ---- icon bodies: (gradient, solid, track) => svg markup in a 100x100 box
+  const icons = {
+    arnaq: [
+      ["A", "Ring-q", "The app's ring with a stem: a q, and also an a.", (g, b) =>
+        `<path d="${arc(42, 46, 24, 12, 350)}" stroke="${g}" ${S(13)}/><line x1="66" y1="20" x2="66" y2="88" stroke="${b}" ${S(13)}/>`],
+      ["B", "Wallet", "A soft wallet with the ring as its clasp.", (g, b) =>
+        `<rect x="14" y="26" width="72" height="50" rx="15" stroke="${g}" ${S(11)}/><path d="M16 42 H66" stroke="${g}" ${S(11)}/><circle cx="70" cy="56" r="8" fill="${b}"/>`],
+      ["C", "Ring with a coin", "An open ring that ends in a coin: money in motion.", (g, b, t) =>
+        `<path d="${arc(50, 50, 31, 0, 359.9)}" stroke="${t}" ${S(11)}/><path d="${arc(50, 50, 31, 25, 285)}" stroke="${g}" ${S(11)}/><circle cx="${pt(50, 50, 31, 285)[0]}" cy="${pt(50, 50, 31, 285)[1]}" r="10" fill="${b}"/>`],
+      ["D", "Letter a", "A single-story a: round bowl, one stem. Pure monogram.", (g, b) =>
+        `<path d="${arc(44, 54, 22, 0, 359.9)}" stroke="${g}" ${S(13)}/><line x1="66" y1="30" x2="66" y2="78" stroke="${b}" ${S(13)}/>`],
+    ],
+    arnax: [
+      ["A", "Crossing arcs", "Two arcs cross to make an x: two flows meeting.", (g, b) =>
+        `<path d="M24 22 Q50 46 76 78" stroke="${g}" ${S(15)}/><path d="M76 22 Q50 50 24 78" stroke="${b}" ${S(15)}/>`],
+      ["B", "Coin with x", "A ring with an x at its centre: a marked coin.", (g, b, t) =>
+        `<circle cx="50" cy="50" r="34" stroke="${t}" ${S(10)}/><path d="${arc(50, 50, 34, 10, 300)}" stroke="${g}" ${S(10)}/><path d="M38 38 L62 62 M62 38 L38 62" stroke="${b}" ${S(11)}/>`],
+      ["C", "Wallet with x", "The wallet, with an x on the clasp.", (g, b) =>
+        `<rect x="14" y="26" width="72" height="50" rx="15" stroke="${g}" ${S(11)}/><path d="M16 42 H62" stroke="${g}" ${S(11)}/><path d="M66 49 L80 63 M80 49 L66 63" stroke="${b}" ${S(8)}/>`],
+      ["D", "Ring-a plus x", "The ring-a from arnaq with a small x beside it.", (g, b) =>
+        `<path d="${arc(35, 56, 19, 0, 359.9)}" stroke="${g}" ${S(12)}/><line x1="54" y1="38" x2="54" y2="74" stroke="${b}" ${S(12)}/><path d="M66 40 L88 72 M88 40 L66 72" stroke="${b}" ${S(11)}/>`],
+    ],
+  };
+
+  const tile = (th, body, s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(th, body, Math.round(s * .62))}</div>`;
+  const panel = (th, body) => `<div class="panel ${th}">${tile(th, body, 96)}<div class="sizes">${tile(th, body, 44)}${tile(th, body, 22)}</div></div>`;
+
+  // ---- wordmarks: letters in text, the special letter as a drawn glyph
+  const glyphQ = (th) => svg(th, (g, b) => `<path d="${arc(29, 30, 23, 14, 352)}" stroke="${g}" ${S(13)}/><line x1="54" y1="9" x2="54" y2="76" stroke="${b}" ${S(13)}/>`, 0, "0 0 64 84", 'height=".7em" width=".54em" style="vertical-align:-.17em"');
+  const glyphX = (th) => svg(th, (g, b) => `<path d="M14 14 Q40 36 66 66" stroke="${g}" ${S(15)}/><path d="M66 14 Q40 40 14 66" stroke="${b}" ${S(15)}/>`, 0, "0 0 80 80", 'height=".52em" width=".52em"');
+  const words = { arnaq: (th) => `arna${glyphQ(th)}`, arnax: (th) => `arna${glyphX(th)}` };
+
+  const section = (key, title, intro) => `
+    <section class="section">
+      <div><h2>${title}</h2><p class="note">${intro}</p></div>
+      <div class="grid">${icons[key].map(([k, name, why, body]) => `
+        <div class="card"><h3>${k}. ${name}<small>${why}</small></h3>
+          <div class="pair">${panel("light", body)}${panel("dark", body)}</div></div>`).join("")}
+      </div>
+      <div class="words">
+        <div class="wm light"><small>Serif (the app's voice)</small><div class="serif">${words[key]("light")}</div></div>
+        <div class="wm dark"><small>Serif (the app's voice)</small><div class="serif">${words[key]("dark")}</div></div>
+        <div class="wm light"><small>Modern sans</small><div class="sans">${words[key]("light")}</div></div>
+        <div class="wm dark"><small>Modern sans</small><div class="sans">${words[key]("dark")}</div></div>
+      </div>
+    </section>`;
+
+  document.getElementById("out").innerHTML =
+    section("arnaq", "arnaq", "The ring is the q. Direction A makes that idea the whole icon; D keeps just the letter; B and C bring in the wallet and the coin.") +
+    section("arnax", "Arnax", "The x is two crossing arcs. Direction A is the purest; B turns it into a coin; C and D tie it to the wallet and the letter a.");
+</script>
+</body>
+</html>

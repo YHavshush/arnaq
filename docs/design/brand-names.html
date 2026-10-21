@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Brand names: Kinsa, Kinsen, Kupah</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway comparison page, no app code. */
+:root {
+  --ink: #17202e; --muted: #4a5568; --hair: rgba(23, 32, 46, .12);
+  --page-from: #d9e5f5; --page-to: #f6e8d8; --card: rgba(255, 255, 255, .62);
+  --accent: #243b73; --good: #1f7a54; --warn: #a65a1f; --bad: #b3362d;
+}
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body {
+  margin: 0; color: var(--ink); min-height: 100vh;
+  font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, var(--page-from) 0%, #f1e6dd 46%, var(--page-to) 100%) fixed;
+  padding: 28px 16px 56px;
+}
+main { max-width: 1120px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+.lead { color: var(--muted); margin: 8px 0 0; max-width: 62ch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; align-items: start; }
+.card { background: var(--card); border: 1px solid rgba(255, 255, 255, .7); border-radius: 24px; padding: 18px; display: grid; gap: 16px;
+  box-shadow: 0 10px 30px rgba(36, 59, 115, .08); min-width: 0; }
+.tag { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 4px 10px; }
+.tag.good { background: rgba(31, 122, 84, .14); color: var(--good); }
+.tag.warn { background: rgba(166, 90, 31, .14); color: var(--warn); }
+.tag.bad { background: rgba(179, 54, 45, .12); color: var(--bad); }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.name { font: 500 30px/1 "Newsreader", Georgia, serif; margin: 0; }
+
+.panel { border-radius: 18px; padding: 18px; display: grid; gap: 14px; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.lockup { display: flex; align-items: center; gap: 12px; }
+.lockup .word { font: 500 40px/1 "Newsreader", Georgia, serif; letter-spacing: -.01em; }
+.row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.tile { width: 76px; height: 76px; border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 6px 16px rgba(36, 59, 115, .18); }
+.panel.dark .tile { background: linear-gradient(160deg, #1b2434, #0f141d); box-shadow: 0 6px 16px rgba(0, 0, 0, .5); border: 1px solid rgba(255, 255, 255, .08); }
+.tile.small { width: 40px; height: 40px; }
+.hdr { display: flex; align-items: center; justify-content: space-between; border-radius: 14px; padding: 10px 14px; }
+.panel.light .hdr { background: rgba(255, 255, 255, .58); }
+.panel.dark .hdr { background: rgba(255, 255, 255, .06); }
+.hdr .word { font: 500 22px/1 "Newsreader", Georgia, serif; }
+.hdr small { opacity: .7; font-size: 13px; }
+
+dl { margin: 0; display: grid; gap: 10px; }
+dl div { display: grid; grid-template-columns: 7.5rem 1fr; gap: 10px; font-size: 14.5px; }
+dt { color: var(--muted); }
+dd { margin: 0; }
+.note { color: var(--muted); font-size: 14px; margin: 0; }
+@media (max-width: 420px) { dl div { grid-template-columns: 1fr; gap: 2px; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Kinsa, Kinsen or Kupah</h1>
+    <p class="lead">The same ring icon and the app's own heading font, in the light and dark theme. The facts come from the .app registry (all three are unregistered) and a web search for companies with the same name.</p>
+  </div>
+  <div class="grid" id="grid"></div>
+  <p class="note">The icon is only a first sketch (a ring with a small gap, in the app's blue-to-violet gradient) so the names can be judged next to something. Which name is it, and then we design the icon properly.</p>
+</main>
+<script>
+  // Same geometry idea as the app's ring: round caps, diagonal gradient, a small gap.
+  let n = 0;
+  const ring = (size, from, to, track) => {
+    const id = "g" + n++, r = 38, c = 2 * Math.PI * r, arc = c * 0.8;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" aria-hidden="true">
+      <defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${from}"/><stop offset="1" stop-color="${to}"/></linearGradient></defs>
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="${track}" stroke-width="10"/>
+      <circle cx="50" cy="50" r="${r}" fill="none" stroke="url(#${id})" stroke-width="10" stroke-linecap="round"
+        stroke-dasharray="${arc} ${c}" transform="rotate(-70 50 50)"/></svg>`;
+  };
+  const L = (s) => ring(s, "#33c6ff", "#7f8cff", "rgba(23,32,46,.10)");
+  const D = (s) => ring(s, "#2ac9ff", "#7d8bff", "rgba(255,255,255,.12)");
+  const names = [
+    { name: "Kinsa", say: "KIN-sah", tag: ["bad", "Conflict found"],
+      origin: "A soft variant of Kinsen (金銭, money matters). Not a Japanese word on its own.",
+      taken: "kinsa.app is unregistered.",
+      risk: "Kinsa is a well-known US health technology company (smart thermometers and an app, San Francisco). Different field, but search results and any trademark check will be dominated by them." },
+    { name: "Kinsen", say: "KIN-sen", tag: ["good", "Clear"],
+      origin: "金銭: money, financial matters. Written in Japanese in the same way a ledger is: plain and exact.",
+      taken: "kinsen.app is unregistered.",
+      risk: "No company with this name turned up. A Japanese surname and word, so Japanese speakers will read it as 'money'." },
+    { name: "Kupah", say: "koo-PAH", tag: ["warn", "Too close"],
+      origin: "קופה: the Hebrew word for a cash box or a fund, spelled the way it is transliterated.",
+      taken: "kupah.app is unregistered; kupa.app and kupa.com are taken.",
+      risk: "A family pocket-money app called Kupa is listed in the App Store's Finance category (first released May 2026). Kupah sounds exactly the same, in the same category. Also, 'kupa' is a vulgar word in Polish." },
+  ];
+  const card = (x) => `
+    <section class="card">
+      <div class="head"><h2 class="name">${x.name}</h2><span class="tag ${x.tag[0]}">${x.tag[1]}</span></div>
+      <div class="panel light">
+        <div class="lockup">${L(44)}<span class="word">${x.name.toLowerCase()}</span></div>
+        <div class="row"><div class="tile">${L(52)}</div><div class="tile small">${L(26)}</div></div>
+        <div class="hdr"><span class="word">${x.name}</span><small>October 2026</small></div>
+      </div>
+      <div class="panel dark">
+        <div class="lockup">${D(44)}<span class="word">${x.name.toLowerCase()}</span></div>
+        <div class="row"><div class="tile">${D(52)}</div><div class="tile small">${D(26)}</div></div>
+        <div class="hdr"><span class="word">${x.name}</span><small>October 2026</small></div>
+      </div>
+      <dl>
+        <div><dt>Sounds like</dt><dd>${x.say}</dd></div>
+        <div><dt>Meaning</dt><dd>${x.origin}</dd></div>
+        <div><dt>Domain</dt><dd>${x.taken}</dd></div>
+        <div><dt>Existing use</dt><dd>${x.risk}</dd></div>
+      </dl>
+    </section>`;
+  document.getElementById("grid").innerHTML = names.map(card).join("");
+</script>
+</body>
+</html>

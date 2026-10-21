@@ -49,3 +49,7 @@ Model table:
 
 - **Language (done):** English by default, Dutch second, switchable. All UI text goes through the catalogs in `src/i18n/messages/` (never hard-code text in components; never build a sentence by joining translated fragments, a catalog function returns the whole sentence). Server messages stay English in code and are translated at the API edge. See README "Language".
 - **Accounts:** Supabase Auth (register, log in, log out, reset password). **Multiple users, each with their own data**: every table gets an owner and the database enforces it (RLS), see the auth milestone. The unauthenticated API stays closed once that lands.
+
+## Brand spelling (2026-10-21)
+
+- The app is called **arnaq**, always lowercase (UI text, titles, docs, README, store listings, emails), like the logo. Never "Arnaq" or "ARNAQ". Kasboek is the old name and is being renamed milestone by milestone.

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq: an a and a q</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; --card: rgba(255, 255, 255, .62); }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 24px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 68ch; }
+.note { font-size: 14px; margin: 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; align-items: start; }
+.card { background: var(--card); border: 1px solid rgba(255, 255, 255, .7); border-radius: 22px; padding: 14px; display: grid; gap: 12px; box-shadow: 0 10px 30px rgba(36, 59, 115, .08); min-width: 0; }
+.card h3 { margin: 0; font-size: 15px; }
+.card p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 14px 10px; display: grid; gap: 10px; justify-items: center; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+.sizes { display: flex; align-items: center; gap: 10px; }
+.words { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.wm { border-radius: 18px; padding: 22px 18px; display: grid; gap: 4px; }
+.wm.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.wm.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.wm small { opacity: .65; font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.lock { display: flex; align-items: center; gap: 14px; }
+.serif { font: 500 50px/1.1 "Newsreader", Georgia, serif; letter-spacing: -.01em; white-space: nowrap; }
+.sans { font: 700 46px/1.1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; }
+@media (max-width: 420px) { .serif { font-size: 40px; } .sans { font-size: 38px; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>arnaq: an a and a q, side by side</h1>
+    <p class="lead">Five ways to show both letters in the icon. In each, the a has a short stem and the q has a long one, so you read "a" and "q" even though both are the app's ring. Light and dark, at app-icon, small and favicon size. Below: the best two as a full logo with the wordmark.</p>
+  </div>
+  <div id="grid" class="grid"></div>
+  <div id="words" class="words"></div>
+</main>
+<script>
+  let uid = 0;
+  const TH = { light: ["#33c6ff", "#7f8cff", "rgba(23,32,46,.12)"], dark: ["#2ac9ff", "#7d8bff", "rgba(255,255,255,.14)"] };
+  const rad = (d) => ((d - 90) * Math.PI) / 180;
+  const pt = (cx, cy, r, d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+  const arc = (cx, cy, r, a0, a1) => { const [x0, y0] = pt(cx, cy, r, a0), [x1, y1] = pt(cx, cy, r, a1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  const S = (w) => `stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+  const svg = (th, body, size, vb = "0 0 100 100", extra = "") => { const [a, b] = TH[th], id = "g" + uid++;
+    return `<svg ${size ? `width="${size}" height="${size}"` : ""} viewBox="${vb}" ${extra} aria-hidden="true"><defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="8" y1="14" x2="92" y2="86"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>${body(`url(#${id})`, b, TH[th][2], a)}</svg>`; };
+
+  // a and q as ring + stem. (cx, cy, r) is the ring; the stem sits on its right edge.
+  const letterA = (cx, cy, r, w, g, stem) => `<path d="${arc(cx, cy, r, 0, 359.9)}" stroke="${g}" ${S(w)}/><line x1="${cx + r}" y1="${cy - r * .62}" x2="${cx + r}" y2="${cy + r}" stroke="${stem}" ${S(w)}/>`;
+  const letterQ = (cx, cy, r, w, g, stem, drop) => `<path d="${arc(cx, cy, r, 0, 359.9)}" stroke="${g}" ${S(w)}/><line x1="${cx + r}" y1="${cy - r * .62}" x2="${cx + r}" y2="${cy + r + drop}" stroke="${stem}" ${S(w)}/>`;
+
+  const variants = [
+    ["1. Side by side", "A clear gap between the a and the q. The reading is instant: a, q.", (g, b) =>
+      letterA(26, 44, 15, 10, g, g) + letterQ(70, 44, 15, 10, b, b, 22)],
+    ["2. Side by side, one gradient", "The same, but one gradient flows across both letters: they feel like one word.", (g) =>
+      letterA(26, 44, 15, 10, g, g) + letterQ(70, 44, 15, 10, g, g, 22)],
+    ["3. Overlapping coins", "The a and q rings overlap like two coins. The overlap is the join.", (g, b) =>
+      `<path d="${arc(36, 46, 22, 0, 359.9)}" stroke="${g}" ${S(10)}/><path d="${arc(62, 46, 22, 0, 359.9)}" stroke="${b}" ${S(10)}/><line x1="84" y1="30" x2="84" y2="84" stroke="${b}" ${S(10)}/>`],
+    ["4. Stacked", "The a above the q, each with its own stem: a small monogram with an even shape.", (g, b) =>
+      letterA(42, 29, 14, 9, g, g) + letterQ(42, 63, 14, 9, b, b, 18)],
+    ["5. A inside the q", "The a sits inside the q's ring. Reads as one symbol, but is small at favicon size.", (g, b) =>
+      `<path d="${arc(44, 46, 30, 0, 359.9)}" stroke="${g}" ${S(11)}/><line x1="74" y1="22" x2="74" y2="90" stroke="${b}" ${S(11)}/>` + letterA(42, 47, 8, 6.5, b, b)],
+  ];
+
+  const tile = (th, body, s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(th, body, Math.round(s * .64))}</div>`;
+  const panel = (th, body) => `<div class="panel ${th}">${tile(th, body, 96)}<div class="sizes">${tile(th, body, 44)}${tile(th, body, 22)}</div></div>`;
+  document.getElementById("grid").innerHTML = variants.map(([title, why, body]) => `
+    <div class="card"><h3>${title}</h3><p>${why}</p><div class="pair">${panel("light", body)}${panel("dark", body)}</div></div>`).join("");
+
+  // Wordmarks: icon plus name, in the serif and the sans.
+  const mark = (th, body, s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(th, body, Math.round(s * .64))}</div>`;
+  const q = (th) => svg(th, (g, b) => `<path d="${arc(29, 30, 23, 14, 352)}" stroke="${g}" ${S(13)}/><line x1="54" y1="9" x2="54" y2="76" stroke="${b}" ${S(13)}/>`, 0, "0 0 64 84", 'height=".7em" width=".54em" style="vertical-align:-.17em;overflow:visible"');
+  const picks = [variants[0][2], variants[1][2]];
+  document.getElementById("words").innerHTML = picks.map((body, i) => ["light", "dark"].map((th) =>
+    ["serif", "sans"].map((cls) => `
+    <div class="wm ${th}"><small>Option ${i + 1} · ${cls === "serif" ? "serif" : "modern sans"}</small>
+      <div class="lock">${mark(th, body, 64)}<div class="${cls}">arna${q(th)}</div></div></div>`).join("")).join("")).join("");
+</script>
+</body>
+</html>

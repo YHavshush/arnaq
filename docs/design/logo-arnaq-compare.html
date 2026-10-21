@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq: wordmark comparison</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700&family=Comfortaa:wght@700&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. No web fonts here: the whole logo is drawn, so it looks the same everywhere. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1000px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(26px, 5vw, 38px)/1.1 Georgia, "Times New Roman", serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 74ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.card { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 24px 12px; display: grid; place-items: center; gap: 16px; overflow: hidden; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.sizes { display: flex; align-items: center; gap: 16px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+svg { display: block; overflow: visible; max-width: 100%; }
+.typed { font-family: "Outfit", system-ui, sans-serif; letter-spacing: -.02em; white-space: nowrap; display: inline-flex; align-items: baseline; line-height: 1; }
+.typed > svg { display: inline-block; }
+.typed.fat { -webkit-text-stroke: .036em currentColor; paint-order: stroke fill; }
+.warn { background: #fff3cd; color: #664d03; border-radius: 12px; padding: 10px 14px; font-size: 14px; }
+@media (max-width: 520px) { .pair { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Outfit bold, Outfit semibold, Comfortaa and the drawn word</h1>
+    <p class="lead">Each typed version has "arna" in a font and a drawn gradient q whose ring and stem are sized from that font. The monogram's stroke is 28% of its ring height. <b>Outfit bold</b> is 31%, <b>Outfit semibold</b> 27%. <b>Comfortaa</b> has the round a with the short stem like your logo, but even its heaviest weight is only 19%, so it looks light next to the monogram: shown natural, and thickened to 28% to match. The last is the fully drawn word, first version.</p><div id="warn"></div><div id="warn"></div>
+  </div>
+  <div id="out" style="display:grid;gap:22px"></div>
+</main>
+<script>
+  const TH = { light: { ink: "#17202e", blue: "#33c6ff", purple: "#7f8cff" }, dark: { ink: "#eef1f5", blue: "#2ac9ff", purple: "#7d8bff" } };
+  const D = 57, w = 16, h = w / 2, TAIL = 21;                 // ring height, stroke, stem below the ring (the shortest)
+  const R = (D - w) / 2, C = D / 2;                           // ring centre-line radius, centre
+  const GAP = 9;                                              // space between letters
+  const S = (stroke) => `fill="none" stroke="${stroke}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"`;
+  const ring = (x0, stroke) => `<circle cx="${x0 + C}" cy="${C}" r="${R}" ${S(stroke)}/>`;
+
+  // Letters, as strokes. x0 = the letter's left edge. Each returns { w: advance width, body }.
+  const L = {
+    a: (x0, ink, o) => ({ w: D, body: ring(x0, ink) + `<line x1="${x0 + D - h}" y1="${o.aTop}" x2="${x0 + D - h}" y2="${D - h}" stroke="${ink}" stroke-width="${w}" stroke-linecap="round"/>` }),
+    r: (x0, ink) => ({ w: 40, body: `<path d="M${x0 + h} ${h} V${D - h} M${x0 + h} 26 C${x0 + h} 14 ${x0 + 16} ${h} ${x0 + 32} ${h}" ${S(ink)}/>` }),
+    n: (x0, ink) => ({ w: D, body: `<path d="M${x0 + h} ${h} V${D - h} M${x0 + h} 26 C${x0 + h} 14 ${x0 + 18} ${h} ${x0 + C} ${h} C${x0 + D - 18} ${h} ${x0 + D - h} 14 ${x0 + D - h} 26 V${D - h}" ${S(ink)}/>` }),
+    q: (x0, ink, o) => ({ w: D, body: `<defs><linearGradient id="${o.id}" gradientUnits="userSpaceOnUse" x1="${x0}" y1="${D * .15}" x2="${x0 + D * .8}" y2="${D + TAIL}"><stop offset="0" stop-color="${o.blue}"/><stop offset="1" stop-color="${o.purple}"/></linearGradient></defs>` +
+      `<circle cx="${x0 + C}" cy="${C}" r="${R}" ${S(`url(#${o.id})`)}/><line x1="${x0 + D - h}" y1="${h}" x2="${x0 + D - h}" y2="${D + TAIL - h}" stroke="url(#${o.id})" stroke-width="${w}" stroke-linecap="round"/>` }),
+  };
+  let uid = 0;
+  // The wordmark "arnaq". aTop: where the a's stem starts (0.45 = like the monogram's a; 0 = a full-height stem).
+  const wordmark = (th, { aTop = 0.45, height = 90 } = {}) => { const c = TH[th], o = { aTop: h + aTop * (D - w), id: "q" + uid++, blue: c.blue, purple: c.purple };
+    let x = 0, body = ""; for (const k of "arnaq") { const g = L[k](x, c.ink, o); body += g.body; x += g.w + GAP; }
+    const W = x - GAP, H = D + TAIL;
+    return `<svg height="${height}" width="${(W * height / H).toFixed(1)}" viewBox="${-2} ${-2} ${W + 4} ${H + 4}" role="img" aria-label="arnaq">${body}</svg>`; };
+
+  // The monogram (the icon): your previous row 1.
+  const pair = (th, { white = false } = {}) => { const c = white ? { blue: "#fff", purple: "rgba(255,255,255,.8)" } : TH[th], gap = 0.12 * D, cxa = D / 2, cxq = D + gap + D / 2, W = 2 * D + gap, H = D + TAIL, aTop = h + 0.45 * (D - w);
+    return `<svg viewBox="${-2} ${-2} ${W + 4} ${H + 4}" aria-hidden="true"><circle cx="${cxa}" cy="${C}" r="${R}" ${S(c.blue)}/><line x1="${cxa + R}" y1="${aTop}" x2="${cxa + R}" y2="${D - h}" stroke="${c.blue}" stroke-width="${w}" stroke-linecap="round"/><circle cx="${cxq}" cy="${C}" r="${R}" ${S(c.purple)}/><line x1="${cxq + R}" y1="${h}" x2="${cxq + R}" y2="${D + TAIL - h}" stroke="${c.purple}" stroke-width="${w}" stroke-linecap="round"/></svg>`; };
+  const tile = (th, s, white) => `<div class="tile" style="width:${s}px;height:${s}px;${white ? "background:linear-gradient(135deg,#33c6ff,#7f8cff);box-shadow:0 8px 18px rgba(36,59,115,.25);border:0" : ""}"><div style="width:${Math.round(s * .68)}px">${pair(th, { white })}</div></div>`;
+  const panels = (fn) => `<div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${fn(th)}</div>`).join("")}</div>`;
+
+  // Sizes measured from each font (per 100 em). D = height of the round o, w = stem width, tail = the q's stem below the ring.
+  const FONTS = {
+    ob: { name: "Outfit bold", family: "Outfit", weight: 700, D: 50.8, ovs: 1.1, w: 15.75, tail: 19.4, ratio: "31%", fat: false },
+    os: { name: "Outfit semibold", family: "Outfit", weight: 600, D: 50.4, ovs: 1.05, w: 13.63, tail: 19.2, ratio: "27%", fat: false },
+    cn: { name: "Comfortaa bold, natural", family: "Comfortaa", weight: 700, D: 55.5, ovs: 0.4, w: 10.4, tail: 23.0, ratio: "19%", fat: false },
+    cf: { name: "Comfortaa bold, thickened to match the monogram", family: "Comfortaa", weight: 700, D: 62.7, ovs: 4.0, w: 17.6, tail: 23.0, ratio: "28%", fat: true },
+  };
+  const typedQ = (th, m) => { const c = TH[th], r = (m.D - m.w) / 2, cx = m.D / 2, cy = m.D / 2, Hh = m.D + m.tail, id = "tq" + uid++, hh = m.w / 2;
+    return `<svg height="${(Hh / 100).toFixed(3)}em" width="${(m.D / 100).toFixed(3)}em" viewBox="0 0 ${m.D} ${Hh}" style="position:relative;top:${((m.tail + m.ovs) / 100).toFixed(3)}em;margin-left:.02em" aria-hidden="true">
+      <defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${m.D * .15}" x2="${m.D * .8}" y2="${Hh}"><stop offset="0" stop-color="${c.blue}"/><stop offset="1" stop-color="${c.purple}"/></linearGradient></defs>
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#${id})" stroke-width="${m.w}"/><line x1="${cx + r}" y1="${hh}" x2="${cx + r}" y2="${m.D + m.tail - hh}" stroke="url(#${id})" stroke-width="${m.w}" stroke-linecap="round"/></svg>`; };
+  // font-size chosen so the ring is the same height (57 px) in every version
+  const typed = (th, m, scale = 1) => `<span class="typed${m.fat ? " fat" : ""}" style="font-family:'${m.family}',system-ui,sans-serif;font-weight:${m.weight};font-size:${((57 / m.D) * 100 * scale).toFixed(0)}px">arna${typedQ(th, m)}</span>`;
+  const lock = (th, inner) => `<div class="sizes">${tile(th, 84)}${inner}</div>`;
+  const card = (title, note, word, lockWord) => `<section class="card"><div><h2>${title}</h2><p class="note">${note}</p></div>${panels(word)}${panels((th) => lock(th, lockWord(th)))}</section>`;
+
+  document.getElementById("out").innerHTML =
+    Object.values(FONTS).map((m) => card(m.name, `Stroke ${m.ratio} of the letter height. The a has ${m.family === "Comfortaa" ? "the short stem, like your logo" : "a full-height stem"}.`, (th) => typed(th, m), (th) => typed(th, m, .62))).join("") +
+    card("The drawn word (first version)", "Every letter drawn from the monogram's strokes, with the logo's short-stem a. The exact weight, by construction.", (th) => wordmark(th, { aTop: 0.45, height: 78 }), (th) => wordmark(th, { aTop: 0.45, height: 50 }));
+  // If the font did not load in this viewer, say so instead of showing something misleading.
+  Promise.all([document.fonts.load("700 20px Outfit"), document.fonts.load("700 20px Comfortaa")]).then(() => { if (!document.fonts.check("700 20px Outfit") || !document.fonts.check("700 20px Comfortaa")) document.getElementById("warn").innerHTML = '<div class="warn">A font did not load in this viewer, so some typed letters are shown in a fallback font. Open the page in a normal browser, or tell me and I will embed the fonts.</div>'; });
+</script>
+</body>
+</html>

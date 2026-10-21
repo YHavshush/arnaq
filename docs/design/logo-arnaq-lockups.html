@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq lockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; --card: rgba(255, 255, 255, .62); }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1180px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 15px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 68ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.block { display: grid; gap: 10px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.panel { border-radius: 20px; padding: 28px 22px; display: grid; place-items: center; min-height: 150px; overflow: hidden; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.lock { display: flex; align-items: center; gap: 16px; }
+.stack { display: grid; justify-items: center; gap: 10px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+.sans { font: 700 52px/1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; }
+.sans svg { display: inline-block; overflow: visible; }
+.appbar { display: flex; align-items: center; gap: 8px; justify-self: start; }
+.appbar .sans { font-size: 22px; }
+@media (max-width: 420px) { .sans { font-size: 40px; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>arnaq: the monogram at the right size</h1>
+    <p class="lead">Option 1 (a and q side by side) with the modern sans. The monogram is now as tall as the wordmark's letters or bigger, so it no longer gets lost next to the name. Four ways to combine them, then how it looks as a small app header.</p>
+  </div>
+  <div id="out" class="block"></div>
+</main>
+<script>
+  let uid = 0;
+  const TH = { light: ["#33c6ff", "#7f8cff"], dark: ["#2ac9ff", "#7d8bff"] };
+  const rad = (d) => ((d - 90) * Math.PI) / 180;
+  const pt = (cx, cy, r, d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+  const arc = (cx, cy, r, a0, a1) => { const [x0, y0] = pt(cx, cy, r, a0), [x1, y1] = pt(cx, cy, r, a1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  const S = (w) => `stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+  const svg = (th, body, attrs, vb) => { const [a, b] = TH[th], id = "g" + uid++;
+    return `<svg ${attrs} viewBox="${vb}" aria-hidden="true"><defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="8" y1="14" x2="92" y2="86"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs>${body(`url(#${id})`, b)}</svg>`; };
+
+  // Option 1: a and q, side by side with a clear gap. The a has a short stem, the q a long one.
+  const letter = (cx, cy, r, w, g, stem, drop) => `<path d="${arc(cx, cy, r, 0, 359.9)}" stroke="${g}" ${S(w)}/><line x1="${cx + r}" y1="${cy - r * .62}" x2="${cx + r}" y2="${cy + r + drop}" stroke="${stem}" ${S(w)}/>`;
+  const mono = (g, b) => letter(26, 44, 15, 10, g, g, 0) + letter(70, 44, 15, 10, b, b, 22);
+  // Cropped to the letters, so its height can be matched to the wordmark.
+  const bare = (th, h) => svg(th, mono, `height="${h}" width="${(h * 82) / 66}"`, "4 20 82 66");
+  const tile = (th, s) => `<div class="tile" style="width:${s}px;height:${s}px">${svg(th, mono, `width="${Math.round(s * .66)}" height="${Math.round(s * .66)}"`, "0 0 100 100")}</div>`;
+  // The wordmark's q is the ring with a stem, drawn as a glyph.
+  const q = (th) => svg(th, (g, b) => `<path d="${arc(29, 30, 23, 14, 352)}" stroke="${g}" ${S(13)}/><line x1="54" y1="9" x2="54" y2="76" stroke="${b}" ${S(13)}/>`, `height=".7em" width=".54em" style="vertical-align:-.17em"`, "0 0 64 84");
+  const word = (th) => `<span class="sans">arna${q(th)}</span>`;
+
+  const lockups = [
+    ["1. Icon tile + wordmark", "The tile is about twice the height of the letters: the monogram can be read at a glance.", (th) => `<div class="lock">${tile(th, 96)}${word(th)}</div>`],
+    ["2. Bare monogram + wordmark", "No tile. The monogram is as tall as the wordmark, so the two read as one line.", (th) => `<div class="lock">${bare(th, 66)}${word(th)}</div>`],
+    ["3. Stacked", "The monogram above the name. Good for a splash screen or a centred login.", (th) => `<div class="stack">${bare(th, 84)}${word(th)}</div>`],
+    ["4. Wordmark only", "For tight spaces, where the ring-q in the name does the work.", (th) => `<div class="lock">${word(th)}</div>`],
+  ];
+  const panels = (fn) => `<div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${fn(th)}</div>`).join("")}</div>`;
+  document.getElementById("out").innerHTML = lockups.map(([t, why, fn]) => `<div class="block"><div><h2>${t}</h2><p class="note">${why}</p></div>${panels(fn)}</div>`).join("") +
+    `<div class="block"><div><h2>5. As the app's header</h2><p class="note">At 22 px, top left of every page, as it would sit in the app.</p></div>` +
+    panels((th) => `<div class="appbar">${bare(th, 26)}${word(th)}</div>`) + `</div>`;
+</script>
+</body>
+</html>

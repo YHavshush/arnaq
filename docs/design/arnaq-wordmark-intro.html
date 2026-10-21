@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq intro animations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1100px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 70ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.panel { border-radius: 20px; padding: 24px 22px; display: grid; place-items: center; min-height: 190px; overflow: hidden; position: relative; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.label { position: absolute; top: 10px; left: 14px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; opacity: .6; }
+.stage { position: relative; }
+.sans { font: 800 64px/1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; display: inline-flex; align-items: baseline; position: relative; }
+.sans > span, .sans > svg { display: inline-block; }
+.sans svg { overflow: visible; }
+.qring { opacity: 0; }
+.ripple { position: absolute; border-radius: 50%; border: 2px solid; pointer-events: none; }
+.opt { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.opt-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; border-radius: 999px; padding: 3px 9px; margin-left: 8px; background: rgba(36, 59, 115, .12); color: #243b73; vertical-align: 2px; }
+.tag.fav { background: rgba(31, 122, 84, .16); color: #1f7a54; }
+button { font: inherit; font-weight: 600; font-size: 15px; border: 0; border-radius: 999px; min-height: 44px; padding: 0 20px; background: #243b73; color: #fff; cursor: pointer; }
+button.ghost { background: rgba(36, 59, 115, .12); color: #243b73; }
+button:focus-visible, input:focus-visible { outline: 3px solid #7f8cff; outline-offset: 2px; }
+.toolbar { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; }
+.toolbar label { display: inline-flex; gap: 8px; align-items: center; min-height: 44px; font-size: 14px; }
+@media (max-width: 420px) { .sans { font-size: 44px; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Intro animations with the new logo</h1>
+    <p class="lead">Your two favourites, rolling coin and fly out, rebuilt with the overlay logo (the blue a on top of the purple q). Each has a variation, and four more are completely different ideas. About 2 to 2.5 seconds each. With "reduce motion" on in the system, the finished word is shown with no movement.</p>
+    <div class="toolbar" style="margin-top:10px">
+      <strong style="font-size:14px">Logo:</strong>
+      <label><input type="radio" name="v" value="A" checked> Short a stem (like your picture)</label>
+      <label><input type="radio" name="v" value="B"> Full a stem</label>
+      <button id="all" type="button">Replay all</button>
+    </div>
+  </div>
+  <div id="out" class="main"></div>
+</main>
+<script>
+  const TH = { light: { blue: "#33c6ff", purple: "#7f8cff" }, dark: { blue: "#2ac9ff", purple: "#7d8bff" } };
+  const rad = (d) => ((d - 90) * Math.PI) / 180;
+  const pt = (cx, cy, r, d) => [cx + r * Math.cos(rad(d)), cy + r * Math.sin(rad(d))];
+  const arc = (cx, cy, r, a0, a1) => { const [x0, y0] = pt(cx, cy, r, a0), [x1, y1] = pt(cx, cy, r, a1);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${a1 - a0 > 180 ? 1 : 0} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+
+  let M, aTop = 0.45;
+  async function measure() {
+    await document.fonts.load('800 100px Manrope'); await document.fonts.ready;
+    const c = document.createElement("canvas").getContext("2d"); c.font = '800 100px Manrope, sans-serif';
+    const o = c.measureText("o"), l = c.measureText("l");
+    M = { D: o.actualBoundingBoxAscent + o.actualBoundingBoxDescent, ovs: o.actualBoundingBoxDescent, w: 16, desc: 34 };
+  }
+  // The glyph: a purple q (ring + long stem) under a blue a (ring + stem). Rings are arcs with a gap on the
+  // right, where the stem hides it. The purple ring is hidden unless an animation needs it.
+  const glyph = (th) => { const { D, ovs, w, desc } = M, c = TH[th], r = (D - w) / 2, cx = D / 2, cy = D / 2, sx = D - w / 2, top = cy - r, bot = cy + r, tail = D + desc - w / 2, aT = top + aTop * (bot - top);
+    const ringD = arc(cx, cy, r, 120, 420);
+    return `<svg class="g" height="${((D + desc) / 100).toFixed(3)}em" width="${(D / 100).toFixed(3)}em" viewBox="0 0 ${D.toFixed(2)} ${(D + desc).toFixed(2)}"
+        style="position:relative;top:${((desc + ovs) / 100).toFixed(3)}em;margin-left:.015em" aria-hidden="true" data-cx="${cx}" data-cy="${cy}">
+      <g class="gq"><path class="qring" d="${ringD}" stroke="${c.purple}" stroke-width="${w}" stroke-linecap="round" fill="none"/><line class="qstem" x1="${sx}" y1="${top}" x2="${sx}" y2="${tail}" stroke="${c.purple}" stroke-width="${w}" stroke-linecap="round"/></g>
+      <g class="ga"><path class="aring" d="${ringD}" stroke="${c.blue}" stroke-width="${w}" stroke-linecap="round" fill="none"/><line class="astem" x1="${sx}" y1="${aT}" x2="${sx}" y2="${bot}" stroke="${c.blue}" stroke-width="${w}" stroke-linecap="round"/></g></svg>`; };
+  const word = (th) => `<span class="sans">${["a", "r", "n", "a"].map((c) => `<span class="ch">${c}</span>`).join("")}${glyph(th)}</span>`;
+
+  const OPTIONS = [
+    ["Rolling coin", "fav", "your pick", "A blue ring rolls in from the left like a coin, and the letters appear as it passes. It lands at the end, grows its stem, and the purple q tail drops.", "roll"],
+    ["Rolling coin, with a wobble", "", "variation", "The coin rolls a little too far, rolls back, and rocks to a stop, like a real coin landing.", "wobble"],
+    ["Two coins", "", "variation", "Two coins roll in, the blue a first and the purple q a beat behind. They land on top of each other: that is your overlay.", "coins"],
+    ["Fly out", "fav", "your pick", "The glyph draws itself (blue a, then the purple tail). Then the black arna flies out from behind it to the left.", "fly"],
+    ["Fly out, springy", "", "variation", "The same, but the letters spin out with more spring, and the glyph breathes as they leave.", "spring"],
+    ["Two letters meet", "", "new idea", "The blue a and the purple q start side by side, as in your picture, then slide together into one glyph. Then the letters fly out.", "meet"],
+    ["Coin flip", "", "new idea", "The glyph spins like a flipped coin, and the letters unfold from it one by one, like a book opening to the left.", "flip"],
+    ["Ripple", "", "new idea", "Rings spread out from the glyph like a ripple on water, and the letters fade in, nearest first.", "ripple"],
+  ];
+  const panels = (fn) => `<div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${fn(th)}</div>`).join("")}</div>`;
+  function render() {
+    document.getElementById("out").innerHTML = OPTIONS.map(([t, cls, tag, d, key], i) => `<div class="opt" data-key="${key}"><div class="opt-head"><div><h2>${i + 1}. ${t}<span class="tag ${cls}">${tag}</span></h2><p class="note">${d}</p></div><button class="ghost replay" type="button">Replay</button></div>${panels((th) => `<span class="label">${th}</span><div class="stage">${word(th)}</div>`)}</div>`).join("");
+    document.querySelectorAll(".opt").forEach((opt) => opt.querySelector(".replay").addEventListener("click", () => play(opt)));
+  }
+
+  // ---------------- animations (Web Animations API; offsets are measured from the layout) ----------------
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const A = (el, kf, o) => el.animate(kf, { fill: "both", ...o });
+  const drawRing = (ring, delay, dur) => { const L = ring.getTotalLength(); A(ring, [{ strokeDasharray: `${L} ${L}`, strokeDashoffset: L }, { strokeDasharray: `${L} ${L}`, strokeDashoffset: 0 }], { delay, duration: dur, easing: "ease-out" }); };
+  const grow = (el, delay, dur) => { el.style.transformBox = "fill-box"; el.style.transformOrigin = "50% 0%"; A(el, [{ transform: "scaleY(0)", opacity: 0 }, { transform: "scaleY(1)", opacity: 1 }], { delay, duration: dur, easing: "cubic-bezier(.3,.9,.3,1.2)" }); };
+  const pop = (svg, delay, s = 1.12) => A(svg, [{ transform: "scale(1)" }, { transform: `scale(${s})`, offset: .5 }, { transform: "scale(1)" }], { delay, duration: 420, easing: "ease-in-out" });
+  const ease = "cubic-bezier(.3,.8,.3,1)";
+
+  function ctx(stage) {
+    stage.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    stage.querySelectorAll(".ripple").forEach((e) => e.remove());
+    const word = stage.querySelector(".sans"), svg = word.querySelector(".g"), chars = [...word.querySelectorAll(".ch")];
+    const wr = word.getBoundingClientRect(), sr = svg.getBoundingClientRect(), fs = parseFloat(getComputedStyle(word).fontSize);
+    const q = (s) => svg.querySelector(s);
+    return { stage, word, svg, chars, aring: q(".aring"), qring: q(".qring"), astem: q(".astem"), qstem: q(".qstem"), ga: q(".ga"), gq: q(".gq"), wr, sr, lead: sr.left - wr.left, k: fs / 100, D: M.D, cx: svg.dataset.cx, cy: svg.dataset.cy };
+  }
+  // The word starts shifted so the glyph is in the middle, holds, then slides back as the letters arrive.
+  const centre = (c, hold, total) => A(c.word, [{ transform: `translateX(${-c.lead / 2}px)` }, { transform: `translateX(${-c.lead / 2}px)`, offset: hold / total }, { transform: "translateX(0)" }], { duration: total, easing: ease });
+  const draw = (c) => { drawRing(c.aring, 0, 520); grow(c.astem, 380, 300); grow(c.qstem, 760, 300); pop(c.svg, 940); };
+  const order = (c, i) => c.chars.length - 1 - i;   // 0 = the letter next to the glyph
+
+  function flyLetters(c, t0, o = {}) { c.chars.forEach((ch, i) => { const dx = c.sr.left - ch.getBoundingClientRect().left;
+    A(ch, o.kf ? o.kf(dx, i) : [{ transform: `translateX(${dx}px) scale(.4)`, opacity: 0 }, { transform: "translateX(0) scale(1)", opacity: 1 }], { delay: t0 + order(c, i) * (o.step ?? 100), duration: o.dur ?? 720, easing: o.easing ?? "cubic-bezier(.22,.9,.28,1.12)" }); }); }
+
+  // rolling: `rings` are the arcs that roll in; the letters appear as the first one passes
+  function rolling(c, { wobble = false, rings = [c.aring], lag = 0 } = {}) {
+    const T = wobble ? 1000 : 950, t0 = 150, dist = c.lead / c.k + c.D * 0.9;
+    const turns = Math.round(((dist / (c.D / 2)) * 180 / Math.PI) / 360) * 360;
+    rings.forEach((ring, j) => {
+      ring.style.transformOrigin = `${c.cx}px ${c.cy}px`;
+      const d = dist + j * 18, rd = turns;
+      const kf = wobble ? [{ transform: `translateX(${-d}px) rotate(0deg)` }, { transform: `translateX(${c.D * 0.28}px) rotate(${rd + 40}deg)`, offset: .78 }, { transform: `translateX(0) rotate(${rd}deg)` }]
+                        : [{ transform: `translateX(${-d}px) rotate(0deg)` }, { transform: `translateX(0) rotate(${rd}deg)` }];
+      A(ring, kf, { delay: t0 + j * lag, duration: T, easing: wobble ? "cubic-bezier(.4,.1,.3,1)" : "cubic-bezier(.45,.05,.3,1)" });
+    });
+    const start = c.lead - dist * c.k + (c.D / 2) * c.k, end = c.lead + (c.D / 2) * c.k;
+    c.chars.forEach((ch) => { const r = ch.getBoundingClientRect(), mid = r.left - c.wr.left + r.width / 2, f = Math.min(1, Math.max(0, (mid - start) / (end - start)));
+      A(ch, [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "translateY(0)" }], { delay: t0 + T * f * 0.9, duration: 300, easing: "ease-out" }); });
+    const land = t0 + T + (rings.length - 1) * lag;
+    grow(c.astem, land, 260); grow(c.qstem, land + 240, 280); pop(c.svg, land + 480);
+    return land;
+  }
+
+  const ANIM = {
+    roll(c) { rolling(c); },
+    wobble(c) { rolling(c, { wobble: true }); },
+    coins(c) { // the purple ring rolls in a beat behind and ends up hidden under the blue one
+      c.qring.style.opacity = 1; const land = rolling(c, { rings: [c.aring, c.qring], lag: 140 });
+      A(c.qring, [{ opacity: 1 }, { opacity: 1, offset: .99 }, { opacity: 0 }], { delay: 0, duration: land + 700, easing: "linear", composite: "replace" }); },
+    fly(c) { draw(c); centre(c, 1000, 1900); flyLetters(c, 1050); },
+    spring(c) { draw(c); centre(c, 1000, 2000);
+      flyLetters(c, 1000, { step: 75, dur: 900, easing: "cubic-bezier(.2,.9,.3,1)", kf: (dx, i) => [
+        { transform: `translateX(${dx}px) rotate(${-30 + i * 8}deg) scale(.3)`, opacity: 0 },
+        { transform: "translateX(-16px) rotate(7deg) scale(1.1)", opacity: 1, offset: .62 },
+        { transform: "translateX(5px) rotate(-2deg) scale(.98)", offset: .82 },
+        { transform: "translateX(0) rotate(0) scale(1)", opacity: 1 }] });
+      A(c.svg, [{ transform: "scale(1)" }, { transform: "scale(1.22)", offset: .45 }, { transform: "scale(1)" }], { delay: 950, duration: 1000, easing: "ease-in-out" }); },
+    meet(c) { // a and q start apart, as in the monogram, then slide together
+      const sep = c.D * 0.95;
+      c.qring.style.opacity = 1;
+      drawRing(c.aring, 0, 480); grow(c.astem, 300, 260); drawRing(c.qring, 160, 480); grow(c.qstem, 480, 280);
+      A(c.ga, [{ transform: `translateX(${-sep}px)` }, { transform: `translateX(${-sep}px)`, offset: .01 }, { transform: "translateX(0)" }], { duration: 1500, easing: "cubic-bezier(.6,0,.2,1)" });
+      // the two start apart, hold, then slide together
+      c.ga.getAnimations()[0].cancel(); c.ga.style.transformBox = "view-box";
+      A(c.ga, [{ transform: `translateX(${-sep}px)` }, { transform: `translateX(${-sep}px)`, offset: .45 }, { transform: "translateX(0)" }], { duration: 1500, easing: "cubic-bezier(.6,0,.2,1)" });
+      A(c.gq, [{ transform: `translateX(${sep}px)` }, { transform: `translateX(${sep}px)`, offset: .45 }, { transform: "translateX(0)" }], { duration: 1500, easing: "cubic-bezier(.6,0,.2,1)" });
+      A(c.qring, [{ opacity: 1 }, { opacity: 1, offset: .96 }, { opacity: 0 }], { duration: 1600, easing: "linear" });
+      pop(c.svg, 1450, 1.15); centre(c, 1500, 2500); flyLetters(c, 1550); },
+    flip(c) { draw(c); centre(c, 1000, 2100);
+      A(c.svg, [{ transform: "perspective(500px) rotateY(0deg)" }, { transform: "perspective(500px) rotateY(720deg)" }], { delay: 1000, duration: 900, easing: "cubic-bezier(.4,0,.2,1)" });
+      c.chars.forEach((ch, i) => { ch.style.transformOrigin = "right center"; A(ch, [{ transform: "scaleX(0)", opacity: 0 }, { transform: "scaleX(1)", opacity: 1 }], { delay: 1150 + order(c, i) * 90, duration: 520, easing: "cubic-bezier(.2,.9,.3,1.1)" }); }); },
+    ripple(c) { draw(c); centre(c, 1100, 2000);
+      const col = getComputedStyle(c.astem).stroke, st = c.stage.getBoundingClientRect(), gx = c.sr.left + c.sr.width / 2 - c.lead / 2 - st.left, gy = c.sr.top + c.sr.height * 0.4 - st.top;
+      [0, 1, 2].forEach((i) => { const d = document.createElement("span"); d.className = "ripple"; d.style.cssText = `left:${gx - 15}px;top:${gy - 15}px;width:30px;height:30px;border-color:${col}`; c.stage.appendChild(d);
+        A(d, [{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(.3)", opacity: .75, offset: .05 }, { transform: "scale(9)", opacity: 0 }], { delay: 950 + i * 230, duration: 1200, easing: "cubic-bezier(.2,.6,.3,1)" }); });
+      c.chars.forEach((ch, i) => A(ch, [{ opacity: 0, filter: "blur(8px)" }, { opacity: 1, filter: "blur(0)" }], { delay: 1050 + order(c, i) * 110, duration: 700, easing: "ease-out" })); },
+  };
+  function play(opt) { opt.querySelectorAll(".stage").forEach((st) => { const c = ctx(st); if (!reduce) ANIM[opt.dataset.key](c); }); }
+  const playAll = () => document.querySelectorAll(".opt").forEach(play);
+  document.getElementById("all").addEventListener("click", playAll);
+  document.querySelectorAll('input[name="v"]').forEach((r) => r.addEventListener("change", () => { aTop = r.value === "A" ? 0.45 : 0; render(); requestAnimationFrame(playAll); }));
+  measure().then(() => { render(); requestAnimationFrame(playAll); });
+</script>
+</body>
+</html>

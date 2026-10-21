@@ -4,7 +4,7 @@ Newest first. Decisions, research and state of the project that are not obvious 
 
 ## Open decisions and todos
 
-- **TODO: test the brand with other people (added 2026-10-20).** The name is Arnaq. The wordmark shortlist is Comfortaa
+- **TODO: test the brand with other people (added 2026-10-20).** The name is arnaq. The wordmark shortlist is Comfortaa
   thickened (the owner's preference), Outfit bold, Outfit semibold and the drawn word, all with the monogram (separated
   blue a and purple q) as the app icon. The intro animation shortlist is rolling coin, rolling coin with a wobble, "the
   stem joins" and ripple (page: `docs/design/logo-arnaq-kit.html`). Show 5 to 8 people who have not seen it, without
@@ -151,7 +151,7 @@ migration 0004 not applied to Supabase; plan in `docs/plans/smart-categorisation
 - **Next (needs a migration, so the owner's approval):** the savings goal. Decided: one total target, progress = the
   amount saved before the first upload (optional) + deposits - withdrawals from the Savings category; a withdrawal
   reduces progress. Two settings columns on `user_settings`, a Settings form and a Savings card on the Overview.
-- Brand: the name is **Arnaq**. The logo is being designed (docs/design/logo-arnaq-*.html); the intro animation
+- Brand: the name is **arnaq**. The logo is being designed (docs/design/logo-arnaq-*.html); the intro animation
   shortlist is rolling coin, rolling coin with a wobble, "two letters meet" and ripple (not built yet).
 
 ## 2026-10-20: Savings goal and the header icons (branch feat/savings-goal, NOT merged: needs migration 0006)
@@ -290,7 +290,7 @@ allowed for categorising only, or only for chat-like products? What does a user 
   "Try it with sample data" button. Earlier rounds: `onboarding-pasted.html`, `onboarding-variations.html`,
   `feature-names-onboarding.html`.
 - **Open:** a and q colours in the onboarding monogram (flat like the icon, or the gradient); sample-data design (marker
-  and one-step removal, may need a migration); build after the Arnaq rename, en + nl, with tests.
+  and one-step removal, may need a migration); build after the arnaq rename, en + nl, with tests.
 - **Blocked:** migration 0006 was NOT applied to Supabase (the tool call was denied by the permission check), so
   `feat/savings-goal` is not merged. Tests (659), type-check and lint are green on the branch.
 
@@ -301,6 +301,7 @@ allowed for categorising only, or only for chat-like products? What does a user 
 - **Onboarding screen 1:** the a and q fly in and meet (flat blue a, flat purple q).
 - **Loading family** (`docs/design/animation-uses.html`): chase (quick waits), swap (waits with no known length), fill then done
   (reading a statement), shimmer (lists). Done uses a brighter green in light mode.
-- **q gradient in the wordmark:** the first version was mostly blue. The pick (`docs/design/q-gradient.html`, option 2): a touch of
-  blue at the top left of the ring, purple from 40% on, so the q reads purple like the icon's.
+- **q gradient in the wordmark: unchanged** (blue to purple over the whole q). The owner saw four options (`docs/design/q-gradient.html`,
+  including a more purple one) and chose to keep the original.
+- **Spelling: the name is always lowercase, "arnaq", everywhere** (UI text, docs, store listings), like the logo.
 - Open: the owner's wordmark preference vs the fully drawn word (the signature uses the drawn one); a decision to start the build.

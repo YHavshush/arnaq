@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq: the purple q on top</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1100px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 70ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; }
+.card { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 18px 10px; display: grid; place-items: center; gap: 14px; overflow: hidden; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.sans { font: 800 54px/1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; display: inline-flex; align-items: baseline; }
+.sans > span, .sans > svg { display: inline-block; }
+.sans svg { overflow: visible; }
+.sizes { display: flex; align-items: center; gap: 10px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+@media (max-width: 460px) { .sans { font-size: 38px; } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>The purple q on top of the blue a</h1>
+    <p class="lead">The original pair, the blue a and the purple q, now laid over each other with the <b>q on top</b>. Exactly on top the q would hide the a completely, so the a peeks out behind it: to the left (and a little down in one). The rings keep an empty middle, the a has its short stem, the q its long one. Wordmark first, then as an app icon at three sizes.</p>
+  </div>
+  <div id="grid" class="grid"></div>
+</main>
+<script>
+  const TH = { light: { blue: "#33c6ff", purple: "#7f8cff" }, dark: { blue: "#2ac9ff", purple: "#7d8bff" } };
+  let M;
+  async function measure() {
+    await document.fonts.load('800 100px Manrope'); await document.fonts.ready;
+    const c = document.createElement("canvas").getContext("2d"); c.font = '800 100px Manrope, sans-serif';
+    const o = c.measureText("o");
+    M = { D: o.actualBoundingBoxAscent + o.actualBoundingBoxDescent, ovs: o.actualBoundingBoxDescent, w: 16, desc: 34 };
+  }
+  const S = (w) => `stroke-width="${w}" stroke-linecap="round"`;
+  const ring = (cx, cy, r, stroke, w) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${stroke}" ${S(w)}/>`;
+  const line = (x, y1, y2, stroke, w) => `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${stroke}" ${S(w)}/>`;
+
+  // dx, dy: how far the a sits left of, and below, the q (in ring diameters). The q is drawn last, so it is on top.
+  const build = (th, { dx, dy = 0 }) => { const { D, w, desc } = M, c = TH[th], r = (D - w) / 2, ox = dx * D, oy = dy * D;
+    const cxq = ox + D / 2, cyq = D / 2, cxa = D / 2, cya = D / 2 + oy, aStemTop = cya - r + 0.45 * 2 * r;
+    const W = D + ox, H = D + desc + Math.max(0, oy);
+    return { W, H, body:
+      ring(cxa, cya, r, c.blue, w) + line(cxa + r, aStemTop, cya + r, c.blue, w) +                       // the a, behind
+      ring(cxq, cyq, r, c.purple, w) + line(cxq + r, cyq - r, D + desc - w / 2, c.purple, w) };           // the q, in front
+  };
+  const wordSvg = (g) => `<svg height="${(g.H / 100).toFixed(3)}em" width="${(g.W / 100).toFixed(3)}em" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" style="position:relative;top:${((M.desc + M.ovs) / 100).toFixed(3)}em;margin-left:.015em" aria-hidden="true">${g.body}</svg>`;
+  const iconSvg = (g, px) => { const s = Math.min((px * .66) / g.W, (px * .74) / g.H); return `<svg width="${(g.W * s).toFixed(1)}" height="${(g.H * s).toFixed(1)}" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" aria-hidden="true">${g.body}</svg>`; };
+  const tile = (inner, s) => `<div class="tile" style="width:${s}px;height:${s}px">${inner(s)}</div>`;
+
+  const VARIANTS = [
+    { t: "Reference: the original pair, side by side", d: "As in your picture: the blue a, the purple q. This is what gets overlaid.", p: { dx: 1.2 }, word: "arn" },
+    { t: "A. The a peeks out a little", d: "The a is 14% of a ring width to the left. Mostly a q, with a blue echo behind it. The word is arna + this.", p: { dx: 0.14 }, word: "arna" },
+    { t: "B. The a peeks out clearly", d: "The a is about a third of a ring to the left, so its short stem is visible next to the q's long stem. Reads as a, q. The word is arn + this.", p: { dx: 0.3 }, word: "arn" },
+    { t: "C. The a further out", d: "Half a ring to the left: still overlapping, but easier to read as two letters. The word is arn + this.", p: { dx: 0.5 }, word: "arn" },
+    { t: "D. The a peeks out to the lower left", d: "A little to the left and a little lower, like a shadow cast by the q. The word is arna + this.", p: { dx: 0.18, dy: 0.12 }, word: "arna" },
+  ];
+
+  function render() {
+    document.getElementById("grid").innerHTML = VARIANTS.map((v) => {
+      const g = (th) => build(th, v.p);
+      return `<section class="card"><div><h2>${v.t}</h2><p class="note">${v.d}</p></div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}"><span class="sans">${v.word.split("").map((c) => `<span>${c}</span>`).join("")}${wordSvg(g(th))}</span></div>`).join("")}</div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${tile((s) => iconSvg(g(th), s), 96)}<div class="sizes">${tile((s) => iconSvg(g(th), s), 44)}${tile((s) => iconSvg(g(th), s), 22)}</div></div>`).join("")}</div></section>`;
+    }).join("");
+  }
+  measure().then(render);
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq: arn plus the glyph, and the q stem on top</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+/* Colours copied from src/design/tokens.ts. Throwaway design page, no app code. */
+:root { --ink: #17202e; --muted: #4a5568; }
+* { box-sizing: border-box; }
+html { background: #f1e6dd; }
+body { margin: 0; color: var(--ink); min-height: 100vh; font: 16px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  background: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 46%, #f6e8d8 100%) fixed; padding: 28px 16px 64px; }
+main { max-width: 1100px; margin: 0 auto; display: grid; gap: 22px; }
+h1 { font: 500 clamp(28px, 5vw, 40px)/1.1 "Newsreader", Georgia, serif; margin: 0; text-wrap: balance; }
+h2 { margin: 0; font-size: 16px; }
+.lead, .note { color: var(--muted); margin: 8px 0 0; max-width: 70ch; }
+.note { font-size: 14px; margin: 4px 0 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; }
+.card { background: rgba(255, 255, 255, .55); border-radius: 22px; padding: 16px; display: grid; gap: 12px; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.panel { border-radius: 16px; padding: 18px 10px; display: grid; place-items: center; gap: 14px; overflow: hidden; }
+.panel.light { background: linear-gradient(180deg, #d9e5f5, #f1e6dd); color: #17202e; }
+.panel.dark { background: linear-gradient(180deg, #1b2434, #0f141d); color: #eef1f5; }
+.sans { font: 800 54px/1 "Manrope", system-ui, sans-serif; letter-spacing: -.035em; white-space: nowrap; display: inline-flex; align-items: baseline; }
+.sans > span, .sans > svg { display: inline-block; }
+.sans svg { overflow: visible; }
+.sizes { display: flex; align-items: center; gap: 10px; }
+.tile { border-radius: 22%; display: grid; place-items: center; flex: none; }
+.panel.light .tile { background: linear-gradient(160deg, #eef3fb, #f1e6dd); box-shadow: 0 8px 18px rgba(36, 59, 115, .2); }
+.panel.dark .tile { background: linear-gradient(160deg, #1d2738, #0f141d); box-shadow: 0 8px 18px rgba(0, 0, 0, .55); border: 1px solid rgba(255, 255, 255, .08); }
+@media (max-width: 460px) { .sans { font-size: 38px; } .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Two variants of your chosen glyph</h1>
+    <p class="lead">Your chosen overlay (the blue a on top of the purple q). <b>Variant 1</b>: the same glyph, but the word is just "arn" in front of it, because the glyph already holds the a and the q. <b>Variant 2</b>: only the q's stem is on top of the a: the blue a stays whole, the purple stem runs over it, and "arna" stands in front. The version with "arna" in front of variant 1 is at the bottom for comparison.</p>
+  </div>
+  <div id="grid" class="grid"></div>
+</main>
+<script>
+  const TH = { light: { blue: "#33c6ff", purple: "#7f8cff" }, dark: { blue: "#2ac9ff", purple: "#7d8bff" } };
+  let M;
+  async function measure() {
+    await document.fonts.load('800 100px Manrope'); await document.fonts.ready;
+    const c = document.createElement("canvas").getContext("2d"); c.font = '800 100px Manrope, sans-serif';
+    const o = c.measureText("o");
+    M = { D: o.actualBoundingBoxAscent + o.actualBoundingBoxDescent, ovs: o.actualBoundingBoxDescent, w: 16, desc: 34 };
+  }
+  const S = (w) => `stroke-width="${w}" stroke-linecap="round"`;
+  const ring = (cx, cy, r, stroke, w) => `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${stroke}" ${S(w)}/>`;
+  const line = (x, y1, y2, stroke, w) => `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="${stroke}" ${S(w)}/>`;
+
+  // mode "aTop": the blue a on top of the purple q (your chosen A). mode "stemTop": the blue a whole underneath, only the purple stem on top.
+  const build = (th, { mode, aTop = 0.45 }) => { const { D, w, desc } = M, c = TH[th], r = (D - w) / 2, cx = D / 2, cy = D / 2, aStemTop = cy - r + aTop * 2 * r, W = D, H = D + desc;
+    const qStem = line(cx + r, cy - r, D + desc - w / 2, c.purple, w), qRing = ring(cx, cy, r, c.purple, w);
+    const aRing = ring(cx, cy, r, c.blue, w), aStem = line(cx + r, aStemTop, cy + r, c.blue, w);
+    return { W, H, body: mode === "stemTop" ? aRing + aStem + qStem : qRing + qStem + aRing + aStem };
+  };
+  const wordSvg = (g) => `<svg height="${(g.H / 100).toFixed(3)}em" width="${(g.W / 100).toFixed(3)}em" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" style="position:relative;top:${((M.desc + M.ovs) / 100).toFixed(3)}em;margin-left:.015em" aria-hidden="true">${g.body}</svg>`;
+  const iconSvg = (g, px) => { const s = Math.min((px * .66) / g.W, (px * .74) / g.H); return `<svg width="${(g.W * s).toFixed(1)}" height="${(g.H * s).toFixed(1)}" viewBox="0 0 ${g.W.toFixed(2)} ${g.H.toFixed(2)}" aria-hidden="true">${g.body}</svg>`; };
+  const tile = (inner, s) => `<div class="tile" style="width:${s}px;height:${s}px">${inner(s)}</div>`;
+
+  const VARIANTS = [
+    { t: "Variant 1: arn + the glyph", d: "Your chosen glyph, the blue a on top of the purple q, with only arn in front. The glyph supplies the last a and the q, so the word still reads arnaq.", p: { mode: "aTop" }, word: "arn" },
+    { t: "Variant 2: arna + the q stem on top of the a", d: "The a is whole and blue; only the q's stem is on top of it, running the full height and down past the ring. arna in front, and the glyph is the q.", p: { mode: "stemTop" }, word: "arna" },
+    { t: "Variant 2b: arn + the same glyph", d: "Variant 2's glyph with only arn in front, since the glyph already shows an a.", p: { mode: "stemTop" }, word: "arn" },
+    { t: "For comparison: arna + your chosen glyph", d: "What you saw before: arna in front of the blue-a-on-purple-q glyph.", p: { mode: "aTop" }, word: "arna" },
+  ];
+
+  function render() {
+    document.getElementById("grid").innerHTML = VARIANTS.map((v) => {
+      const g = (th) => build(th, v.p);
+      return `<section class="card"><div><h2>${v.t}</h2><p class="note">${v.d}</p></div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}"><span class="sans">${v.word.split("").map((c) => `<span>${c}</span>`).join("")}${wordSvg(g(th))}</span></div>`).join("")}</div>
+        <div class="pair">${["light", "dark"].map((th) => `<div class="panel ${th}">${tile((s) => iconSvg(g(th), s), 96)}<div class="sizes">${tile((s) => iconSvg(g(th), s), 44)}${tile((s) => iconSvg(g(th), s), 22)}</div></div>`).join("")}</div></section>`;
+    }).join("");
+  }
+  measure().then(render);
+</script>
+</body>
+</html>

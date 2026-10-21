@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Arnaq: feature names and onboarding options</title>
+<title>arnaq: feature names and onboarding options</title>
 <style>
 /* Colours copied from src/design/tokens.ts. System fonts only, so it looks the same in any viewer. */
 :root { --ink:#17202e; --muted:#4a5568; --card:rgba(255,255,255,.62); --line:rgba(23,32,46,.12); --blue:#1aa8e6; --purple:#6a76f0; --good:#1f7a4d; --warn:#9a5b00; --bad:#a63a3a; --phone:#fbf7f3; }
@@ -53,7 +53,7 @@ th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(-
 <body>
 <main>
   <header>
-    <h1>Arnaq: names for the features, and how the first minute could feel</h1>
+    <h1>arnaq: names for the features, and how the first minute could feel</h1>
     <p class="lead" style="margin-top:8px">You asked me to take the other AI's version into account, check all the options, and add my own. Below: what I would keep from it, what I would change and why, five naming sets, and three onboarding flows with mock screens. Nothing is built yet. You choose.</p>
   </header>
 
@@ -69,13 +69,13 @@ th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(-
         </ul></div>
       <div class="set"><h3>I would change</h3>
         <ul class="change">
-          <li><b>"AI-driven pulse", "intelligent caps", "autopilot", "effortless"</b> promise things Arnaq does not do. It reads uploaded statements (no bank link), and the sorting learns from your choices, it is not AI. A budgeting app lives on trust, so I would not claim it.</li>
-          <li><b>"Vaults"</b> is Revolut's word for its savings goals, and you use Revolut. People would think Arnaq is a Revolut add-on.</li>
+          <li><b>"AI-driven pulse", "intelligent caps", "autopilot", "effortless"</b> promise things arnaq does not do. It reads uploaded statements (no bank link), and the sorting learns from your choices, it is not AI. A budgeting app lives on trust, so I would not claim it.</li>
+          <li><b>"Vaults"</b> is Revolut's word for its savings goals, and you use Revolut. People would think arnaq is a Revolut add-on.</li>
           <li><b>"Caps"</b> is ambiguous (limit? capital letters? a hat?) and has no natural Dutch word.</li>
           <li><b>"Flow" and "pulse"</b> are used by many apps and say nothing concrete. A new user cannot guess what is behind them.</li>
         </ul></div>
     </div>
-    <p class="note">Claims check: what is actually true in Arnaq today.</p>
+    <p class="note">Claims check: what is actually true in arnaq today.</p>
     <div class="scroll"><table>
       <tr><th>Pasted claim</th><th>What is true</th><th>Honest replacement</th></tr>
       <tr><td>"track effortlessly"</td><td>You upload a statement (Rabobank PDF, Revolut CSV). Sorting learns after you teach it once.</td><td>"add a statement, we sort it, you correct once"</td></tr>
@@ -116,7 +116,7 @@ th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(-
         <p class="note">Only rename what gains from it (Forecast → Ahead). Smallest change.</p></div>
     </div>
     <div class="scroll"><table>
-      <tr><th>Set</th><th>Clear to a new user</th><th>Works in Dutch</th><th>No clash with other apps</th><th>Honest</th><th>Fits the Arnaq voice</th></tr>
+      <tr><th>Set</th><th>Clear to a new user</th><th>Works in Dutch</th><th>No clash with other apps</th><th>Honest</th><th>Fits the arnaq voice</th></tr>
       <tr><td>A. Plain</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="mid">neutral</td></tr>
       <tr><td>B. Pasted</td><td class="no">no</td><td class="no">no</td><td class="no">Revolut</td><td class="mid">suggests AI</td><td class="ok">yes</td></tr>
       <tr><td>C. Lowercase plain</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td><td class="ok">yes</td></tr>
@@ -135,7 +135,7 @@ th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(-
     <h2>3. Onboarding flow 1: the pasted idea, made truthful</h2>
     <p class="note">Three screens, then the app. Closest to what you pasted. Text uses set C. Can be skipped from any screen.</p>
     <div class="flow">
-      <div class="phone"><span class="step">1 of 3</span><div class="body"><span class="big">see where it goes</span><span class="small">Add a bank statement. Arnaq sorts every payment, and learns from your corrections.</span></div><div><div class="cta">next</div></div></div>
+      <div class="phone"><span class="step">1 of 3</span><div class="body"><span class="big">see where it goes</span><span class="small">Add a bank statement. arnaq sorts every payment, and learns from your corrections.</span></div><div><div class="cta">next</div></div></div>
       <div class="phone"><span class="step">2 of 3</span><div class="body"><span class="big">know what is ahead</span><span class="small">Fixed items are found for you, and the forecast shows what stays free to spend.</span></div><div><div class="cta">next</div></div></div>
       <div class="phone"><span class="step">3 of 3</span><div class="body"><span class="big">save on purpose</span><span class="small">Set a goal and watch it fill. Your statements stay yours: export or delete anytime.</span></div><div><div class="cta">get started</div></div></div>
     </div>
@@ -187,7 +187,7 @@ th { font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(-
       <li>Onboarding: <b>flow 2</b> (my pick), flow 1, flow 3, or flow 2 with the three-line copy of flow 1?</li>
       <li>Should I build sample-data mode with it? (my pick: yes)</li>
     </ul>
-    <p class="note">Once you choose I build it on its own branch after the Arnaq rename, with tests and both languages. Until then nothing in the app changes.</p>
+    <p class="note">Once you choose I build it on its own branch after the arnaq rename, with tests and both languages. Until then nothing in the app changes.</p>
   </section>
 </main>
 </body>
