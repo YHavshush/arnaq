@@ -402,6 +402,7 @@ export const ui = {
     },
     of: (a: string, b: string) => `${a} of ${b}`,
     freeToSpend: "free to spend",
+    pace: "pace of the month",
     diningBudget: "dining budget",
     shoppingBudget: "shopping budget",
     goal: "goal · japan trip",

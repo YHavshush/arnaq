@@ -409,6 +409,7 @@ export const ui: typeof en = {
     },
     of: (a: string, b: string) => `${a} van ${b}`,
     freeToSpend: "vrij te besteden",
+    pace: "tempo van de maand",
     diningBudget: "budget uit eten",
     shoppingBudget: "budget winkelen",
     goal: "doel · reis naar japan",

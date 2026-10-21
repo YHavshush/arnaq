@@ -232,3 +232,24 @@
     background: var(--track);
   }
 }
+
+/* The onboarding's ripple and glow: soft logo colours on dark, a stronger violet-blue on the light dawn. */
+.onb {
+  --onb-ripple: color-mix(in oklab, var(--ring-accent-to) 75%, transparent);
+  --onb-glow: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--ring-accent-from) 34%, transparent),
+    color-mix(in oklab, var(--ring-accent-to) 14%, transparent) 45%,
+    transparent 70%
+  );
+}
+:root[data-mode="dark"] .onb,
+:root:not([data-mode]) .onb {
+  --onb-ripple: color-mix(in oklab, var(--ring-accent-from) 50%, transparent);
+  --onb-glow: radial-gradient(
+    circle,
+    color-mix(in oklab, var(--ring-accent-from) 40%, transparent),
+    color-mix(in oklab, var(--ring-accent-to) 20%, transparent) 45%,
+    transparent 70%
+  );
+}

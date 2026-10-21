@@ -7,6 +7,7 @@ import { SAMPLE_WISH_COOKIE, WELCOMED_COOKIE } from "@/lib/welcome";
 import { formatter } from "@/lib/view/format";
 import { LanguageSwitcher } from "./language-switcher";
 import { LETTER_A, LETTER_Q } from "./logo";
+import { Ring } from "./ring";
 
 const EASE = "cubic-bezier(.3,.8,.3,1)";
 const BLUE = { stroke: "var(--ring-accent-from)" } as const;
@@ -57,17 +58,6 @@ const play = (el: Element | null, kf: Keyframe[], o: KeyframeAnimationOptions): 
   if (!el || reducedMotion()) return () => {};
   const a = el.animate(kf, { fill: "both", ...o });
   return () => a.cancel();
-};
-const dash = (el: SVGGeometryElement | null, to: number, delay: number, ms: number): Stop => {
-  if (!el) return () => {};
-  const len = el.getTotalLength();
-  el.style.strokeDasharray = `${len} ${len}`;
-  el.style.strokeDashoffset = String(len * (1 - to));
-  return play(el, [{ strokeDashoffset: len }, { strokeDashoffset: len * (1 - to) }], {
-    delay,
-    duration: ms,
-    easing: "cubic-bezier(.45,.05,.2,1)",
-  });
 };
 const meter = (el: HTMLElement | null, to: number, delay: number, ms: number): Stop => {
   if (!el) return () => {};
@@ -175,24 +165,20 @@ function Hook({ active }: { active: boolean }) {
       ),
     ];
   });
-  const ring: CSSProperties = {
-    borderColor: "color-mix(in oklab, var(--ring-accent-from) 50%, transparent)",
-  };
+  // Visible on both grounds: the soft blue of the logo on dark, a stronger violet-blue on the light dawn.
+  const ring: CSSProperties = { borderColor: "var(--onb-ripple)" };
   return (
     <div ref={root} className="relative grid place-items-center">
       <div
         data-glow
         className="absolute size-[320px] rounded-full"
-        style={{
-          background:
-            "radial-gradient(circle, color-mix(in oklab, var(--ring-accent-from) 40%, transparent), color-mix(in oklab, var(--ring-accent-to) 20%, transparent) 45%, transparent 70%)",
-        }}
+        style={{ background: "var(--onb-glow)" }}
       />
       {[0, 1].map((i) => (
         <div
           key={i}
           data-ripple
-          className="absolute size-[190px] rounded-full border opacity-0"
+          className="absolute size-[190px] rounded-full border-2 opacity-0"
           style={ring}
         />
       ))}
@@ -221,7 +207,17 @@ function Hook({ active }: { active: boolean }) {
   );
 }
 
-/** Screen 2: free to spend in the app's own ring, and two budgets filling. */
+/** Invented spending per day (euros) for the pace graph: the same look as the app's "pace of the month" card. */
+const PACE_DAYS = [105, 8, 0, 44, 0, 0, 12, 0, 0, 6, 75, 0, 15, 0, 0, 0, 81, 0, 12, 0, 0];
+const PACE_LAST = 31;
+const PACE_TODAY = PACE_DAYS.length;
+const PACE_THRESHOLD = 40;
+const PACE_MAX = Math.max(...PACE_DAYS);
+
+/**
+ * Screen 2: free to spend in the app's own ring (the same component as the overview), the pace of the
+ * month as a small bar graph like the app's, and two budgets filling. On a short screen the graph is left out.
+ */
 function Flow({ active }: { active: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const { t, locale } = useI18n();
@@ -231,70 +227,101 @@ function Flow({ active }: { active: boolean }) {
     active,
     root,
     (el) => [
-      dash(q<SVGCircleElement>(el, "[data-ring]"), 0.68, 150, 1500),
       count(q(el, "[data-n]"), 842, 1300, 150, (v) => f.euro(Math.round(v) * 100)),
       play(
         q(el, "[data-ringbox]"),
         [
-          { transform: "scale(.9)", opacity: 0 },
+          { transform: "scale(.88)", opacity: 0 },
           { transform: "scale(1)", opacity: 1 },
         ],
-        { duration: 800, easing: EASE },
+        { duration: 900, easing: EASE },
       ),
+      play(
+        q(el, "[data-pace]"),
+        [
+          { opacity: 0, transform: "translateY(36px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ],
+        { delay: 250, duration: 700, easing: EASE },
+      ),
+      ...[...el.querySelectorAll<HTMLElement>("[data-bar]")].map((bar, i) => {
+        bar.style.transformOrigin = "bottom";
+        return play(bar, [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }], {
+          delay: 500 + i * 28,
+          duration: 450,
+          easing: EASE,
+        });
+      }),
       play(
         q(el, "[data-card]"),
         [
           { opacity: 0, transform: "translateY(40px)" },
           { opacity: 1, transform: "translateY(0)" },
         ],
-        { delay: 350, duration: 700, easing: EASE },
+        { delay: 450, duration: 700, easing: EASE },
       ),
-      meter(q(el, "[data-m1]"), 0.8, 800, 1100),
-      count(q(el, "[data-t1]"), 120, 1100, 800, (v) =>
+      meter(q(el, "[data-m1]"), 0.8, 900, 1100),
+      count(q(el, "[data-t1]"), 120, 1100, 900, (v) =>
         w.of(f.euro(Math.round(v) * 100), f.euro(15000)),
       ),
-      meter(q(el, "[data-m2]"), 0.475, 950, 1100),
-      count(q(el, "[data-t2]"), 95, 1100, 950, (v) =>
+      meter(q(el, "[data-m2]"), 0.475, 1050, 1100),
+      count(q(el, "[data-t2]"), 95, 1100, 1050, (v) =>
         w.of(f.euro(Math.round(v) * 100), f.euro(20000)),
       ),
     ],
     [locale],
   );
+  const month = "2026-10";
   return (
-    <div ref={root} className="grid h-full w-full content-evenly justify-items-center gap-0">
-      <div data-ringbox className="relative grid size-[170px] place-items-center">
-        <svg viewBox="0 0 204 204" className="absolute inset-0" aria-hidden>
-          <circle
-            cx="102"
-            cy="102"
-            r="95"
-            fill="none"
-            strokeWidth="10"
-            style={{ stroke: "var(--track)" }}
+    <div ref={root} className="grid h-full w-full content-evenly justify-items-center gap-3">
+      <div data-ringbox className="[@media(max-height:760px)]:[zoom:.82]">
+        <Ring value={0.72} tone="good" size={196} label={w.freeToSpend}>
+          <div
+            data-n
+            className="num text-[42px] leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
           />
-          <circle
-            data-ring
-            cx="102"
-            cy="102"
-            r="95"
-            fill="none"
-            strokeWidth="10"
-            strokeLinecap="round"
-            transform="rotate(-90 102 102)"
-            stroke="url(#onb-ring)"
-          />
-          <defs>
-            <linearGradient id="onb-ring" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" style={{ stopColor: "var(--ring-accent-from)" }} />
-              <stop offset="1" style={{ stopColor: "var(--ring-accent-to)" }} />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="relative grid place-items-center text-center">
-          <span className="text-ink-muted absolute bottom-full mb-1 text-[11.5px] tracking-[.06em] whitespace-nowrap uppercase">
-            {w.freeToSpend}
-          </span>
-          <span data-n className="num text-[34px] leading-none font-semibold tracking-[-0.035em]" />
+          <div className="text-ink-muted mt-2 text-sm">{w.freeToSpend}</div>
+        </Ring>
+      </div>
+      <div data-pace className="glass w-full px-4 py-3 [@media(max-height:760px)]:hidden">
+        <div className="text-ink-muted text-[11.5px] tracking-[.06em] uppercase">{w.pace}</div>
+        <div aria-hidden className="mt-2 flex h-[56px] items-end gap-[3px]">
+          {Array.from({ length: PACE_LAST }, (_, i) => {
+            const day = i + 1;
+            const future = day > PACE_TODAY;
+            const amount = future ? 0 : PACE_DAYS[i];
+            const high = amount >= PACE_THRESHOLD;
+            const h = future ? 2 : Math.max(3, (amount / PACE_MAX) * 42);
+            return (
+              <div
+                key={day}
+                className="relative flex h-full flex-1 flex-col items-center justify-end"
+              >
+                {high && (
+                  <span
+                    className="num text-ink-muted absolute text-[9px] leading-none"
+                    style={{ bottom: h + 4 }}
+                  >
+                    {amount}
+                  </span>
+                )}
+                <i
+                  data-bar
+                  className="block w-full min-w-[3px] rounded-[3px]"
+                  style={{
+                    height: h,
+                    background: high ? "var(--accent)" : "var(--ink-muted)",
+                    opacity: future ? 0.2 : high ? 1 : 0.5,
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <div aria-hidden className="text-ink-muted num mt-1 flex justify-between text-[11px]">
+          <span>{f.dayLabel(`${month}-01`)}</span>
+          <span>{f.dayLabel(`${month}-15`)}</span>
+          <span>{f.dayLabel(`${month}-${PACE_LAST}`)}</span>
         </div>
       </div>
       <div data-card className="glass grid w-full gap-3 px-4 py-3.5">
@@ -409,10 +436,7 @@ function Goals({ active }: { active: boolean }) {
       <div
         data-vglow
         className="absolute size-[320px] rounded-full opacity-0"
-        style={{
-          background:
-            "radial-gradient(circle, color-mix(in oklab, var(--ring-accent-from) 40%, transparent), color-mix(in oklab, var(--ring-accent-to) 20%, transparent) 45%, transparent 70%)",
-        }}
+        style={{ background: "var(--onb-glow)" }}
       />
       <svg data-dial viewBox="0 0 200 200" className="absolute top-0 size-[200px]" aria-hidden>
         <circle
@@ -526,7 +550,7 @@ export function Onboarding() {
 
   return (
     <div
-      className="relative min-h-dvh overflow-hidden"
+      className="onb relative min-h-dvh overflow-hidden"
       role="region"
       aria-roledescription="carousel"
       aria-label={w.label}
@@ -542,8 +566,13 @@ export function Onboarding() {
           key={i}
           aria-hidden
           className="absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none"
-          style={{ background: bg, opacity: index === i ? 1 : 0 }}
-        />
+          style={{ opacity: index === i ? 1 : 0 }}
+        >
+          {/* Light: the app's own dawn, the same on every screen, so the intro looks like the light app.
+              Dark: a different tint per screen, fading into the navy (the dark app is made the same way). */}
+          <div className="absolute inset-0 dark:hidden" style={{ background: "var(--page-bg)" }} />
+          <div className="absolute inset-0 hidden dark:block" style={{ background: bg }} />
+        </div>
       ))}
       <div className="relative mx-auto flex h-dvh min-h-[640px] max-w-[430px] flex-col overflow-hidden">
         <div className="absolute top-5 right-4 left-6 z-10 flex items-center justify-between">
