@@ -14,7 +14,9 @@ import {
 import { applyTheme, readTheme, subscribeTheme } from "@/design/theme-client";
 import { useI18n } from "@/i18n/client";
 import { SAMPLE_WISH_COOKIE, WELCOMED_COOKIE } from "@/lib/welcome";
+import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
+import { CategoryIcon } from "./category-icon";
 import { LanguageSwitcher } from "./language-switcher";
 import { LETTER_A, LETTER_Q } from "./logo";
 import { Ring } from "./ring";
@@ -295,12 +297,16 @@ function Hook({ active }: { active: boolean }) {
   );
 }
 
-/** Invented spending per day (euros) for the pace graph: the same look as the app's "pace of the month" card. */
-const PACE_DAYS = [105, 8, 0, 44, 0, 0, 12, 0, 0, 6, 75, 0, 15, 0, 0, 0, 81, 0, 12, 0, 0];
-const PACE_LAST = 31;
-const PACE_TODAY = PACE_DAYS.length;
-const PACE_THRESHOLD = 40;
-const PACE_MAX = Math.max(...PACE_DAYS);
+/**
+ * Three of the sample data's budgets (whole euros, adding up to the card's spent amount): two comfortably under their
+ * limit and one close to it, so the card shows both halves of the screen's text: where the money goes and budgets
+ * that keep you on track.
+ */
+const PACE_CATEGORIES = [
+  { name: "Boodschappen", spent: 146, budget: 280, tone: "accent" },
+  { name: "Eten & drinken", spent: 98, budget: 110, tone: "warn" },
+  { name: "Vervoer", spent: 14, budget: 60, tone: "accent" },
+] as const;
 /** The same demo numbers as the overview: spent, the budget for everyday spending, and where an even pace would be today. */
 /** How strongly the dial shows once it has settled (the goal card in front of it is what should stand out). */
 const DIAL_OPACITY = 0.75;
@@ -311,7 +317,7 @@ const PACE_SCHEDULE = 509;
 
 /**
  * Screen 2: free to spend in the app's own ring (the same component as the overview), the pace of the
- * month as a small bar graph like the app's, and two budgets filling. On a short screen the graph is left out.
+ * month as one bar, and three category budgets filling.
  */
 function Flow({ active }: { active: boolean }) {
   const root = useRef<HTMLDivElement>(null);
@@ -342,14 +348,9 @@ function Flow({ active }: { active: boolean }) {
         ],
         { delay: 250, duration: 700, easing: EASE },
       ),
-      ...[...el.querySelectorAll<HTMLElement>("[data-bar]")].map((bar, i) => {
-        bar.style.transformOrigin = "bottom";
-        return play(bar, [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }], {
-          delay: 500 + i * 28,
-          duration: 450,
-          easing: EASE,
-        });
-      }),
+      ...[...el.querySelectorAll<HTMLElement>("[data-cat]")].map((bar, i) =>
+        meter(bar, Number(bar.dataset.cat), 650 + i * 200, 900),
+      ),
     ],
     [locale],
   );
@@ -375,7 +376,6 @@ function Flow({ active }: { active: boolean }) {
       raf = requestAnimationFrame(() => setFill(0));
     };
   }, [active]);
-  const month = "2026-10";
   return (
     <div
       ref={root}
@@ -424,47 +424,34 @@ function Flow({ active }: { active: boolean }) {
             {o.paceSchedule(f.euro(PACE_SCHEDULE * 100))}
           </span>
         </div>
-        <div aria-hidden className="flex h-[56px] items-end gap-[3px]">
-          {Array.from({ length: PACE_LAST }, (_, i) => {
-            const day = i + 1;
-            const future = day > PACE_TODAY;
-            const amount = future ? 0 : PACE_DAYS[i];
-            const high = amount >= PACE_THRESHOLD;
-            const h = future ? 2 : Math.max(3, (amount / PACE_MAX) * 42);
-            return (
-              <div
-                key={day}
-                className="relative flex h-full flex-1 flex-col items-center justify-end"
-              >
-                {high && (
-                  <span
-                    className="num text-ink-muted absolute text-[9px] leading-none"
-                    style={{ bottom: h + 4 }}
-                  >
-                    {amount}
+        <ul className="mt-1 grid gap-3.5">
+          {PACE_CATEGORIES.map((c, i) => (
+            <li
+              key={c.name}
+              // On a short screen the third row would run under the page dots, so it is left out there.
+              className={`flex items-center gap-3 ${i >= 2 ? "[@media(max-height:720px)]:hidden" : ""}`}
+            >
+              <CategoryIcon name={c.name} />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline justify-between gap-2 text-[14px]">
+                  <span className="truncate font-medium">{categoryLabel(c.name, locale)}</span>
+                  <span className="text-ink-muted num shrink-0 text-[12px]">
+                    {f.euro(c.spent * 100)} {o.paceOf(f.euro(c.budget * 100))}
                   </span>
-                )}
-                <i
-                  data-bar
-                  className="block w-full min-w-[3px] rounded-[3px]"
-                  style={{
-                    height: h,
-                    background: high ? "var(--accent)" : "var(--ink-muted)",
-                    opacity: future ? 0.2 : high ? 1 : 0.5,
-                  }}
-                />
+                </div>
+                <div aria-hidden className="bg-track mt-1.5 h-2 overflow-hidden rounded-full">
+                  <i
+                    data-cat={c.spent / c.budget}
+                    className="block h-full w-full origin-left rounded-full"
+                    style={{
+                      background: `linear-gradient(90deg, var(--ring-${c.tone}-from), var(--ring-${c.tone}-to))`,
+                    }}
+                  />
+                </div>
               </div>
-            );
-          })}
-        </div>
-        <div aria-hidden className="text-ink-muted num mt-1 flex justify-between text-[11px]">
-          <span>{f.dayLabel(`${month}-01`)}</span>
-          <span>{f.dayLabel(`${month}-15`)}</span>
-          <span>{f.dayLabel(`${month}-${PACE_LAST}`)}</span>
-        </div>
-        <p className="text-ink-muted mt-1.5 text-[12px]">
-          {o.paceBars(f.euro(PACE_THRESHOLD * 100))}
-        </p>
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );
