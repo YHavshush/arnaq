@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
+import { SAMPLE_WISH_COOKIE } from "@/lib/welcome";
 import { ErrorLine } from "./form";
 
 /** The empty overview's second action: fill the account with sample data to look around. */
@@ -11,13 +12,18 @@ export function LoadSampleButton() {
   const router = useRouter();
   const { t } = useI18n();
   const s = t.ui.sample;
-  const [busy, startTransition] = useTransition();
+  const [pending, startTransition] = useTransition();
+  const [posting, setPosting] = useState(false);
+  const busy = pending || posting; // also during the request itself, so a double tap sends one
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
     setError(null);
+    setPosting(true);
     const res = await api("POST", "/api/sample");
+    setPosting(false);
     if (!res.ok) return setError(res.error);
+    document.cookie = `${SAMPLE_WISH_COOKIE}=; path=/; max-age=0`; // the wish is granted
     startTransition(() => router.refresh());
   }
 

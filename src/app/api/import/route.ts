@@ -47,7 +47,7 @@ export async function POST(request: Request) {
     const summary = await userDb(async (db) => {
       // Real data and sample data must never mix: the first real statement replaces the sample. It is one
       // transaction, so a file that turns out to be unusable leaves the sample in place.
-      await clearSample(db);
+      await clearSample(db, todayIso());
       return importStatement(db, {
         // A PDF goes in as bytes. Text must not hold NUL characters (Postgres cannot store them).
         content: isPdf(bytes) ? bytes : new TextDecoder().decode(bytes).replaceAll("\u0000", ""),

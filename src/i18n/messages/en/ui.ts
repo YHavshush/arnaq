@@ -346,7 +346,7 @@ export const ui = {
       button: "Restore",
       working: "Restoring…",
       done: "The backup is restored.",
-      notBackup: "That is not a arnaq backup file.",
+      notBackup: "That is not an arnaq backup file.",
     },
     erase: {
       title: "Delete my data",

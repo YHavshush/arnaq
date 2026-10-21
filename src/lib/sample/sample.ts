@@ -118,6 +118,20 @@ const SHOP_CATEGORY: Record<string, string> = {
   Etsy: "Kleding & verzorging",
 };
 
+/** Nothing of the person's own yet: no transactions, no fixed items, no budgets. */
+async function isEmpty(db: Db): Promise<boolean> {
+  for (const table of [
+    schema.transactions,
+    schema.recurringItems,
+    schema.budgets,
+    schema.monthlyTotalBudget,
+  ]) {
+    const [{ n }] = await db.select({ n: count() }).from(table);
+    if (n > 0) return false;
+  }
+  return true;
+}
+
 const sampleAccount = async (db: Db) =>
   (await db.select().from(schema.accounts).where(eq(schema.accounts.iban, SAMPLE_IBAN)))[0];
 
@@ -133,8 +147,8 @@ export async function hasSample(db: Db): Promise<boolean> {
 export async function loadSample(db: Db, today: string): Promise<{ transactions: number }> {
   return await db.transaction(async (tx) => {
     if (await sampleAccount(tx)) return { transactions: 0 };
-    const [{ n }] = await tx.select({ n: count() }).from(schema.transactions);
-    if (n > 0) throw new SampleError("Sample data can only be added to an empty account.");
+    if (!(await isEmpty(tx)))
+      throw new SampleError("Sample data can only be added to an empty account.");
 
     const thisMonth = today.slice(0, 7);
     const [account] = await tx
@@ -247,7 +261,7 @@ export async function loadSample(db: Db, today: string): Promise<{ transactions:
  * budget is removed only when it is exactly the sample's (a changed one is theirs now).
  * Returns whether there was any sample data.
  */
-export async function clearSample(db: Db): Promise<boolean> {
+export async function clearSample(db: Db, today: string): Promise<boolean> {
   return await db.transaction(async (tx) => {
     const account = await sampleAccount(tx);
     if (!account) return false;
@@ -261,6 +275,12 @@ export async function clearSample(db: Db): Promise<boolean> {
       .update(schema.transactions)
       .set({ matchedOccurrenceId: null })
       .where(inArray(schema.transactions.id, sampleTx));
+    // The other direction: an occurrence of a fixed item that stays (a person edited it, or added their own
+    // that happens to match a sample shop) may point at a sample transaction. Free it, so it is matched again.
+    await tx
+      .update(schema.recurringOccurrences)
+      .set({ transactionId: null, status: "expected" })
+      .where(inArray(schema.recurringOccurrences.transactionId, sampleTx));
 
     const items = await tx.select().from(schema.recurringItems);
     const ours = items.filter((i) =>
@@ -284,24 +304,38 @@ export async function clearSample(db: Db): Promise<boolean> {
     await tx.delete(schema.imports).where(eq(schema.imports.accountId, account.id));
     await tx.delete(schema.accounts).where(eq(schema.accounts.id, account.id));
 
+    // Budgets: only the sample's months (the same window `loadSample` filled) and only its exact amounts.
+    const thisMonth = today.slice(0, 7);
+    const months = Array.from({ length: MONTHS_BACK + 4 }, (_, i) =>
+      addMonths(thisMonth, i - MONTHS_BACK),
+    );
     const cats = new Map((await tx.select().from(schema.categories)).map((c) => [c.name, c.id]));
     for (const [name, euros] of SAMPLE_BUDGETS) {
       const id = cats.get(name);
       if (id !== undefined)
         await tx
           .delete(schema.budgets)
-          .where(and(eq(schema.budgets.categoryId, id), eq(schema.budgets.amount, euros * 100)));
+          .where(
+            and(
+              eq(schema.budgets.categoryId, id),
+              eq(schema.budgets.amount, euros * 100),
+              inArray(schema.budgets.month, months),
+            ),
+          );
     }
     await tx
       .delete(schema.monthlyTotalBudget)
-      .where(eq(schema.monthlyTotalBudget.amount, SAMPLE_TOTAL_BUDGET));
+      .where(
+        and(
+          eq(schema.monthlyTotalBudget.amount, SAMPLE_TOTAL_BUDGET),
+          inArray(schema.monthlyTotalBudget.month, months),
+        ),
+      );
     return true;
   });
 }
 
-/** Can sample data be offered here? Only for an account with no transactions and no sample yet. */
+/** Can sample data be offered here? Only for an account with nothing of the person's own and no sample yet. */
 export async function canLoadSample(db: Db): Promise<boolean> {
-  if (await sampleAccount(db)) return false;
-  const [{ n }] = await db.select({ n: count() }).from(schema.transactions);
-  return n === 0;
+  return !(await sampleAccount(db)) && (await isEmpty(db));
 }

@@ -17,6 +17,6 @@ export async function POST() {
 /** DELETE: remove the sample data ("use my own"). */
 export async function DELETE() {
   return await handle(async () =>
-    Response.json({ removed: await userDb((db) => clearSample(db)) }),
+    Response.json({ removed: await userDb((db) => clearSample(db, todayIso())) }),
   );
 }

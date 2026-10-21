@@ -87,6 +87,8 @@ function useOnActive(
   active: boolean,
   root: RefObject<HTMLElement | null>,
   run: (el: HTMLElement) => Stop[],
+  /** What the animation writes into the page (the language), so it runs again when that changes. */
+  deps: readonly unknown[] = [],
 ) {
   useEffect(() => {
     const el = root.current;
@@ -102,7 +104,7 @@ function useOnActive(
     };
     // `run` is a closure over props that do not change while a screen is on view.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active]);
+  }, [active, ...deps]);
 }
 
 const q = <T extends Element>(el: HTMLElement, sel: string) => el.querySelector(sel) as T | null;
@@ -221,34 +223,39 @@ function Flow({ active }: { active: boolean }) {
   const { t, locale } = useI18n();
   const w = t.ui.welcome;
   const f = formatter(locale);
-  useOnActive(active, root, (el) => [
-    dash(q<SVGCircleElement>(el, "[data-ring]"), 0.68, 150, 1500),
-    count(q(el, "[data-n]"), 842, 1300, 150, (v) => f.euro(Math.round(v) * 100)),
-    play(
-      q(el, "[data-ringbox]"),
-      [
-        { transform: "scale(.9)", opacity: 0 },
-        { transform: "scale(1)", opacity: 1 },
-      ],
-      { duration: 800, easing: EASE },
-    ),
-    play(
-      q(el, "[data-card]"),
-      [
-        { opacity: 0, transform: "translateY(40px)" },
-        { opacity: 1, transform: "translateY(0)" },
-      ],
-      { delay: 350, duration: 700, easing: EASE },
-    ),
-    meter(q(el, "[data-m1]"), 0.8, 800, 1100),
-    count(q(el, "[data-t1]"), 120, 1100, 800, (v) =>
-      w.of(f.euro(Math.round(v) * 100), f.euro(15000)),
-    ),
-    meter(q(el, "[data-m2]"), 0.475, 950, 1100),
-    count(q(el, "[data-t2]"), 95, 1100, 950, (v) =>
-      w.of(f.euro(Math.round(v) * 100), f.euro(20000)),
-    ),
-  ]);
+  useOnActive(
+    active,
+    root,
+    (el) => [
+      dash(q<SVGCircleElement>(el, "[data-ring]"), 0.68, 150, 1500),
+      count(q(el, "[data-n]"), 842, 1300, 150, (v) => f.euro(Math.round(v) * 100)),
+      play(
+        q(el, "[data-ringbox]"),
+        [
+          { transform: "scale(.9)", opacity: 0 },
+          { transform: "scale(1)", opacity: 1 },
+        ],
+        { duration: 800, easing: EASE },
+      ),
+      play(
+        q(el, "[data-card]"),
+        [
+          { opacity: 0, transform: "translateY(40px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ],
+        { delay: 350, duration: 700, easing: EASE },
+      ),
+      meter(q(el, "[data-m1]"), 0.8, 800, 1100),
+      count(q(el, "[data-t1]"), 120, 1100, 800, (v) =>
+        w.of(f.euro(Math.round(v) * 100), f.euro(15000)),
+      ),
+      meter(q(el, "[data-m2]"), 0.475, 950, 1100),
+      count(q(el, "[data-t2]"), 95, 1100, 950, (v) =>
+        w.of(f.euro(Math.round(v) * 100), f.euro(20000)),
+      ),
+    ],
+    [locale],
+  );
   return (
     <div ref={root} className="grid h-full w-full content-evenly justify-items-center gap-0">
       <div data-ringbox className="relative grid size-[170px] place-items-center">
@@ -325,56 +332,61 @@ function Goals({ active }: { active: boolean }) {
   const { t, locale } = useI18n();
   const w = t.ui.welcome;
   const f = formatter(locale);
-  useOnActive(active, root, (el) => {
-    const reduced = reducedMotion();
-    if (reduced) {
-      const d = q<HTMLElement>(el, "[data-dial]");
-      if (d) d.style.opacity = "0.35";
-      const k = q<HTMLElement>(el, "[data-tick]");
-      if (k) k.style.opacity = "1";
-      const g = q<HTMLElement>(el, "[data-vglow]");
-      if (g) g.style.opacity = "1";
-    }
-    return [
-      play(
-        q(el, "[data-dial]"),
-        [
-          { transform: "rotate(0deg) scale(.85)", opacity: 0 },
-          { transform: "rotate(260deg) scale(1)", opacity: 1, offset: 0.55 },
-          { transform: "rotate(360deg) scale(1)", opacity: 0.35 },
-        ],
-        { duration: 2000, easing: "cubic-bezier(.45,.05,.2,1)" },
-      ),
-      play(
-        q(el, "[data-goal]"),
-        [
-          { opacity: 0, transform: "translateY(60px)" },
-          { opacity: 0, transform: "translateY(60px)", offset: 0.4 },
-          { opacity: 1, transform: "translateY(0)" },
-        ],
-        { duration: 1500, easing: EASE },
-      ),
-      play(
-        q(el, "[data-tick]"),
-        [
-          { opacity: 0, transform: "scale(0)" },
-          { opacity: 0, transform: "scale(0)", offset: 0.85 },
-          { opacity: 1, transform: "scale(1.25)", offset: 0.93 },
-          { opacity: 1, transform: "scale(1)" },
-        ],
-        { delay: 1200, duration: 1500, easing: "ease-out" },
-      ),
-      play(q(el, "[data-vglow]"), [{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }], {
-        delay: 600,
-        duration: 2300,
-      }),
-      meter(q(el, "[data-m]"), 1, 900, 1700),
-      count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
-      count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
-        w.of(f.euro(Math.round(v) * 100), f.euro(180000)),
-      ),
-    ];
-  });
+  useOnActive(
+    active,
+    root,
+    (el) => {
+      const reduced = reducedMotion();
+      if (reduced) {
+        const d = q<HTMLElement>(el, "[data-dial]");
+        if (d) d.style.opacity = "0.35";
+        const k = q<HTMLElement>(el, "[data-tick]");
+        if (k) k.style.opacity = "1";
+        const g = q<HTMLElement>(el, "[data-vglow]");
+        if (g) g.style.opacity = "1";
+      }
+      return [
+        play(
+          q(el, "[data-dial]"),
+          [
+            { transform: "rotate(0deg) scale(.85)", opacity: 0 },
+            { transform: "rotate(260deg) scale(1)", opacity: 1, offset: 0.55 },
+            { transform: "rotate(360deg) scale(1)", opacity: 0.35 },
+          ],
+          { duration: 2000, easing: "cubic-bezier(.45,.05,.2,1)" },
+        ),
+        play(
+          q(el, "[data-goal]"),
+          [
+            { opacity: 0, transform: "translateY(60px)" },
+            { opacity: 0, transform: "translateY(60px)", offset: 0.4 },
+            { opacity: 1, transform: "translateY(0)" },
+          ],
+          { duration: 1500, easing: EASE },
+        ),
+        play(
+          q(el, "[data-tick]"),
+          [
+            { opacity: 0, transform: "scale(0)" },
+            { opacity: 0, transform: "scale(0)", offset: 0.85 },
+            { opacity: 1, transform: "scale(1.25)", offset: 0.93 },
+            { opacity: 1, transform: "scale(1)" },
+          ],
+          { delay: 1200, duration: 1500, easing: "ease-out" },
+        ),
+        play(q(el, "[data-vglow]"), [{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }], {
+          delay: 600,
+          duration: 2300,
+        }),
+        meter(q(el, "[data-m]"), 1, 900, 1700),
+        count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
+        count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
+          w.of(f.euro(Math.round(v) * 100), f.euro(180000)),
+        ),
+      ];
+    },
+    [locale],
+  );
   const ticks = Array.from({ length: 24 }, (_, i) => {
     const a = (i / 24) * Math.PI * 2;
     const r1 = i % 6 === 0 ? 74 : 80;
@@ -516,6 +528,7 @@ export function Onboarding() {
       aria-label={w.label}
       tabIndex={0}
       onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return; // arrows inside the language menu are not for the slides
         if (e.key === "ArrowRight") go(index + 1);
         if (e.key === "ArrowLeft") go(index - 1);
       }}
@@ -533,15 +546,15 @@ export function Onboarding() {
           <span className="num text-ink-muted text-xs tracking-[.08em]">{w.pager(index + 1)}</span>
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            {index < last && (
-              <button
-                type="button"
-                onClick={() => go(last)}
-                className="text-ink-muted min-h-11 px-3 text-sm"
-              >
-                {w.skip}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => go(last)}
+              tabIndex={index < last ? 0 : -1}
+              aria-hidden={index < last ? undefined : true}
+              className={`text-ink-muted min-h-11 px-3 text-sm ${index < last ? "" : "invisible"}`}
+            >
+              {w.skip}
+            </button>
           </div>
         </div>
         <div
@@ -600,7 +613,7 @@ export function Onboarding() {
         </div>
         <div
           className="absolute inset-x-0 bottom-4 z-10 flex justify-center gap-2"
-          role="tablist"
+          role="group"
           aria-label={w.label}
         >
           {screens.map((_, k) => (
