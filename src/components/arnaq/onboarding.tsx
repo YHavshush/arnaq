@@ -136,7 +136,8 @@ function Glow() {
     </>
   );
 }
-function glowStops(el: HTMLElement): Stop[] {
+/** `lag` holds the glow back (ms) so it can follow a visual that appears later instead of lighting an empty spot. */
+function glowStops(el: HTMLElement, lag = 0): Stop[] {
   const main = q(el, "[data-glow]");
   const wide = q(el, "[data-glow2]");
   if (reducedMotion()) {
@@ -151,7 +152,7 @@ function glowStops(el: HTMLElement): Stop[] {
         { opacity: 0, transform: "scale(.7)" },
         { opacity: 1, transform: "scale(1)" },
       ],
-      { delay: 200, duration: 2400, easing: "ease-in-out" },
+      { delay: lag + 200, duration: 2400, easing: "ease-in-out" },
     ),
     play(
       wide,
@@ -159,11 +160,11 @@ function glowStops(el: HTMLElement): Stop[] {
         { opacity: 0, transform: "scale(.7)" },
         { opacity: 1, transform: "scale(1)" },
       ],
-      { delay: 700, duration: 2800, easing: "ease-in-out" },
+      { delay: lag + 700, duration: 2800, easing: "ease-in-out" },
     ),
     // After the rise: a slow breath, and a slow drift of the wide layer, out of step.
     play(main, [{ transform: "scale(1)" }, { transform: "scale(1.09)" }], {
-      delay: 2600,
+      delay: lag + 2600,
       duration: 6000,
       ...loop,
     }),
@@ -173,7 +174,7 @@ function glowStops(el: HTMLElement): Stop[] {
         { transform: "translate(-16px, 10px) scale(1)", opacity: 1 },
         { transform: "translate(16px, -10px) scale(1.1)", opacity: 0.7 },
       ],
-      { delay: 3500, duration: 9000, ...loop },
+      { delay: lag + 3500, duration: 9000, ...loop },
     ),
   ];
 }
@@ -491,8 +492,8 @@ function Goals({ active }: { active: boolean }) {
           ],
           { delay: 1200, duration: 1500, easing: "ease-out" },
         ),
-        // The glow rises slowly with the dial turning, then keeps breathing: no jump at the end of the animation.
-        ...glowStops(el),
+        // The glow starts once the dial is mostly in view and rises slowly, then keeps breathing: no jump at the end of the animation.
+        ...glowStops(el, 900),
         meter(q(el, "[data-m]"), 1, 900, 1700),
         count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
         count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>

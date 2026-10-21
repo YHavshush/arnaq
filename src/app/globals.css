@@ -241,17 +241,17 @@
   --onb-ripple: color-mix(in oklab, var(--ring-accent-to) 75%, transparent);
   --onb-glow: radial-gradient(
     closest-side,
-    rgb(255 255 255 / 0.95),
-    rgb(255 255 255 / 0.75) 25%,
-    rgb(255 255 255 / 0.4) 55%,
-    rgb(255 255 255 / 0.1) 80%,
+    rgb(255 255 255 / 0.5),
+    rgb(255 255 255 / 0.38) 25%,
+    rgb(255 255 255 / 0.18) 55%,
+    rgb(255 255 255 / 0.05) 80%,
     transparent
   );
   --onb-glow-2: radial-gradient(
     closest-side,
-    rgb(255 176 120 / 0.75),
-    rgb(255 176 120 / 0.5) 35%,
-    rgb(255 176 120 / 0.18) 70%,
+    rgb(255 176 120 / 0.24),
+    rgb(255 176 120 / 0.16) 35%,
+    rgb(255 176 120 / 0.06) 70%,
     transparent
   );
 }
