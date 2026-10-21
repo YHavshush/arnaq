@@ -233,23 +233,45 @@
   }
 }
 
-/* The onboarding's ripple and glow: soft logo colours on dark, a stronger violet-blue on the light dawn. */
+/* The onboarding's ripple and glow: soft logo colours on dark, a stronger violet-blue on the light dawn.
+   The glow is two layers with many eased stops and reaches zero exactly at the edge of its box, so it fades out
+   gently instead of stopping at a visible rim. */
 .onb {
   --onb-ripple: color-mix(in oklab, var(--ring-accent-to) 75%, transparent);
-  --onb-glow: radial-gradient(
-    circle,
-    color-mix(in oklab, var(--ring-accent-from) 34%, transparent),
-    color-mix(in oklab, var(--ring-accent-to) 14%, transparent) 45%,
-    transparent 70%
-  );
+  --onb-glow:
+    radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--ring-accent-from) 30%, transparent),
+      color-mix(in oklab, var(--ring-accent-from) 22%, transparent) 25%,
+      color-mix(in oklab, var(--ring-accent-from) 10%, transparent) 55%,
+      color-mix(in oklab, var(--ring-accent-from) 3%, transparent) 80%,
+      transparent
+    ),
+    radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--ring-accent-to) 14%, transparent),
+      color-mix(in oklab, var(--ring-accent-to) 9%, transparent) 40%,
+      color-mix(in oklab, var(--ring-accent-to) 3%, transparent) 75%,
+      transparent
+    );
 }
 :root[data-mode="dark"] .onb,
 :root:not([data-mode]) .onb {
   --onb-ripple: color-mix(in oklab, var(--ring-accent-from) 50%, transparent);
-  --onb-glow: radial-gradient(
-    circle,
-    color-mix(in oklab, var(--ring-accent-from) 40%, transparent),
-    color-mix(in oklab, var(--ring-accent-to) 20%, transparent) 45%,
-    transparent 70%
-  );
+  --onb-glow:
+    radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--ring-accent-from) 38%, transparent),
+      color-mix(in oklab, var(--ring-accent-from) 28%, transparent) 25%,
+      color-mix(in oklab, var(--ring-accent-from) 12%, transparent) 55%,
+      color-mix(in oklab, var(--ring-accent-from) 4%, transparent) 80%,
+      transparent
+    ),
+    radial-gradient(
+      closest-side,
+      color-mix(in oklab, var(--ring-accent-to) 22%, transparent),
+      color-mix(in oklab, var(--ring-accent-to) 14%, transparent) 40%,
+      color-mix(in oklab, var(--ring-accent-to) 5%, transparent) 75%,
+      transparent
+    );
 }

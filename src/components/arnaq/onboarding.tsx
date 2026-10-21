@@ -180,7 +180,7 @@ function Hook({ active }: { active: boolean }) {
     <div ref={root} className="relative grid place-items-center">
       <div
         data-glow
-        className="absolute size-[320px] rounded-full"
+        className="absolute size-[340px] rounded-full"
         style={{ background: "var(--onb-glow)" }}
       />
       {[0, 1].map((i) => (
@@ -447,7 +447,7 @@ function Goals({ active }: { active: boolean }) {
     >
       <div
         data-vglow
-        className="absolute size-[320px] rounded-full opacity-0"
+        className="absolute size-[340px] rounded-full opacity-0"
         style={{ background: "var(--onb-glow)" }}
       />
       <svg data-dial viewBox="0 0 200 200" className="absolute top-0 size-[200px]" aria-hidden>
