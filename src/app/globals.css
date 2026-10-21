@@ -49,6 +49,9 @@
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+  --color-action: var(--action);
+  --color-action-ink: var(--action-ink);
+  --color-select: var(--select);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -73,8 +76,8 @@
   --card-foreground: var(--ink);
   --popover: var(--surface);
   --popover-foreground: var(--ink);
-  --primary: var(--accent);
-  --primary-foreground: var(--accent-ink);
+  --primary: var(--action);
+  --primary-foreground: var(--action-ink);
   --secondary: var(--soft);
   --secondary-foreground: var(--ink);
   --muted: var(--soft);

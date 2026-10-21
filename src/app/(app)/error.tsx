@@ -16,7 +16,7 @@ export default function ErrorScreen({ reset }: { error: Error; reset: () => void
       <button
         type="button"
         onClick={reset}
-        className="bg-accent text-accent-ink mt-1 min-h-11 rounded-full px-5 text-[15px] font-semibold"
+        className="bg-action text-action-ink mt-1 min-h-11 rounded-full px-5 text-[15px] font-semibold"
       >
         {t.ui.states.retry}
       </button>

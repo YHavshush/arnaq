@@ -24,9 +24,9 @@ export function AppearanceSettings() {
   const dot = (on: boolean) => (
     <span
       aria-hidden
-      className={`grid size-5 shrink-0 place-items-center rounded-full border-2 ${on ? "border-accent" : "border-hair"}`}
+      className={`grid size-5 shrink-0 place-items-center rounded-full border-2 ${on ? "border-select" : "border-hair"}`}
     >
-      {on && <span className="bg-accent size-2.5 rounded-full" />}
+      {on && <span className="bg-select size-2.5 rounded-full" />}
     </span>
   );
 

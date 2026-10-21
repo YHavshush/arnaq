@@ -26,7 +26,7 @@ async function ReviewBadge() {
   return (
     <span
       aria-label={t.ui.nav.toSort(count)}
-      className="num bg-accent text-accent-ink absolute top-0 left-[calc(50%+6px)] rounded-full px-1.5 text-[10.5px] leading-4 font-semibold @min-[900px]/app:static @min-[900px]/app:ml-auto"
+      className="num absolute top-0 left-[calc(50%+6px)] rounded-full bg-[var(--badge-bg)] px-1.5 text-[10.5px] leading-4 font-semibold text-[color:var(--badge-ink)] @min-[900px]/app:static @min-[900px]/app:ml-auto"
     >
       {count > 99 ? "99+" : count}
     </span>
@@ -53,7 +53,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
       <ThemeFollower />
       <a
         href="#main"
-        className="bg-accent text-accent-ink sr-only z-40 rounded-full px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        className="bg-action text-action-ink sr-only z-40 rounded-full px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         {t.ui.skipToContent}
       </a>

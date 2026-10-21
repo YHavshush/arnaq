@@ -63,7 +63,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         <div className="flex justify-center pb-2">
           <Link
             href="/fixed-costs"
-            className="bg-accent text-accent-ink inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold"
+            className="bg-action text-action-ink inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold"
           >
             {t.ui.forecast.addIncome}
           </Link>

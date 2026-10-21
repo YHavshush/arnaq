@@ -49,7 +49,7 @@ export function EmptyState({
       {action && (
         <Link
           href={action.href}
-          className="bg-accent text-accent-ink mt-1 inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold"
+          className="bg-action text-action-ink mt-1 inline-flex min-h-11 items-center rounded-full px-5 text-[15px] font-semibold"
         >
           {action.label}
         </Link>

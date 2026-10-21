@@ -78,6 +78,11 @@ export interface ThemeTokens {
   track: string;
   accent: string;
   accentInk: string;
+  /** Fill of primary buttons and the text on it. Own tokens so buttons can differ from the text accent. */
+  action: string;
+  actionInk: string;
+  /** Selected state of radio buttons and toggles (the dot). Needs 3:1 against the card, unlike a button fill. */
+  select: string;
   soft: string;
   good: string;
   warn: string;
@@ -133,6 +138,9 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     track: "rgba(23,32,46,.10)",
     accent: "#243b73",
     accentInk: "#ffffff",
+    action: "#243b73",
+    actionInk: "#ffffff",
+    select: "#243b73",
     soft: "rgba(36,59,115,.08)",
     good: "#17714a",
     warn: "#8f5200",
@@ -168,6 +176,9 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     track: "rgba(255,255,255,.075)",
     accent: "#8fd0ff",
     accentInk: "#06121c",
+    action: "#8fd0ff",
+    actionInk: "#06121c",
+    select: "#8fd0ff",
     soft: "rgba(143,208,255,.10)",
     good: "#5ee0a0",
     warn: "#f2b84b",
@@ -210,6 +221,7 @@ export const textPairs: [fg: keyof ThemeTokens, bg: keyof ThemeTokens][] = [
   ["ink", "surface"],
   ["inkMuted", "canvas"],
   ["inkMuted", "surface"],
+  ["actionInk", "action"],
   ["accent", "surface"],
   ["good", "surface"],
   ["warn", "surface"],

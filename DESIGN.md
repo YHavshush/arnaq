@@ -37,16 +37,18 @@ Set by the inline script in `src/design/theme-script.ts` before first paint (no 
 
 Semantic names, generated per theme. shadcn's variables are derived from them in `src/app/globals.css`, so shadcn components follow the theme automatically.
 
-| Token                                | Use                                                                                                |
-| ------------------------------------ | -------------------------------------------------------------------------------------------------- |
-| `canvas`, `surface`                  | page base and card (translucent glass in practice; the solid `surface` is used for contrast tests) |
-| `ink`, `ink-muted`                   | text; muted is for secondary text and must stay readable on the washed page top                    |
-| `hair`, `track`, `soft`              | borders, ring and bar tracks, quiet fills and selection                                            |
-| `accent`, `accent-ink`               | primary actions and links (light: ink-blue, dark: pale blue)                                       |
-| `good`, `warn`, `bad`                | status **text** colours (AA on surface and canvas)                                                 |
-| `chip-*` and `chip-*-ink`            | category icon tints: sky, mint, peach, rose, lavender, yellow, gray                                |
-| `ring-<tone>-from/to`, `glow-<tone>` | ring gradients and the tint under/behind the hero ring                                             |
-| `page-bg-<mood>`                     | page background: a vertical gradient plus a status wash at the top                                 |
+| Token                                | Use                                                                                                                           |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `canvas`, `surface`                  | page base and card (translucent glass in practice; the solid `surface` is used for contrast tests)                            |
+| `ink`, `ink-muted`                   | text; muted is for secondary text and must stay readable on the washed page top                                               |
+| `hair`, `track`, `soft`              | borders, ring and bar tracks, quiet fills and selection                                                                       |
+| `accent`, `accent-ink`               | links and text accents (light: ink-blue, dark: pale blue)                                                                     |
+| `action`, `action-ink`               | primary buttons (today the same as `accent`; its own token so light and dark buttons can be redesigned apart from text links) |
+| `select`                             | the selected dot of radio buttons and toggles (3:1 against the card)                                                          |
+| `good`, `warn`, `bad`                | status **text** colours (AA on surface and canvas)                                                                            |
+| `chip-*` and `chip-*-ink`            | category icon tints: sky, mint, peach, rose, lavender, yellow, gray                                                           |
+| `ring-<tone>-from/to`, `glow-<tone>` | ring gradients and the tint under/behind the hero ring                                                                        |
+| `page-bg-<mood>`                     | page background: a vertical gradient plus a status wash at the top                                                            |
 
 Contrast results are enforced by tests, not by this table. Two real findings from them: the muted text colours were darkened in light and lightened in dark and Dark + so they stay readable on the strongest part of the wash, and the Dark + `bad` text was lightened (4.26:1 to above 4.5).
 

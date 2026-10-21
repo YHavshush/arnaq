@@ -42,7 +42,7 @@ export function SmartSettings({ provider, entitled, available }: Props) {
   const dot = (on: boolean) => (
     <span
       aria-hidden
-      className={`mt-1 size-3.5 rounded-full border-2 ${on ? "border-accent bg-accent" : "border-ink-muted"}`}
+      className={`mt-1 size-3.5 rounded-full border-2 ${on ? "border-select bg-select" : "border-ink-muted"}`}
     />
   );
 

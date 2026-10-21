@@ -115,7 +115,7 @@ export function ReviewList({
                   type="button"
                   disabled={busy || sending}
                   onClick={() => choose(t, t.suggestedCategoryId!)}
-                  className="bg-accent text-accent-ink inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold"
+                  className="bg-action text-action-ink inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold"
                 >
                   {msg.ui.upload.review.yes}
                 </button>

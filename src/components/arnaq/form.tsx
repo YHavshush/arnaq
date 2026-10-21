@@ -25,7 +25,7 @@ export function PrimaryButton({ children, ...rest }: React.ComponentProps<"butto
   return (
     <button
       {...rest}
-      className="bg-accent text-accent-ink min-h-11 rounded-full px-5 text-[15px] font-semibold disabled:opacity-50"
+      className="bg-action text-action-ink min-h-11 rounded-full px-5 text-[15px] font-semibold disabled:opacity-50"
     >
       {children}
     </button>

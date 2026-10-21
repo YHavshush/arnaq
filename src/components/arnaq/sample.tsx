@@ -72,7 +72,7 @@ export function SampleBanner() {
           type="button"
           disabled={busy}
           onClick={useMine}
-          className="bg-accent text-accent-ink min-h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold disabled:opacity-60"
+          className="bg-action text-action-ink min-h-9 shrink-0 rounded-full px-4 text-[13px] font-semibold disabled:opacity-60"
         >
           {busy ? s.removing : s.useMine}
         </button>

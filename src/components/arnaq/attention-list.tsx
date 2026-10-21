@@ -32,7 +32,7 @@ export function AttentionList({ items }: { items: AttentionItem[] }) {
             href={item.action.href}
             className={
               item.action.primary
-                ? "bg-accent text-accent-ink inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold"
+                ? "bg-action text-action-ink inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold"
                 : "bg-soft text-accent inline-flex min-h-11 items-center rounded-full px-4 text-sm font-semibold"
             }
           >

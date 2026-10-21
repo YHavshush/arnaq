@@ -22,8 +22,8 @@ describe.each(THEMES)("theme %s", (name) => {
     expect(t.page.stops).toHaveLength(t.page.at.length);
   });
 
-  it("button text reaches AA on the accent colour", () => {
-    expect(contrastRatio(t.accentInk, t.accent)).toBeGreaterThanOrEqual(AA);
+  it("button text reaches AA on the action colour", () => {
+    expect(contrastRatio(t.actionInk, t.action)).toBeGreaterThanOrEqual(AA);
   });
 
   it.each(CHIPS)("chip %s: icon colour reaches AA on its tint", (chip) => {
