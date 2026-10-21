@@ -136,7 +136,11 @@ function Glow({ vault = false }: { vault?: boolean }) {
     </>
   );
 }
-function glowStops(el: HTMLElement): Stop[] {
+/**
+ * `fromZero`: the wide layer's slow drift keeps its opacity off the first keyframe, so it does not hold full strength
+ * during its start delay and pop on in one frame before the rise has begun (screen 3 uses it; 1 and 2 are unchanged).
+ */
+function glowStops(el: HTMLElement, fromZero = false): Stop[] {
   const main = q(el, "[data-glow]");
   const wide = q(el, "[data-glow2]");
   if (reducedMotion()) {
@@ -170,7 +174,7 @@ function glowStops(el: HTMLElement): Stop[] {
     play(
       wide,
       [
-        { transform: "translate(-16px, 10px) scale(1)", opacity: 1 },
+        { transform: "translate(-16px, 10px) scale(1)", ...(fromZero ? {} : { opacity: 1 }) },
         { transform: "translate(16px, -10px) scale(1.1)", opacity: 0.7 },
       ],
       { delay: 3500, duration: 9000, ...loop },
@@ -492,7 +496,7 @@ function Goals({ active }: { active: boolean }) {
           { delay: 1200, duration: 1500, easing: "ease-out" },
         ),
         // The glow rises slowly with the dial turning, then keeps breathing: no jump at the end of the animation.
-        ...glowStops(el),
+        ...glowStops(el, true),
         meter(q(el, "[data-m]"), 1, 900, 1700),
         count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
         count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
