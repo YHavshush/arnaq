@@ -268,30 +268,17 @@ function Flow({ active }: { active: boolean }) {
           easing: EASE,
         });
       }),
-      play(
-        q(el, "[data-card]"),
-        [
-          { opacity: 0, transform: "translateY(40px)" },
-          { opacity: 1, transform: "translateY(0)" },
-        ],
-        { delay: 450, duration: 700, easing: EASE },
-      ),
-      meter(q(el, "[data-m1]"), 0.8, 900, 1100),
-      count(q(el, "[data-t1]"), 120, 1100, 900, (v) =>
-        w.of(f.euro(Math.round(v) * 100), f.euro(15000)),
-      ),
-      meter(q(el, "[data-m2]"), 0.475, 1050, 1100),
-      count(q(el, "[data-t2]"), 95, 1100, 1050, (v) =>
-        w.of(f.euro(Math.round(v) * 100), f.euro(20000)),
-      ),
     ],
     [locale],
   );
   const month = "2026-10";
   return (
-    <div ref={root} className="grid h-full w-full content-evenly justify-items-center gap-3 pb-6">
+    <div
+      ref={root}
+      className="grid h-full w-full content-evenly justify-items-center gap-6 px-0 pb-4"
+    >
       <div data-ringbox className="[@media(max-height:760px)]:[zoom:.82]">
-        <Ring value={0.72} tone="good" size={190} label={w.freeToSpend}>
+        <Ring value={0.72} tone="good" size={200} label={w.freeToSpend}>
           <div
             data-n
             className="num text-[42px] leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
@@ -299,7 +286,7 @@ function Flow({ active }: { active: boolean }) {
           <div className="text-ink-muted mt-2 text-sm">{w.freeToSpend}</div>
         </Ring>
       </div>
-      <div data-pace className="glass w-full px-4 py-3.5 [@media(max-height:760px)]:hidden">
+      <div data-pace className="glass w-full px-4 py-3.5">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="num text-[22px] leading-none font-semibold tracking-tight">
             <span data-spent />
@@ -374,35 +361,6 @@ function Flow({ active }: { active: boolean }) {
         <p className="text-ink-muted mt-1.5 text-[12px]">
           {o.paceBars(f.euro(PACE_THRESHOLD * 100))}
         </p>
-      </div>
-      <div data-card className="glass grid w-full gap-3 px-4 py-3.5">
-        {[
-          [
-            "data-m1",
-            "data-t1",
-            w.diningBudget,
-            "bg-[linear-gradient(90deg,var(--ring-warn-from),var(--ring-warn-to))]",
-          ],
-          [
-            "data-m2",
-            "data-t2",
-            w.shoppingBudget,
-            "bg-[linear-gradient(90deg,var(--ring-accent-from),var(--ring-accent-to))]",
-          ],
-        ].map(([m, tt, label, bar]) => (
-          <div key={m} className="grid gap-1.5">
-            <div className="num flex justify-between text-[13px]">
-              <span>{label}</span>
-              <span {...{ [tt]: "" }} className="text-ink-muted" />
-            </div>
-            <div className="bg-track h-2 overflow-hidden rounded-full">
-              <b
-                {...{ [m]: "" }}
-                className={`block h-full w-full origin-left rounded-full ${bar}`}
-              />
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );
@@ -483,7 +441,10 @@ function Goals({ active }: { active: boolean }) {
     };
   });
   return (
-    <div ref={root} className="relative grid h-[290px] w-[min(260px,70vw)] place-items-center">
+    <div
+      ref={root}
+      className="relative grid h-[290px] w-[min(260px,70vw)] -translate-y-7 place-items-center"
+    >
       <div
         data-vglow
         className="absolute size-[320px] rounded-full opacity-0"
@@ -565,7 +526,7 @@ function PreviewThemeToggle() {
     <button
       type="button"
       onClick={() => applyTheme(dark ? "light" : "dark")}
-      className="glass text-ink-muted absolute bottom-3 right-4 z-10 inline-flex min-h-9 items-center gap-1.5 !rounded-full px-3 text-xs"
+      className="glass text-ink-muted absolute top-6 left-1/2 z-10 inline-flex min-h-9 -translate-x-1/2 items-center gap-1.5 !rounded-full px-3 text-xs"
     >
       {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
       {dark ? "light" : "dark"} (test)
