@@ -97,7 +97,7 @@ svg { display:block; overflow:visible; max-width:100%; }
       <g class="c1" stroke="#33c6ff">${G.a}</g><g class="c2" stroke="var(--ink)">${G.a}</g></g></g>
     <g transform="translate(247 0)"><g class="roll lq">
       <g class="c1" stroke="#7f8cff">${G.q}</g><g class="c2" stroke="url(#${id}g)">${G.q}</g></g></g>`;
-  const defsBase = (id) => `<linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>`;
+  const defsBase = (id) => `<linearGradient id="${id}g" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78"><stop offset="0" stop-color="#33c6ff"/><stop offset=".4" stop-color="#7f8cff"/><stop offset="1" stop-color="#7f8cff"/></linearGradient>`;
   const frame = (id, defs, body, extra = "") => `<svg id="${id}" width="min(540px,100%)" viewBox="-6 -6 316 90" role="img" aria-label="arnaq"><defs>${defsBase(id)}${defs}</defs>${body}${extra}</svg>`;
   const prepRoll = (svg) => $$(".roll", svg).forEach((g) => { g.style.transformBox = "fill-box"; g.style.transformOrigin = "20.5px 20.5px"; });
   const fade = (svg, o) => $$(".roll", svg).forEach((g) => { $(".c1", g).style.opacity = 1 - o; $(".c2", g).style.opacity = o; });

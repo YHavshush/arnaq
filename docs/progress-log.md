@@ -293,3 +293,14 @@ allowed for categorising only, or only for chat-like products? What does a user 
   and one-step removal, may need a migration); build after the Arnaq rename, en + nl, with tests.
 - **Blocked:** migration 0006 was NOT applied to Supabase (the tool call was denied by the permission check), so
   `feat/savings-goal` is not merged. Tests (659), type-check and lint are green on the branch.
+
+## 2026-10-21: Animation decisions (design only, not built)
+
+- **App-open and login animation: A, "the turn"** (`docs/design/animation-signature-compare.html`): the icon's a rolls left and the
+  q right, each a full turn, r, n and a are drawn between them. The pen, orbit, split-flap and light wipe were shown and not chosen.
+- **Onboarding screen 1:** the a and q fly in and meet (flat blue a, flat purple q).
+- **Loading family** (`docs/design/animation-uses.html`): chase (quick waits), swap (waits with no known length), fill then done
+  (reading a statement), shimmer (lists). Done uses a brighter green in light mode.
+- **q gradient in the wordmark:** the first version was mostly blue. The pick (`docs/design/q-gradient.html`, option 2): a touch of
+  blue at the top left of the ring, purple from 40% on, so the q reads purple like the icon's.
+- Open: the owner's wordmark preference vs the fully drawn word (the signature uses the drawn one); a decision to start the build.

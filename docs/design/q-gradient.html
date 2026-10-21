@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arnaq q gradient options</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500&display=swap">
+<style>
+:root { --page:#0b0f17; --page2:#141b28; --ink:#eef1f5; --muted:#a8b1bf; --hair:rgba(255,255,255,.10); --glass:rgba(255,255,255,.06); --glassb:rgba(255,255,255,.12);
+  --serif:"Newsreader",Georgia,serif; --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; }
+[data-look="light"] { --page:#d9e5f5; --page2:#f1e6dd; --ink:#17202e; --muted:#4a5568; --hair:rgba(23,32,46,.12); --glass:rgba(255,255,255,.66); --glassb:rgba(255,255,255,.9); }
+* { box-sizing:border-box; }
+html { background:var(--page); }
+body { margin:0; color:var(--ink); min-height:100vh; font:15px/1.45 var(--sans); padding:28px 16px 64px; background:linear-gradient(180deg,var(--page),var(--page2)) fixed; }
+[data-look="light"] body { background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8) fixed; }
+main { max-width:1000px; margin:0 auto; display:grid; gap:22px; }
+h1 { font:500 clamp(26px,5vw,36px)/1.1 var(--serif); margin:0; }
+p { margin:0; } .lead,.note { color:var(--muted); max-width:68ch; } .note { font-size:13px; }
+.seg { display:inline-flex; border:1px solid var(--hair); border-radius:99px; padding:3px; background:var(--glass); width:max-content; }
+.seg button { font:inherit; font-size:13px; color:var(--muted); background:none; border:0; border-radius:99px; padding:6px 14px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--ink); color:var(--page); }
+.grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+@media (max-width:760px) { .grid { grid-template-columns:minmax(0,1fr); } }
+.card { border:1px solid var(--glassb); background:var(--glass); border-radius:20px; padding:16px; display:grid; gap:12px; }
+.card.pick { outline:2px solid #33c6ff; }
+.row { display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
+.tag { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+svg { display:block; overflow:visible; max-width:100%; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px"><h1>Is the gradient on the q purple enough?</h1>
+    <p class="lead">No. In the wordmark the q is blue for the top half and only turns purple at the very end of the stem, while the icon's q is fully purple. Four options, each next to the icon's pair so you can judge the match.</p></header>
+  <span class="seg" role="group" aria-label="Look"><button type="button" data-look-btn="dark" aria-pressed="true">dark</button><button type="button" data-look-btn="light" aria-pressed="false">light</button></span>
+  <div class="grid" id="grid"></div>
+  <p class="note">The a stays ink in the word. Colours are the icon's own blue #33c6ff and purple #7f8cff.</p>
+</main>
+<script>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const set = (l) => { document.documentElement.dataset.look = l; $$("[data-look-btn]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lookBtn === l))); };
+  set("dark"); $$("[data-look-btn]").forEach((b) => b.addEventListener("click", () => set(b.dataset.lookBtn)));
+  const G = { a: `<circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="26.5" x2="49" y2="49"/>`, r: `<path d="M8 8 V49 M8 26 C8 14 16 8 32 8"/>`, n: `<path d="M8 8 V49 M8 26 C8 14 18 8 28.5 8 C39 8 49 14 49 26 V49"/>`, q: `<circle cx="28.5" cy="28.5" r="20.5"/><line x1="49" y1="8" x2="49" y2="70"/>` };
+  const OPTS = [
+    { key: "now", name: "1. Now", note: "Blue to purple over the whole q. Mostly blue.", stops: [[0, "#33c6ff"], [1, "#7f8cff"]] },
+    { key: "mine", name: "2. More purple (my pick)", note: "A touch of blue at the top left of the ring, then purple for most of the q.", stops: [[0, "#33c6ff"], [.4, "#7f8cff"], [1, "#7f8cff"]], pick: true },
+    { key: "soft", name: "3. Softer blue", note: "Starts from a violet-blue, so the whole q reads purple with a glow.", stops: [[0, "#62a8ff"], [.55, "#7f8cff"], [1, "#8a7dff"]] },
+    { key: "flat", name: "4. Flat purple", note: "Exactly the icon's q. No gradient.", stops: [[0, "#7f8cff"], [1, "#7f8cff"]] },
+  ];
+  let n = 0;
+  const word = (o, h) => { const id = "g" + n++; const w = (316 * h) / 90;
+    return `<svg width="${w}" height="${h}" viewBox="-6 -6 316 90" role="img" aria-label="arnaq"><defs><linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="57" y2="78">${o.stops.map(([s, c]) => `<stop offset="${s}" stop-color="${c}"/>`).join("")}</linearGradient></defs>
+      <g fill="none" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"><g stroke="var(--ink)"><g>${G.a}</g><g transform="translate(66 0)">${G.r}</g><g transform="translate(115 0)">${G.n}</g><g transform="translate(181 0)">${G.a}</g></g>
+      <g transform="translate(247 0)" stroke="url(#${id})">${G.q}</g></g></svg>`; };
+  const icon = (h) => { const w = (133 * h) / 90; return `<svg width="${w}" height="${h}" viewBox="-6 -6 133 90" aria-label="icon"><g fill="none" stroke-width="16" stroke-linecap="round"><g stroke="#33c6ff">${G.a}</g><g transform="translate(64 0)" stroke="#7f8cff">${G.q}</g></g></svg>`; };
+  $("#grid").innerHTML = OPTS.map((o) => `<section class="card${o.pick ? " pick" : ""}"><span class="tag">${o.name}</span><div class="row">${word(o, 84)}</div><div class="row">${word(o, 34)}${word(o, 20)}<span style="margin-left:auto">${icon(34)}</span></div><p class="note">${o.note}</p></section>`).join("");
+})();
+</script>
+</body>
+</html>
