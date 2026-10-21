@@ -8,7 +8,7 @@ import { ErrorLine, PrimaryButton } from "./form";
 
 interface Props {
   provider: "off" | "claude" | "chatgpt";
-  /** May this person use Kasboek AI (Kasboek Plus)? */
+  /** May this person use arnaq AI (arnaq plus)? */
   entitled: boolean;
   /** Is a provider built for it yet? */
   available: boolean;
@@ -17,7 +17,7 @@ interface Props {
 const row =
   "grid grid-cols-[1.25rem_minmax(0,1fr)] items-start gap-3 px-4 py-3 text-left disabled:opacity-60";
 
-/** Where smart sorting gets its help from: nothing (default), Kasboek AI after consent, or later the person's ChatGPT plan. */
+/** Where smart sorting gets its help from: nothing (default), arnaq AI after consent, or later the person's ChatGPT plan. */
 export function SmartSettings({ provider, entitled, available }: Props) {
   const router = useRouter();
   const { t } = useI18n();

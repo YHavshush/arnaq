@@ -1,16 +1,16 @@
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
-import { Hero } from "@/components/kasboek/hero";
-import { MoodSetter } from "@/components/kasboek/mood";
-import { PageHeader, Section } from "@/components/kasboek/page-header";
-import { StatusChip } from "@/components/kasboek/status-chip";
-import { Row } from "@/components/kasboek/row";
-import { EmptyState, HeroSkeleton } from "@/components/kasboek/states";
+import { Hero } from "@/components/arnaq/hero";
+import { MoodSetter } from "@/components/arnaq/mood";
+import { PageHeader, Section } from "@/components/arnaq/page-header";
+import { StatusChip } from "@/components/arnaq/status-chip";
+import { Row } from "@/components/arnaq/row";
+import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
 import {
   AddItemForm,
   ItemManager,
   SuggestionList,
-} from "@/components/kasboek/vaste-lasten-actions";
+} from "@/components/arnaq/vaste-lasten-actions";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { formatter } from "@/lib/view/format";

@@ -5,6 +5,7 @@ import { userDb } from "@/lib/auth/request";
 import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { getNeedsReview } from "@/lib/categories/categorise";
+import { Wordmark } from "./logo";
 import { Nav } from "./nav";
 import { ThemeFollower } from "./theme-follower";
 
@@ -51,9 +52,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
         />
         <div className="mx-auto w-full max-w-[760px] px-4 pt-3 pb-36 @min-[900px]/app:max-w-[1040px] @min-[900px]/app:px-8 @min-[900px]/app:pt-6 @min-[900px]/app:pb-14">
           <div className="flex items-center justify-between pb-2">
-            <span className="font-display text-lg font-medium @min-[900px]/app:invisible">
-              {t.ui.brand}
-            </span>
+            <Wordmark title={t.ui.brand} className="h-5 w-auto @min-[900px]/app:invisible" />
             <div className="flex gap-2">
               <Link
                 href="/settings"

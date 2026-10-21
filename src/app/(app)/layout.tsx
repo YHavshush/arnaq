@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { AppShell } from "@/components/kasboek/shell";
+import { AppShell } from "@/components/arnaq/shell";
 import { I18nProvider } from "@/i18n/client";
 import { getLocale } from "@/i18n/server";
 

@@ -21,7 +21,7 @@ const TABLES = {
 } as const;
 
 export interface FullExport {
-  app: "kasboek";
+  app: "arnaq";
   version: number;
   exportedAt: string;
   /** Every table, rows as stored (money in integer cents, dates as text). */
@@ -40,7 +40,7 @@ export async function buildExport(db: Db, now: Date = new Date()): Promise<FullE
       return rest;
     });
   }
-  return { app: "kasboek", version: EXPORT_VERSION, exportedAt: now.toISOString(), tables };
+  return { app: "arnaq", version: EXPORT_VERSION, exportedAt: now.toISOString(), tables };
 }
 
 /**

@@ -28,7 +28,7 @@ const chipClass =
 
 /**
  * Transactions that need a category. The usual ones are one tap away, "Other…" opens the full list.
- * Choosing saves at once; "remember" teaches Kasboek the shop (and, for a transfer between the
+ * Choosing saves at once; "remember" teaches arnaq the shop (and, for a transfer between the
  * person's own accounts, the direction).
  */
 export function ReviewList({

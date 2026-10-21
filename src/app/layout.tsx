@@ -13,12 +13,18 @@ const display = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "Kasboek",
+  title: "arnaq",
   description: "Personal budget overview",
   // A static file, not a metadata route: in development a route made every page reload in a loop.
   manifest: "/manifest.webmanifest",
-  icons: { apple: "/apple-touch-icon.png" },
-  appleWebApp: { capable: true, title: "Kasboek", statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: { capable: true, title: "arnaq", statusBarStyle: "default" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

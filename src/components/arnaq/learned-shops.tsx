@@ -16,7 +16,7 @@ interface Shop {
   direction: "in" | "out" | null;
 }
 
-/** The shops Kasboek has been taught: see them, forget one. */
+/** The shops arnaq has been taught: see them, forget one. */
 export function LearnedShops({ shops }: { shops: Shop[] }) {
   const router = useRouter();
   const { t } = useI18n();

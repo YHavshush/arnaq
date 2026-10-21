@@ -4,14 +4,14 @@ import type { ui as en } from "../en/ui";
 const plain = (text: string) => ({ text });
 
 export const ui: typeof en = {
-  brand: "Kasboek",
+  brand: "arnaq",
   skipToContent: "Naar de inhoud",
   nav: {
     label: "Hoofdmenu",
-    overview: "Overzicht",
-    forecast: "Prognose",
-    fixedCosts: "Vaste posten",
-    upload: "Upload",
+    overview: "vandaag",
+    forecast: "vooruit",
+    fixedCosts: "vast",
+    upload: "toevoegen",
     settings: "Instellingen",
     toSort: (n: number) => `${n} te sorteren`,
   },
@@ -47,7 +47,7 @@ export const ui: typeof en = {
   },
   step: { to: (month: string) => `Naar ${month}` },
   overview: {
-    title: "Overzicht",
+    title: "vandaag",
     emptyTitle: (month: string) => `Nog niets in ${month}`,
     emptyBody:
       "Upload een afschrift van je bank om te zien hoe deze maand ervoor staat. Je kunt daarna een budget instellen.",
@@ -87,7 +87,7 @@ export const ui: typeof en = {
       `Gebaseerd op ${n} ${n === 1 ? "transactie" : "transacties"} deze maand. Overboekingen tussen je eigen rekeningen en regels in een andere munt zijn niet meegeteld. Vaste lasten die nog moeten komen staan al van het vrije bedrag af.`,
   },
   forecast: {
-    title: "Prognose",
+    title: "vooruit",
     subEmpty: "Hoe het er de komende maanden uitziet",
     subRange: (n: number) => `De komende ${n} maanden`,
     emptyTitle: "Nog niets te voorspellen",
@@ -135,7 +135,7 @@ export const ui: typeof en = {
     table: { caption: "Prognose per maand", month: "Maand", total: "Totaal", growth: "Groei" },
   },
   fixed: {
-    title: "Vaste posten",
+    title: "vast",
     ring: (paid: number, total: number) => `${paid} van ${total} vaste lasten betaald`,
     caption: "betaald",
     emptyTitle: "Nog geen vaste posten",
@@ -193,7 +193,7 @@ export const ui: typeof en = {
     },
   },
   upload: {
-    title: "Upload",
+    title: "toevoegen",
     sub: "Een afschrift per bank, per periode",
     ring: (sorted: number, total: number) => `${sorted} van ${total} transacties gesorteerd`,
     done: "Klaar",
@@ -274,7 +274,7 @@ export const ui: typeof en = {
       title: "Automatisch gesorteerd",
       aside: (n: number) => `${n} om te checken`,
       intro:
-        "Kasboek heeft deze gesorteerd. Check ze: een correctie wordt onthouden voor dezelfde winkel.",
+        "arnaq heeft deze gesorteerd. Check ze: een correctie wordt onthouden voor dezelfde winkel.",
       label: "Automatisch",
       undo: "Ongedaan maken",
       undoFor: (name: string) => `Maak de categorie van ${name} ongedaan`,
@@ -302,7 +302,7 @@ export const ui: typeof en = {
     sub: "Je gegevens en je regels",
     backup: "Back-up",
     backupBody:
-      "Bewaar een kopie van alles wat Kasboek van je weet. De back-up is één bestand dat je zelf bewaart; de lijst met transacties past in een spreadsheet.",
+      "Bewaar een kopie van alles wat arnaq van je weet. De back-up is één bestand dat je zelf bewaart; de lijst met transacties past in een spreadsheet.",
     backupFull: "Volledige back-up (JSON)",
     backupCsv: "Transacties (CSV)",
     appearance: "Taal en thema",
@@ -324,14 +324,14 @@ export const ui: typeof en = {
     smart: {
       title: "Slim sorteren",
       intro:
-        "Kasboek sorteert wat het herkent altijd zelf. Slim sorteren kan ook een taalmodel vragen naar winkels die het niet kent. Standaard uit.",
+        "arnaq sorteert wat het herkent altijd zelf. Slim sorteren kan ook een taalmodel vragen naar winkels die het niet kent. Standaard uit.",
       off: "Uit",
-      offHint: "Er verlaat niets Kasboek.",
-      claude: "Kasboek AI",
+      offHint: "Er verlaat niets arnaq.",
+      claude: "arnaq AI",
       claudeHint: "Vraagt Claude (Anthropic) naar onbekende winkels.",
       chatgpt: "Je ChatGPT-abonnement",
       chatgptHint: "Komt later.",
-      needsPlus: "Onderdeel van Kasboek Plus.",
+      needsPlus: "Onderdeel van arnaq plus.",
       notAvailable: "Nog niet beschikbaar.",
       consentTitle: "Voordat je dit aanzet",
       consentSends:
@@ -347,13 +347,13 @@ export const ui: typeof en = {
     },
     restore: {
       title: "Back-up terugzetten",
-      body: "Vervangt alles in Kasboek door de inhoud van een back-upbestand dat je met Volledige back-up hebt gemaakt. Wat je nu hebt wordt eerst verwijderd.",
+      body: "Vervangt alles in arnaq door de inhoud van een back-upbestand dat je met Volledige back-up hebt gemaakt. Wat je nu hebt wordt eerst verwijderd.",
       choose: "Kies het back-upbestand",
       agree: "Ik begrijp dat mijn huidige gegevens worden vervangen",
       button: "Terugzetten",
       working: "Bezig met terugzetten…",
       done: "De back-up is teruggezet.",
-      notBackup: "Dit is geen Kasboek-back-up.",
+      notBackup: "Dit is geen arnaq-back-up.",
     },
     erase: {
       title: "Verwijder mijn gegevens",
@@ -365,7 +365,7 @@ export const ui: typeof en = {
     },
     advanced: "Geavanceerd",
     advancedHint:
-      "Sorteerregels en de winkels die Kasboek heeft geleerd. Je hebt deze zelden nodig.",
+      "Sorteerregels en de winkels die arnaq heeft geleerd. Je hebt deze zelden nodig.",
     learned: {
       title: "Geleerde winkels",
       aside: (n: number) => `${n} winkels`,

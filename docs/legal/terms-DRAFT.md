@@ -1,9 +1,9 @@
-# Terms of use for Kasboek (DRAFT, in English)
+# Terms of use for arnaq (DRAFT, in English)
 
 > **Draft, not legal advice.** Fill in the brackets and have a lawyer read it before the app is offered to
 > others, especially the parts about liability and payment.
 
-1. **What this is.** Kasboek is a tool that helps you keep track of your own money. It is not financial,
+1. **What this is.** arnaq is a tool that helps you keep track of your own money. It is not financial,
    tax or investment advice. Forecasts are estimates from what you uploaded and set up; they can be wrong.
 2. **Your account.** You must be [18 or older]. Keep your password to yourself. You are responsible for what
    happens under your account.
@@ -11,8 +11,8 @@
    may use them. Do not upload other people's statements without their permission.
 4. **Acceptable use.** No attempts to break, overload or scrape the service, no unlawful use, no access to
    other people's data.
-5. **Kasboek AI (optional).** Uses a language model for shop names you switch it on for; its suggestions can
-   be wrong, are marked as automatic, and you can undo them. It is part of [Kasboek Plus], price [..], billing
+5. **arnaq AI (optional).** Uses a language model for shop names you switch it on for; its suggestions can
+   be wrong, are marked as automatic, and you can undo them. It is part of [arnaq plus], price [..], billing
    terms [..].
 6. **Availability.** The service is provided as it is, without a guarantee that it is always available or free of
    errors. Keep your own backup (Settings).

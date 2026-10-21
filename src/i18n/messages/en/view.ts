@@ -95,7 +95,7 @@ export const view = {
     attention: {
       uncategorised: (n: number) =>
         n === 1 ? "1 transaction without a category" : `${n} transactions without a category`,
-      uncategorisedSub: "Sort them and Kasboek remembers your choice",
+      uncategorisedSub: "Sort them and arnaq remembers your choice",
       incomeMissing: (name: string) => `${name} is not in yet`,
       expenseMissing: (name: string) => `${name} has not been paid yet`,
       expectedOn: (date: string) => `Expected on ${date}, not counted`,

@@ -72,12 +72,12 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
   const b = backup as { app?: unknown; version?: unknown; tables?: unknown } | null;
   if (
     !b ||
-    b.app !== "kasboek" ||
+    (b.app !== "arnaq" && b.app !== "kasboek") ||
     typeof b.version !== "number" ||
     b.version < 1 ||
     b.version > EXPORT_VERSION
   )
-    throw new RestoreError("This is not a Kasboek backup, or it is from a newer version.");
+    throw new RestoreError("This is not an arnaq backup, or it is from a newer version.");
   if (typeof b.tables !== "object" || b.tables === null || Array.isArray(b.tables))
     throw new RestoreError("The backup has no tables.");
   const t = b.tables as Record<string, unknown>;

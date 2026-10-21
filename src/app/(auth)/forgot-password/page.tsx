@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ForgotForm } from "@/components/kasboek/auth-forms";
+import { ForgotForm } from "@/components/arnaq/auth-forms";
 import { requestTime } from "@/lib/api";
 import { redirectIfSignedIn } from "@/lib/auth/guards";
 

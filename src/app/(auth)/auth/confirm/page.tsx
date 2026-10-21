@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ConfirmForm, InvalidLink } from "@/components/kasboek/auth-forms";
+import { ConfirmForm, InvalidLink } from "@/components/arnaq/auth-forms";
 import { requestTime } from "@/lib/api";
 import { isOtpType, safeNext } from "@/lib/auth/validate";
 

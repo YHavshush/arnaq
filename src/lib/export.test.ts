@@ -14,7 +14,7 @@ describe("buildExport", () => {
       .values({ accountId: account.id, date: "2026-09-01", amount: -1234, importHash: "h1" });
     const out = await buildExport(db, new Date("2026-10-12T10:00:00Z"));
     expect(out).toMatchObject({
-      app: "kasboek",
+      app: "arnaq",
       version: EXPORT_VERSION,
       exportedAt: "2026-10-12T10:00:00.000Z",
     });

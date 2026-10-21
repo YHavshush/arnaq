@@ -25,5 +25,5 @@ case "$URL" in
   *) SEP="?" ;;
 esac
 
-echo "Kasboek draait op http://localhost:3300 en gebruikt je Supabase-database. Stoppen: Ctrl-C."
+echo "arnaq draait op http://localhost:3300 en gebruikt je Supabase-database. Stoppen: Ctrl-C."
 DATABASE_URL="${URL}${SEP}sslmode=require" npm run dev -- -p 3300

@@ -22,7 +22,7 @@ interface Item {
 type Cat = PickerCategory;
 
 /**
- * What Kasboek categorised by itself, for the person to check. Each row says so ("Automatic"), has
+ * What arnaq categorised by itself, for the person to check. Each row says so ("Automatic"), has
  * the category to change and an Undo; "All correct" approves the lot. A correction is remembered.
  */
 export function AutoList({

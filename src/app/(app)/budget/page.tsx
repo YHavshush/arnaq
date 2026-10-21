@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
-import { BudgetEditor } from "@/components/kasboek/budget-editor";
-import { MoodSetter } from "@/components/kasboek/mood";
-import { PageHeader } from "@/components/kasboek/page-header";
-import { HeroSkeleton } from "@/components/kasboek/states";
+import { BudgetEditor } from "@/components/arnaq/budget-editor";
+import { MoodSetter } from "@/components/arnaq/mood";
+import { PageHeader } from "@/components/arnaq/page-header";
+import { HeroSkeleton } from "@/components/arnaq/states";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { getMonthOverview } from "@/lib/budget/overview";

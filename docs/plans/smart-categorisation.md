@@ -84,7 +84,7 @@ Opaque refs per request (`m1..m25`, `c1..cN`); database ids never leave the serv
 
 ## 4. UI (en and nl catalogs, tokens only)
 
-- Settings: "Smart sorting" with Off (default), "Kasboek AI (Claude)" (disabled with "Part of Kasboek Plus"
+- Settings: "Smart sorting" with Off (default), "arnaq AI (Claude)" (disabled with "Part of arnaq plus"
   when not entitled), "Your ChatGPT plan" (disabled, "Coming later"). Switching Claude on opens a consent
   dialog: what is sent (shop name and description), what is never sent (amounts, dates, account numbers,
   name), the processor (Anthropic, outside the EU), how to switch off. The consent text is versioned.
