@@ -414,9 +414,11 @@ function Goals({ active }: { active: boolean }) {
           ],
           { delay: 1200, duration: 1500, easing: "ease-out" },
         ),
-        play(q(el, "[data-vglow]"), [{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }], {
-          delay: 600,
-          duration: 2300,
+        // The glow rises slowly with the dial turning and then stays: no jump at the end of the animation.
+        play(q(el, "[data-vglow]"), [{ opacity: 0 }, { opacity: 1 }], {
+          delay: 200,
+          duration: 2600,
+          easing: "ease-in-out",
         }),
         meter(q(el, "[data-m]"), 1, 900, 1700),
         count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
