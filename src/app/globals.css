@@ -127,6 +127,9 @@
   }
   html {
     @apply font-sans;
+    /* Touch: no grey flash where a finger lands (iOS), and no waiting for a possible double-tap zoom. */
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
 }
 
@@ -153,6 +156,44 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  /* Tappable frosted cards and buttons dip a little under the finger and spring back. */
+  a.glass,
+  button.glass {
+    transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  a.glass:active,
+  button.glass:active {
+    transform: scale(0.97);
+    transition-duration: 70ms;
+  }
+  /* A bottom sheet slides up from the edge over a backdrop that fades in; on a wide screen it eases in centred. */
+  dialog.sheet[open] {
+    animation: sheet-up 340ms cubic-bezier(0.2, 0.9, 0.25, 1);
+  }
+  dialog.sheet[open]::backdrop {
+    animation: sheet-fade 260ms ease-out;
+  }
+  @keyframes sheet-up {
+    from {
+      transform: translateY(100%);
+    }
+  }
+  @keyframes sheet-fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @media (min-width: 768px) {
+    dialog.sheet[open] {
+      animation: sheet-pop 220ms ease-out;
+    }
+    @keyframes sheet-pop {
+      from {
+        opacity: 0;
+        transform: scale(0.97);
+      }
+    }
+  }
   .fade-in {
     animation: fade-in 280ms ease-out both;
   }

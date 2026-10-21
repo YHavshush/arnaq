@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Search, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { useI18n } from "@/i18n/client";
 import { categoryLabel } from "@/lib/view/categories";
 import { CategoryIcon } from "./category-icon";
@@ -50,11 +50,57 @@ export function CategorySheet(props: SheetProps) {
       onClick={(e) => {
         if (e.target === ref.current) onClose(); // a tap on the dimmed area
       }}
-      className="bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[85dvh] w-full max-w-none overflow-hidden rounded-t-3xl border p-0 shadow-xl md:m-auto md:max-w-md md:rounded-3xl"
+      className="sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[85dvh] w-full max-w-none overflow-hidden rounded-t-3xl border p-0 shadow-xl md:m-auto md:max-w-md md:rounded-3xl"
     >
       {open && <SheetBody {...props} />}
     </dialog>
   );
+}
+
+/**
+ * Swipe the sheet's top (the grab handle and the title) down to close it: the sheet follows the finger, and
+ * either flies off (a long or quick pull) or springs back. Touch and pen only; a mouse has the close button,
+ * Escape and the backdrop. Taps on the close button are left alone.
+ */
+function useSheetDrag(onClose: () => void) {
+  const drag = useRef<{ y: number; t: number; sheet: HTMLElement } | null>(null);
+  const finish = (e: ReactPointerEvent<HTMLElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    const dy = Math.max(0, e.clientY - d.y);
+    const speed = dy / Math.max(1, performance.now() - d.t); // px per ms
+    d.sheet.style.transition = "transform 220ms cubic-bezier(.2,.8,.2,1)";
+    if (e.type !== "pointercancel" && (dy > 110 || speed > 0.6)) {
+      d.sheet.style.transform = "translateY(100%)";
+      window.setTimeout(() => {
+        onClose();
+        d.sheet.style.transform = "";
+        d.sheet.style.transition = "";
+      }, 200);
+    } else {
+      d.sheet.style.transform = "";
+      window.setTimeout(() => {
+        d.sheet.style.transition = "";
+      }, 230);
+    }
+  };
+  return {
+    onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
+      if (e.pointerType === "mouse" || (e.target as HTMLElement).closest("button")) return;
+      const sheet = e.currentTarget.closest("dialog");
+      if (!sheet) return;
+      drag.current = { y: e.clientY, t: performance.now(), sheet };
+      sheet.style.transition = "none";
+      e.currentTarget.setPointerCapture(e.pointerId);
+    },
+    onPointerMove: (e: ReactPointerEvent<HTMLElement>) => {
+      const d = drag.current;
+      if (d) d.sheet.style.transform = `translateY(${Math.max(0, e.clientY - d.y)}px)`;
+    },
+    onPointerUp: finish,
+    onPointerCancel: finish,
+  };
 }
 
 // Mounted fresh on every open, so the search always starts empty.
@@ -69,6 +115,7 @@ function SheetBody({
 }: SheetProps) {
   const { locale, t } = useI18n();
   const m = t.ui.upload.review;
+  const dragHandlers = useSheetDrag(onClose);
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
   const matches = (c: PickerCategory) =>
@@ -115,16 +162,19 @@ function SheetBody({
 
   return (
     <div className="flex max-h-[85dvh] flex-col">
-      <div className="border-hair flex items-center justify-between gap-3 border-b px-4 py-3">
-        <h2 className="min-w-0 truncate text-lg font-semibold">{title}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          aria-label={m.close}
-          className="bg-soft grid size-11 shrink-0 place-items-center rounded-full"
-        >
-          <X aria-hidden className="size-5" />
-        </button>
+      <div {...dragHandlers} className="border-hair touch-none border-b md:touch-auto">
+        <div aria-hidden className="bg-hair mx-auto mt-2 h-1 w-9 rounded-full md:hidden" />
+        <div className="flex items-center justify-between gap-3 px-4 py-3">
+          <h2 className="min-w-0 truncate text-lg font-semibold">{title}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label={m.close}
+            className="bg-soft grid size-11 shrink-0 place-items-center rounded-full"
+          >
+            <X aria-hidden className="size-5" />
+          </button>
+        </div>
       </div>
       <div className="px-4 pt-3 pb-2">
         <label className="bg-soft border-hair flex min-h-11 items-center gap-2 rounded-xl border px-3">

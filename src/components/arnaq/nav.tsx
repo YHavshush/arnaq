@@ -3,7 +3,7 @@
 import { Repeat, TrendingUp, Upload, WalletCards, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/i18n/client";
 import { Wordmark } from "./logo";
 
@@ -21,25 +21,135 @@ const ITEMS: {
 const isActive = (path: string, href: string) =>
   href === "/" ? path === "/" : path.startsWith(href);
 
+/** A little overshoot at the end, so the pill settles into place instead of just stopping. */
+const SPRING = "cubic-bezier(.3,1.35,.5,1)";
+
+const reducedMotion = () =>
+  typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * True while the page is being scrolled down (past the top), false on the way back up and near the top.
+ * The nav uses it to shrink out of the way while someone reads, and to come back as soon as they scroll up.
+ */
+function useCompactOnScroll() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    let last = window.scrollY;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const y = window.scrollY;
+      const dy = y - last;
+      if (y < 48) {
+        setCompact(false);
+        last = y;
+      } else if (dy > 10) {
+        setCompact(true);
+        last = y;
+      } else if (dy < -10) {
+        setCompact(false);
+        last = y;
+      }
+    };
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(update);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+  return compact;
+}
+
 /** Sidebar on a wide app, floating pill on a narrow one. `badge` goes on Upload (open items). */
 export function Nav({ badge }: { badge?: ReactNode }) {
   const path = usePathname();
   const { t } = useI18n();
+  const compact = useCompactOnScroll();
+  const navRef = useRef<HTMLElement>(null);
+
+  // The pill moves the moment a tab is tapped, not when the next page has loaded. `from` ties the tap to the page it
+  // was made on, so it stops counting by itself as soon as the route has changed (or if the navigation never happens).
+  const [tap, setTap] = useState<{ href: string; from: string } | null>(null);
+  useEffect(() => {
+    if (!tap) return;
+    const id = setTimeout(() => setTap(null), 5000);
+    return () => clearTimeout(id);
+  }, [tap]);
+  const current = ITEMS.find((i) => isActive(path, i.href))?.href ?? null;
+  const shown = tap && tap.from === path ? tap.href : current;
+  const index = ITEMS.findIndex((i) => i.href === shown);
+
+  // Animations beyond the slide: the pill stretches a little on its way, the new tab's icon hops. The slide's own
+  // transition is switched on after the first paint, so the pill is simply there on load instead of sliding in.
+  const before = useRef(shown);
+  useEffect(() => {
+    const pill = navRef.current?.querySelector<HTMLElement>("[data-pill]");
+    if (pill && !reducedMotion())
+      pill.style.transition = `transform 460ms ${SPRING}, opacity 200ms`;
+  }, []);
+  useEffect(() => {
+    if (before.current === shown) return;
+    before.current = shown;
+    const nav = navRef.current;
+    if (!nav || reducedMotion()) return;
+    nav
+      .querySelector("[data-pill-body]")
+      ?.animate(
+        [
+          { transform: "scaleX(1)" },
+          { transform: "scaleX(1.24)", offset: 0.4 },
+          { transform: "scaleX(1)" },
+        ],
+        { duration: 460, easing: "ease-in-out" },
+      );
+    nav
+      .querySelector(`[data-icon="${shown}"]`)
+      ?.animate(
+        [
+          { transform: "translateY(0) scale(1)" },
+          { transform: "translateY(-3px) scale(1.16)", offset: 0.4 },
+          { transform: "translateY(0) scale(1)" },
+        ],
+        { duration: 440, easing: SPRING },
+      );
+  }, [shown]);
+
   return (
     <>
       <nav
+        ref={navRef}
+        data-compact={compact}
         aria-label={t.ui.nav.label}
-        className="glass-nav fixed bottom-[calc(12px+env(safe-area-inset-bottom,0px))] left-1/2 z-20 grid w-[min(440px,calc(100%-24px))] -translate-x-1/2 grid-cols-4 rounded-full p-1.5 @min-[900px]/app:hidden"
+        className="glass-nav group/nav fixed bottom-[calc(12px+env(safe-area-inset-bottom,0px))] left-1/2 z-20 grid w-[min(440px,calc(100%-24px))] -translate-x-1/2 grid-cols-4 rounded-full p-1.5 transition-[width] duration-300 ease-out data-[compact=true]:w-[min(320px,calc(100%-24px))] motion-reduce:transition-none @min-[900px]/app:hidden"
       >
+        <span
+          aria-hidden
+          data-pill
+          className="pointer-events-none absolute top-1.5 bottom-1.5 left-1.5 w-[calc((100%-12px)/4)]"
+          style={{
+            transform: `translateX(${Math.max(index, 0) * 100}%)`,
+            opacity: index < 0 ? 0 : 1,
+          }}
+        >
+          <span data-pill-body className="bg-accent block h-full rounded-full shadow-sm" />
+        </span>
         {ITEMS.map(({ href, key, icon: Icon }) => (
           <Link
             key={href}
             href={href}
             aria-current={isActive(path, href) ? "page" : undefined}
-            className="text-ink-muted aria-[current=page]:bg-accent aria-[current=page]:text-accent-ink relative grid min-h-12 justify-items-center gap-0.5 rounded-full px-1 py-1.5 text-[11.5px] font-semibold"
+            onClick={() => setTap({ href, from: path })}
+            className={`relative z-10 grid min-h-12 justify-items-center gap-0.5 rounded-full px-1 py-1.5 text-[11.5px] font-semibold transition-[transform,color,min-height] duration-200 group-data-[compact=true]/nav:min-h-10 active:scale-[.92] motion-reduce:transition-none ${
+              shown === href ? "text-accent-ink" : "text-ink-muted"
+            }`}
           >
-            <Icon className="size-5" />
-            {t.ui.nav[key]}
+            <Icon data-icon={href} className="size-5" />
+            <span className="max-h-4 overflow-hidden leading-4 transition-[max-height,opacity] duration-200 group-data-[compact=true]/nav:max-h-0 group-data-[compact=true]/nav:opacity-0 motion-reduce:transition-none">
+              {t.ui.nav[key]}
+            </span>
             {href === "/upload" && badge}
           </Link>
         ))}
