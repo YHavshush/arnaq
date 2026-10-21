@@ -8,6 +8,7 @@ import { getNeedsReview } from "@/lib/categories/categorise";
 import { hasSample } from "@/lib/sample/sample";
 import { Wordmark } from "./logo";
 import { Nav } from "./nav";
+import { PageMotion } from "./page-motion";
 import { SampleBanner } from "./sample";
 import { ThemeFollower } from "./theme-follower";
 
@@ -80,7 +81,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <SampleNotice />
           </Suspense>
-          <main id="main">{children}</main>
+          <main id="main">
+            <PageMotion>{children}</PageMotion>
+          </main>
         </div>
       </div>
     </div>

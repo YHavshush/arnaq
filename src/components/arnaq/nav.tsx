@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/i18n/client";
 import { Wordmark } from "./logo";
+import { TAB_EVENT, isTabActive } from "./tabs";
 
 const ITEMS: {
   href: string;
@@ -18,8 +19,7 @@ const ITEMS: {
   { href: "/upload", key: "upload", icon: Upload },
 ];
 
-const isActive = (path: string, href: string) =>
-  href === "/" ? path === "/" : path.startsWith(href);
+const isActive = isTabActive;
 
 /** A little overshoot at the end, so the pill settles into place instead of just stopping. */
 const SPRING = "cubic-bezier(.3,1.35,.5,1)";
@@ -69,10 +69,17 @@ export function Nav({ badge }: { badge?: ReactNode }) {
   const { t } = useI18n();
   const compact = useCompactOnScroll();
   const navRef = useRef<HTMLElement>(null);
+  // While a finger is down on the bar the selected bubble swells, like a lens, and settles when it lifts.
+  const [pressed, setPressed] = useState(false);
 
   // The pill moves the moment a tab is tapped, not when the next page has loaded. `from` ties the tap to the page it
   // was made on, so it stops counting by itself as soon as the route has changed (or if the navigation never happens).
   const [tap, setTap] = useState<{ href: string; from: string } | null>(null);
+  useEffect(() => {
+    const onSwipe = (e: Event) => setTap({ href: (e as CustomEvent<string>).detail, from: path });
+    window.addEventListener(TAB_EVENT, onSwipe);
+    return () => window.removeEventListener(TAB_EVENT, onSwipe);
+  }, [path]);
   useEffect(() => {
     if (!tap) return;
     const id = setTimeout(() => setTap(null), 5000);
@@ -122,8 +129,13 @@ export function Nav({ badge }: { badge?: ReactNode }) {
       <nav
         ref={navRef}
         data-compact={compact}
+        data-pressed={pressed}
+        onPointerDown={() => setPressed(true)}
+        onPointerUp={() => setPressed(false)}
+        onPointerCancel={() => setPressed(false)}
+        onPointerLeave={() => setPressed(false)}
         aria-label={t.ui.nav.label}
-        className="glass-nav group/nav fixed bottom-[calc(12px+env(safe-area-inset-bottom,0px))] left-1/2 z-20 grid w-[min(440px,calc(100%-24px))] -translate-x-1/2 grid-cols-4 rounded-full p-1.5 transition-[width] duration-300 ease-out data-[compact=true]:w-[min(320px,calc(100%-24px))] motion-reduce:transition-none @min-[900px]/app:hidden"
+        className="liquid group/nav fixed bottom-[calc(12px+env(safe-area-inset-bottom,0px))] left-1/2 z-20 grid w-[min(440px,calc(100%-24px))] -translate-x-1/2 grid-cols-4 rounded-full p-1.5 transition-[width] duration-300 ease-out data-[compact=true]:w-[min(320px,calc(100%-24px))] motion-reduce:transition-none @min-[900px]/app:hidden"
       >
         <span
           aria-hidden
@@ -134,7 +146,12 @@ export function Nav({ badge }: { badge?: ReactNode }) {
             opacity: index < 0 ? 0 : 1,
           }}
         >
-          <span data-pill-body className="bg-accent block h-full rounded-full shadow-sm" />
+          <span data-pill-lens className="block h-full">
+            <span
+              data-pill-body
+              className="bg-accent block h-full rounded-full bg-[linear-gradient(180deg,rgb(255_255_255/.24),transparent_55%)] shadow-[inset_0_1px_1px_rgb(255_255_255/.5),inset_0_-2px_5px_rgb(0_0_0/.14),0_8px_16px_-8px_var(--accent)]"
+            />
+          </span>
         </span>
         {ITEMS.map(({ href, key, icon: Icon }) => (
           <Link
