@@ -136,8 +136,7 @@ function Glow({ vault = false }: { vault?: boolean }) {
     </>
   );
 }
-/** `lag` holds the glow back (ms) so it can follow a visual that appears later instead of lighting an empty spot. */
-function glowStops(el: HTMLElement, lag = 0): Stop[] {
+function glowStops(el: HTMLElement): Stop[] {
   const main = q(el, "[data-glow]");
   const wide = q(el, "[data-glow2]");
   if (reducedMotion()) {
@@ -152,7 +151,7 @@ function glowStops(el: HTMLElement, lag = 0): Stop[] {
         { opacity: 0, transform: "scale(.7)" },
         { opacity: 1, transform: "scale(1)" },
       ],
-      { delay: lag + 200, duration: 2400, easing: "ease-in-out" },
+      { delay: 200, duration: 2400, easing: "ease-in-out" },
     ),
     play(
       wide,
@@ -160,23 +159,21 @@ function glowStops(el: HTMLElement, lag = 0): Stop[] {
         { opacity: 0, transform: "scale(.7)" },
         { opacity: 1, transform: "scale(1)" },
       ],
-      { delay: lag + 700, duration: 2800, easing: "ease-in-out" },
+      { delay: 700, duration: 2800, easing: "ease-in-out" },
     ),
     // After the rise: a slow breath, and a slow drift of the wide layer, out of step.
     play(main, [{ transform: "scale(1)" }, { transform: "scale(1.09)" }], {
-      delay: lag + 2600,
+      delay: 2600,
       duration: 6000,
       ...loop,
     }),
     play(
       wide,
       [
-        // No opacity on the first keyframe: held during the delay it would show the layer at full strength
-        // before the rise (which sets opacity) has even started.
-        { transform: "translate(-16px, 10px) scale(1)" },
+        { transform: "translate(-16px, 10px) scale(1)", opacity: 1 },
         { transform: "translate(16px, -10px) scale(1.1)", opacity: 0.7 },
       ],
-      { delay: lag + 3500, duration: 9000, ...loop },
+      { delay: 3500, duration: 9000, ...loop },
     ),
   ];
 }
@@ -494,8 +491,8 @@ function Goals({ active }: { active: boolean }) {
           ],
           { delay: 1200, duration: 1500, easing: "ease-out" },
         ),
-        // The glow starts once the dial is mostly in view and rises slowly, then keeps breathing: no jump at the end of the animation.
-        ...glowStops(el, 900),
+        // The glow rises slowly with the dial turning, then keeps breathing: no jump at the end of the animation.
+        ...glowStops(el),
         meter(q(el, "[data-m]"), 1, 900, 1700),
         count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
         count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
