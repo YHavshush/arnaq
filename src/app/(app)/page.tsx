@@ -6,6 +6,7 @@ import { Hero } from "@/components/arnaq/hero";
 import { IncomeList } from "@/components/arnaq/income-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PaceCard } from "@/components/arnaq/pace-card";
+import { LoadSampleButton } from "@/components/arnaq/sample";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
 import { Row } from "@/components/arnaq/row";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
@@ -17,6 +18,7 @@ import type { Locale } from "@/i18n/config";
 import { requestTime, todayIso } from "@/lib/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
+import { canLoadSample } from "@/lib/sample/sample";
 import { loadOverzicht, parseMonth } from "@/lib/view/load";
 import type { OverzichtRow } from "@/lib/view/overzicht";
 
@@ -61,6 +63,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const today = todayIso();
   const month = parseMonth((await searchParams).month, today.slice(0, 7));
   const o = await pageDb((db) => loadOverzicht(db, month, today, locale));
+  const offerSample = !o.hasActivity && (await pageDb((db) => canLoadSample(db)));
   const step = {
     prev: `/?month=${o.prev}`,
     next: `/?month=${o.next}`,
@@ -76,6 +79,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         <EmptyState
           title={t.ui.overview.emptyTitle(f.monthName(month))}
           action={{ href: "/upload", label: t.ui.common.uploadStatement }}
+          extra={offerSample ? <LoadSampleButton /> : undefined}
         >
           {t.ui.overview.emptyBody}
         </EmptyState>

@@ -7,13 +7,13 @@ import { useId } from "react";
  * the letters of the word use the current text colour. Never put a CSS filter on these (Safari rule).
  */
 const STROKE = 16;
-const A = (
+export const LETTER_A = (
   <>
     <circle cx="28.5" cy="28.5" r="20.5" />
     <line x1="49" y1="26.5" x2="49" y2="49" />
   </>
 );
-const Q = (
+export const LETTER_Q = (
   <>
     <circle cx="28.5" cy="28.5" r="20.5" />
     <line x1="49" y1="8" x2="49" y2="70" />
@@ -48,9 +48,9 @@ export function Monogram({ className, title }: LogoProps) {
       aria-hidden={title ? undefined : true}
       {...lines}
     >
-      <g style={BLUE}>{A}</g>
+      <g style={BLUE}>{LETTER_A}</g>
       <g transform="translate(64 0)" style={PURPLE}>
-        {Q}
+        {LETTER_Q}
       </g>
     </svg>
   );
@@ -75,13 +75,13 @@ export function Wordmark({ className, title }: LogoProps) {
         </linearGradient>
       </defs>
       <g stroke="currentColor">
-        <g>{A}</g>
+        <g>{LETTER_A}</g>
         <g transform="translate(66 0)">{R}</g>
         <g transform="translate(115 0)">{N}</g>
-        <g transform="translate(181 0)">{A}</g>
+        <g transform="translate(181 0)">{LETTER_A}</g>
       </g>
       <g transform="translate(247 0)" stroke={`url(#${id})`}>
-        {Q}
+        {LETTER_Q}
       </g>
     </svg>
   );

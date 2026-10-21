@@ -4,6 +4,7 @@ import { localizeMessage } from "@/i18n/server-messages";
 import { MAX_ID, errorResponse, requestLocale, todayIso } from "@/lib/api";
 import { isPdf } from "@/lib/import/pdf";
 import { ImportError, importStatement } from "@/lib/import/service";
+import { clearSample } from "@/lib/sample/sample";
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
@@ -43,16 +44,19 @@ export async function POST(request: Request) {
 
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const summary = await userDb((db) =>
-      importStatement(db, {
+    const summary = await userDb(async (db) => {
+      // Real data and sample data must never mix: the first real statement replaces the sample. It is one
+      // transaction, so a file that turns out to be unusable leaves the sample in place.
+      await clearSample(db);
+      return importStatement(db, {
         // A PDF goes in as bytes. Text must not hold NUL characters (Postgres cannot store them).
         content: isPdf(bytes) ? bytes : new TextDecoder().decode(bytes).replaceAll("\u0000", ""),
         filename: file.name,
         accountId,
         month: typeof monthRaw === "string" && monthRaw ? monthRaw : undefined,
         today: todayIso(),
-      }),
-    );
+      });
+    });
     // The service speaks English; what the person reads is translated here.
     const locale = await requestLocale();
     return Response.json({

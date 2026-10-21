@@ -1,7 +1,8 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { getI18n } from "@/i18n/server";
 import { LanguageSwitcher } from "./language-switcher";
-import { Wordmark } from "./logo";
+import { WordmarkReveal } from "./motion";
 import { ThemeSwitcher } from "./theme-switcher";
 
 /** The frame of the sign-in pages: the brand, the two switches, and a calm centred card. */
@@ -10,7 +11,7 @@ export async function AuthShell({ children }: { children: ReactNode }) {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[440px] flex-col px-4 py-6">
       <header className="flex items-center justify-between pb-10">
-        <Wordmark title={t.ui.brand} className="h-7 w-auto" />
+        <WordmarkReveal title={t.ui.brand} className="h-7 w-auto" />
         <div className="flex gap-2">
           <LanguageSwitcher />
           <ThemeSwitcher />
@@ -20,6 +21,11 @@ export async function AuthShell({ children }: { children: ReactNode }) {
         <p className="text-ink-muted mb-4 px-1 text-[15px]">{t.auth.brandLine}</p>
         {children}
       </main>
+      <footer className="pt-6 text-center">
+        <Link href="/welcome" className="text-ink-muted text-[13px] underline underline-offset-4">
+          {t.ui.welcome.again}
+        </Link>
+      </footer>
     </div>
   );
 }

@@ -364,8 +364,7 @@ export const ui: typeof en = {
       done: "Al je gegevens zijn verwijderd.",
     },
     advanced: "Geavanceerd",
-    advancedHint:
-      "Sorteerregels en de winkels die arnaq heeft geleerd. Je hebt deze zelden nodig.",
+    advancedHint: "Sorteerregels en de winkels die arnaq heeft geleerd. Je hebt deze zelden nodig.",
     learned: {
       title: "Geleerde winkels",
       aside: (n: number) => `${n} winkels`,
@@ -390,5 +389,43 @@ export const ui: typeof en = {
       added: "Regel toegevoegd.",
       addedSorted: (n: number) => `Regel toegevoegd; ${n} transacties zijn meteen gesorteerd.`,
     },
+  },
+  welcome: {
+    label: "Introductie",
+    again: "Hoe werkt arnaq?",
+    skip: "Overslaan",
+    pager: (n: number) => `0${n} / 03`,
+    screen: (n: number) => `Scherm ${n} van 3`,
+    s1: {
+      title: "volg het\nmoeiteloos.",
+      body: "Geen rommelige spreadsheets meer. Je geld, overzichtelijk op één plek.",
+    },
+    s2: {
+      title: "zie wat er\nover is.",
+      body: "Zie waar je geld naartoe gaat en stel budgetten in die je op koers houden.",
+    },
+    s3: {
+      title: "maak je\ndoelen waar.",
+      body: "Stel een spaardoel in en zie het groeien met elk afschrift dat je toevoegt.",
+    },
+    of: (a: string, b: string) => `${a} van ${b}`,
+    freeToSpend: "vrij te besteden",
+    diningBudget: "budget uit eten",
+    shoppingBudget: "budget winkelen",
+    goal: "doel · reis naar japan",
+    start: "Aan de slag",
+    sample: "Kijk rond met voorbeeldgegevens",
+    sampleHint:
+      "Je maakt eerst een account. Daarna kun je het vullen met voorbeeldgegevens om rond te kijken.",
+  },
+  sample: {
+    banner: "Voorbeeldgegevens. Verzonnen betalingen, niets hiervan is van jou.",
+    uploadHint: "Als je je eigen afschrift uploadt, worden ze vervangen.",
+    useMine: "Gebruik mijn eigen",
+    removing: "Bezig met verwijderen…",
+    load: "Kijk rond met voorbeeldgegevens",
+    loading: "Voorbeeldgegevens toevoegen…",
+    loadHint:
+      "Vult dit account met verzonnen betalingen, zodat je kunt zien hoe alles werkt. Je verwijdert ze met één tik.",
   },
 };

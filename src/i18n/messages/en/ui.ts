@@ -383,4 +383,42 @@ export const ui = {
       addedSorted: (n: number) => `Rule added; ${n} transactions were sorted right away.`,
     },
   },
+  welcome: {
+    label: "Introduction",
+    again: "How does arnaq work?",
+    skip: "Skip",
+    pager: (n: number) => `0${n} / 03`,
+    screen: (n: number) => `Screen ${n} of 3`,
+    s1: {
+      title: "track\neffortlessly.",
+      body: "Say goodbye to messy spreadsheets. Streamline your money in one clean space.",
+    },
+    s2: {
+      title: "see what's\nleft.",
+      body: "See where your money goes and set spending budgets that keep you on track.",
+    },
+    s3: {
+      title: "secure your\ngoals.",
+      body: "Set a savings goal and watch it grow with every statement you add.",
+    },
+    of: (a: string, b: string) => `${a} of ${b}`,
+    freeToSpend: "free to spend",
+    diningBudget: "dining budget",
+    shoppingBudget: "shopping budget",
+    goal: "goal · japan trip",
+    start: "Get Started",
+    sample: "Try it with sample data",
+    sampleHint:
+      "You'll create an account first. Then you can fill it with sample data to look around.",
+  },
+  sample: {
+    banner: "Sample data. Invented payments, nothing here is yours.",
+    uploadHint: "Uploading your own statement replaces it.",
+    useMine: "Use my own",
+    removing: "Removing…",
+    load: "Look around with sample data",
+    loading: "Adding sample data…",
+    loadHint:
+      "Fills this account with invented payments, so you can see how everything works. You can remove it in one tap.",
+  },
 };

@@ -6,6 +6,7 @@ import { useRef, useState, useTransition } from "react";
 import { useI18n } from "@/i18n/client";
 import { formatter } from "@/lib/view/format";
 import { ErrorLine, Field, PrimaryButton, inputClass } from "./form";
+import { ChaseSpinner, DoneRing } from "./motion";
 
 interface Summary {
   bank: string;
@@ -138,13 +139,21 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
       <ErrorLine message={error} />
       <div>
         <PrimaryButton type="submit" disabled={busy || !file}>
-          {busy ? p.busy : p.submit}
+          {busy ? (
+            <span className="inline-flex items-center gap-2">
+              <ChaseSpinner />
+              {p.busy}
+            </span>
+          ) : (
+            p.submit
+          )}
         </PrimaryButton>
       </div>
 
       {summary && (
         <div role="status" className="glass fade-in grid gap-3 p-4">
-          <h3 className="font-display text-xl font-medium">
+          <h3 className="font-display flex items-center gap-2 text-xl font-medium">
+            <DoneRing />
             {p.processed(
               BANK[summary.bank] ?? summary.bank,
               summary.period

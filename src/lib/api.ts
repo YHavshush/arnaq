@@ -9,6 +9,7 @@ import { ForecastError } from "@/lib/forecast/errors";
 import { ImportError } from "@/lib/import/service";
 import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { RecurringError } from "@/lib/recurring/errors";
+import { SampleError } from "@/lib/sample/sample";
 import { SavingsError } from "@/lib/savings/settings";
 
 const DOMAIN_ERRORS = [
@@ -17,6 +18,7 @@ const DOMAIN_ERRORS = [
   ForecastError,
   ImportError,
   RecurringError,
+  SampleError,
   SavingsError,
 ];
 

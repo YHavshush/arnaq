@@ -34,6 +34,7 @@ const ROUTES: Record<string, string[]> = {
   "recurring/[id]": ["GET", "PATCH", "DELETE"],
   "smart/settings": ["GET", "PUT"],
   "savings/settings": ["GET", "PUT"],
+  sample: ["GET", "POST", "DELETE"],
   "categorise/smart": ["POST"],
   "account/delete": ["POST"],
   "account/restore": ["POST"],
@@ -50,6 +51,7 @@ const ROUTES: Record<string, string[]> = {
   "transactions/confirm": ["POST"],
 };
 
+const TEST_USER_C = "00000000-0000-0000-0000-00000000000c"; // never given any data, for the sample test
 const MARK = "TENANT-A-MARKER";
 const MARK_IBAN = "NL00MARK0000000001";
 const FIXTURE_NAME = "Koffie Voorbeeld"; // a counterparty in tests/fixtures/rabobank-sample.csv
@@ -456,5 +458,36 @@ describe("savings settings are per person", () => {
     expect(await get()).toEqual({ goal: null, start: 0 });
     setTestUser(TEST_USER_A);
     expect(await get()).toEqual({ goal: 123456, start: 7000 });
+  });
+});
+
+describe("sample data is per person", () => {
+  it("C (empty) can load it, A never sees it, and clearing C's leaves A's data alone", async () => {
+    const loadedFor = async () =>
+      (
+        (await (await call("sample", "GET", new Request(url("/api/sample")))).json()) as {
+          loaded: boolean;
+        }
+      ).loaded;
+    setTestUser(TEST_USER_C);
+    expect(
+      (await call("sample", "POST", new Request(url("/api/sample"), { method: "POST" }))).status,
+    ).toBe(201);
+    expect(await loadedFor()).toBe(true);
+    setTestUser(TEST_USER_A);
+    expect(await loadedFor()).toBe(false);
+    // A has real data, so A cannot add the sample either.
+    expect(
+      (await call("sample", "POST", new Request(url("/api/sample"), { method: "POST" }))).status,
+    ).toBe(422);
+    setTestUser(TEST_USER_C);
+    expect(
+      (await call("sample", "DELETE", new Request(url("/api/sample"), { method: "DELETE" })))
+        .status,
+    ).toBe(200);
+    expect(await loadedFor()).toBe(false);
+    setTestUser(TEST_USER_A);
+    const exportNow = await (await call("export", "GET", new Request(url("/api/export")))).text();
+    expect(exportNow).toContain(MARK);
   });
 });

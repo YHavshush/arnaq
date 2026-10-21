@@ -23,6 +23,16 @@ describe("proxy: signed out", () => {
     expect(to.searchParams.get("next")).toBe("/forecast?months=12");
   });
 
+  it("shows the introduction at the front door once, then the sign-in page", async () => {
+    setClaims(null);
+    const first = await ask("/");
+    expect(new URL(location(first)!).pathname).toBe("/welcome");
+    const again = await ask("/", { headers: { cookie: "arnaq-welcomed=1" } });
+    expect(new URL(location(again)!).pathname).toBe("/login");
+    // Deep links are not intercepted: someone following a link wants that page.
+    expect(new URL(location(await ask("/upload"))!).pathname).toBe("/login");
+  });
+
   it("answers APIs with 401 JSON, in the visitor's language", async () => {
     setClaims(null);
     const res = await ask("/api/review");
@@ -35,6 +45,7 @@ describe("proxy: signed out", () => {
   it("leaves the sign-in pages and the confirmation link open", async () => {
     setClaims(null);
     for (const p of [
+      "/welcome",
       "/login",
       "/register",
       "/forgot-password",
