@@ -159,7 +159,7 @@ export function Nav({ badge }: { badge?: ReactNode }) {
             href={href}
             aria-current={isActive(path, href) ? "page" : undefined}
             onClick={() => setTap({ href, from: path })}
-            className={`relative z-10 grid min-h-12 justify-items-center gap-0.5 rounded-full px-1 py-1.5 text-[11.5px] font-semibold transition-[transform,color,min-height] duration-200 group-data-[compact=true]/nav:min-h-10 active:scale-[.92] motion-reduce:transition-none ${
+            className={`relative z-10 grid min-h-12 content-center justify-items-center gap-0.5 rounded-full px-1 py-1.5 text-[11.5px] font-semibold transition-[transform,color,min-height,gap] duration-200 group-data-[compact=true]/nav:min-h-10 group-data-[compact=true]/nav:gap-0 active:scale-[.92] motion-reduce:transition-none ${
               shown === href ? "text-accent-ink" : "text-ink-muted"
             }`}
           >
