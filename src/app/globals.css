@@ -105,18 +105,29 @@
   }
   body {
     @apply text-foreground;
-    /* The page background is a gradient plus a status wash. Set data-mood on <html> to
-       neutral | good | warn | bad per screen; neutral is used when nothing is set. */
-    background: var(--page-bg-neutral) fixed;
+    background-color: var(--canvas);
   }
-  :root[data-mood="good"] body {
-    background: var(--page-bg-good) fixed;
+  /* The page background is a gradient plus a status wash. Set data-mood on <html> to
+     neutral | good | warn | bad per screen; neutral is used when nothing is set.
+     It lives on a fixed layer behind the page, not on the body: a `fixed` keyword in the `background`
+     shorthand only applies to the LAST layer, so the dark themes' glow (the first layer) scrolled with
+     the content and ended in hard edges, and iOS Safari ignores background-attachment: fixed anyway. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: var(--page-bg-neutral);
   }
-  :root[data-mood="warn"] body {
-    background: var(--page-bg-warn) fixed;
+  :root[data-mood="good"] body::before {
+    background: var(--page-bg-good);
   }
-  :root[data-mood="bad"] body {
-    background: var(--page-bg-bad) fixed;
+  :root[data-mood="warn"] body::before {
+    background: var(--page-bg-warn);
+  }
+  :root[data-mood="bad"] body::before {
+    background: var(--page-bg-bad);
   }
   ::selection {
     background: color-mix(in srgb, var(--accent) 28%, transparent);
