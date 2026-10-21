@@ -6,11 +6,18 @@ import { localizeMessage } from "@/i18n/server-messages";
 import { devAuthEnabled } from "@/lib/auth/session";
 import { safeNext } from "@/lib/auth/validate";
 import { supabaseConfig } from "@/lib/supabase/config";
+import { WELCOMED_COOKIE } from "@/lib/welcome";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 
 /** Reachable without signing in. Everything else, pages and API alike, needs a session. */
-const PUBLIC = [/^\/login$/, /^\/register$/, /^\/forgot-password$/, /^\/auth\/confirm$/];
+const PUBLIC = [
+  /^\/welcome$/,
+  /^\/login$/,
+  /^\/register$/,
+  /^\/forgot-password$/,
+  /^\/auth\/confirm$/,
+];
 /** Pages a signed-in person has no business on. */
 const GUEST_ONLY = [/^\/login$/, /^\/register$/, /^\/forgot-password$/];
 
@@ -71,6 +78,9 @@ export async function proxy(request: NextRequest) {
         NextResponse.json({ error: localizeMessage("Not signed in.", locale) }, { status: 401 }),
       );
     }
+    // A first-time visitor at the front door sees the introduction; everyone else the sign-in page.
+    if (path === "/" && !request.cookies.has(WELCOMED_COOKIE))
+      return carry(response, redirect(request, "/welcome"));
     const login = redirectTarget("/login", request.url);
     const next = safeNext(path + request.nextUrl.search, "");
     if (next) login.searchParams.set("next", next);

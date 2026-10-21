@@ -130,6 +130,11 @@ const NL: Rule[] = [
     /^The amount already saved cannot be negative\.$/,
     () => "Het al gespaarde bedrag kan niet negatief zijn.",
   ],
+  // sample data
+  [
+    /^Sample data can only be added to an empty account\.$/,
+    () => "Voorbeeldgegevens kun je alleen toevoegen aan een leeg account.",
+  ],
   // fixed costs
   [/^Name is required\.$/, () => "Geef de vaste post een naam."],
   [/^Name is too long \(max (\d+)\)\.$/, (m) => `De naam is te lang (maximaal ${m[1]} tekens).`],

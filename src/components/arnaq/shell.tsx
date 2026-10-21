@@ -5,8 +5,10 @@ import { userDb } from "@/lib/auth/request";
 import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
 import { getNeedsReview } from "@/lib/categories/categorise";
+import { hasSample } from "@/lib/sample/sample";
 import { Wordmark } from "./logo";
 import { Nav } from "./nav";
+import { SampleBanner } from "./sample";
 import { ThemeFollower } from "./theme-follower";
 
 /** Open items on Upload: transactions that still need a category. Hidden at zero. */
@@ -28,6 +30,18 @@ async function ReviewBadge() {
       {count > 99 ? "99+" : count}
     </span>
   );
+}
+
+/** The sample-data notice, on every screen while there is sample data in the account. */
+async function SampleNotice() {
+  await requestTime();
+  let sample = false;
+  try {
+    sample = await userDb((db) => hasSample(db));
+  } catch {
+    return null; // a failing notice must not take the whole shell down
+  }
+  return sample ? <SampleBanner /> : null;
 }
 
 /** One adaptive layout: sidebar and two columns when the app is 900px wide, pill nav below that. */
@@ -63,6 +77,9 @@ export async function AppShell({ children }: { children: ReactNode }) {
               </Link>
             </div>
           </div>
+          <Suspense fallback={null}>
+            <SampleNotice />
+          </Suspense>
           <main id="main">{children}</main>
         </div>
       </div>

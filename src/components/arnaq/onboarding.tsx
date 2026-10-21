@@ -1,0 +1,634 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { useI18n } from "@/i18n/client";
+import { SAMPLE_WISH_COOKIE, WELCOMED_COOKIE } from "@/lib/welcome";
+import { formatter } from "@/lib/view/format";
+import { LanguageSwitcher } from "./language-switcher";
+import { LETTER_A, LETTER_Q } from "./logo";
+
+const EASE = "cubic-bezier(.3,.8,.3,1)";
+const BLUE = { stroke: "var(--ring-accent-from)" } as const;
+const PURPLE = { stroke: "var(--ring-accent-to)" } as const;
+const REDUCED = "(prefers-reduced-motion: reduce)";
+
+/** The three screens' tinted backgrounds, made from the theme's own colours so both themes work. */
+const TINT = (a: string, b: string) =>
+  `linear-gradient(165deg, color-mix(in oklab, var(${a}) 26%, var(--canvas)), color-mix(in oklab, var(${b}) 22%, var(--canvas)) 55%, var(--canvas))`;
+const BACKGROUNDS = [
+  TINT("--ring-accent-from", "--ring-accent-to"),
+  TINT("--ring-good-from", "--ring-accent-from"),
+  TINT("--ring-accent-to", "--ring-accent-from"),
+];
+
+const reducedMotion = () => typeof matchMedia === "function" && matchMedia(REDUCED).matches;
+
+/** Run one animation for as long as the screen is on view; the returned function stops everything. */
+type Stop = () => void;
+const count = (
+  el: HTMLElement | null,
+  to: number,
+  ms: number,
+  delay: number,
+  show: (v: number) => string,
+): Stop => {
+  if (!el) return () => {};
+  if (reducedMotion()) {
+    el.textContent = show(to);
+    return () => {};
+  }
+  let raf = 0;
+  const t0 = performance.now() + delay;
+  el.textContent = show(0);
+  const step = (now: number) => {
+    const p = Math.min(1, Math.max(0, (now - t0) / ms));
+    el.textContent = show(to * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) raf = requestAnimationFrame(step);
+  };
+  raf = requestAnimationFrame(step);
+  return () => cancelAnimationFrame(raf);
+};
+const play = (el: Element | null, kf: Keyframe[], o: KeyframeAnimationOptions): Stop => {
+  if (!el || reducedMotion()) return () => {};
+  const a = el.animate(kf, { fill: "both", ...o });
+  return () => a.cancel();
+};
+const dash = (el: SVGGeometryElement | null, to: number, delay: number, ms: number): Stop => {
+  if (!el) return () => {};
+  const len = el.getTotalLength();
+  el.style.strokeDasharray = `${len} ${len}`;
+  el.style.strokeDashoffset = String(len * (1 - to));
+  return play(el, [{ strokeDashoffset: len }, { strokeDashoffset: len * (1 - to) }], {
+    delay,
+    duration: ms,
+    easing: "cubic-bezier(.45,.05,.2,1)",
+  });
+};
+const meter = (el: HTMLElement | null, to: number, delay: number, ms: number): Stop => {
+  if (!el) return () => {};
+  el.style.transform = `scaleX(${to})`;
+  return play(el, [{ transform: "scaleX(0)" }, { transform: `scaleX(${to})` }], {
+    delay,
+    duration: ms,
+    easing: EASE,
+  });
+};
+const breathe = (el: Element | null, delay: number, k: number): Stop =>
+  play(el, [{ transform: "scale(1)" }, { transform: `scale(${k})` }, { transform: "scale(1)" }], {
+    delay,
+    duration: 3200,
+    iterations: Infinity,
+    easing: "ease-in-out",
+  });
+
+/** Calls `run` whenever the screen becomes the active one, and cleans up when it leaves. */
+function useOnActive(
+  active: boolean,
+  root: RefObject<HTMLElement | null>,
+  run: (el: HTMLElement) => Stop[],
+  /** What the animation writes into the page (the language), so it runs again when that changes. */
+  deps: readonly unknown[] = [],
+) {
+  useEffect(() => {
+    const el = root.current;
+    if (!active || !el) return;
+    const stops = run(el);
+    return () => {
+      for (const s of stops) s();
+      // Put the dash back, so the next time the drawing starts from nothing again.
+      el.querySelectorAll<SVGElement>("[style*=stroke-dash]").forEach((e) => {
+        e.style.strokeDasharray = "";
+        e.style.strokeDashoffset = "";
+      });
+    };
+    // `run` is a closure over props that do not change while a screen is on view.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, ...deps]);
+}
+
+const q = <T extends Element>(el: HTMLElement, sel: string) => el.querySelector(sel) as T | null;
+
+/** Screen 1: the a and q fly in, meet, and breathe. */
+function Hook({ active }: { active: boolean }) {
+  const root = useRef<HTMLDivElement>(null);
+  useOnActive(active, root, (el) => {
+    const a = q<SVGGElement>(el, "[data-la]");
+    const qq = q<SVGGElement>(el, "[data-lq]");
+    for (const g of [a, qq])
+      if (g) Object.assign(g.style, { transformBox: "fill-box", transformOrigin: "center" });
+    const mono = q<SVGSVGElement>(el, "[data-mono]");
+    return [
+      play(
+        a,
+        [
+          { transform: "translateX(-70px) rotate(-200deg)", opacity: 0 },
+          { transform: "translateX(0) rotate(0)", opacity: 1 },
+        ],
+        { duration: 1100, easing: EASE },
+      ),
+      play(
+        qq,
+        [
+          { transform: "translateX(70px) rotate(200deg)", opacity: 0 },
+          { transform: "translateX(0) rotate(0)", opacity: 1 },
+        ],
+        { duration: 1100, easing: EASE },
+      ),
+      play(
+        mono,
+        [
+          { transform: "scale(1)" },
+          { transform: "scale(1.1)", offset: 0.5 },
+          { transform: "scale(1)" },
+        ],
+        { delay: 1100, duration: 600, easing: "ease-in-out" },
+      ),
+      breathe(mono, 1800, 1.03),
+      play(
+        q(el, "[data-glow]"),
+        [
+          { opacity: 0, transform: "scale(.6)" },
+          { opacity: 1, transform: "scale(1)" },
+        ],
+        { delay: 400, duration: 1200, easing: EASE },
+      ),
+      breathe(q(el, "[data-glow]"), 1600, 1.12),
+      ...[0, 1].map((i) =>
+        play(
+          el.querySelectorAll("[data-ripple]")[i],
+          [
+            { transform: "scale(.7)", opacity: 0.5 },
+            { transform: "scale(2.2)", opacity: 0 },
+          ],
+          {
+            delay: 1200 + i * 1200,
+            duration: 3400,
+            iterations: Infinity,
+            easing: "ease-out",
+          },
+        ),
+      ),
+    ];
+  });
+  const ring: CSSProperties = {
+    borderColor: "color-mix(in oklab, var(--ring-accent-from) 50%, transparent)",
+  };
+  return (
+    <div ref={root} className="relative grid place-items-center">
+      <div
+        data-glow
+        className="absolute size-[320px] rounded-full"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in oklab, var(--ring-accent-from) 40%, transparent), color-mix(in oklab, var(--ring-accent-to) 20%, transparent) 45%, transparent 70%)",
+        }}
+      />
+      {[0, 1].map((i) => (
+        <div
+          key={i}
+          data-ripple
+          className="absolute size-[190px] rounded-full border opacity-0"
+          style={ring}
+        />
+      ))}
+      <svg
+        data-mono
+        viewBox="-6 -6 133 90"
+        className="relative w-[min(262px,70vw)] overflow-visible"
+        fill="none"
+        strokeWidth={16}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <g>
+          <g data-la style={BLUE}>
+            {LETTER_A}
+          </g>
+        </g>
+        <g transform="translate(64 0)">
+          <g data-lq style={PURPLE}>
+            {LETTER_Q}
+          </g>
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+/** Screen 2: free to spend in the app's own ring, and two budgets filling. */
+function Flow({ active }: { active: boolean }) {
+  const root = useRef<HTMLDivElement>(null);
+  const { t, locale } = useI18n();
+  const w = t.ui.welcome;
+  const f = formatter(locale);
+  useOnActive(
+    active,
+    root,
+    (el) => [
+      dash(q<SVGCircleElement>(el, "[data-ring]"), 0.68, 150, 1500),
+      count(q(el, "[data-n]"), 842, 1300, 150, (v) => f.euro(Math.round(v) * 100)),
+      play(
+        q(el, "[data-ringbox]"),
+        [
+          { transform: "scale(.9)", opacity: 0 },
+          { transform: "scale(1)", opacity: 1 },
+        ],
+        { duration: 800, easing: EASE },
+      ),
+      play(
+        q(el, "[data-card]"),
+        [
+          { opacity: 0, transform: "translateY(40px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ],
+        { delay: 350, duration: 700, easing: EASE },
+      ),
+      meter(q(el, "[data-m1]"), 0.8, 800, 1100),
+      count(q(el, "[data-t1]"), 120, 1100, 800, (v) =>
+        w.of(f.euro(Math.round(v) * 100), f.euro(15000)),
+      ),
+      meter(q(el, "[data-m2]"), 0.475, 950, 1100),
+      count(q(el, "[data-t2]"), 95, 1100, 950, (v) =>
+        w.of(f.euro(Math.round(v) * 100), f.euro(20000)),
+      ),
+    ],
+    [locale],
+  );
+  return (
+    <div ref={root} className="grid h-full w-full content-evenly justify-items-center gap-0">
+      <div data-ringbox className="relative grid size-[170px] place-items-center">
+        <svg viewBox="0 0 204 204" className="absolute inset-0" aria-hidden>
+          <circle
+            cx="102"
+            cy="102"
+            r="95"
+            fill="none"
+            strokeWidth="10"
+            style={{ stroke: "var(--track)" }}
+          />
+          <circle
+            data-ring
+            cx="102"
+            cy="102"
+            r="95"
+            fill="none"
+            strokeWidth="10"
+            strokeLinecap="round"
+            transform="rotate(-90 102 102)"
+            stroke="url(#onb-ring)"
+          />
+          <defs>
+            <linearGradient id="onb-ring" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" style={{ stopColor: "var(--ring-accent-from)" }} />
+              <stop offset="1" style={{ stopColor: "var(--ring-accent-to)" }} />
+            </linearGradient>
+          </defs>
+        </svg>
+        <div className="relative grid place-items-center text-center">
+          <span className="text-ink-muted absolute bottom-full mb-1 text-[11.5px] tracking-[.06em] whitespace-nowrap uppercase">
+            {w.freeToSpend}
+          </span>
+          <span data-n className="num text-[34px] leading-none font-semibold tracking-[-0.035em]" />
+        </div>
+      </div>
+      <div data-card className="glass grid w-full gap-3 px-4 py-3.5">
+        {[
+          [
+            "data-m1",
+            "data-t1",
+            w.diningBudget,
+            "bg-[linear-gradient(90deg,var(--ring-warn-from),var(--ring-warn-to))]",
+          ],
+          [
+            "data-m2",
+            "data-t2",
+            w.shoppingBudget,
+            "bg-[linear-gradient(90deg,var(--ring-accent-from),var(--ring-accent-to))]",
+          ],
+        ].map(([m, tt, label, bar]) => (
+          <div key={m} className="grid gap-1.5">
+            <div className="num flex justify-between text-[13px]">
+              <span>{label}</span>
+              <span {...{ [tt]: "" }} className="text-ink-muted" />
+            </div>
+            <div className="bg-track h-2 overflow-hidden rounded-full">
+              <b
+                {...{ [m]: "" }}
+                className={`block h-full w-full origin-left rounded-full ${bar}`}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Screen 3: a dial turns, and the goal card fills to 100 per cent. */
+function Goals({ active }: { active: boolean }) {
+  const root = useRef<HTMLDivElement>(null);
+  const { t, locale } = useI18n();
+  const w = t.ui.welcome;
+  const f = formatter(locale);
+  useOnActive(
+    active,
+    root,
+    (el) => {
+      const reduced = reducedMotion();
+      if (reduced) {
+        const d = q<HTMLElement>(el, "[data-dial]");
+        if (d) d.style.opacity = "0.35";
+        const k = q<HTMLElement>(el, "[data-tick]");
+        if (k) k.style.opacity = "1";
+        const g = q<HTMLElement>(el, "[data-vglow]");
+        if (g) g.style.opacity = "1";
+      }
+      return [
+        play(
+          q(el, "[data-dial]"),
+          [
+            { transform: "rotate(0deg) scale(.85)", opacity: 0 },
+            { transform: "rotate(260deg) scale(1)", opacity: 1, offset: 0.55 },
+            { transform: "rotate(360deg) scale(1)", opacity: 0.35 },
+          ],
+          { duration: 2000, easing: "cubic-bezier(.45,.05,.2,1)" },
+        ),
+        play(
+          q(el, "[data-goal]"),
+          [
+            { opacity: 0, transform: "translateY(60px)" },
+            { opacity: 0, transform: "translateY(60px)", offset: 0.4 },
+            { opacity: 1, transform: "translateY(0)" },
+          ],
+          { duration: 1500, easing: EASE },
+        ),
+        play(
+          q(el, "[data-tick]"),
+          [
+            { opacity: 0, transform: "scale(0)" },
+            { opacity: 0, transform: "scale(0)", offset: 0.85 },
+            { opacity: 1, transform: "scale(1.25)", offset: 0.93 },
+            { opacity: 1, transform: "scale(1)" },
+          ],
+          { delay: 1200, duration: 1500, easing: "ease-out" },
+        ),
+        play(q(el, "[data-vglow]"), [{ opacity: 0 }, { opacity: 0, offset: 0.6 }, { opacity: 1 }], {
+          delay: 600,
+          duration: 2300,
+        }),
+        meter(q(el, "[data-m]"), 1, 900, 1700),
+        count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
+        count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
+          w.of(f.euro(Math.round(v) * 100), f.euro(180000)),
+        ),
+      ];
+    },
+    [locale],
+  );
+  const ticks = Array.from({ length: 24 }, (_, i) => {
+    const a = (i / 24) * Math.PI * 2;
+    const r1 = i % 6 === 0 ? 74 : 80;
+    // Rounded, so the server and the browser print exactly the same numbers.
+    const at = (r: number, fn: (x: number) => number) => Math.round((100 + r * fn(a)) * 100) / 100;
+    return {
+      x1: at(r1, Math.cos),
+      y1: at(r1, Math.sin),
+      x2: at(88, Math.cos),
+      y2: at(88, Math.sin),
+      major: i % 6 === 0,
+    };
+  });
+  return (
+    <div ref={root} className="relative grid h-[290px] w-[min(260px,70vw)] place-items-center">
+      <div
+        data-vglow
+        className="absolute size-[320px] rounded-full opacity-0"
+        style={{
+          background:
+            "radial-gradient(circle, color-mix(in oklab, var(--ring-accent-from) 40%, transparent), color-mix(in oklab, var(--ring-accent-to) 20%, transparent) 45%, transparent 70%)",
+        }}
+      />
+      <svg data-dial viewBox="0 0 200 200" className="absolute top-0 size-[200px]" aria-hidden>
+        <circle
+          cx="100"
+          cy="100"
+          r="92"
+          strokeWidth="2"
+          style={{ fill: "var(--glass-bg)", stroke: "var(--glass-border)" }}
+        />
+        <circle
+          cx="100"
+          cy="100"
+          r="64"
+          fill="none"
+          strokeWidth="2"
+          style={{ stroke: "var(--track)" }}
+        />
+        {ticks.map((k, i) => (
+          <line
+            key={i}
+            x1={k.x1}
+            y1={k.y1}
+            x2={k.x2}
+            y2={k.y2}
+            strokeWidth={k.major ? 3 : 1.5}
+            strokeLinecap="round"
+            style={{ stroke: "var(--ink-muted)" }}
+          />
+        ))}
+        <circle cx="100" cy="100" r="14" style={{ fill: "var(--ring-accent-from)" }} />
+      </svg>
+      <div data-goal className="glass absolute bottom-0 grid w-full gap-2.5 p-4">
+        <span
+          data-tick
+          className="absolute top-3.5 right-3.5 grid size-[26px] place-items-center rounded-full text-sm font-bold opacity-0"
+          style={{ background: "var(--ring-good-to)", color: "var(--canvas)" }}
+          aria-hidden
+        >
+          ✓
+        </span>
+        <div>
+          <div className="text-ink-muted text-[11.5px] tracking-[.06em] uppercase">{w.goal}</div>
+          <div
+            data-pct
+            className="num text-[26px] leading-none font-semibold tracking-[-0.035em]"
+          />
+        </div>
+        <div className="bg-track h-2 overflow-hidden rounded-full">
+          <b
+            data-m
+            className="block h-full w-full origin-left rounded-full bg-[linear-gradient(90deg,var(--ring-accent-from),var(--ring-accent-to))]"
+          />
+        </div>
+        <span data-amt className="text-ink-muted text-[12.5px]" />
+      </div>
+    </div>
+  );
+}
+
+function setCookie(name: string) {
+  document.cookie = `${name}=1; path=/; max-age=31536000; samesite=lax`;
+}
+
+/**
+ * The three-screen introduction: swipe (or use the dots or the arrow keys), then create an account, or
+ * look around with sample data. Works with the theme and the language, and without motion when the
+ * device asks for less of it.
+ */
+export function Onboarding() {
+  const router = useRouter();
+  const { t } = useI18n();
+  const w = t.ui.welcome;
+  const [index, setIndex] = useState(0);
+  const track = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x0: number; dx: number } | null>(null);
+  const last = 2;
+
+  const go = (i: number) => setIndex(Math.max(0, Math.min(last, i)));
+  const leave = (to: string, wishSample = false) => {
+    setCookie(WELCOMED_COOKIE);
+    if (wishSample) setCookie(SAMPLE_WISH_COOKIE);
+    router.push(to);
+  };
+
+  const onDown = (e: React.PointerEvent) => {
+    if ((e.target as HTMLElement).closest("button, a")) return;
+    drag.current = { x0: e.clientX, dx: 0 };
+    track.current?.setPointerCapture(e.pointerId);
+    if (track.current) track.current.style.transition = "none";
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d || !track.current) return;
+    d.dx = e.clientX - d.x0;
+    track.current.style.transform = `translateX(calc(${-index * 100}% + ${d.dx}px))`;
+  };
+  const onEnd = () => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d || !track.current) return;
+    track.current.style.transition = "";
+    track.current.style.transform = `translateX(${-index * 100}%)`;
+    if (Math.abs(d.dx) > 50) go(index + (d.dx < 0 ? 1 : -1));
+  };
+
+  const screens = [
+    { title: w.s1.title, body: w.s1.body, visual: <Hook active={index === 0} /> },
+    { title: w.s2.title, body: w.s2.body, visual: <Flow active={index === 1} /> },
+    { title: w.s3.title, body: w.s3.body, visual: <Goals active={index === 2} /> },
+  ];
+
+  return (
+    <div
+      className="relative min-h-dvh overflow-hidden"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={w.label}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return; // arrows inside the language menu are not for the slides
+        if (e.key === "ArrowRight") go(index + 1);
+        if (e.key === "ArrowLeft") go(index - 1);
+      }}
+    >
+      {BACKGROUNDS.map((bg, i) => (
+        <div
+          key={i}
+          aria-hidden
+          className="absolute inset-0 transition-opacity duration-700 motion-reduce:transition-none"
+          style={{ background: bg, opacity: index === i ? 1 : 0 }}
+        />
+      ))}
+      <div className="relative mx-auto flex h-dvh min-h-[640px] max-w-[430px] flex-col overflow-hidden">
+        <div className="absolute top-5 right-4 left-6 z-10 flex items-center justify-between">
+          <span className="num text-ink-muted text-xs tracking-[.08em]">{w.pager(index + 1)}</span>
+          <div className="flex items-center gap-2">
+            <LanguageSwitcher />
+            <button
+              type="button"
+              onClick={() => go(last)}
+              tabIndex={index < last ? 0 : -1}
+              aria-hidden={index < last ? undefined : true}
+              className={`text-ink-muted min-h-11 px-3 text-sm ${index < last ? "" : "invisible"}`}
+            >
+              {w.skip}
+            </button>
+          </div>
+        </div>
+        <div
+          ref={track}
+          className="flex min-h-0 flex-1 touch-pan-y transition-transform duration-[550ms] ease-[cubic-bezier(.3,.8,.3,1)] motion-reduce:transition-none"
+          style={{ transform: `translateX(${-index * 100}%)` }}
+          onPointerDown={onDown}
+          onPointerMove={onMove}
+          onPointerUp={onEnd}
+          onPointerCancel={onEnd}
+        >
+          {screens.map((s, k) => (
+            <section
+              key={k}
+              aria-label={w.screen(k + 1)}
+              aria-hidden={index !== k}
+              className="grid w-full flex-none grid-rows-[250px_1fr_140px] px-6"
+            >
+              <div className="grid content-start gap-3 pt-[64px]">
+                <h1 className="font-display text-[clamp(40px,12.5vw,52px)] leading-[.98] font-normal tracking-[-0.02em] whitespace-pre-line">
+                  {s.title}
+                </h1>
+                <p className="text-ink-muted max-w-[31ch] text-[15px]">{s.body}</p>
+              </div>
+              <div
+                className="grid place-items-center transition-transform duration-[550ms] ease-[cubic-bezier(.3,.8,.3,1)] motion-reduce:transition-none"
+                style={{ transform: `translateX(${(k - index) * 60}px)` }}
+              >
+                {s.visual}
+              </div>
+              <div className="grid content-end gap-2.5 pb-11">
+                {k === last && (
+                  <>
+                    <button
+                      type="button"
+                      tabIndex={index === last ? 0 : -1}
+                      onClick={() => leave("/register")}
+                      className="text-ink dark:text-canvas min-h-12 w-full rounded-full px-5 text-base font-semibold shadow-[0_10px_28px_-10px_var(--ring-accent-from)]"
+                      style={{ background: "var(--ring-accent-from)" }}
+                    >
+                      {w.start}
+                    </button>
+                    <button
+                      type="button"
+                      tabIndex={index === last ? 0 : -1}
+                      onClick={() => leave("/register", true)}
+                      className="glass min-h-11 w-full !rounded-full px-5 text-[15px] font-medium"
+                    >
+                      {w.sample}
+                    </button>
+                  </>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
+        <div
+          className="absolute inset-x-0 bottom-4 z-10 flex justify-center gap-2"
+          role="group"
+          aria-label={w.label}
+        >
+          {screens.map((_, k) => (
+            <button
+              key={k}
+              type="button"
+              aria-label={w.screen(k + 1)}
+              aria-current={index === k}
+              onClick={() => go(k)}
+              className={`h-[7px] rounded-full transition-all duration-300 ${index === k ? "w-[22px]" : "w-[7px]"}`}
+              style={{ background: index === k ? "var(--ring-accent-from)" : "var(--track)" }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

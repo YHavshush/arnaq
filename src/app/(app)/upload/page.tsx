@@ -11,6 +11,7 @@ import { HeroSkeleton } from "@/components/arnaq/states";
 import { UploadPanel } from "@/components/arnaq/upload-panel";
 import { getI18n } from "@/i18n/server";
 import { requestTime } from "@/lib/api";
+import { SAMPLE_IBAN } from "@/lib/sample/sample";
 import { formatter } from "@/lib/view/format";
 import { loadUpload } from "@/lib/view/load";
 
@@ -49,7 +50,11 @@ async function Content() {
       />
 
       <Section title={m.sectionUpload}>
-        <UploadPanel accounts={u.accounts.map((a) => ({ id: a.id, name: a.name }))} />
+        <UploadPanel
+          accounts={u.accounts
+            .filter((a) => a.iban !== SAMPLE_IBAN) // the sample account is not a place to upload to
+            .map((a) => ({ id: a.id, name: a.name }))}
+        />
       </Section>
 
       {u.review.length > 0 && (

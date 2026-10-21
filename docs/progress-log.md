@@ -305,3 +305,24 @@ allowed for categorising only, or only for chat-like products? What does a user 
   including a more purple one) and chose to keep the original.
 - **Spelling: the name is always lowercase, "arnaq", everywhere** (UI text, docs, store listings), like the logo.
 - Open: the owner's wordmark preference vs the fully drawn word (the signature uses the drawn one); a decision to start the build.
+
+## 2026-10-21: arnaq rename, onboarding, sample data and animations (branches feat/arnaq-rename and feat/onboarding, NOT merged)
+
+- **Rename:** the product is "arnaq" (lowercase) in the UI, titles, docs, manifest and file names. The drawn wordmark replaces the
+  text brand (header, sidebar, sign-in pages); new app icons are made from the logo (`npm run icons`). Menu names are set C: today,
+  ahead, fixed, add (vandaag, vooruit, vast, toevoegen). Backups are marked "arnaq"; old "kasboek" backups still restore. Left as
+  they were on purpose (infrastructure, invisible): the `kasboek_app` database role, the Supabase project name, the
+  `kasboek-theme` and `kasboek-lang` storage keys, `KASBOEK_AI_USERS`.
+- **Onboarding:** `/welcome` (public), the approved B design in both languages and both themes. A first visit to "/" lands there
+  (cookie `arnaq-welcomed`), later visits go to the sign-in page, which links back to it ("How does arnaq work?").
+- **Sample data:** `GET/POST/DELETE /api/sample`. Only an account with nothing of its own (no transactions, fixed items or budgets)
+  can take it. It is a marked "Sample account" with five months of invented payments, six fixed items and budgets, shown with a banner
+  on every screen and removed in one tap ("Use my own"). The first real upload replaces it in the same database transaction (a bad
+  file leaves it in place). Clearing removes only exact copies of what the sample made, within the sample's months, so a person's own
+  edits survive. No migration was needed. The empty overview offers "Look around with sample data".
+- **Animations:** the signature ("the turn") on the sign-in pages once per browser session; chase in the upload button, swap and
+  shimmer in the loading skeleton, a done ring after an import. All stand still under reduced motion.
+- **Review:** the code-reviewer agent found one HIGH (clearing could hit a foreign key from an edited sample item to a sample
+  transaction, blocking uploads), two MEDIUM (budgets outside the sample's window, a stale language in the animations) and seven
+  LOW. All fixed, with tests for each. 678 tests, type-check and lint are green.
+- Not done: Dutch/English copy review by the owner, the real-device swipe check on an iPhone, and the merge (production deploy).
