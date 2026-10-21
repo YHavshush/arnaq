@@ -116,31 +116,34 @@ const q = <T extends Element>(el: HTMLElement, sel: string) => el.querySelector(
 /**
  * The glow behind the visuals: two soft layers (a core and a larger halo) that rise slowly into view, then
  * breathe and drift a little, out of step with each other, so the light feels alive and never repeats exactly.
- * Both fade to nothing at their edge. Under reduced motion they just sit there.
+ * Both fade to nothing at their edge. Under reduced motion they just sit there. `steady` skips the rise: the glow is
+ * painted from the first frame (screen 1) and only breathes and drifts.
  */
-function Glow({ vault = false }: { vault?: boolean }) {
+function Glow({ vault = false, steady = false }: { vault?: boolean; steady?: boolean }) {
   return (
     <>
       <div
         data-glow
         aria-hidden
-        className="absolute size-[340px] rounded-full opacity-0"
+        className={`absolute size-[340px] rounded-full ${steady ? "" : "opacity-0"}`}
         style={{ background: vault ? "var(--onb-glow-vault)" : "var(--onb-glow)" }}
       />
       <div
         data-glow2
         aria-hidden
-        className="absolute size-[430px] rounded-full opacity-0"
+        className={`absolute size-[430px] rounded-full ${steady ? "" : "opacity-0"}`}
         style={{ background: vault ? "var(--onb-glow-vault-2)" : "var(--onb-glow-2)" }}
       />
     </>
   );
 }
 /**
- * `fromZero`: the wide layer's slow drift keeps its opacity off the first keyframe, so it does not hold full strength
- * during its start delay and pop on in one frame before the rise has begun (screen 3 uses it, in light and dark; screens 1 and 2 are unchanged).
+ * `kind`: "rise" fades the layers in (screen 2). "fromZero" is the same, but the wide layer's drift keeps its opacity off
+ * the first keyframe, so it does not hold full strength during its start delay and pop on before the rise has begun
+ * (screen 3). "steady" has no rise at all: the layers are already there and only breathe and drift (screen 1, which
+ * pairs it with `<Glow steady />`).
  */
-function glowStops(el: HTMLElement, fromZero = false): Stop[] {
+function glowStops(el: HTMLElement, kind: "rise" | "fromZero" | "steady" = "rise"): Stop[] {
   const main = q(el, "[data-glow]");
   const wide = q(el, "[data-glow2]");
   if (reducedMotion()) {
@@ -148,6 +151,21 @@ function glowStops(el: HTMLElement, fromZero = false): Stop[] {
     return [];
   }
   const loop = { iterations: Infinity, direction: "alternate" as const, easing: "ease-in-out" };
+  if (kind === "steady")
+    return [
+      play(main, [{ transform: "scale(1)" }, { transform: "scale(1.09)" }], {
+        duration: 6000,
+        ...loop,
+      }),
+      play(
+        wide,
+        [
+          { transform: "translate(0, 0) scale(1)", opacity: 1 },
+          { transform: "translate(16px, -10px) scale(1.1)", opacity: 0.7 },
+        ],
+        { duration: 9000, ...loop },
+      ),
+    ];
   return [
     play(
       main,
@@ -174,7 +192,10 @@ function glowStops(el: HTMLElement, fromZero = false): Stop[] {
     play(
       wide,
       [
-        { transform: "translate(-16px, 10px) scale(1)", ...(fromZero ? {} : { opacity: 1 }) },
+        {
+          transform: "translate(-16px, 10px) scale(1)",
+          ...(kind === "fromZero" ? {} : { opacity: 1 }),
+        },
         { transform: "translate(16px, -10px) scale(1.1)", opacity: 0.7 },
       ],
       { delay: 3500, duration: 9000, ...loop },
@@ -218,7 +239,7 @@ function Hook({ active }: { active: boolean }) {
         { delay: 1100, duration: 600, easing: "ease-in-out" },
       ),
       breathe(mono, 1800, 1.03),
-      ...glowStops(el),
+      ...glowStops(el, "steady"),
       ...[0, 1].map((i) =>
         play(
           el.querySelectorAll("[data-ripple]")[i],
@@ -240,7 +261,7 @@ function Hook({ active }: { active: boolean }) {
   const ring: CSSProperties = { borderColor: "var(--onb-ripple)" };
   return (
     <div ref={root} className="relative grid place-items-center">
-      <Glow />
+      <Glow steady />
       {[0, 1].map((i) => (
         <div
           key={i}
@@ -496,7 +517,7 @@ function Goals({ active }: { active: boolean }) {
           { delay: 1200, duration: 1500, easing: "ease-out" },
         ),
         // The glow rises slowly with the dial turning, then keeps breathing: no jump at the end of the animation.
-        ...glowStops(el, true),
+        ...glowStops(el, "fromZero"),
         meter(q(el, "[data-m]"), 1, 900, 1700),
         count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
         count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
