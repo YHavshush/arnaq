@@ -211,11 +211,12 @@ export const textPairs: [fg: keyof ThemeTokens, bg: keyof ThemeTokens][] = [
 
 /**
  * Whether the page background carries a status wash (a soft tint at the top that follows the screen's tone).
- * Light: off, decided by the owner (the wash was tested and judged not worth a third status signal next to ring colour and glow).
- * Dark and Dark +: on, it is part of the dark look the owner approved. Flip a value and run `npm run tokens`.
+ * Off in every theme (owner, 2026-10-21): the page background is the same calm gradient on every screen, in light, dark
+ * and Dark +. Dark used to carry it (a glow that changed colour per screen: blue, green, amber, rose), which read as
+ * uneven colours. Flip a value and run `npm run tokens` to bring it back.
  */
 export const statusWash: Record<ThemeName, boolean> = {
   light: false,
-  dark: true,
-  darkplus: true,
+  dark: false,
+  darkplus: false,
 };

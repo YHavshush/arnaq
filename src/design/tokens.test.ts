@@ -43,12 +43,10 @@ describe("generated css", () => {
     expect(file).toBe(buildTokensCss());
   });
 
-  it("only emits a wash where the theme has statusWash on", () => {
+  it("only emits a wash where the theme has statusWash on (none do: the page background is the same on every screen)", () => {
     const css = buildTokensCss();
-    const lightBlock = css.slice(css.indexOf(":root {"), css.indexOf("@media"));
-    expect(statusWash.light).toBe(false);
-    expect(lightBlock).not.toContain("radial-gradient");
-    expect(css.slice(css.indexOf('[data-theme="dark"]'))).toContain("radial-gradient");
+    for (const n of THEMES) expect(statusWash[n]).toBe(false);
+    expect(css).not.toContain("radial-gradient");
   });
 
   it("covers light, dark (system and explicit) and darkplus", () => {
