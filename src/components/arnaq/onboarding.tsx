@@ -277,6 +277,8 @@ const PACE_TODAY = PACE_DAYS.length;
 const PACE_THRESHOLD = 40;
 const PACE_MAX = Math.max(...PACE_DAYS);
 /** The same demo numbers as the overview: spent, the budget for everyday spending, and where an even pace would be today. */
+/** How strongly the dial shows once it has settled (the goal card in front of it is what should stand out). */
+const DIAL_OPACITY = 0.75;
 const RING_VALUE = 0.72; // 72 per cent of the budget is spent or planned, as in the overview
 const PACE_SPENT = 258;
 const PACE_BUDGET = 752;
@@ -456,17 +458,17 @@ function Goals({ active }: { active: boolean }) {
       const reduced = reducedMotion();
       if (reduced) {
         const d = q<HTMLElement>(el, "[data-dial]");
-        if (d) d.style.opacity = "0.35";
+        if (d) d.style.opacity = String(DIAL_OPACITY);
         const k = q<HTMLElement>(el, "[data-tick]");
         if (k) k.style.opacity = "1";
       }
       return [
         play(
           q(el, "[data-dial]"),
+          // It fades in once and stays at its resting strength: no full-strength flash followed by a dimming.
           [
             { transform: "rotate(0deg) scale(.85)", opacity: 0 },
-            { transform: "rotate(260deg) scale(1)", opacity: 1, offset: 0.55 },
-            { transform: "rotate(360deg) scale(1)", opacity: 0.35 },
+            { transform: "rotate(360deg) scale(1)", opacity: DIAL_OPACITY },
           ],
           { duration: 2000, easing: "cubic-bezier(.45,.05,.2,1)" },
         ),
