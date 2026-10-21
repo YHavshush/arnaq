@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq theme gradients</title>
+<style>
+/* The values below are copied from src/design/tokens.ts (the page gradient, the card surface and the text of each theme). */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1040px; margin:0 auto; display:grid; gap:22px; }
+h1 { font:500 clamp(26px,5vw,36px)/1.1 Georgia,serif; margin:0; }
+p { margin:0; } .lead,.note { color:var(--muted); max-width:72ch; } .note { font-size:13px; }
+.grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+@media (max-width:820px) { .grid { grid-template-columns:minmax(0,1fr); } }
+.col { display:grid; gap:10px; min-width:0; }
+.col h2 { margin:0; font-size:16px; }
+.panel { border-radius:22px; padding:18px; height:380px; display:grid; align-content:start; gap:14px; }
+.panel .t { font:500 26px/1.1 Georgia,serif; }
+.card { border-radius:20px; padding:14px; display:grid; gap:6px; }
+.ring { width:120px; height:120px; border-radius:50%; display:grid; place-items:center; margin:6px auto; font:600 26px -apple-system,system-ui,sans-serif; letter-spacing:-.03em; }
+.row { display:flex; gap:6px; align-items:center; font-size:12px; flex-wrap:wrap; }
+.sw { width:22px; height:22px; border-radius:6px; border:1px solid rgba(127,127,127,.35); flex:none; }
+table { border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums; }
+td,th { text-align:left; padding:6px 8px; border-bottom:1px solid rgba(127,127,127,.25); }
+th { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+.tablewrap { overflow-x:auto; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>The three modes, side by side</h1>
+    <p class="lead">Each panel is the real page background of that mode (top to bottom), with a card and the text on it. The numbers under it are the exact colours and how light they are (0 is black, 100 is white).</p>
+  </header>
+  <div class="grid" id="grid"></div>
+  <section class="tablewrap" id="table"></section>
+  <p class="note" id="read"></p>
+</main>
+<script>
+const THEMES = [
+  { name: "Light", stops: ["#d9e5f5", "#f1e6dd", "#f6e8d8"], card: "rgba(255,255,255,.58)", border: "rgba(255,255,255,.8)", ink: "#17202e", muted: "#4a5568", ringA: "#33c6ff", ringB: "#7f8cff", track: "rgba(23,32,46,.10)", base: "#e9eaf3" },
+  { name: "Dark", stops: ["#1b2434", "#141b28", "#0f141d"], card: "rgba(255,255,255,.055)", border: "rgba(255,255,255,.10)", ink: "#eef1f5", muted: "#a8b1bf", ringA: "#2ac9ff", ringB: "#7d8bff", track: "rgba(255,255,255,.075)", base: "#141b28" },
+  { name: "Dark +", stops: ["#2b3a56", "#1f2a40", "#172033"], card: "rgba(255,255,255,.075)", border: "rgba(255,255,255,.14)", ink: "#eef1f5", muted: "#b8c1d1", ringA: "#2ac9ff", ringB: "#7d8bff", track: "rgba(255,255,255,.11)", base: "#1f2a40" },
+];
+const hsl = (hex) => { const n = parseInt(hex.slice(1), 16), r = (n >> 16) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255; const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, s = 0; const d = mx - mn;
+  if (d) { s = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h = (h * 60 + 360) % 360; } return { h: Math.round(h), s: Math.round(s * 100), l: Math.round(l * 100) }; };
+document.getElementById("grid").innerHTML = THEMES.map((t) => `<div class="col"><h2>${t.name}</h2>
+  <div class="panel" style="background:linear-gradient(180deg,${t.stops.join(",")});color:${t.ink}">
+    <div class="t">today</div>
+    <div class="ring" style="background:conic-gradient(from -90deg,${t.ringA},${t.ringB} 70%,${t.track} 70%);position:relative"><span style="background:${t.base};border-radius:50%;width:98px;height:98px;display:grid;place-items:center">€494</span></div>
+    <div class="card" style="background:${t.card};border:1px solid ${t.border}"><b>Budget</b><span style="color:${t.muted};font-size:13px">€1,256 of €1,750</span></div>
+    <div class="card" style="background:${t.card};border:1px solid ${t.border}"><b>Fixed costs</b><span style="color:${t.muted};font-size:13px">4/5 paid</span></div>
+  </div>
+  <div class="row">${t.stops.map((s) => `<span class="sw" style="background:${s}"></span><code>${s}</code>`).join("&nbsp;")}</div></div>`).join("");
+document.getElementById("table").innerHTML = `<table><tr><th>Mode</th><th>Top</th><th>Middle</th><th>Bottom</th><th>Top to bottom</th><th>Hue</th></tr>` + THEMES.map((t) => { const [a, b, c] = t.stops.map(hsl);
+  return `<tr><td><b>${t.name}</b></td><td>lightness ${a.l}</td><td>lightness ${b.l}</td><td>lightness ${c.l}</td><td>${Math.abs(a.l - c.l)} points</td><td>${a.h}° → ${c.h}°</td></tr>`; }).join("") + `</table>`;
+const [L, D, P] = THEMES.map((t) => t.stops.map(hsl));
+document.getElementById("read").textContent = `How to read it: Light changes colour from top to bottom, from a cool blue (hue ${L[0].h}°) to a warm peach (hue ${L[2].h}°), at the same lightness (${L[0].l}). Dark and Dark + do not change colour at all: they stay one blue-grey (hue ${D[0].h}° and ${P[0].h}°) and only get darker towards the bottom (${D[0].l} to ${D[2].l} and ${P[0].l} to ${P[2].l}). Dark + is just a lighter version of Dark, about ${P[1].l - D[1].l} points lighter in the middle. That is why the dark ones feel flat next to light, and why Dark and Dark + are hard to tell apart.`;
+</script>
+</body>
+</html>
