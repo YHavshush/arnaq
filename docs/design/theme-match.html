@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq app and onboarding backgrounds</title>
+<style>
+/* Colours from src/design/tokens.ts and the onboarding (src/components/arnaq/onboarding.tsx). */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1120px; margin:0 auto; display:grid; gap:20px; }
+h1 { font:500 clamp(26px,5vw,36px)/1.1 Georgia,serif; margin:0; }
+h2 { font:500 19px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .lead,.note { color:var(--muted); max-width:76ch; } .note { font-size:13px; }
+.row { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+@media (max-width:860px) { .row { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.sec { display:grid; gap:8px; }
+.cap { font-size:12.5px; color:var(--muted); }
+.tile { border-radius:20px; height:330px; padding:14px; display:grid; align-content:start; gap:9px; overflow:hidden; position:relative; }
+.tile .t { font:500 25px/1.1 Georgia,serif; } .s { font-size:11.5px; opacity:.75; }
+.ring { width:96px; height:96px; border-radius:50%; display:grid; place-items:center; margin:2px auto; }
+.ring span { border-radius:50%; width:78px; height:78px; display:grid; place-items:center; font:600 20px -apple-system,system-ui,sans-serif; letter-spacing:-.03em; }
+.card { border-radius:15px; padding:9px 11px; display:grid; gap:2px; font-size:13px; }
+.card small { font-size:11.5px; opacity:.75; }
+.ob h3 { margin:6px 0 0; font:400 27px/.98 Georgia,serif; letter-spacing:-.02em; white-space:pre-line; }
+.ob p { font-size:11.5px; max-width:25ch; opacity:.8; margin-top:6px; }
+.dot { width:70px; height:70px; border-radius:50%; margin:10px auto 0; border:7px solid transparent; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>App and onboarding, side by side</h1>
+    <p class="lead">You like the onboarding as it is and the light app as it is, and the brown does not fit dark. So here are the four rows: light and dark, each with the app next to the onboarding screens. The last row is my proposal for dark: the app's dark background made the same way as the onboarding's.</p>
+  </header>
+  <div id="rows" style="display:grid;gap:20px"></div>
+</main>
+<script>
+const mix = (a, pct, base) => `color-mix(in oklab, ${a} ${pct}%, ${base})`;
+const THEME = {
+  light: { ink: "#17202e", muted: "#4a5568", blue: "#33c6ff", violet: "#7f8cff", mint: "#8fe0bd", canvas: "#e9eaf3", glass: "rgba(255,255,255,.58)", gb: "rgba(255,255,255,.8)", track: "rgba(23,32,46,.10)", dawn: ["#d9e5f5", "#f1e6dd", "#f6e8d8"] },
+  dark: { ink: "#eef1f5", muted: "#a8b1bf", blue: "#2ac9ff", violet: "#7d8bff", mint: "#8fe0bd", canvas: "#141b28", glass: "rgba(255,255,255,.055)", gb: "rgba(255,255,255,.10)", track: "rgba(255,255,255,.075)", graphite: ["#1b2434", "#141b28", "#0f141d"] },
+};
+const SCREENS = [
+  { n: 1, t: "track\neffortlessly.", b: "Say goodbye to messy spreadsheets. Streamline your money in one clean space.", a: "blue", c: "violet" },
+  { n: 2, t: "see what's\nleft.", b: "See where your money goes and set spending budgets that keep you on track.", a: "mint", c: "blue" },
+  { n: 3, t: "secure your\ngoals.", b: "Set a savings goal and watch it grow with every statement you add.", a: "violet", c: "blue" },
+];
+// the onboarding's own recipe: tints over a base, fading to the base at the bottom
+const recipe = (th, s, base) => `linear-gradient(165deg, ${mix(th[s.a], 26, base[0])}, ${mix(th[s.c], 22, base[1])} 55%, ${base[2]})`;
+const app = (th, bg, label) => `<div class="tile" style="background:${bg};color:${th.ink}"><div><div class="s">October 2026</div><div class="t">today</div></div>
+  <div class="ring" style="background:conic-gradient(from -90deg,${th.blue},${th.violet} 72%,${th.track} 72%)"><span style="background:${th.canvas}">€494</span></div>
+  <div class="card" style="background:${th.glass};border:1px solid ${th.gb}"><b>Budget</b><small>€1,256 of €1,750</small></div>
+  <div class="card" style="background:${th.glass};border:1px solid ${th.gb}"><b>Fixed costs</b><small>4/5 paid</small></div></div>`;
+const onb = (th, s, bg) => `<div class="tile ob" style="background:${bg};color:${th.ink}"><div class="s" style="letter-spacing:.08em">0${s.n} / 03</div><h3>${s.t}</h3><p>${s.b}</p><div class="dot" style="background:linear-gradient(${th.canvas},${th.canvas}) padding-box,linear-gradient(135deg,${th.blue},${th.violet}) border-box"></div></div>`;
+const row = (title, note, cells) => `<section class="sec"><h2>${title}</h2><p class="cap">${note}</p><div class="row">${cells.join("")}</div></section>`;
+const L = THEME.light, D = THEME.dark;
+const lightOnbToday = (s) => recipe(L, s, [L.canvas, L.canvas, L.canvas]);
+const lightOnbDawn = (s) => `linear-gradient(165deg, ${mix(L[s.a], 24, L.dawn[0])}, ${mix(L[s.c], 18, L.dawn[1])} 55%, ${L.dawn[2]})`;
+const darkOnb = (s) => recipe(D, s, [D.canvas, D.canvas, D.canvas]);
+// my proposal for the dark app: the same recipe as the onboarding's first screen, on every screen
+const darkAppProposal = darkOnb(SCREENS[0]);
+document.getElementById("rows").innerHTML = [
+  row("Light today", "The app has its dawn gradient (cool blue into peach). The onboarding tints go over one flat light grey, so it ends cooler and plainer than the app.",
+    [app(L, `linear-gradient(180deg,${L.dawn.join(",")})`), ...SCREENS.map((s) => onb(L, s, lightOnbToday(s)))]),
+  row("Light, if the onboarding sits on the dawn gradient", "The same tints over the app's own dawn, so the onboarding ends in the peach like the app does. A small change; the app does not change at all.",
+    [app(L, `linear-gradient(180deg,${L.dawn.join(",")})`), ...SCREENS.map((s) => onb(L, s, lightOnbDawn(s)))]),
+  row("Dark today", "The app is flat graphite, the onboarding has blue, mint and violet tints. They do not look related.",
+    [app(D, `linear-gradient(180deg,${D.graphite.join(",")})`), ...SCREENS.map((s) => onb(D, s, darkOnb(s)))]),
+  row("Dark, my proposal: the app made like the onboarding", "The app's page background is the onboarding's first screen (blue into violet over the deep navy), the same on every screen. The onboarding does not change.",
+    [app(D, darkAppProposal), ...SCREENS.map((s) => onb(D, s, darkOnb(s)))]),
+].join("");
+</script>
+</body>
+</html>
