@@ -45,7 +45,7 @@ export function ThemeSwitcher() {
         aria-expanded={open}
         aria-label={t.ui.theme.choose}
         onClick={() => setOpen((o) => !o)}
-        className="glass grid size-11 place-items-center rounded-full"
+        className="liquid grid size-11 place-items-center rounded-full"
       >
         <Palette className="size-[18px]" />
       </button>

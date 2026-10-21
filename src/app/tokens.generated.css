@@ -12,6 +12,7 @@
   --action: #8fd0ff;
   --action-ink: #06121c;
   --select: #8fd0ff;
+  --mark: #8fd0ff;
   --soft: rgba(36,59,115,.08);
   --good: #17714a;
   --warn: #8f5200;
@@ -64,6 +65,7 @@
     --action: #8fd0ff;
     --action-ink: #06121c;
     --select: #8fd0ff;
+    --mark: #8fd0ff;
     --soft: rgba(143,208,255,.10);
     --good: #5ee0a0;
     --warn: #f2b84b;
@@ -116,6 +118,7 @@
   --action: #8fd0ff;
   --action-ink: #06121c;
   --select: #8fd0ff;
+  --mark: #8fd0ff;
   --soft: rgba(36,59,115,.08);
   --good: #17714a;
   --warn: #8f5200;
@@ -167,6 +170,7 @@
   --action: #8fd0ff;
   --action-ink: #06121c;
   --select: #8fd0ff;
+  --mark: #8fd0ff;
   --soft: rgba(143,208,255,.10);
   --good: #5ee0a0;
   --warn: #f2b84b;

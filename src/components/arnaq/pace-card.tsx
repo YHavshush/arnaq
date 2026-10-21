@@ -88,13 +88,13 @@ export async function PaceCard({ pace, month }: { pace: Pace; month: string }) {
                 className="block w-full min-w-[3px] rounded-[3px]"
                 style={{
                   height: h,
-                  background: isHigh ? "var(--accent)" : "var(--ink-muted)",
+                  background: isHigh ? "var(--mark)" : "var(--ink-muted)",
                   opacity: d.state === "future" ? 0.2 : isHigh ? 1 : 0.5,
                 }}
               />
               <b
                 className="mt-1 block size-1 rounded-full"
-                style={{ background: d.state === "today" ? "var(--accent)" : "transparent" }}
+                style={{ background: d.state === "today" ? "var(--mark)" : "transparent" }}
               />
             </div>
           );

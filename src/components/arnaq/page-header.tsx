@@ -25,14 +25,14 @@ export function PageHeader({
           <Link
             href={step.prev}
             aria-label={step.prevLabel}
-            className="glass grid size-11 place-items-center rounded-full"
+            className="liquid grid size-11 place-items-center rounded-full"
           >
             <ChevronLeft className="size-[18px]" />
           </Link>
           <Link
             href={step.next}
             aria-label={step.nextLabel}
-            className="glass grid size-11 place-items-center rounded-full"
+            className="liquid grid size-11 place-items-center rounded-full"
           >
             <ChevronRight className="size-[18px]" />
           </Link>

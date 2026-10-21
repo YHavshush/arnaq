@@ -22,6 +22,7 @@ function declarations(t: ThemeTokens): string[] {
     "action",
     "actionInk",
     "select",
+    "mark",
     "soft",
     "good",
     "warn",

@@ -72,7 +72,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
               <Link
                 href="/settings"
                 aria-label={t.ui.nav.settings}
-                className="glass grid size-11 place-items-center rounded-full"
+                className="liquid grid size-11 place-items-center rounded-full"
               >
                 <Settings className="size-[18px]" />
               </Link>

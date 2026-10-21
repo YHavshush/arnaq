@@ -72,13 +72,13 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
       <Section
         title={t.ui.forecast.progress}
         aside={
-          <nav aria-label={t.ui.forecast.horizon} className="bg-track inline-flex rounded-xl p-0.5">
+          <nav aria-label={t.ui.forecast.horizon} className="liquid seg">
             {HORIZONS.map((h) => (
               <Link
                 key={h}
                 href={`/forecast?months=${h}`}
                 aria-current={h === months ? "true" : undefined}
-                className="text-ink-muted aria-[current=true]:bg-surface aria-[current=true]:text-ink inline-flex min-h-9 min-w-9 items-center justify-center rounded-[10px] px-2.5 text-sm font-semibold"
+                className="seg-item inline-flex min-h-9 min-w-9 items-center justify-center px-2.5 text-sm font-semibold"
               >
                 {h}
               </Link>

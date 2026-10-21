@@ -220,11 +220,7 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
       }}
       className="glass fade-in grid gap-4 p-4"
     >
-      <div
-        role="radiogroup"
-        aria-label={f.kind}
-        className="bg-track inline-flex w-fit rounded-xl p-0.5"
-      >
+      <div role="radiogroup" aria-label={f.kind} className="liquid seg w-fit">
         {(["expense", "income"] as const).map((kind) => (
           <button
             key={kind}
@@ -232,7 +228,7 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
             role="radio"
             aria-checked={type === kind}
             onClick={() => setType(kind)}
-            className="text-ink-muted aria-checked:bg-surface aria-checked:text-ink min-h-10 rounded-[10px] px-4 text-sm font-semibold"
+            className="seg-item min-h-10 px-4 text-sm font-semibold"
           >
             {kind === "expense" ? f.expense : f.income}
           </button>

@@ -116,18 +116,14 @@ export function PrognoseChart({
   return (
     <div ref={box}>
       <div className="flex justify-end px-1 pb-1">
-        <div
-          role="group"
-          aria-label={t.ui.chart.viewLabel}
-          className="bg-track inline-flex rounded-xl p-0.5"
-        >
+        <div role="group" aria-label={t.ui.chart.viewLabel} className="liquid seg">
           {(["total", "monthly"] as const).map((v) => (
             <button
               key={v}
               type="button"
               aria-pressed={view === v}
               onClick={() => setView(v)}
-              className="text-ink-muted aria-[pressed=true]:bg-surface aria-[pressed=true]:text-ink inline-flex min-h-9 items-center justify-center rounded-[10px] px-3 text-sm font-semibold"
+              className="seg-item inline-flex min-h-9 items-center justify-center px-3 text-sm font-semibold"
             >
               {v === "total"
                 ? balance
@@ -149,8 +145,8 @@ export function PrognoseChart({
       >
         <defs>
           <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" style={{ stopColor: "var(--accent)", stopOpacity: 0.26 }} />
-            <stop offset="100%" style={{ stopColor: "var(--accent)", stopOpacity: 0 }} />
+            <stop offset="0%" style={{ stopColor: "var(--mark)", stopOpacity: 0.26 }} />
+            <stop offset="100%" style={{ stopColor: "var(--mark)", stopOpacity: 0 }} />
           </linearGradient>
         </defs>
 
@@ -187,7 +183,7 @@ export function PrognoseChart({
                 fill="none"
                 strokeWidth="2.5"
                 strokeLinecap="round"
-                style={{ stroke: "var(--accent)" }}
+                style={{ stroke: "var(--mark)" }}
               />
             )}
             {firstProjected !== -1 && (
@@ -197,7 +193,7 @@ export function PrognoseChart({
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeDasharray="6 5"
-                style={{ stroke: "var(--accent)" }}
+                style={{ stroke: "var(--mark)" }}
               />
             )}
           </>
@@ -254,7 +250,7 @@ export function PrognoseChart({
                 fill="none"
                 strokeWidth="2"
                 className="opacity-0 group-focus-visible:opacity-100"
-                style={{ stroke: "var(--accent)" }}
+                style={{ stroke: "var(--mark)" }}
               />
 
               {view === "total" ? (
@@ -264,8 +260,8 @@ export function PrognoseChart({
                   r={isSel ? 6.5 : 4}
                   strokeWidth={isSel ? 3 : 2.5}
                   style={{
-                    fill: isSel ? "var(--surface)" : "var(--accent)",
-                    stroke: "var(--accent)",
+                    fill: isSel ? "var(--surface)" : "var(--mark)",
+                    stroke: "var(--mark)",
                   }}
                 />
               ) : (
@@ -348,13 +344,13 @@ export function PrognoseChart({
         <span
           aria-hidden
           className="mr-1 inline-block h-0.5 w-5 align-middle"
-          style={{ background: "var(--accent)" }}
+          style={{ background: "var(--mark)" }}
         />{" "}
         {t.ui.chart.legendActual}
         <span
           aria-hidden
           className="mr-1 ml-4 inline-block h-0.5 w-5 border-t-2 border-dashed align-middle"
-          style={{ borderColor: "var(--accent)" }}
+          style={{ borderColor: "var(--mark)" }}
         />
         {t.ui.chart.legendForecast}.{" "}
         {balance ? t.ui.chart.legendHelpBalance : t.ui.chart.legendHelp}

@@ -52,6 +52,7 @@
   --color-action: var(--action);
   --color-action-ink: var(--action-ink);
   --color-select: var(--select);
+  --color-mark: var(--mark);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
@@ -156,6 +157,7 @@
   /* The bottom bar as liquid glass, in the spirit of Apple's: see-through with a strong blur and colour lift, a bright
      rim where light catches the edge, a soft sheen across it. Navigation and controls only, never reading surfaces. */
   .liquid {
+    position: relative;
     background: color-mix(in oklab, var(--glass-nav) 14%, transparent);
     border: 1px solid rgb(255 255 255 / 0.6);
     -webkit-backdrop-filter: blur(26px) saturate(2.1);
@@ -213,6 +215,37 @@
     background: rgb(255 255 255 / 0.14);
     border-color: rgb(255 255 255 / 0.3);
   }
+  /* Segmented controls (view and range pickers): a clear-glass track, the selected item a flat clear-glass bubble, the
+     same as the bottom bar. Put `liquid seg` on the track and `seg-item` on each choice. */
+  .seg {
+    display: inline-flex;
+    border-radius: 999px;
+    padding: 3px;
+  }
+  .seg-item {
+    position: relative;
+    z-index: 1;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    color: var(--nav-label);
+    transition:
+      background-color 200ms,
+      border-color 200ms,
+      color 200ms;
+  }
+  .seg-item[aria-pressed="true"],
+  .seg-item[aria-checked="true"],
+  .seg-item[aria-current="true"] {
+    color: var(--ink);
+    background: rgb(255 255 255 / 0.55);
+    border-color: rgb(255 255 255 / 0.9);
+  }
+  :root[data-mode="dark"] .seg-item[aria-pressed="true"],
+  :root[data-mode="dark"] .seg-item[aria-checked="true"],
+  :root[data-mode="dark"] .seg-item[aria-current="true"] {
+    background: rgb(255 255 255 / 0.14);
+    border-color: rgb(255 255 255 / 0.3);
+  }
   [data-pill-lens] {
     transition: transform 320ms cubic-bezier(0.3, 1.35, 0.5, 1);
   }
@@ -240,11 +273,15 @@
 @media (prefers-reduced-motion: no-preference) {
   /* Tappable frosted cards and buttons dip a little under the finger and spring back. */
   a.glass,
-  button.glass {
+  button.glass,
+  a.liquid,
+  button.liquid {
     transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   a.glass:active,
-  button.glass:active {
+  button.glass:active,
+  a.liquid:active,
+  button.liquid:active {
     transform: scale(0.97);
     transition-duration: 70ms;
   }

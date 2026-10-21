@@ -45,7 +45,7 @@ export function LanguageSwitcher() {
         aria-expanded={open}
         aria-label={t.ui.language.choose}
         onClick={() => setOpen((o) => !o)}
-        className="glass grid size-11 place-items-center rounded-full"
+        className="liquid grid size-11 place-items-center rounded-full"
       >
         <Languages className="size-[18px]" />
       </button>
