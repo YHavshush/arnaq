@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq dusk with the onboarding</title>
+<style>
+/* Dark today and the onboarding tints come from src/design/tokens.ts and src/components/arnaq/onboarding.tsx. */
+:root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --line:rgba(255,255,255,.14);
+  --blue:#2ac9ff; --violet:#7d8bff; --mint:#8fe0bd; --canvas:#141b28; --glass:rgba(255,255,255,.06); --glassb:rgba(255,255,255,.11); }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1120px; margin:0 auto; display:grid; gap:24px; }
+h1 { font:500 clamp(26px,5vw,36px)/1.1 Georgia,serif; margin:0; }
+h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .lead,.note { color:var(--muted); max-width:74ch; } .note { font-size:13px; }
+.grid2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.grid3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+@media (max-width:720px) { .grid2,.grid3 { grid-template-columns:minmax(0,1fr); } }
+.col { display:grid; gap:8px; align-content:start; min-width:0; }
+.cap { font-size:13px; color:var(--muted); }
+.panel { border-radius:22px; padding:16px; height:430px; display:grid; align-content:start; gap:12px; overflow:hidden; }
+.panel .t { font:500 28px/1.1 Georgia,serif; } .s { font-size:12px; color:var(--muted); }
+.ring { width:112px; height:112px; border-radius:50%; display:grid; place-items:center; margin:2px auto; }
+.ring span { border-radius:50%; width:92px; height:92px; display:grid; place-items:center; font:600 23px -apple-system,system-ui,sans-serif; letter-spacing:-.03em; }
+.card { border-radius:18px; padding:12px; display:grid; gap:4px; font-size:14px; background:var(--glass); border:1px solid var(--glassb); }
+.card small { font-size:12.5px; color:var(--muted); }
+/* onboarding mock screens */
+.ob { border-radius:26px; height:420px; padding:18px 16px; display:grid; grid-template-rows:auto 1fr auto; gap:6px; overflow:hidden; position:relative; }
+.ob h3 { margin:0; font:400 31px/.98 Georgia,serif; letter-spacing:-.02em; white-space:pre-line; }
+.ob p { font-size:12.5px; color:var(--muted); max-width:26ch; margin-top:6px; }
+.vis { display:grid; place-items:center; }
+.dot { width:86px; height:86px; border-radius:50%; border:8px solid transparent; background:linear-gradient(var(--canvas),var(--canvas)) padding-box, linear-gradient(135deg,var(--blue),var(--violet)) border-box; opacity:.95; }
+.btn { border-radius:99px; padding:10px; text-align:center; font-weight:600; font-size:13px; }
+.cta { background:var(--blue); color:#06121c; } .ghost { background:var(--glass); border:1px solid var(--glassb); }
+.pager { font-size:11px; color:var(--muted); letter-spacing:.08em; }
+</style>
+</head>
+<body>
+<main>
+  <header style="display:grid;gap:8px">
+    <h1>Dusk with the onboarding</h1>
+    <p class="lead">Two things. First, the top of Dusk A made lighter, as you asked. Second, how the warm bottom colour sits with the onboarding screens, because the onboarding today ends in a cool dark blue and would not match the warm bottom.</p>
+  </header>
+
+  <section style="display:grid;gap:10px">
+    <h2>1. The top, lighter</h2>
+    <div class="grid2" id="tops"></div>
+  </section>
+
+  <section style="display:grid;gap:10px">
+    <h2>2. The onboarding</h2>
+    <p class="note">Top row: how it is today. Bottom row: the same three screens with the dusk background underneath, so the tints blend into the warm bottom and the intro matches the app.</p>
+    <div class="grid3" id="ob-now"></div>
+    <div class="grid3" id="ob-dusk"></div>
+  </section>
+</main>
+<script>
+const rgb = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+const lin = (c) => { c /= 255; return c <= .03928 ? c / 12.92 : Math.pow((c + .055) / 1.055, 2.4); };
+const lum = ([r, g, b]) => .2126 * lin(r) + .7152 * lin(g) + .0722 * lin(b);
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+const over = (bg, a) => bg.map((v) => v * (1 - a) + 255 * a);
+const lightness = (h) => { const [r, g, b] = rgb(h).map((v) => v / 255); return Math.round(((Math.max(r, g, b) + Math.min(r, g, b)) / 2) * 100); };
+
+const TOPS = [
+  { key: "Dusk A (as shown before)", stops: ["#1f2b47", "#262a3d", "#2b2522"] },
+  { key: "Dusk A, lighter top", stops: ["#2a3a5f", "#2b3048", "#2c2623"] },
+];
+document.getElementById("tops").innerHTML = TOPS.map((c) => {
+  const worst = Math.min(...c.stops.map((s) => ratio(rgb("#b2bac8"), over(rgb(s), .06))));
+  return `<div class="col"><div class="cap"><b>${c.key}</b> · ${c.stops.map((s) => s).join(" · ")} · lightness ${lightness(c.stops[0])} to ${lightness(c.stops[2])} · grey text ${worst.toFixed(1)} to 1</div>
+  <div class="panel" style="background:linear-gradient(180deg,${c.stops.join(",")})">
+    <div><div class="s">October 2026</div><div class="t">today</div></div>
+    <div class="ring" style="background:conic-gradient(from -90deg,var(--blue),var(--violet) 72%,rgba(255,255,255,.085) 72%)"><span style="background:${c.stops[1]}">€494</span></div>
+    <div class="card"><b>Budget</b><small>€1,256 of €1,750</small></div>
+    <div class="card"><b>Fixed costs</b><small>4/5 paid, €35 still to come</small></div>
+    <div class="card"><b>Savings</b><small>Under way, €1,353 of €5,000</small></div>
+  </div></div>`;
+}).join("");
+
+const S = [
+  { n: 1, t: "track\neffortlessly.", b: "Say goodbye to messy spreadsheets. Streamline your money in one clean space.", tint1: "var(--blue)", tint2: "var(--violet)", cta: false },
+  { n: 2, t: "see what's\nleft.", b: "See where your money goes and set spending budgets that keep you on track.", tint1: "var(--mint)", tint2: "var(--blue)", cta: false },
+  { n: 3, t: "secure your\ngoals.", b: "Set a savings goal and watch it grow with every statement you add.", tint1: "var(--violet)", tint2: "var(--blue)", cta: true },
+];
+const screen = (s, bg) => `<div class="ob" style="background:${bg}"><div><div class="pager">0${s.n} / 03</div><h3 style="margin-top:14px">${s.t}</h3><p>${s.b}</p></div><div class="vis"><div class="dot"></div></div><div style="display:grid;gap:7px;min-height:72px;align-content:end">${s.cta ? '<div class="btn cta">Get Started</div><div class="btn ghost">Try it with sample data</div>' : ""}</div></div>`;
+// today: tint over the dark canvas, ending in the canvas
+document.getElementById("ob-now").innerHTML = S.map((s) => screen(s, `linear-gradient(165deg, color-mix(in oklab, ${s.tint1} 26%, #141b28), color-mix(in oklab, ${s.tint2} 22%, #141b28) 55%, #141b28)`)).join("");
+// with dusk: the same tints over the dusk gradient, ending in its warm bottom
+const D = ["#2a3a5f", "#2b3048", "#2c2623"];
+document.getElementById("ob-dusk").innerHTML = S.map((s) => screen(s, `linear-gradient(165deg, color-mix(in oklab, ${s.tint1} 24%, ${D[0]}), color-mix(in oklab, ${s.tint2} 18%, ${D[1]}) 55%, ${D[2]})`)).join("");
+</script>
+</body>
+</html>
