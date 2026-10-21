@@ -8,6 +8,7 @@ import {
   useState,
   useSyncExternalStore,
   type CSSProperties,
+  type ReactNode,
   type RefObject,
 } from "react";
 import { applyTheme, readTheme, subscribeTheme } from "@/design/theme-client";
@@ -377,6 +378,8 @@ function Goals({ active }: { active: boolean }) {
     root,
     (el) => {
       const reduced = reducedMotion();
+      const arc = q<SVGCircleElement>(el, "[data-arc]");
+      if (arc) arc.style.strokeDashoffset = reduced ? "0" : "100";
       if (reduced) {
         const d = q<HTMLElement>(el, "[data-dial]");
         if (d) d.style.opacity = "0.35";
@@ -420,6 +423,25 @@ function Goals({ active }: { active: boolean }) {
           duration: 2600,
           easing: "ease-in-out",
         }),
+        // A ring round the dial fills as the goal does, and a soft pulse marks the moment it is reached.
+        play(
+          arc,
+          [
+            { strokeDashoffset: 100, opacity: 0 },
+            { strokeDashoffset: 100, opacity: 1, offset: 0.02 },
+            { strokeDashoffset: 0, opacity: 1 },
+          ],
+          { delay: 900, duration: 1700, easing: "cubic-bezier(.45,.05,.2,1)" },
+        ),
+        play(
+          q(el, "[data-burst]"),
+          [
+            { opacity: 0, transform: "scale(1)" },
+            { opacity: 0.6, transform: "scale(1.02)", offset: 0.02 },
+            { opacity: 0, transform: "scale(1.5)" },
+          ],
+          { delay: 2600, duration: 1000, easing: "ease-out" },
+        ),
         meter(q(el, "[data-m]"), 1, 900, 1700),
         count(q(el, "[data-pct]"), 100, 1700, 900, (v) => `${Math.round(v)}%`),
         count(q(el, "[data-amt]"), 1800, 1700, 900, (v) =>
@@ -482,6 +504,38 @@ function Goals({ active }: { active: boolean }) {
         ))}
         <circle cx="100" cy="100" r="14" style={{ fill: "var(--ring-accent-from)" }} />
       </svg>
+      <svg
+        viewBox="0 0 200 200"
+        className="pointer-events-none absolute top-0 size-[200px]"
+        fill="none"
+        aria-hidden
+      >
+        <defs>
+          <linearGradient id="onb-arc" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" style={{ stopColor: "var(--ring-accent-from)" }} />
+            <stop offset="1" style={{ stopColor: "var(--ring-accent-to)" }} />
+          </linearGradient>
+        </defs>
+        <circle
+          data-arc
+          cx="100"
+          cy="100"
+          r="97"
+          strokeWidth="4"
+          strokeLinecap="round"
+          pathLength={100}
+          strokeDasharray="100 100"
+          transform="rotate(-90 100 100)"
+          stroke="url(#onb-arc)"
+          style={{ strokeDashoffset: 100, opacity: 0 }}
+        />
+      </svg>
+      <div
+        data-burst
+        aria-hidden
+        className="pointer-events-none absolute top-0 size-[200px] rounded-full border-2 opacity-0"
+        style={{ borderColor: "var(--ring-accent-from)" }}
+      />
       <div data-goal className="glass absolute bottom-0 grid w-full gap-2.5 p-4">
         <span
           data-tick
@@ -512,6 +566,39 @@ function Goals({ active }: { active: boolean }) {
 
 function setCookie(name: string) {
   document.cookie = `${name}=1; path=/; max-age=31536000; samesite=lax`;
+}
+
+/** The headline and the text under it rise in softly, one after the other, each time their screen comes into view. */
+function Reveal({
+  active,
+  className,
+  children,
+}: {
+  active: boolean;
+  className?: string;
+  children: ReactNode;
+}) {
+  const root = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = root.current;
+    if (!active || !el) return;
+    const stops = [...el.children].map((c, i) =>
+      play(
+        c,
+        [
+          { opacity: 0, transform: "translateY(14px)" },
+          { opacity: 1, transform: "translateY(0)" },
+        ],
+        { delay: 80 + i * 130, duration: 700, easing: EASE },
+      ),
+    );
+    return () => stops.forEach((stop) => stop());
+  }, [active]);
+  return (
+    <div ref={root} className={className}>
+      {children}
+    </div>
+  );
 }
 
 /**
@@ -642,12 +729,12 @@ export function Onboarding() {
               aria-hidden={index !== k}
               className="grid w-full flex-none grid-rows-[250px_1fr_140px] px-6"
             >
-              <div className="grid content-start gap-3 pt-[64px]">
+              <Reveal active={index === k} className="grid content-start gap-3 pt-[64px]">
                 <h1 className="font-display text-[clamp(40px,12.5vw,52px)] leading-[.98] font-normal tracking-[-0.02em] whitespace-pre-line">
                   {s.title}
                 </h1>
                 <p className="text-ink-muted max-w-[31ch] text-[15px]">{s.body}</p>
-              </div>
+              </Reveal>
               <div
                 className={`grid place-items-center transition-transform duration-[550ms] ease-[cubic-bezier(.3,.8,.3,1)] motion-reduce:transition-none ${k === 1 ? "pb-8" : ""}`}
                 style={{
