@@ -233,25 +233,25 @@
   }
 }
 
-/* The onboarding's ripple and glow: soft logo colours on dark, a stronger violet-blue on the light dawn.
-   The glow is two separate layers (a blue one and a larger violet one) so they can breathe and drift out of step.
+/* The onboarding's ripple and glow: soft logo colours on dark, a warm white and apricot bloom on the light dawn.
+   The glow is two separate layers (a core and a larger halo) so they can breathe and drift out of step.
    Each has many eased stops and reaches zero exactly at the edge of its box, so it fades out gently instead of
    stopping at a visible rim. */
 .onb {
   --onb-ripple: color-mix(in oklab, var(--ring-accent-to) 75%, transparent);
   --onb-glow: radial-gradient(
     closest-side,
-    color-mix(in oklab, var(--ring-accent-from) 32%, transparent),
-    color-mix(in oklab, var(--ring-accent-from) 23%, transparent) 25%,
-    color-mix(in oklab, var(--ring-accent-from) 11%, transparent) 55%,
-    color-mix(in oklab, var(--ring-accent-from) 3%, transparent) 80%,
+    rgb(255 255 255 / 0.95),
+    rgb(255 255 255 / 0.75) 25%,
+    rgb(255 255 255 / 0.4) 55%,
+    rgb(255 255 255 / 0.1) 80%,
     transparent
   );
   --onb-glow-2: radial-gradient(
     closest-side,
-    color-mix(in oklab, var(--ring-accent-to) 20%, transparent),
-    color-mix(in oklab, var(--ring-accent-to) 13%, transparent) 35%,
-    color-mix(in oklab, var(--ring-accent-to) 5%, transparent) 70%,
+    rgb(255 176 120 / 0.75),
+    rgb(255 176 120 / 0.5) 35%,
+    rgb(255 176 120 / 0.18) 70%,
     transparent
   );
 }

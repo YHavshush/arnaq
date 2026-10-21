@@ -114,7 +114,7 @@ function useOnActive(
 const q = <T extends Element>(el: HTMLElement, sel: string) => el.querySelector(sel) as T | null;
 
 /**
- * The glow behind the visuals: two soft layers (blue, and a larger violet one) that rise slowly into view, then
+ * The glow behind the visuals: two soft layers (a core and a larger halo) that rise slowly into view, then
  * breathe and drift a little, out of step with each other, so the light feels alive and never repeats exactly.
  * Both fade to nothing at their edge. Under reduced motion they just sit there.
  */
