@@ -147,10 +147,7 @@ export function Nav({ badge }: { badge?: ReactNode }) {
           }}
         >
           <span data-pill-lens className="block h-full">
-            <span
-              data-pill-body
-              className="bg-accent block h-full rounded-full bg-[linear-gradient(180deg,rgb(255_255_255/.24),transparent_55%)] shadow-[inset_0_1px_1px_rgb(255_255_255/.5),inset_0_-2px_5px_rgb(0_0_0/.14),0_8px_16px_-8px_var(--accent)]"
-            />
+            <span data-pill-body className="block h-full rounded-full" />
           </span>
         </span>
         {ITEMS.map(({ href, key, icon: Icon }) => (
@@ -160,7 +157,7 @@ export function Nav({ badge }: { badge?: ReactNode }) {
             aria-current={isActive(path, href) ? "page" : undefined}
             onClick={() => setTap({ href, from: path })}
             className={`relative z-10 grid min-h-12 content-center justify-items-center gap-0.5 rounded-full px-1 py-1.5 text-[11.5px] font-semibold transition-[transform,color,min-height,gap] duration-200 group-data-[compact=true]/nav:min-h-10 group-data-[compact=true]/nav:gap-0 active:scale-[.92] motion-reduce:transition-none ${
-              shown === href ? "text-accent-ink" : "text-ink-muted"
+              shown === href ? "text-ink" : "text-[color:var(--nav-label)]"
             }`}
           >
             <Icon data-icon={href} className="size-5" />
