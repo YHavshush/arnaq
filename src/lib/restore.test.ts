@@ -148,6 +148,7 @@ describe("restoreFromBackup", () => {
     const { db, backup } = await seeded();
     const old = JSON.parse(JSON.stringify(backup));
     old.version = 1;
+    old.app = "kasboek"; // backups made before the rename carry the old name and must still restore
     old.tables.categories = [{ id: 1, name: "Boodschappen", type: "expense", sortOrder: 4 }];
     old.tables.categorisationRules = [];
     old.tables.budgets = [];

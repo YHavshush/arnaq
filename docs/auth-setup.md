@@ -25,7 +25,7 @@ Confirm signup:
 
 ```html
 <h2>Confirm your email address</h2>
-<p>Press the button to finish creating your Kasboek account.</p>
+<p>Press the button to finish creating your arnaq account.</p>
 <p>
   <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/"
     >Confirm email address</a
@@ -38,7 +38,7 @@ Reset password:
 ```html
 <h2>Choose a new password</h2>
 <p>
-  Press the button to choose a new password for your Kasboek account. If you did not ask for this,
+  Press the button to choose a new password for your arnaq account. If you did not ask for this,
   ignore this email.
 </p>
 <p>

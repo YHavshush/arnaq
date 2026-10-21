@@ -1,4 +1,4 @@
-# Privacy notice for Kasboek (DRAFT, in English)
+# Privacy notice for arnaq (DRAFT, in English)
 
 > **Draft, not legal advice.** Written from what the app actually does on 2026-10-16. Fill in the
 > bracketed parts, have it read by the owner and, before strangers use the app, by a lawyer. Provide it in
@@ -8,9 +8,9 @@
 
 [Name or company], [address], [email]. This is the controller of the personal data described below.
 
-## What Kasboek is
+## What arnaq is
 
-A personal budget tracker. You create an account, upload your own bank statements, and Kasboek shows
+A personal budget tracker. You create an account, upload your own bank statements, and arnaq shows
 where your money goes and how the coming months look.
 
 ## What we store
@@ -19,7 +19,7 @@ where your money goes and how the coming months look.
 | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------- |
 | Your email address and a password (stored only as a hash by Supabase Auth)                                     | to sign you in                                                                     | Supabase, EU (Frankfurt)                  |
 | The transactions in the statements you upload: date, amount, counterparty name and account number, description | to show your overview and forecast                                                 | Supabase, EU (Frankfurt)                  |
-| Your categories, rules, budgets, fixed costs, the shops Kasboek has learned from your choices, your settings   | to work as you set it up                                                           | same                                      |
+| Your categories, rules, budgets, fixed costs, the shops arnaq has learned from your choices, your settings   | to work as you set it up                                                           | same                                      |
 | A language and a theme choice                                                                                  | to remember your preference                                                        | your browser (a cookie and local storage) |
 | Sign-in cookies                                                                                                | to keep you signed in; they are not readable by scripts and only sent to this site | your browser                              |
 
@@ -29,7 +29,7 @@ We do not use advertising or analytics trackers. We do not sell data.
 
 - **Supabase** (database and sign-in), data in the EU. [Link the data processing agreement.]
 - **[Hosting provider, e.g. Vercel or Hetzner]**: serves the app; it handles requests but does not keep your data. [DPA.]
-- **Anthropic** (the company behind Claude), **only if you switch on "Kasboek AI"** after reading the
+- **Anthropic** (the company behind Claude), **only if you switch on "arnaq AI"** after reading the
   consent text. We then send the name of a shop and a short description with numbers, account numbers and
   e-mail addresses removed. We never send amounts, dates, account numbers, your name, or payments to and
   from people. Anthropic is outside the EU; the transfer relies on [standard contractual clauses / its DPA]. You can switch
@@ -55,4 +55,4 @@ extract transactions and the files themselves are not kept.
 ## Changes
 
 If this notice changes in a way that matters (a new processor, a new use of your data), we will tell you in
-the app and, for Kasboek AI, ask for your consent again.
+the app and, for arnaq AI, ask for your consent again.

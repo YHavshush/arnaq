@@ -1,5 +1,5 @@
 import { Suspense, type ReactNode } from "react";
-import { AuthShell } from "@/components/kasboek/auth-shell";
+import { AuthShell } from "@/components/arnaq/auth-shell";
 import { I18nProvider } from "@/i18n/client";
 import { getLocale } from "@/i18n/server";
 

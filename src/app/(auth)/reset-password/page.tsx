@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { ResetForm } from "@/components/kasboek/auth-forms";
+import { ResetForm } from "@/components/arnaq/auth-forms";
 import { requestTime } from "@/lib/api";
 import { requireSignedIn } from "@/lib/auth/guards";
 

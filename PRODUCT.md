@@ -12,7 +12,7 @@ One person (the owner), a Dutch student renting a room, with a Rabobank current 
 
 ## Product Purpose
 
-Kasboek answers one question in a second: how much is still free to spend this month, after the fixed costs that are still to come. It turns monthly bank statements into budget versus actual, fixed costs and income that match themselves against the statements (no double counting), and a forecast over a horizon the owner chooses. Success is that the owner opens it instead of their banking apps to decide whether they can afford something.
+arnaq answers one question in a second: how much is still free to spend this month, after the fixed costs that are still to come. It turns monthly bank statements into budget versus actual, fixed costs and income that match themselves against the statements (no double counting), and a forecast over a horizon the owner chooses. Success is that the owner opens it instead of their banking apps to decide whether they can afford something.
 
 ## Positioning
 
@@ -28,7 +28,7 @@ Money is integer cents. The forecast is read-only. Internal transfers between ow
 
 ## Brand Commitments
 
-Name: Kasboek. Voice: plain Dutch, second person, no jargon, no alarm. The owner chose the look (see DESIGN.md) and has final say on it.
+Name: arnaq. Voice: plain Dutch, second person, no jargon, no alarm. The owner chose the look (see DESIGN.md) and has final say on it.
 
 ## Evidence on Hand
 

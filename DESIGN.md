@@ -1,6 +1,6 @@
 # DESIGN.md
 
-The design system for Kasboek. The look was chosen by the owner over eleven prototype rounds (`docs/design/`, index in `docs/design/README.md`). This file records what was decided and why, so later work does not relitigate it.
+The design system for arnaq. The look was chosen by the owner over eleven prototype rounds (`docs/design/`, index in `docs/design/README.md`). This file records what was decided and why, so later work does not relitigate it.
 
 **Source of truth for colour: `src/design/tokens.ts`.** `npm run tokens` generates `src/app/tokens.generated.css`. Tests (`src/design/tokens.test.ts`) fail if the generated file is stale or any text pair drops below WCAG AA (4.5:1). Never edit the generated CSS by hand.
 

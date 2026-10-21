@@ -43,7 +43,7 @@ export async function setSmartProvider(
 ): Promise<void> {
   if (provider === "chatgpt") throw new SettingsError("This option is not available yet.");
   if (provider === "claude") {
-    if (!opts.entitled) throw new SettingsError("Kasboek AI is part of Kasboek Plus.");
+    if (!opts.entitled) throw new SettingsError("arnaq AI is part of arnaq plus.");
     if (!opts.consent) throw new SettingsError("Agree to what is sent before switching this on.");
   }
   const values =

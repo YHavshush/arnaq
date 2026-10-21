@@ -19,7 +19,7 @@ Newest first. Decisions, research and state of the project that are not obvious 
   shadow repeats what the ring colour already says, and `DESIGN.md` already treats a third status signal
   as noise (the status wash was removed in light for that reason); depth already comes from the glass
   cards; no Safari or hairline-gap risk. Close call: the research says nothing specific about ring glows.
-  Keep the switch in one place (`src/components/kasboek/ring.tsx`, the light shadow element, and
+  Keep the switch in one place (`src/components/arnaq/ring.tsx`, the light shadow element, and
   `glowStyle` in `tokens.ts`) so F can come back. Comparison page: `docs/design/ring-f-vs-a.html`.
   Related finding for the same pass: the light end of the ring gradients (for example `#8fe0bd`) is far
   below 3:1 against the page (WCAG non-text contrast); darken the light end of each light gradient.

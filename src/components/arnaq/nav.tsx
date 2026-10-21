@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useI18n } from "@/i18n/client";
+import { Wordmark } from "./logo";
 
 const ITEMS: {
   href: string;
@@ -44,9 +45,8 @@ export function Nav({ badge }: { badge?: ReactNode }) {
         ))}
       </nav>
       <aside className="glass-nav sticky top-0 hidden h-dvh flex-col gap-1 self-start border-y-0 border-s-0 px-3 py-5 @min-[900px]/app:flex">
-        <div className="font-display flex items-center gap-2 px-3 pb-5 text-xl font-medium">
-          <span aria-hidden className="bg-accent size-5 rounded-md" />
-          {t.ui.brand}
+        <div className="px-3 pb-5">
+          <Wordmark title={t.ui.brand} className="h-6 w-auto" />
         </div>
         {ITEMS.map(({ href, key, icon: Icon }) => (
           <Link

@@ -91,7 +91,7 @@ export const view: typeof en = {
     attention: {
       uncategorised: (n: number) =>
         n === 1 ? "1 transactie zonder categorie" : `${n} transacties zonder categorie`,
-      uncategorisedSub: "Sorteer ze en Kasboek onthoudt je keuze",
+      uncategorisedSub: "Sorteer ze en arnaq onthoudt je keuze",
       incomeMissing: (name: string) => `${name} nog niet binnen`,
       expenseMissing: (name: string) => `${name} nog niet betaald`,
       expectedOn: (date: string) => `Verwacht op ${date}, wordt niet meegeteld`,

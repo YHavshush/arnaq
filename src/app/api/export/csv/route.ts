@@ -10,7 +10,7 @@ export async function GET() {
       new Response(await userDb((db) => transactionsCsv(db)), {
         headers: {
           "content-type": "text/csv; charset=utf-8",
-          "content-disposition": `attachment; filename="kasboek-transacties-${todayIso()}.csv"`,
+          "content-disposition": `attachment; filename="arnaq-transacties-${todayIso()}.csv"`,
           "cache-control": "no-store",
         },
       }),

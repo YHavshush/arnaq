@@ -10,7 +10,7 @@ import {
   type SmartProviderId,
 } from "@/lib/smart/settings";
 
-/** GET: the person's smart settings and whether they may use Kasboek AI. */
+/** GET: the person's smart settings and whether they may use arnaq AI. */
 export async function GET() {
   return await handle(async () => {
     const entitled = isEntitled(await currentUserId());

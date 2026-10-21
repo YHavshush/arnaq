@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
-import { Hero } from "@/components/kasboek/hero";
-import { MonthList } from "@/components/kasboek/month-list";
-import { MoodSetter } from "@/components/kasboek/mood";
-import { PageHeader, Section } from "@/components/kasboek/page-header";
-import { PrognoseChart } from "@/components/kasboek/prognose-chart";
-import { EmptyState, HeroSkeleton } from "@/components/kasboek/states";
+import { Hero } from "@/components/arnaq/hero";
+import { MonthList } from "@/components/arnaq/month-list";
+import { MoodSetter } from "@/components/arnaq/mood";
+import { PageHeader, Section } from "@/components/arnaq/page-header";
+import { PrognoseChart } from "@/components/arnaq/prognose-chart";
+import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { formatter } from "@/lib/view/format";

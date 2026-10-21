@@ -16,7 +16,7 @@ interface Item {
   amount: number;
   counterparty: string | null;
   description: string | null;
-  /** null: found by Kasboek itself; otherwise the person chose it (or taught it). */
+  /** null: found by arnaq itself; otherwise the person chose it (or taught it). */
   source: string | null;
   /** The category it is in (own accounts or savings). */
   categoryName: string | null;

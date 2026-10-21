@@ -4,14 +4,14 @@ const plain = (text: string) => ({ text });
 
 /** Text on the screens and in the components. Amounts and dates arrive formatted. */
 export const ui = {
-  brand: "Kasboek",
+  brand: "arnaq",
   skipToContent: "Skip to content",
   nav: {
     label: "Main menu",
-    overview: "Overview",
-    forecast: "Forecast",
-    fixedCosts: "Fixed items",
-    upload: "Upload",
+    overview: "today",
+    forecast: "ahead",
+    fixedCosts: "fixed",
+    upload: "add",
     settings: "Settings",
     toSort: (n: number) => `${n} to sort`,
   },
@@ -47,7 +47,7 @@ export const ui = {
   },
   step: { to: (month: string) => `Go to ${month}` },
   overview: {
-    title: "Overview",
+    title: "today",
     emptyTitle: (month: string) => `Nothing in ${month} yet`,
     emptyBody:
       "Upload a statement from your bank to see how this month is going. You can set a budget afterwards.",
@@ -87,7 +87,7 @@ export const ui = {
       `Based on ${n} ${n === 1 ? "transaction" : "transactions"} this month. Transfers between your own accounts and rows in another currency are not counted. Fixed costs still to come are already taken off what is free.`,
   },
   forecast: {
-    title: "Forecast",
+    title: "ahead",
     subEmpty: "How the coming months look",
     subRange: (n: number) => `The next ${n} months`,
     emptyTitle: "Nothing to forecast yet",
@@ -130,7 +130,7 @@ export const ui = {
     table: { caption: "Forecast per month", month: "Month", total: "Total", growth: "Growth" },
   },
   fixed: {
-    title: "Fixed items",
+    title: "fixed",
     ring: (paid: number, total: number) => `${paid} of ${total} fixed costs paid`,
     caption: "paid",
     emptyTitle: "No fixed items yet",
@@ -187,7 +187,7 @@ export const ui = {
     },
   },
   upload: {
-    title: "Upload",
+    title: "add",
     sub: "One statement per bank, per period",
     ring: (sorted: number, total: number) => `${sorted} of ${total} transactions sorted`,
     done: "Done",
@@ -267,7 +267,7 @@ export const ui = {
     auto: {
       title: "Sorted automatically",
       aside: (n: number) => `${n} to check`,
-      intro: "Kasboek sorted these. Check them: a correction is remembered for the same shop.",
+      intro: "arnaq sorted these. Check them: a correction is remembered for the same shop.",
       label: "Automatic",
       undo: "Undo",
       undoFor: (name: string) => `Undo the category of ${name}`,
@@ -295,7 +295,7 @@ export const ui = {
     sub: "Your data and your rules",
     backup: "Backup",
     backupBody:
-      "Keep a copy of everything Kasboek knows about you. The backup is one file you store yourself; the list of transactions fits in a spreadsheet.",
+      "Keep a copy of everything arnaq knows about you. The backup is one file you store yourself; the list of transactions fits in a spreadsheet.",
     backupFull: "Full backup (JSON)",
     backupCsv: "Transactions (CSV)",
     appearance: "Language and theme",
@@ -317,14 +317,14 @@ export const ui = {
     smart: {
       title: "Smart sorting",
       intro:
-        "Kasboek always sorts what it recognises by itself. Smart sorting can also ask a language model about shops it does not know. Off by default.",
+        "arnaq always sorts what it recognises by itself. Smart sorting can also ask a language model about shops it does not know. Off by default.",
       off: "Off",
-      offHint: "Nothing leaves Kasboek.",
-      claude: "Kasboek AI",
+      offHint: "Nothing leaves arnaq.",
+      claude: "arnaq AI",
       claudeHint: "Asks Claude (Anthropic) about unknown shops.",
       chatgpt: "Your ChatGPT plan",
       chatgptHint: "Coming later.",
-      needsPlus: "Part of Kasboek Plus.",
+      needsPlus: "Part of arnaq plus.",
       notAvailable: "Not available yet.",
       consentTitle: "Before you switch this on",
       consentSends:
@@ -340,13 +340,13 @@ export const ui = {
     },
     restore: {
       title: "Restore a backup",
-      body: "Replaces everything in Kasboek with the contents of a backup file you made with Full backup. What you have now is deleted first.",
+      body: "Replaces everything in arnaq with the contents of a backup file you made with Full backup. What you have now is deleted first.",
       choose: "Choose the backup file",
       agree: "I understand that my current data is replaced",
       button: "Restore",
       working: "Restoring…",
       done: "The backup is restored.",
-      notBackup: "That is not a Kasboek backup file.",
+      notBackup: "That is not a arnaq backup file.",
     },
     erase: {
       title: "Delete my data",
@@ -357,7 +357,7 @@ export const ui = {
       done: "All your data is deleted.",
     },
     advanced: "Advanced",
-    advancedHint: "Sorting rules and the shops Kasboek has learned. You rarely need these.",
+    advancedHint: "Sorting rules and the shops arnaq has learned. You rarely need these.",
     learned: {
       title: "Learned shops",
       aside: (n: number) => `${n} shops`,
