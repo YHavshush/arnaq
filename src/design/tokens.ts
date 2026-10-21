@@ -81,7 +81,7 @@ export interface ThemeTokens {
   /** Fill of primary buttons and the text on it. Own tokens so buttons can differ from the text accent. */
   action: string;
   actionInk: string;
-  /** Graphic marks: chart lines, dots, areas and bars. The same pale sky in both themes (text links keep `accent`). */
+  /** Graphic marks: chart lines, dots, areas and bars. The same as `accent` today (ink-blue in light, pale sky in dark); its own token so marks can change apart from text links. */
   mark: string;
   /** Selected state of radio buttons and toggles (the dot). Needs 3:1 against the card, unlike a button fill. */
   select: string;
@@ -140,10 +140,10 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     track: "rgba(23,32,46,.10)",
     accent: "#243b73",
     accentInk: "#ffffff",
-    action: "#8fd0ff", // the same pale sky as dark: one button colour in the app (the onboarding keeps the logo cyan)
-    actionInk: "#06121c",
-    select: "#8fd0ff",
-    mark: "#8fd0ff",
+    action: "#243b73", // light keeps the original ink-blue; dark uses the pale sky
+    actionInk: "#ffffff",
+    select: "#243b73",
+    mark: "#243b73",
     soft: "rgba(36,59,115,.08)",
     good: "#17714a",
     warn: "#8f5200",
