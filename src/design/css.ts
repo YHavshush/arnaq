@@ -1,27 +1,14 @@
-import {
-  CHIPS,
-  MOODS,
-  THEMES,
-  TONES,
-  statusWash,
-  themes,
-  type Mood,
-  type ThemeName,
-  type ThemeTokens,
-} from "./tokens";
+import { CHIPS, THEMES, TONES, themes, type ThemeName, type ThemeTokens } from "./tokens";
 
-/** Vertical gradient, with a radial status wash on top when the theme has one. */
-export function pageBg(t: ThemeTokens, mood: Mood, withWash: boolean): string {
-  const n = t.page.stops.length - 1;
-  const gradient = t.page.stops.map((c, i) => `${c} ${Math.round((i / n) * 100)}%`).join(", ");
-  if (!withWash) return `linear-gradient(180deg, ${gradient})`;
-  const [r, g, b, a] = t.page.wash[mood];
-  return `radial-gradient(900px 540px at 50% -6%, rgba(${r},${g},${b},${a}), transparent 68%), linear-gradient(180deg, ${gradient})`;
+/** The page background: one gradient, the same on every screen. */
+export function pageBg(t: ThemeTokens): string {
+  const { angle, stops, at } = t.page;
+  return `linear-gradient(${angle}deg, ${stops.map((c, i) => `${c} ${at[i]}%`).join(", ")})`;
 }
 
 const kebab = (s: string) => s.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`);
 
-function declarations(t: ThemeTokens, withWash: boolean): string[] {
+function declarations(t: ThemeTokens): string[] {
   const d: string[] = [];
   for (const k of [
     "canvas",
@@ -53,15 +40,13 @@ function declarations(t: ThemeTokens, withWash: boolean): string[] {
     `--glass-shadow: ${t.glass.shadow};`,
     `--glass-nav: ${t.glass.nav};`,
   );
-  for (const m of MOODS) d.push(`--page-bg-${m}: ${pageBg(t, m, withWash)};`);
+  // The last stop is where the page ends; the onboarding fades its tints into it.
+  d.push(`--page-bg: ${pageBg(t)};`, `--page-end: ${t.page.stops[t.page.stops.length - 1]};`);
   return d;
 }
 
 const block = (selector: string, name: ThemeName, scheme: "light" | "dark", indent = "") =>
-  `${indent}${selector} {\n${indent}  color-scheme: ${scheme};\n${declarations(
-    themes[name],
-    statusWash[name],
-  )
+  `${indent}${selector} {\n${indent}  color-scheme: ${scheme};\n${declarations(themes[name])
     .map((l) => `${indent}  ${l}`)
     .join("\n")}\n${indent}}\n`;
 

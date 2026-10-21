@@ -21,7 +21,6 @@ export const ui: typeof en = {
     system: "Systeem",
     light: "Licht",
     dark: "Donker",
-    darkplus: "Donker +",
   },
   language: { choose: "Taal kiezen", group: "Taal" },
   common: {

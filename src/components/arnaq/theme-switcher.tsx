@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { THEME_CHOICES, applyTheme, readTheme, subscribeTheme } from "@/design/theme-client";
 import { useI18n } from "@/i18n/client";
 
-/** Light, Dark, Dark + or follow the system. The only setting the app has. */
+/** Light, Dark or follow the system. The only setting the app has. */
 export function ThemeSwitcher() {
   const { t } = useI18n();
   const [open, setOpen] = useState(false);

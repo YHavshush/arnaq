@@ -2,7 +2,7 @@
  * Design tokens: the single source of truth for colour. `npm run tokens` turns this into
  * src/app/tokens.generated.css. See DESIGN.md for the reasoning behind every choice.
  */
-export const THEMES = ["light", "dark", "darkplus"] as const;
+export const THEMES = ["light", "dark"] as const;
 export type ThemeName = (typeof THEMES)[number];
 
 export const MOODS = ["neutral", "good", "warn", "bad"] as const;
@@ -15,10 +15,56 @@ export const CHIPS = ["sky", "mint", "peach", "rose", "lavender", "yellow", "gra
 export type Chip = (typeof CHIPS)[number];
 
 export interface PageTokens {
-  /** Vertical gradient stops, evenly spaced. The first stop is the colour at the very top of the page. */
+  /** Gradient direction in degrees (180 is straight down). */
+  angle: number;
+  /** Gradient stops, top to bottom. The first is the colour at the very top of the page, the last at the bottom. */
   stops: string[];
-  /** Status wash at the top of the page, per mood: [r, g, b, alpha]. Follows the active screen's tone, never a stale month mood. */
-  wash: Record<Mood, [r: number, g: number, b: number, a: number]>;
+  /** Where each stop sits, in per cent. */
+  at: number[];
+}
+
+/** sRGB hex -> OKLab (https://bottosson.github.io/posts/oklab/), the space CSS `color-mix(in oklab, ...)` blends in. */
+function toOklab(hex: string): [number, number, number] {
+  const n = parseInt(hex.slice(1), 16);
+  const lin = [n >> 16, (n >> 8) & 255, n & 255].map((v) => {
+    const c = v / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  });
+  const [r, g, b] = lin;
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return [
+    0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+    1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+    0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+  ];
+}
+function fromOklab([L, a, b]: [number, number, number]): string {
+  const l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
+  const m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
+  const s = Math.pow(L - 0.0894841775 * a - 1.291485548 * b, 3);
+  const lin = [
+    4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+    -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+    -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+  ];
+  const hex = lin.map((c) => {
+    const v = Math.min(1, Math.max(0, c));
+    const e = v <= 0.0031308 ? v * 12.92 : 1.055 * Math.pow(v, 1 / 2.4) - 0.055;
+    return Math.round(e * 255)
+      .toString(16)
+      .padStart(2, "0");
+  });
+  return `#${hex.join("")}`;
+}
+/** `fg` at `pct` per cent over `base`, blended in OKLab: the same result as `color-mix(in oklab, fg pct%, base)`. */
+export function mixOklab(fg: string, pct: number, base: string): string {
+  const a = toOklab(fg);
+  const b = toOklab(base);
+  return fromOklab(
+    [0, 1, 2].map((i) => b[i] + (a[i] - b[i]) * (pct / 100)) as [number, number, number],
+  );
 }
 
 export interface ThemeTokens {
@@ -76,19 +122,6 @@ const darkGlow: ThemeTokens["glow"] = {
   warn: "rgba(242,184,75,.22)",
   bad: "rgba(255,123,110,.22)",
 };
-// Strengths are capped so muted text keeps 4.5:1 on the strongest part of the wash (see tokens.test.ts).
-const darkWash: PageTokens["wash"] = {
-  neutral: [125, 139, 255, 0.26],
-  good: [31, 201, 143, 0.22],
-  warn: [242, 184, 75, 0.2],
-  bad: [255, 123, 110, 0.26],
-};
-const darkplusWash: PageTokens["wash"] = {
-  neutral: [125, 139, 255, 0.22],
-  good: [31, 201, 143, 0.18],
-  warn: [242, 184, 75, 0.16],
-  bad: [255, 123, 110, 0.22],
-};
 
 export const themes: Record<ThemeName, ThemeTokens> = {
   light: {
@@ -123,15 +156,8 @@ export const themes: Record<ThemeName, ThemeTokens> = {
       shadow: "0 14px 40px -22px rgba(30,45,80,.45)",
       nav: "rgba(255,255,255,.76)",
     },
-    page: {
-      stops: ["#d9e5f5", "#f1e6dd", "#f6e8d8"], // the soft blue-to-peach dawn the owner approved in the prototypes
-      wash: {
-        neutral: [110, 160, 255, 0.36],
-        good: [60, 200, 150, 0.36],
-        warn: [255, 170, 110, 0.38],
-        bad: [255, 130, 120, 0.34],
-      },
-    },
+    // The soft blue-to-peach dawn the owner approved in the prototypes.
+    page: { angle: 180, stops: ["#d9e5f5", "#f1e6dd", "#f6e8d8"], at: [0, 50, 100] },
   },
   dark: {
     canvas: "#141b28",
@@ -155,32 +181,17 @@ export const themes: Record<ThemeName, ThemeTokens> = {
       shadow: "inset 0 1px 0 rgba(255,255,255,.08), 0 18px 44px -24px rgba(0,0,0,.8)",
       nav: "rgba(18,22,30,.80)",
     },
-    page: { stops: ["#1b2434", "#141b28", "#0f141d"], wash: darkWash },
-  },
-  /** "Donker +": a lighter, bluer slate. Same tokens as dark except the surface family. */
-  darkplus: {
-    canvas: "#1f2a40",
-    surface: "#343e52",
-    ink: "#eef1f5",
-    inkMuted: "#b8c1d1", // lifted from #a3afc4 for the same reason
-    hair: "rgba(255,255,255,.14)",
-    track: "rgba(255,255,255,.11)",
-    accent: "#8fd0ff",
-    accentInk: "#06121c",
-    soft: "rgba(143,208,255,.12)",
-    good: "#5ee0a0",
-    warn: "#f2b84b",
-    bad: "#ff8a7e", // lightened: #ff7b6e only reached 4.26:1 on this surface
-    chip: darkChips,
-    ring: darkRing,
-    glow: darkGlow,
-    glass: {
-      bg: "rgba(255,255,255,.075)",
-      border: "rgba(255,255,255,.14)",
-      shadow: "inset 0 1px 0 rgba(255,255,255,.10), 0 18px 44px -24px rgba(0,0,0,.6)",
-      nav: "rgba(31,42,64,.82)",
+    // The onboarding's recipe, the same on every screen: a blue tint at the top and a violet one in the middle,
+    // both mixed into the deep navy canvas, ending in the canvas (owner, 2026-10-22).
+    page: {
+      angle: 165,
+      stops: [
+        mixOklab(darkRing.accent[0], 26, "#141b28"),
+        mixOklab(darkRing.accent[1], 22, "#141b28"),
+        "#141b28",
+      ],
+      at: [0, 55, 100],
     },
-    page: { stops: ["#2b3a56", "#1f2a40", "#172033"], wash: darkplusWash },
   },
 };
 
@@ -191,7 +202,6 @@ export const themes: Record<ThemeName, ThemeTokens> = {
 export const glowStyle: Record<ThemeName, "shadow" | "lit-ring" | "none"> = {
   light: "none",
   dark: "lit-ring",
-  darkplus: "lit-ring",
 };
 
 /** Text pairs that must reach WCAG AA (4.5:1) in every theme. */
@@ -208,15 +218,3 @@ export const textPairs: [fg: keyof ThemeTokens, bg: keyof ThemeTokens][] = [
   ["warn", "canvas"],
   ["bad", "canvas"],
 ];
-
-/**
- * Whether the page background carries a status wash (a soft tint at the top that follows the screen's tone).
- * Off in every theme (owner, 2026-10-21): the page background is the same calm gradient on every screen, in light, dark
- * and Dark +. Dark used to carry it (a glow that changed colour per screen: blue, green, amber, rose), which read as
- * uneven colours. Flip a value and run `npm run tokens` to bring it back.
- */
-export const statusWash: Record<ThemeName, boolean> = {
-  light: false,
-  dark: false,
-  darkplus: false,
-};

@@ -13,9 +13,13 @@ const BLUE = { stroke: "var(--ring-accent-from)" } as const;
 const PURPLE = { stroke: "var(--ring-accent-to)" } as const;
 const REDUCED = "(prefers-reduced-motion: reduce)";
 
-/** The three screens' tinted backgrounds, made from the theme's own colours so both themes work. */
+/**
+ * The three screens' tinted backgrounds, made from the theme's own colours so both themes work. They end in the
+ * page's own last colour (--page-end), so the intro finishes like the app does: the cream-peach in light, the
+ * deep navy in dark. The dark app background is made with this same recipe (see design/tokens.ts).
+ */
 const TINT = (a: string, b: string) =>
-  `linear-gradient(165deg, color-mix(in oklab, var(${a}) 26%, var(--canvas)), color-mix(in oklab, var(${b}) 22%, var(--canvas)) 55%, var(--canvas))`;
+  `linear-gradient(165deg, color-mix(in oklab, var(${a}) 26%, var(--canvas)), color-mix(in oklab, var(${b}) 22%, var(--canvas)) 55%, var(--page-end))`;
 const BACKGROUNDS = [
   TINT("--ring-accent-from", "--ring-accent-to"),
   TINT("--ring-good-from", "--ring-accent-from"),

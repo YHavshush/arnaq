@@ -10,7 +10,7 @@ The design system for arnaq. The look was chosen by the owner over eleven protot
 2. **Calm over clever.** Soft colour, no alarms. Status is carried by words and numbers as well as colour, never colour alone. A tight month is amber, never a red page.
 3. **Honest data.** Numbers are cents in the database and formatted at the edge (`nl-NL`, tabular figures). Forecast values are visibly dashed. "Free to spend" is what is left after fixed costs that are still to come.
 4. **One adaptive layout.** Phone: floating pill navigation, single column. Laptop (app width 900px or more): sidebar and two columns. The switch follows the app's own width (container query), not the device.
-5. **The user chooses the theme, we choose the rest.** Light, Dark, Dark + and System are the only settings.
+5. **The user chooses the theme, we choose the rest.** Light, Dark and System are the only settings.
 
 ## The hero pattern (every screen)
 
@@ -27,11 +27,11 @@ Ring tone follows status: `good` under 85% of budget, `warn` from 85% to 100%, `
 
 ## Themes
 
-Set by the inline script in `src/design/theme-script.ts` before first paint (no flash). Preference is stored in `localStorage` under `kasboek-theme`: `system | light | dark | darkplus`.
+Set by the inline script in `src/design/theme-script.ts` before first paint (no flash). Preference is stored in `localStorage` under `kasboek-theme`: `system | light | dark` (a stored `darkplus`, the retired third theme, reads as dark).
 
-- `<html data-theme="light|dark|darkplus">` only for explicit choices; `data-mode="light|dark"` is always set (Tailwind's `dark:` variant uses it).
+- `<html data-theme="light|dark">` only for explicit choices; `data-mode="light|dark"` is always set (Tailwind's `dark:` variant uses it).
 - With no explicit choice the CSS follows `prefers-color-scheme`.
-- **Light:** airy glass cards on a soft gradient. **Dark:** graphite with lit gradient rings (the former "Titanium"). **Dark +:** the same, on a lighter, bluer slate. It was added because the owner found plain dark possibly too dark; it is a one-tap setting, easily reversible.
+- **Light:** airy glass cards on a soft gradient, cool blue into warm peach. **Dark:** deep navy with lit gradient rings; its page background is made like the onboarding's (a blue tint at the top and a violet one in the middle, mixed into the navy). There used to be a third theme, "Dark +" (a lighter slate); it was retired on 2026-10-22 because it looked almost the same as Dark, and the new Dark is lighter at the top.
 
 ## Tokens
 
@@ -50,21 +50,13 @@ Semantic names, generated per theme. shadcn's variables are derived from them in
 
 Contrast results are enforced by tests, not by this table. Two real findings from them: the muted text colours were darkened in light and lightened in dark and Dark + so they stay readable on the strongest part of the wash, and the Dark + `bad` text was lightened (4.26:1 to above 4.5).
 
-## Status wash
+## Page background
 
-**Decision (owner, updated 2026-10-21): off in every theme.** The dark themes used to have it on; the glow changed colour per screen and read as uneven colours, so the page background is now one calm gradient everywhere, like light. It is one flag per theme: `statusWash` in `tokens.ts`, then `npm run tokens`. Everything below explains how it works if it is turned on again, and why it is off in light.
+**One gradient per theme, the same on every screen** (`page` in `src/design/tokens.ts`, emitted as `--page-bg` and `--page-end`). Light: the soft blue-to-peach dawn. Dark: the onboarding's recipe, `linear-gradient(165deg, blue 26% over navy, violet 22% over navy at 55%, navy)`, with the mixes computed in OKLab so they equal CSS `color-mix(in oklab, ...)`. The onboarding screens end in `--page-end`, so the intro finishes in the app's own last colour (peach in light, navy in dark).
 
-The top of the page is lightly tinted by the **active screen's** tone (set `data-mood="neutral|good|warn|bad"` on `<html>` per screen). Amber on Overzicht when the month is tight, green on a healthy Prognose, blue (neutral) on Vaste lasten and Upload.
+It is drawn on a fixed layer behind the page (`body::before`), not as a `background` on the body: a `fixed` keyword in the shorthand only fixes the last layer, and iOS Safari ignores `background-attachment: fixed`.
 
-Findings from testing it, which are rules:
-
-- **Follow the screen, not the month.** A month-wide mood put an amber page behind green and blue rings and fought them.
-- **Use a neutral base.** Washing over a blue-topped gradient gave a muddy mauve.
-- **Never red.** `bad` is a soft rose wash.
-- **Cap the strength.** The strength per theme is capped so muted text keeps 4.5:1 on the strongest part (see `tokens.ts`).
-- It is a third signal next to ring colour and glow, so keep it quiet. Cross-fade between screens (about 300 ms, off under `prefers-reduced-motion`) so changing tabs does not flash.
-- Why off in light: it is a third signal next to the ring colour and the glow, and the colour of the page changing between tabs adds motion nobody asked for. In dark the glow at the top is part of the approved look, so it stays.
-- Even with the wash off, keep setting `data-mood` per screen; dark and any future theme with the wash on use it.
+History: until 2026-10-22 the dark themes also had a _status wash_, a glow at the top that changed colour per screen (blue, green, amber, rose). It read as uneven colours and was removed for every theme (owner decision). `data-mood` is still set per screen by `MoodSetter` but nothing in the CSS uses it.
 
 ## Glow (decided for now, easy to change)
 
@@ -95,8 +87,6 @@ Findings from testing it, which are rules:
 
 ## Open decisions and known limits
 
-- Status wash: off in every theme (owner decision, 2026-10-21).
-- Dark vs Dark +: both ship; the owner has not chosen a default.
 - The balance chart assumes the CSV parsers store the running balance (Rabobank "Saldo na trn", Revolut "Balance"). They do not yet; that comes with the database port.
 - All prototypes use demo data. The parsers are unverified against real bank exports.
 

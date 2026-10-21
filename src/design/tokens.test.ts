@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { blendOver, contrastRatio } from "./contrast";
+import { contrastRatio } from "./contrast";
 import { buildTokensCss } from "./css";
-import { CHIPS, MOODS, THEMES, TONES, glowStyle, statusWash, textPairs, themes } from "./tokens";
+import { CHIPS, THEMES, TONES, glowStyle, mixOklab, textPairs, themes } from "./tokens";
 
 const AA = 4.5;
 
@@ -14,10 +14,12 @@ describe.each(THEMES)("theme %s", (name) => {
     expect(contrastRatio(t[fg] as string, t[bg] as string)).toBeGreaterThanOrEqual(AA);
   });
 
-  it.each(MOODS)("ink and muted text stay readable on the washed page top (%s)", (mood) => {
-    const top = blendOver(t.page.wash[mood], t.page.stops[0]);
-    expect(contrastRatio(t.ink, top)).toBeGreaterThanOrEqual(AA);
-    expect(contrastRatio(t.inkMuted, top)).toBeGreaterThanOrEqual(AA);
+  it("ink and muted text stay readable on every stop of the page gradient", () => {
+    for (const stop of t.page.stops) {
+      expect(contrastRatio(t.ink, stop)).toBeGreaterThanOrEqual(AA);
+      expect(contrastRatio(t.inkMuted, stop)).toBeGreaterThanOrEqual(AA);
+    }
+    expect(t.page.stops).toHaveLength(t.page.at.length);
   });
 
   it("button text reaches AA on the accent colour", () => {
@@ -29,10 +31,9 @@ describe.each(THEMES)("theme %s", (name) => {
     expect(contrastRatio(ink, bg)).toBeGreaterThanOrEqual(AA);
   });
 
-  it("defines every tone and mood", () => {
+  it("defines every tone", () => {
     expect(Object.keys(t.ring).sort()).toEqual([...TONES].sort());
     expect(Object.keys(t.glow).sort()).toEqual([...TONES].sort());
-    expect(Object.keys(t.page.wash).sort()).toEqual([...MOODS].sort());
     expect(glowStyle[name]).toBeDefined();
   });
 });
@@ -43,13 +44,24 @@ describe("generated css", () => {
     expect(file).toBe(buildTokensCss());
   });
 
-  it("only emits a wash where the theme has statusWash on (none do: the page background is the same on every screen)", () => {
+  it("has one page background per theme, the same on every screen (no per-screen glow)", () => {
     const css = buildTokensCss();
-    for (const n of THEMES) expect(statusWash[n]).toBe(false);
     expect(css).not.toContain("radial-gradient");
+    expect(css).not.toContain("--page-bg-good");
+    expect(css.match(/--page-bg:/g)).toHaveLength(THEMES.length + 2); // :root (light), the system dark, and one per explicit theme
+    expect(css.match(/--page-end:/g)).toHaveLength(THEMES.length + 2);
   });
 
-  it("covers light, dark (system and explicit) and darkplus", () => {
+  it("builds the dark gradient from the onboarding recipe: logo tints mixed into the canvas", () => {
+    const dark = themes.dark;
+    expect(dark.page.stops[2]).toBe(dark.canvas);
+    // OKLab mixing is what color-mix(in oklab, ...) does: 0 per cent is the base, 100 the colour.
+    expect(mixOklab("#2ac9ff", 0, "#141b28")).toBe("#141b28");
+    expect(mixOklab("#2ac9ff", 100, "#141b28")).toBe("#2ac9ff");
+    expect(dark.page.stops[0]).toBe(mixOklab(dark.ring.accent[0], 26, dark.canvas));
+  });
+
+  it("covers light and dark (system and explicit), and no Dark +", () => {
     const css = buildTokensCss();
     expect(css).toContain(":root {");
     expect(css).toContain(":root:not([data-theme])");

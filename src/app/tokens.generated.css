@@ -43,10 +43,8 @@
   --glass-border: rgba(255,255,255,.8);
   --glass-shadow: 0 14px 40px -22px rgba(30,45,80,.45);
   --glass-nav: rgba(255,255,255,.76);
-  --page-bg-neutral: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
-  --page-bg-good: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
-  --page-bg-warn: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
-  --page-bg-bad: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-end: #f6e8d8;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -94,10 +92,8 @@
     --glass-border: rgba(255,255,255,.10);
     --glass-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 44px -24px rgba(0,0,0,.8);
     --glass-nav: rgba(18,22,30,.80);
-    --page-bg-neutral: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-    --page-bg-good: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-    --page-bg-warn: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-    --page-bg-bad: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
+    --page-bg: linear-gradient(165deg, #214359 0%, #283151 55%, #141b28 100%);
+    --page-end: #141b28;
   }
 }
 
@@ -145,10 +141,8 @@
   --glass-border: rgba(255,255,255,.8);
   --glass-shadow: 0 14px 40px -22px rgba(30,45,80,.45);
   --glass-nav: rgba(255,255,255,.76);
-  --page-bg-neutral: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
-  --page-bg-good: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
-  --page-bg-warn: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
-  --page-bg-bad: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-bg: linear-gradient(180deg, #d9e5f5 0%, #f1e6dd 50%, #f6e8d8 100%);
+  --page-end: #f6e8d8;
 }
 
 :root[data-theme="dark"] {
@@ -195,58 +189,6 @@
   --glass-border: rgba(255,255,255,.10);
   --glass-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 18px 44px -24px rgba(0,0,0,.8);
   --glass-nav: rgba(18,22,30,.80);
-  --page-bg-neutral: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-  --page-bg-good: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-  --page-bg-warn: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-  --page-bg-bad: linear-gradient(180deg, #1b2434 0%, #141b28 50%, #0f141d 100%);
-}
-
-:root[data-theme="darkplus"] {
-  color-scheme: dark;
-  --canvas: #1f2a40;
-  --surface: #343e52;
-  --ink: #eef1f5;
-  --ink-muted: #b8c1d1;
-  --hair: rgba(255,255,255,.14);
-  --track: rgba(255,255,255,.11);
-  --accent: #8fd0ff;
-  --accent-ink: #06121c;
-  --soft: rgba(143,208,255,.12);
-  --good: #5ee0a0;
-  --warn: #f2b84b;
-  --bad: #ff8a7e;
-  --chip-sky: #16314d;
-  --chip-sky-ink: #8ec3ff;
-  --chip-mint: #14392a;
-  --chip-mint-ink: #7fdca6;
-  --chip-peach: #4a2a12;
-  --chip-peach-ink: #ffbe8a;
-  --chip-rose: #4a1b33;
-  --chip-rose-ink: #ff9dc8;
-  --chip-lavender: #2d2750;
-  --chip-lavender-ink: #b9a9ff;
-  --chip-yellow: #3e3408;
-  --chip-yellow-ink: #f3d866;
-  --chip-gray: #2a2a30;
-  --chip-gray-ink: #b0b0ba;
-  --ring-accent-from: #2ac9ff;
-  --ring-accent-to: #7d8bff;
-  --glow-accent: rgba(125,139,255,.20);
-  --ring-good-from: #1fc98f;
-  --ring-good-to: #9af2c4;
-  --glow-good: rgba(31,201,143,.22);
-  --ring-warn-from: #e8891a;
-  --ring-warn-to: #ffd36b;
-  --glow-warn: rgba(242,184,75,.22);
-  --ring-bad-from: #e5484d;
-  --ring-bad-to: #ff9b8f;
-  --glow-bad: rgba(255,123,110,.22);
-  --glass-bg: rgba(255,255,255,.075);
-  --glass-border: rgba(255,255,255,.14);
-  --glass-shadow: inset 0 1px 0 rgba(255,255,255,.10), 0 18px 44px -24px rgba(0,0,0,.6);
-  --glass-nav: rgba(31,42,64,.82);
-  --page-bg-neutral: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
-  --page-bg-good: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
-  --page-bg-warn: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
-  --page-bg-bad: linear-gradient(180deg, #2b3a56 0%, #1f2a40 50%, #172033 100%);
+  --page-bg: linear-gradient(165deg, #214359 0%, #283151 55%, #141b28 100%);
+  --page-end: #141b28;
 }

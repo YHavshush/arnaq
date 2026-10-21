@@ -21,7 +21,6 @@ export const ui = {
     system: "System",
     light: "Light",
     dark: "Dark",
-    darkplus: "Dark +",
   },
   language: { choose: "Choose language", group: "Language" },
   common: {

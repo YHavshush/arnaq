@@ -1,12 +1,13 @@
 import { THEME_STORAGE_KEY } from "./theme-script";
 
-export type ThemeChoice = "system" | "light" | "dark" | "darkplus";
-export const THEME_CHOICES: ThemeChoice[] = ["system", "light", "dark", "darkplus"];
+export type ThemeChoice = "system" | "light" | "dark";
+export const THEME_CHOICES: ThemeChoice[] = ["system", "light", "dark"];
 
 export function readTheme(): ThemeChoice {
   try {
     const t = localStorage.getItem(THEME_STORAGE_KEY);
-    return t === "light" || t === "dark" || t === "darkplus" ? t : "system";
+    // "darkplus" was a third theme until 2026-10-22; people who chose it get the (new, lighter) dark.
+    return t === "light" ? t : t === "dark" || t === "darkplus" ? "dark" : "system";
   } catch {
     return "system";
   }
@@ -17,7 +18,6 @@ export function applyTheme(choice: ThemeChoice): void {
   const root = document.documentElement;
   const dark =
     choice === "dark" ||
-    choice === "darkplus" ||
     (choice === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
   if (choice === "system") root.removeAttribute("data-theme");
   else root.setAttribute("data-theme", choice);
