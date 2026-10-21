@@ -379,7 +379,11 @@ describe("buildOverzicht: the parts the design adds", () => {
       word: "Under way",
       sub: expect.stringContaining("€1,250"),
       tone: "accent",
+      // The cents behind the progress card (the card works out the per cent itself).
+      goal: { saved: 125000, target: 500000 },
     });
+    // No goal, no card: the small tile stays.
+    expect(tile(summary({ saved: 90000, thisMonth: 10000, lines: 3 })).goal).toBeUndefined();
     expect(tile(summary({ goal: 500000, saved: 500000, lines: 6 }))).toMatchObject({
       word: "Gehaald",
       tone: "good",

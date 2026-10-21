@@ -1,7 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type CSSProperties, type RefObject } from "react";
+import { Moon, Sun } from "lucide-react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type RefObject,
+} from "react";
+import { applyTheme, readTheme, subscribeTheme } from "@/design/theme-client";
 import { useI18n } from "@/i18n/client";
 import { SAMPLE_WISH_COOKIE, WELCOMED_COOKIE } from "@/lib/welcome";
 import { formatter } from "@/lib/view/format";
@@ -213,6 +222,10 @@ const PACE_LAST = 31;
 const PACE_TODAY = PACE_DAYS.length;
 const PACE_THRESHOLD = 40;
 const PACE_MAX = Math.max(...PACE_DAYS);
+/** The same demo numbers as the overview: spent, the budget for everyday spending, and where an even pace would be today. */
+const PACE_SPENT = 258;
+const PACE_BUDGET = 752;
+const PACE_SCHEDULE = 509;
 
 /**
  * Screen 2: free to spend in the app's own ring (the same component as the overview), the pace of the
@@ -222,12 +235,15 @@ function Flow({ active }: { active: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const { t, locale } = useI18n();
   const w = t.ui.welcome;
+  const o = t.ui.overview;
   const f = formatter(locale);
   useOnActive(
     active,
     root,
     (el) => [
-      count(q(el, "[data-n]"), 842, 1300, 150, (v) => f.euro(Math.round(v) * 100)),
+      count(q(el, "[data-n]"), 494, 1300, 150, (v) => f.euro(Math.round(v) * 100)),
+      count(q(el, "[data-spent]"), PACE_SPENT, 1200, 400, (v) => f.euro(Math.round(v) * 100)),
+      meter(q(el, "[data-fill]"), PACE_SPENT / PACE_BUDGET, 500, 1100),
       play(
         q(el, "[data-ringbox]"),
         [
@@ -273,9 +289,9 @@ function Flow({ active }: { active: boolean }) {
   );
   const month = "2026-10";
   return (
-    <div ref={root} className="grid h-full w-full content-evenly justify-items-center gap-3">
+    <div ref={root} className="grid h-full w-full content-evenly justify-items-center gap-3 pb-6">
       <div data-ringbox className="[@media(max-height:760px)]:[zoom:.82]">
-        <Ring value={0.72} tone="good" size={196} label={w.freeToSpend}>
+        <Ring value={0.72} tone="good" size={190} label={w.freeToSpend}>
           <div
             data-n
             className="num text-[42px] leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
@@ -283,9 +299,41 @@ function Flow({ active }: { active: boolean }) {
           <div className="text-ink-muted mt-2 text-sm">{w.freeToSpend}</div>
         </Ring>
       </div>
-      <div data-pace className="glass w-full px-4 py-3 [@media(max-height:760px)]:hidden">
-        <div className="text-ink-muted text-[11.5px] tracking-[.06em] uppercase">{w.pace}</div>
-        <div aria-hidden className="mt-2 flex h-[56px] items-end gap-[3px]">
+      <div data-pace className="glass w-full px-4 py-3.5 [@media(max-height:760px)]:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="num text-[22px] leading-none font-semibold tracking-tight">
+            <span data-spent />
+            <span className="text-ink-muted ml-1.5 text-[13px] font-normal">
+              {o.paceOf(f.euro(PACE_BUDGET * 100))}
+            </span>
+          </div>
+          <span className="num bg-good/12 text-good rounded-full px-2.5 py-1 text-[12px] font-semibold">
+            {o.paceAhead(f.euro((PACE_SCHEDULE - PACE_SPENT) * 100))}
+          </span>
+        </div>
+        <div aria-hidden className="relative mt-3 mb-6">
+          <div className="bg-track h-2.5 overflow-hidden rounded-full">
+            <i
+              data-fill
+              className="block h-full w-full origin-left rounded-full"
+              style={{
+                transform: `scaleX(${PACE_SPENT / PACE_BUDGET})`,
+                background: "linear-gradient(90deg, var(--ring-warn-from), var(--ring-warn-to))",
+              }}
+            />
+          </div>
+          <i
+            className="bg-ink absolute -top-1 -bottom-1 w-0.5 rounded-full"
+            style={{ left: `${(PACE_SCHEDULE / PACE_BUDGET) * 100}%` }}
+          />
+          <span
+            className="text-ink-muted num absolute top-[calc(100%+3px)] -translate-x-1/2 text-[11px] whitespace-nowrap"
+            style={{ left: `${(PACE_SCHEDULE / PACE_BUDGET) * 100}%` }}
+          >
+            {o.paceSchedule(f.euro(PACE_SCHEDULE * 100))}
+          </span>
+        </div>
+        <div aria-hidden className="flex h-[56px] items-end gap-[3px]">
           {Array.from({ length: PACE_LAST }, (_, i) => {
             const day = i + 1;
             const future = day > PACE_TODAY;
@@ -323,6 +371,9 @@ function Flow({ active }: { active: boolean }) {
           <span>{f.dayLabel(`${month}-15`)}</span>
           <span>{f.dayLabel(`${month}-${PACE_LAST}`)}</span>
         </div>
+        <p className="text-ink-muted mt-1.5 text-[12px]">
+          {o.paceBars(f.euro(PACE_THRESHOLD * 100))}
+        </p>
       </div>
       <div data-card className="glass grid w-full gap-3 px-4 py-3.5">
         {[
@@ -501,6 +552,28 @@ function setCookie(name: string) {
 }
 
 /**
+ * TEMPORARY (for testing the introduction on a phone): flips light and dark with one tap. Remove before launch.
+ */
+function PreviewThemeToggle() {
+  const choice = useSyncExternalStore(subscribeTheme, readTheme, () => "system" as const);
+  const dark =
+    choice === "dark" ||
+    (choice === "system" &&
+      typeof matchMedia === "function" &&
+      matchMedia("(prefers-color-scheme: dark)").matches);
+  return (
+    <button
+      type="button"
+      onClick={() => applyTheme(dark ? "light" : "dark")}
+      className="glass text-ink-muted absolute bottom-3 left-4 z-10 inline-flex min-h-9 items-center gap-1.5 !rounded-full px-3 text-xs"
+    >
+      {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+      {dark ? "light" : "dark"} (test)
+    </button>
+  );
+}
+
+/**
  * The three-screen introduction: swipe (or use the dots or the arrow keys), then create an account, or
  * look around with sample data. Works with the theme and the language, and without motion when the
  * device asks for less of it.
@@ -578,7 +651,6 @@ export function Onboarding() {
         <div className="absolute top-5 right-4 left-6 z-10 flex items-center justify-between">
           <span className="num text-ink-muted text-xs tracking-[.08em]">{w.pager(index + 1)}</span>
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
             <button
               type="button"
               onClick={() => go(last)}
@@ -588,6 +660,7 @@ export function Onboarding() {
             >
               {w.skip}
             </button>
+            <LanguageSwitcher />
           </div>
         </div>
         <div
@@ -613,12 +686,16 @@ export function Onboarding() {
                 <p className="text-ink-muted max-w-[31ch] text-[15px]">{s.body}</p>
               </div>
               <div
-                className="grid place-items-center transition-transform duration-[550ms] ease-[cubic-bezier(.3,.8,.3,1)] motion-reduce:transition-none"
-                style={{ transform: `translateX(${(k - index) * 60}px)` }}
+                className={`grid place-items-center transition-transform duration-[550ms] ease-[cubic-bezier(.3,.8,.3,1)] motion-reduce:transition-none ${k === 1 ? "pb-8" : ""}`}
+                style={{
+                  transform: `translateX(${(k - index) * 60}px)`,
+                  // Screen 2 has no buttons, so its content uses the room they would take (down to the dots).
+                  gridRow: k === 1 ? "2 / span 2" : undefined,
+                }}
               >
                 {s.visual}
               </div>
-              <div className="grid content-end gap-2.5 pb-11">
+              <div className={k === 1 ? "hidden" : "grid content-end gap-2.5 pb-11"}>
                 {k === last && (
                   <>
                     <button
@@ -644,6 +721,7 @@ export function Onboarding() {
             </section>
           ))}
         </div>
+        <PreviewThemeToggle />
         <div
           className="absolute inset-x-0 bottom-4 z-10 flex justify-center gap-2"
           role="group"

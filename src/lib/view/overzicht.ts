@@ -81,6 +81,8 @@ export interface Tile {
   word: string;
   sub: string;
   tone: Tone;
+  /** Only the savings tile, and only when there is a goal: cents saved and the goal. It is shown as a progress card. */
+  goal?: { saved: number; target: number };
 }
 
 export interface Overzicht {
@@ -214,6 +216,7 @@ function sparenTile(
       word: reached ? t.wordReached : t.wordUnderway,
       sub: t.subOf(euro(savings.saved), euro(savings.goal)),
       tone: reached ? "good" : "accent",
+      goal: { saved: savings.saved, target: savings.goal },
     };
   }
   if (savings && savings.lines > 0) {

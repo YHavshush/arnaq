@@ -114,7 +114,16 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       <AttentionList items={o.attention} />
       <div className="mt-6 grid grid-cols-2 gap-3 @min-[900px]/app:grid-cols-4">
         {o.tiles.map((tile) => (
-          <StatusTile key={tile.key} tile={tile} />
+          <StatusTile
+            key={tile.key}
+            tile={tile}
+            // With the savings goal as a full-width card on the phone, income takes the full width too, so no gap is left.
+            className={
+              tile.key === "inkomen" && o.tiles.some((t) => t.goal)
+                ? "col-span-2 @min-[900px]/app:col-span-1"
+                : ""
+            }
+          />
         ))}
       </div>
 

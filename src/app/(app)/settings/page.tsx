@@ -17,10 +17,14 @@ import { SmartSettings } from "@/components/arnaq/smart-settings";
 import { RulesManager } from "@/components/arnaq/rules-manager";
 import { HeroSkeleton } from "@/components/arnaq/states";
 import { getI18n } from "@/i18n/server";
-import { requestTime } from "@/lib/api";
+import { requestTime, todayIso } from "@/lib/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
 import { getSavingsSettings } from "@/lib/savings/settings";
+import { getSavingsSummary } from "@/lib/savings/summary";
+import { SavingsProgress } from "@/components/arnaq/savings-progress";
+import { messages } from "@/i18n/messages";
+import { formatter } from "@/lib/view/format";
 import { splitLabelKey } from "@/lib/smart/learned";
 import { PROVIDERS } from "@/lib/smart/providers";
 import { getSmartSettings, isEntitled } from "@/lib/smart/settings";
@@ -40,13 +44,20 @@ async function Content() {
   await requestTime();
   const { locale, t } = await getI18n();
   const s = t.ui.settings;
-  const [rules, categories, labels, smart, savingsSettings] = await pageDb(async (db) => [
-    await db.select().from(schema.categorisationRules),
-    await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
-    await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
-    await getSmartSettings(db),
-    await getSavingsSettings(db),
-  ]);
+  const [rules, categories, labels, smart, savingsSettings, savingsNow] = await pageDb(
+    async (db) => [
+      await db.select().from(schema.categorisationRules),
+      await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
+      await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
+      await getSmartSettings(db),
+      await getSavingsSettings(db),
+      await getSavingsSummary(db, { today: todayIso() }),
+    ],
+  );
+  const tiles = messages[locale].view.overzicht.tiles.sparen;
+  const { euro } = formatter(locale);
+  const goal = savingsSettings.goal;
+  const reached = goal !== null && savingsNow.saved >= goal;
   const name = new Map(categories.map((c) => [c.id, c.name]));
   const user = await currentUser(); // pageDb above already sent anyone signed out to the login
   return (
@@ -90,6 +101,17 @@ async function Content() {
       </Section>
 
       <Section title={s.savings.title}>
+        {goal !== null && (
+          <SavingsProgress
+            className="mb-3"
+            label={s.savings.title}
+            word={reached ? tiles.wordReached : tiles.wordUnderway}
+            sub={tiles.subOf(euro(savingsNow.saved), euro(goal))}
+            saved={savingsNow.saved}
+            target={goal}
+            tone={reached ? "good" : "accent"}
+          />
+        )}
         <SavingsGoal goal={savingsSettings.goal} start={savingsSettings.start} />
       </Section>
 
