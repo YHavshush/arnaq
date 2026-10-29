@@ -1,6 +1,8 @@
 import { and, between, eq } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { MAX_CENTS } from "@/lib/money";
+import { addMonths } from "@/lib/recurring/dates";
+import { isScheduled } from "@/lib/recurring/occurrences";
 
 export class BudgetError extends Error {}
 
@@ -73,8 +75,15 @@ export async function copyBudgets(db: Db, fromMonth: string, toMonth: string): P
 }
 
 export interface MonthBudgets {
-  /** Category id -> budget in cents, only for categories with a budget that month. */
+  /**
+   * Category id -> budget in cents, only for categories with a budget that month: what the person typed, but never
+   * less than the category's fixed items (`max(explicit, fixed)`). Nothing typed means the fixed items are the budget.
+   */
   byCategory: Map<number, number>;
+  /** The fixed (recurring) expense items of the category scheduled that month, in cents. */
+  fixed: Map<number, number>;
+  /** What the person typed as a budget for the category. */
+  explicit: Map<number, number>;
   /** The explicit monthly total, or null when none is set. */
   total: number | null;
 }
@@ -90,19 +99,56 @@ export async function getBudgetsByMonth(
   const out = new Map<string, MonthBudgets>();
   const at = (month: string) => {
     let b = out.get(month);
-    if (!b) out.set(month, (b = { byCategory: new Map(), total: null }));
+    if (!b)
+      out.set(
+        month,
+        (b = { byCategory: new Map(), fixed: new Map(), explicit: new Map(), total: null }),
+      );
     return b;
   };
   for (const r of await db
     .select()
     .from(schema.budgets)
     .where(between(schema.budgets.month, fromMonth, toMonth)))
-    at(r.month).byCategory.set(r.categoryId, r.amount);
+    at(r.month).explicit.set(r.categoryId, r.amount);
   for (const r of await db
     .select()
     .from(schema.monthlyTotalBudget)
     .where(between(schema.monthlyTotalBudget.month, fromMonth, toMonth)))
     at(r.month).total = r.amount;
+
+  // What recurs is planned: an active outgoing item in an expense category is that category's budget, so rent,
+  // insurance, phone and subscriptions need no separate budget. Savings deposits and income are not budgets.
+  const items = await db
+    .select({
+      categoryId: schema.recurringItems.categoryId,
+      expectedAmount: schema.recurringItems.expectedAmount,
+      dayOfMonth: schema.recurringItems.dayOfMonth,
+      frequency: schema.recurringItems.frequency,
+      startDate: schema.recurringItems.startDate,
+      endDate: schema.recurringItems.endDate,
+    })
+    .from(schema.recurringItems)
+    .innerJoin(schema.categories, eq(schema.categories.id, schema.recurringItems.categoryId))
+    .where(
+      and(
+        eq(schema.recurringItems.active, true),
+        eq(schema.recurringItems.type, "expense"),
+        eq(schema.categories.type, "expense"),
+      ),
+    );
+  for (let m = fromMonth; m <= toMonth; m = addMonths(m, 1))
+    for (const item of items)
+      if (item.categoryId !== null && isScheduled(item, m)) {
+        const fixed = at(m).fixed;
+        fixed.set(item.categoryId, (fixed.get(item.categoryId) ?? 0) + item.expectedAmount);
+      }
+  for (const b of out.values()) {
+    for (const [id, amount] of b.explicit) b.byCategory.set(id, amount);
+    // The fixed items are the floor: a typed rent budget that already includes the rent is not counted twice.
+    for (const [id, amount] of b.fixed)
+      b.byCategory.set(id, Math.max(b.byCategory.get(id) ?? 0, amount));
+  }
   return out;
 }
 

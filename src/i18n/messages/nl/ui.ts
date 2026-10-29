@@ -320,6 +320,8 @@ export const ui: typeof en = {
     copy: (month: string) => `Kopieer ${month}`,
     saved: "bewaard",
     errAmount: "Vul een bedrag in, bijvoorbeeld 250 of 12,50.",
+    fixedPart: (amount: string) => `${amount} vast; vul een budget in voor meer`,
+    extraPlaceholder: "budget",
     forCategory: (name: string) => `Budget voor ${name} in euro`,
   },
   settings: {
