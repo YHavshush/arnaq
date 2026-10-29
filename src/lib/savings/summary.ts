@@ -1,4 +1,4 @@
-import { and, eq, gt, gte, lte, sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { DEFAULT_BTW_POCKET_MATCH, mentions } from "@/lib/btw/summary";
 import { getSavingsSettings } from "./settings";
@@ -32,6 +32,7 @@ const monthRange = (today: string) => {
 /**
  * Money that left the current account for savings is a deposit (saved goes up); money that came back
  * out of savings is a withdrawal (saved goes down). Only rows in the account's own currency count.
+ * The BTW pocket is not savings: that money is owed to the tax office, so its moves are left out.
  */
 export async function getSavingsSummary(
   db: Db,
@@ -39,38 +40,11 @@ export async function getSavingsSummary(
 ): Promise<SavingsSummary> {
   // `month` (YYYY-MM) is the month shown on the page; without it, the month of `today`.
   const { from, to } = monthRange(opts.month ? `${opts.month}-01` : opts.today);
-  const base = and(
-    eq(schema.categories.type, "savings"),
-    eq(schema.transactions.currency, schema.accounts.currency),
-  );
-  const rows = db
-    .select({
-      net: sql<number>`coalesce(sum(-${schema.transactions.amount}), 0)`.mapWith(Number),
-      lines: sql<number>`count(*)`.mapWith(Number),
-    })
-    .from(schema.transactions)
-    .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
-    .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId));
   const settings = await getSavingsSettings(db);
-  const afterAnchor =
-    settings.anchorDate !== null ? gt(schema.transactions.date, settings.anchorDate) : undefined;
-  const [[all], [month]] = await Promise.all([
-    rows.where(and(base, afterAnchor)),
-    db
+  const moves = (
+    await db
       .select({
-        net: sql<number>`coalesce(sum(-${schema.transactions.amount}), 0)`.mapWith(Number),
-      })
-      .from(schema.transactions)
-      .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
-      .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
-      .where(and(base, gte(schema.transactions.date, from), lte(schema.transactions.date, to))),
-  ]);
-  // A statement's savings balance is the savings account only. Money in the BTW pocket is savings too, but it
-  // is not in that balance, so what the pocket held on the statement's date is added once, here.
-  let pocket = 0;
-  if (settings.anchorDate !== null) {
-    const earlier = await db
-      .select({
+        date: schema.transactions.date,
         amount: schema.transactions.amount,
         counterparty: schema.transactions.counterparty,
         description: schema.transactions.description,
@@ -78,18 +52,23 @@ export async function getSavingsSummary(
       .from(schema.transactions)
       .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
       .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
-      .where(and(base, lte(schema.transactions.date, settings.anchorDate)));
-    pocket = earlier
-      .filter((r) => mentions([r.counterparty, r.description], DEFAULT_BTW_POCKET_MATCH))
-      .reduce((s, r) => s - r.amount, 0);
-  }
+      .where(
+        and(
+          eq(schema.categories.type, "savings"),
+          eq(schema.transactions.currency, schema.accounts.currency),
+        ),
+      )
+  ).filter((r) => !mentions([r.counterparty, r.description], DEFAULT_BTW_POCKET_MATCH));
+  // With a statement's savings balance, only the moves after its date add to it.
+  const counted = moves.filter((r) => settings.anchorDate === null || r.date > settings.anchorDate);
+  const deposited = (rows: typeof moves) => rows.reduce((s, r) => s - r.amount, 0);
   return {
     goal: settings.goal,
     start: settings.start,
-    saved: (settings.anchor ?? settings.start) + pocket + (all?.net ?? 0),
+    saved: (settings.anchor ?? settings.start) + deposited(counted),
     anchored: settings.anchor !== null,
     anchorDate: settings.anchorDate,
-    thisMonth: month?.net ?? 0,
-    lines: all?.lines ?? 0,
+    thisMonth: deposited(moves.filter((r) => r.date >= from && r.date <= to)),
+    lines: counted.length,
   };
 }

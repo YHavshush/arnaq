@@ -60,10 +60,12 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     income: m.income,
     expenses: m.expenses,
     net: m.net,
-    // Money moved into savings leaves the accounts and arrives in savings: net worth only follows income and spending.
-    cumulative: m.cumulativeNet + (f.openingBalance ?? 0) + (f.openingSavings ?? 0),
+    // Money moved into savings leaves the accounts and arrives in savings, so net worth only follows income and
+    // spending. Money set aside for the BTW leaves the accounts and arrives nowhere: it is owed, so net worth falls.
+    cumulative:
+      m.cumulativeNet - m.cumulativeReserve + (f.openingBalance ?? 0) + (f.openingSavings ?? 0),
     accounts: hasBalance ? m.cumulativeNet - m.cumulativeSetAside + (f.openingBalance ?? 0) : 0,
-    savings: hasBalance ? m.cumulativeSetAside + (f.openingSavings ?? 0) : 0,
+    savings: hasBalance ? m.cumulativeSetAside - m.cumulativeReserve + (f.openingSavings ?? 0) : 0,
     setAside: m.setAside.total,
     projected: m.kind === "forecast" || m.kind === "mixed",
   }));

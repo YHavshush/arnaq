@@ -1,11 +1,12 @@
 import { getOpeningBalance } from "./balance";
-import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getBudgetsByMonth, resolveTotalBudget, type MonthBudgets } from "@/lib/budget/budgets";
 import { getMonthOverview, sumTransactions, type MonthSums } from "@/lib/budget/overview";
 import { addMonths, isDate, monthOf } from "@/lib/recurring/dates";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
+import { DEFAULT_BTW_POCKET_MATCH, mentions } from "@/lib/btw/summary";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
 import { countedAs, projectRecurring, type ForecastOccurrence } from "./recurring";
@@ -70,11 +71,14 @@ export interface ForecastMonth {
   /**
    * Money moved into savings (net of what came back out), cents. Neither income nor spending, so it is
    * not in `net`, but it has left the current account: `actual` is what really moved, `planned` what fixed
-   * items still put aside this month or later.
+   * items still put aside this month or later. `reserve` is the part of `total` set aside for the BTW: that money
+   * is owed, so it does not count as savings.
    */
-  setAside: { actual: number; planned: number; total: number };
+  setAside: { actual: number; planned: number; total: number; reserve: number };
   /** Running sum of `setAside.total` over the returned months up to and including this one. */
   cumulativeSetAside: number;
+  /** Running sum of `setAside.reserve`: the part set aside for the BTW, which is owed and not savings. */
+  cumulativeReserve: number;
   /** The part of income and expenses that is real money already. */
   actual: { income: number; expenses: number };
   recurring: {
@@ -131,8 +135,8 @@ interface Context {
   inMemoryMatched: Set<number>;
   /** Categories that put money aside; a fixed item in one of them is a deposit, not spending. */
   savings: Set<number>;
-  /** Net money that really moved into savings, per month. */
-  movedToSavings: Map<string, number>;
+  /** Net money that really moved into savings, per month, and the part of it that went to the BTW pocket. */
+  movedToSavings: Map<string, { total: number; reserve: number }>;
 }
 
 /**
@@ -169,18 +173,23 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
 
   let cumulativeNet = 0;
   let cumulativeSetAside = 0;
+  let cumulativeReserve = 0;
   const months: ForecastMonth[] = [];
   for (let m = first; m <= last; m = addMonths(m, 1)) {
     const month = await buildMonth(db, ctx, m);
     cumulativeNet += month.net;
     cumulativeSetAside += month.setAside.total;
-    months.push({ ...month, cumulativeNet, cumulativeSetAside });
+    cumulativeReserve += month.setAside.reserve;
+    months.push({ ...month, cumulativeNet, cumulativeSetAside, cumulativeReserve });
   }
 
   // Savings now, minus what moved in since the first month began, is what was saved when the chart starts.
   const savingsNow = await getSavingsSummary(db, { today: opts.today });
   const savingsKnown = savingsNow.anchored || savingsNow.start > 0 || savingsNow.lines > 0;
-  const movedSince = months.reduce((s, m) => s + m.setAside.actual, 0);
+  // Only real savings count: what went to the BTW pocket is owed, not saved. Only months up to now have real moves.
+  const movedSince = [...ctx.movedToSavings]
+    .filter(([month]) => month <= current)
+    .reduce((sum, [, m]) => sum + m.total - m.reserve, 0);
 
   return {
     today: opts.today,
@@ -209,11 +218,12 @@ function kindOf(ctx: Context, month: string): MonthKind {
 
 /** Per month (YYYY-MM): deposits minus withdrawals on the savings category, in each account's own currency. */
 async function getMovedToSavings(db: Db, first: string, last: string) {
-  const month = sql<string>`substr(${schema.transactions.date}, 1, 7)`;
   const rows = await db
     .select({
-      month,
-      moved: sql<number>`coalesce(sum(-${schema.transactions.amount}), 0)`.mapWith(Number),
+      date: schema.transactions.date,
+      amount: schema.transactions.amount,
+      counterparty: schema.transactions.counterparty,
+      description: schema.transactions.description,
     })
     .from(schema.transactions)
     .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
@@ -225,16 +235,23 @@ async function getMovedToSavings(db: Db, first: string, last: string) {
         gte(schema.transactions.date, `${first}-01`),
         lte(schema.transactions.date, `${last}-31`),
       ),
-    )
-    .groupBy(month);
-  return new Map(rows.map((r) => [r.month, r.moved]));
+    );
+  const byMonth = new Map<string, { total: number; reserve: number }>();
+  for (const r of rows) {
+    const entry = byMonth.get(r.date.slice(0, 7)) ?? { total: 0, reserve: 0 };
+    entry.total -= r.amount;
+    if (mentions([r.counterparty, r.description], DEFAULT_BTW_POCKET_MATCH))
+      entry.reserve -= r.amount;
+    byMonth.set(r.date.slice(0, 7), entry);
+  }
+  return byMonth;
 }
 
 async function buildMonth(
   db: Db,
   ctx: Context,
   month: string,
-): Promise<Omit<ForecastMonth, "cumulativeNet" | "cumulativeSetAside">> {
+): Promise<Omit<ForecastMonth, "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve">> {
   const kind = kindOf(ctx, month);
   const occurrences: ForecastOccurrence[] = (ctx.occurrences.get(month) ?? []).map((o) => ({
     ...o,
@@ -274,9 +291,13 @@ async function buildMonth(
     categories.map((c) => c.budget),
   );
 
-  const setAsideActual =
-    kind === "actual" || kind === "mixed" ? (ctx.movedToSavings.get(month) ?? 0) : 0;
+  const moved = kind === "actual" || kind === "mixed" ? ctx.movedToSavings.get(month) : undefined;
+  const setAsideActual = moved?.total ?? 0;
   const setAsidePlanned = sum(projectedDeposits);
+  // A planned deposit named for the BTW is the reserve: owed money, not savings.
+  const plannedReserve = sum(
+    projectedDeposits.filter((o) => mentions([o.name], DEFAULT_BTW_POCKET_MATCH)),
+  );
 
   return {
     month,
@@ -289,6 +310,7 @@ async function buildMonth(
       actual: setAsideActual,
       planned: setAsidePlanned,
       total: setAsideActual + setAsidePlanned,
+      reserve: (moved?.reserve ?? 0) + plannedReserve,
     },
     actual,
     recurring: {
