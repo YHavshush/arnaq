@@ -15,6 +15,7 @@ import {
   parseRabobankStatement,
 } from "./parsers/rabobank-pdf";
 import { cleanText } from "./clean";
+import { findExistingDuplicates } from "./dedupe";
 import { isPdf, readPdfPages } from "./pdf";
 import type { Bank, ParsedRow, ParseResult, SkippedRow } from "./types";
 
@@ -218,17 +219,22 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
       .returning();
 
     const hashes = buildImportHashes(accountId, parsed.rows);
+    // Money the account already holds, even from a differently laid-out file, is not stored twice.
+    const alreadyThere = await findExistingDuplicates(tx, account.id, parsed.rows);
+    const fresh = parsed.rows
+      .map((row, i) => ({ row, hash: hashes[i] }))
+      .filter((_, i) => !alreadyThere.has(i));
     let imported = 0;
     let foreign = 0;
     // Insert in chunks; rows whose hash already exists are skipped and not returned.
-    for (let from = 0; from < parsed.rows.length; from += INSERT_CHUNK) {
-      const chunk = parsed.rows.slice(from, from + INSERT_CHUNK);
+    for (let from = 0; from < fresh.length; from += INSERT_CHUNK) {
+      const chunk = fresh.slice(from, from + INSERT_CHUNK);
       const inserted = new Set(
         (
           await tx
             .insert(schema.transactions)
             .values(
-              chunk.map((row, j) => ({
+              chunk.map(({ row, hash }) => ({
                 accountId: account.id,
                 importId: imp.id,
                 date: row.date,
@@ -244,7 +250,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
                   row.description === null ? null : cleanText(row.description, 1000),
                 ),
                 balanceAfter: row.balanceAfter ?? null,
-                importHash: hashes[from + j],
+                importHash: hash,
               })),
             )
             .onConflictDoNothing({
@@ -253,8 +259,8 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
             .returning({ importHash: schema.transactions.importHash })
         ).map((r) => r.importHash),
       );
-      chunk.forEach((row, j) => {
-        if (!inserted.has(hashes[from + j])) return;
+      chunk.forEach(({ row, hash }) => {
+        if (!inserted.has(hash)) return;
         imported++;
         if (row.currency !== account.currency) foreign++;
       });
