@@ -139,9 +139,9 @@ export const ui: typeof en = {
       forecast: "prognose",
     },
     viewTotal: "Totaal",
-    viewBalance: "Saldo",
+    viewBalance: "Vermogen",
     legendHelpBalance:
-      "Boven elk punt staat je saldo aan het eind van die maand, eronder de groei van die maand. Tik op een maand voor details.",
+      "Boven elk punt staat je vermogen aan het eind van die maand, eronder de groei van die maand. Tik op een maand voor details.",
     viewMonthly: "Per maand",
     viewLabel: "Weergave van de grafiek",
     allMonths: "Alle maanden",

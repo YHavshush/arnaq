@@ -134,9 +134,9 @@ export const ui = {
     },
     kindShort: { actual: "actual", "no-data": "no upload", mixed: "partial", forecast: "forecast" },
     viewTotal: "Total",
-    viewBalance: "Balance",
+    viewBalance: "Net worth",
     legendHelpBalance:
-      "Above each point is your balance at the end of that month, below it the growth of that month. Tap a month for details.",
+      "Above each point is your net worth at the end of that month, below it the growth of that month. Tap a month for details.",
     viewMonthly: "Per month",
     viewLabel: "Chart view",
     allMonths: "All months",
