@@ -7,6 +7,8 @@ import { normaliseCounterparty } from "@/lib/recurring/normalise";
  * Phrases are matched as whole words in the counterparty and description.
  */
 export const CATALOG_NL: Record<string, string[]> = {
+  // Revolut's savings pot: moves to and from it are savings.
+  savings: ["instant access savings"],
   groceries: [
     "albert heijn",
     "jumbo",

@@ -42,6 +42,8 @@ export const DEFAULT_CATEGORIES: { slug: string; name: string; type: CategoryTyp
  * Higher priority wins; on equal priority the longer pattern wins. All editable in the app.
  */
 export const DEFAULT_RULES: { pattern: string; category: string; priority: number }[] = [
+  // Revolut's savings pot: moves to and from it are savings, not income or spending.
+  { pattern: "instant access savings", category: SAVINGS_CATEGORY, priority: 30 },
   { pattern: "albert heijn", category: "Boodschappen", priority: 10 },
   { pattern: "jumbo", category: "Boodschappen", priority: 10 },
   { pattern: "lidl", category: "Boodschappen", priority: 10 },
