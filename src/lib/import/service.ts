@@ -14,6 +14,7 @@ import {
   looksLikeRabobankStatement,
   parseRabobankStatement,
 } from "./parsers/rabobank-pdf";
+import { setSavingsAnchor } from "@/lib/savings/settings";
 import { cleanText } from "./clean";
 import { findExistingDuplicates } from "./dedupe";
 import { isPdf, readPdfPages } from "./pdf";
@@ -51,6 +52,8 @@ export interface ImportSummary {
   warnings: string[];
   /** What the upload did to recurring items: occurrences planned, matched, missed. */
   recurring: SyncResult;
+  /** The savings balance the file reported and now anchors the savings total, when it had one. */
+  savingsBalance: { amount: number; asOf: string } | null;
 }
 
 export class ImportError extends Error {}
@@ -290,6 +293,9 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
       today: input.today,
     });
 
+    // A savings balance in the file is where the savings total counts on from: nothing to type.
+    if (parsed.savingsBalance) await setSavingsAnchor(tx, parsed.savingsBalance);
+
     if (foreign > 0)
       warnings.push(`${foreign} row(s) are not in ${account.currency}; review them manually.`);
 
@@ -307,6 +313,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
       foreignCurrencyRows: foreign,
       warnings,
       recurring,
+      savingsBalance: parsed.savingsBalance ?? null,
     };
   });
 }

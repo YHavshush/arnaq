@@ -14,12 +14,12 @@ const put = (body: unknown) =>
 
 describe("savings settings over HTTP", () => {
   it("starts empty, saves a goal and a starting amount, and clears the goal", async () => {
-    expect(await (await route.GET()).json()).toEqual({ goal: null, start: 0 });
+    expect(await (await route.GET()).json()).toMatchObject({ goal: null, start: 0 });
     const saved = await route.PUT(put({ goal: 500000, start: 120000 }));
     expect(saved.status).toBe(200);
-    expect(await saved.json()).toEqual({ goal: 500000, start: 120000 });
-    expect(await (await route.GET()).json()).toEqual({ goal: 500000, start: 120000 });
-    expect(await (await route.PUT(put({ goal: null }))).json()).toEqual({
+    expect(await saved.json()).toMatchObject({ goal: 500000, start: 120000 });
+    expect(await (await route.GET()).json()).toMatchObject({ goal: 500000, start: 120000 });
+    expect(await (await route.PUT(put({ goal: null }))).json()).toMatchObject({
       goal: null,
       start: 120000,
     });

@@ -2,7 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createDb, one, schema } from "@/db";
 import { SAVINGS_CATEGORY } from "@/lib/categories/defaults";
-import { getSavingsSettings, SavingsError, setSavingsSettings } from "./settings";
+import { getSavingsSettings, SavingsError, setSavingsAnchor, setSavingsSettings } from "./settings";
 import { getSavingsSummary } from "./summary";
 
 async function setup() {
@@ -93,11 +93,16 @@ describe("getSavingsSummary", () => {
 describe("savings settings", () => {
   it("are empty by default, can be set, and the goal can be cleared", async () => {
     const { db } = await setup();
-    expect(await getSavingsSettings(db)).toEqual({ goal: null, start: 0 });
+    expect(await getSavingsSettings(db)).toEqual({
+      goal: null,
+      start: 0,
+      anchor: null,
+      anchorDate: null,
+    });
     await setSavingsSettings(db, { goal: 100000, start: 5000 });
-    expect(await getSavingsSettings(db)).toEqual({ goal: 100000, start: 5000 });
+    expect(await getSavingsSettings(db)).toMatchObject({ goal: 100000, start: 5000 });
     await setSavingsSettings(db, { goal: null });
-    expect(await getSavingsSettings(db)).toEqual({ goal: null, start: 5000 });
+    expect(await getSavingsSettings(db)).toMatchObject({ goal: null, start: 5000 });
   });
 
   it("refuse nonsense", async () => {
@@ -111,5 +116,55 @@ describe("savings settings", () => {
       { goal: 10 ** 13 },
     ])
       await expect(setSavingsSettings(db, bad)).rejects.toBeInstanceOf(SavingsError);
+  });
+});
+
+describe("the savings balance a statement reports (the anchor)", () => {
+  it("is where the total starts: the reported balance plus savings moves after its date", async () => {
+    const { db, tx } = await setup();
+    await setSavingsSettings(db, { start: 99999 }); // typed by hand earlier; the statement overrules it
+    await tx("2026-10-03", -30000); // before the anchor date: already inside the reported balance
+    await tx("2026-10-29", 5000); // on the anchor date: still inside it
+    await tx("2026-11-02", -10000); // after: adds to it
+    await setSavingsAnchor(db, { amount: 20085, asOf: "2026-10-29" });
+    expect(await getSavingsSummary(db, { today: "2026-11-05" })).toMatchObject({
+      saved: 30085,
+      anchored: true,
+      anchorDate: "2026-10-29",
+    });
+  });
+  it("is reported back with the settings, and cleared by nothing else", async () => {
+    const { db } = await setup();
+    await setSavingsAnchor(db, { amount: 20085, asOf: "2026-10-29" });
+    expect(await getSavingsSettings(db)).toMatchObject({ anchor: 20085, anchorDate: "2026-10-29" });
+    await setSavingsSettings(db, { goal: 500000 });
+    expect(await getSavingsSettings(db)).toMatchObject({ anchor: 20085, anchorDate: "2026-10-29" });
+  });
+  it("only moves forward: an older statement does not replace a newer balance", async () => {
+    const { db } = await setup();
+    await setSavingsAnchor(db, { amount: 20085, asOf: "2026-10-29" });
+    await setSavingsAnchor(db, { amount: 5000, asOf: "2026-08-31" });
+    expect(await getSavingsSettings(db)).toMatchObject({ anchor: 20085, anchorDate: "2026-10-29" });
+    await setSavingsAnchor(db, { amount: 30000, asOf: "2026-11-30" });
+    expect(await getSavingsSettings(db)).toMatchObject({ anchor: 30000, anchorDate: "2026-11-30" });
+  });
+  it("refuses a balance or date that makes no sense", async () => {
+    const { db } = await setup();
+    await expect(setSavingsAnchor(db, { amount: -1, asOf: "2026-10-29" })).rejects.toBeInstanceOf(
+      SavingsError,
+    );
+    await expect(setSavingsAnchor(db, { amount: 100, asOf: "29-10-2026" })).rejects.toBeInstanceOf(
+      SavingsError,
+    );
+  });
+  it("without an anchor the total is the typed start plus every savings move, as before", async () => {
+    const { db, tx } = await setup();
+    await setSavingsSettings(db, { start: 10000 });
+    await tx("2026-10-03", -30000);
+    expect(await getSavingsSummary(db, { today: "2026-10-10" })).toMatchObject({
+      saved: 40000,
+      anchored: false,
+      anchorDate: null,
+    });
   });
 });

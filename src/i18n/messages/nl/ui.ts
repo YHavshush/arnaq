@@ -314,6 +314,8 @@ export const ui: typeof en = {
       goalPlaceholder: "5000",
       startLabel: "Al gespaard voor je eerste upload (€)",
       startHint: "Je voortgang begint bij dit bedrag. Laat leeg als je bij nul begon.",
+      fromStatement: (amount: string, day: string) =>
+        `Je spaarsaldo komt uit je laatste afschrift: ${amount} op ${day}. Nieuwe spaarbewegingen komen erbij.`,
       save: "Opslaan",
       saved: "Opgeslagen",
       errAmount: "Vul een bedrag in, bijvoorbeeld 1250 of 1250,50.",

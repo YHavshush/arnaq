@@ -4,7 +4,7 @@ import { wipeMyData } from "@/lib/account";
 import { ensureSavingsCategory, seedDefaults } from "@/lib/categories/seed";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/defaults";
 import { EXPORT_VERSION } from "@/lib/export";
-import { SavingsError, setSavingsSettings } from "@/lib/savings/settings";
+import { SavingsError, setSavingsAnchor, setSavingsSettings } from "@/lib/savings/settings";
 
 export class RestoreError extends Error {}
 
@@ -261,6 +261,20 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
     ]) {
       try {
         await setSavingsSettings(db, change);
+      } catch (e) {
+        if (!(e instanceof SavingsError)) throw e;
+      }
+    }
+    // The savings balance a statement reported (a hand-edited or damaged value is skipped, not fatal).
+    if (
+      typeof settings.savingsAnchor === "number" &&
+      typeof settings.savingsAnchorDate === "string"
+    ) {
+      try {
+        await setSavingsAnchor(db, {
+          amount: settings.savingsAnchor,
+          asOf: settings.savingsAnchorDate,
+        });
       } catch (e) {
         if (!(e instanceof SavingsError)) throw e;
       }
