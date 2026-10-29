@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { ensureSavingsCategory, seedDefaults } from "@/lib/categories/seed";
+import { ensureSavingsCategory, ensureTaxesCategory, seedDefaults } from "@/lib/categories/seed";
 import type { Db } from "./index";
 import { schema } from "./index";
 
@@ -81,7 +81,11 @@ export async function withUser<T>(
         .onConflictDoNothing()
         .returning({ id: schema.appUsers.userId });
       if (created.length > 0) await seedDefaults(tx);
-      else await ensureSavingsCategory(tx); // an account from before the Savings category existed
+      else {
+        // an account from before the Savings and Taxes categories existed
+        await ensureSavingsCategory(tx);
+        await ensureTaxesCategory(tx);
+      }
     }
     return await fn(tx);
   });

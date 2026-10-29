@@ -104,7 +104,7 @@ const NL: Rule[] = [
     () => "Dit afschrift hoort bij een andere rekening dan de gekozen rekening.",
   ],
   // upload route and API
-  [/^File too large \(max 2 MB\)\.$/, () => "Dit bestand is te groot (maximaal 2 MB)."],
+  [/^File too large \(max 4 MB\)\.$/, () => "Dit bestand is te groot (maximaal 4 MB)."],
   [/^Expected multipart\/form-data\.$/, () => "Verwacht een bestand (multipart/form-data)."],
   [/^Missing file\.$/, () => "Er is geen bestand meegestuurd."],
   [/^Invalid accountId\.$/, () => "Ongeldige rekening."],

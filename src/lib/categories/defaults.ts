@@ -4,6 +4,7 @@ type CategoryType = (typeof CATEGORY_TYPES)[number];
 
 export const INTERNAL_TRANSFER_CATEGORY = "Interne overboeking";
 export const SAVINGS_CATEGORY = "Spaarrekening";
+export const TAXES_CATEGORY = "Belastingen";
 
 /** Types whose transactions are neither income nor spending. */
 export const isNonSpending = (type: CategoryType) => type === "transfer" || type === "savings";
@@ -26,6 +27,7 @@ export const DEFAULT_CATEGORIES: { slug: string; name: string; type: CategoryTyp
   { slug: "travel", name: "Reizen & vakantie", type: "expense" },
   { slug: "gifts-donations", name: "Cadeaus & donaties", type: "expense" },
   { slug: "saving-investing", name: "Sparen & beleggen", type: "expense" },
+  { slug: "taxes", name: TAXES_CATEGORY, type: "expense" },
   { slug: "other", name: "Overig", type: "expense" },
   { slug: "salary", name: "Salaris / bijbaan", type: "income" },
   { slug: "student-finance", name: "Studiefinanciering (DUO)", type: "income" },
@@ -42,6 +44,7 @@ export const DEFAULT_CATEGORIES: { slug: string; name: string; type: CategoryTyp
  * Higher priority wins; on equal priority the longer pattern wins. All editable in the app.
  */
 export const DEFAULT_RULES: { pattern: string; category: string; priority: number }[] = [
+  { pattern: "belastingdienst", category: TAXES_CATEGORY, priority: 20 },
   // Revolut's savings pot: moves to and from it are savings, not income or spending.
   { pattern: "instant access savings", category: SAVINGS_CATEGORY, priority: 30 },
   { pattern: "albert heijn", category: "Boodschappen", priority: 10 },

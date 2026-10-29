@@ -157,8 +157,8 @@ describe("restoreFromBackup", () => {
     old.tables.transactions = [];
     await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, old));
     const cats = await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.categories));
-    // The Savings category is added to any restore, since a backup from before it existed has none.
-    expect(cats.filter((c) => c.type !== "savings")).toMatchObject([
+    // The Savings and Taxes categories are added to any restore, since a backup from before they existed has none.
+    expect(cats.filter((c) => c.type !== "savings" && c.slug !== "taxes")).toMatchObject([
       { name: "Boodschappen", slug: "groceries" },
     ]);
   });

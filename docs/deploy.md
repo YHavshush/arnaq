@@ -29,7 +29,7 @@ but a local development machine.
    second account and look).
 
 The free Hobby plan is for personal, non-commercial use. A request body larger than the platform's limit
-(a few MB) is refused before the app sees it; the app's own limit for statements is 2 MB.
+(a few MB) is refused before the app sees it; the app's own limit for statements is 4 MB (Vercel refuses request bodies above 4.5 MB).
 
 ## Hetzner (more control, more upkeep) — untested outline
 

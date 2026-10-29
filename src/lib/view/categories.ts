@@ -51,6 +51,7 @@ const MAP: Record<string, { chip: Chip; icon: IconKey }> = {
   "Overig inkomen": { chip: "gray", icon: "wallet" },
   "Interne overboeking": { chip: "gray", icon: "arrow-left-right" },
   Spaarrekening: { chip: "mint", icon: "piggy-bank" },
+  Belastingen: { chip: "gray", icon: "landmark" },
 };
 
 /** Tint and icon for a category; unknown (user-added) categories get a neutral gray. */
@@ -77,6 +78,7 @@ const ENGLISH: Record<string, string> = {
   "Kleding & verzorging": "Clothing & personal care",
   Gezondheid: "Health",
   "Reizen & vakantie": "Travel & holidays",
+  Belastingen: "Taxes",
   "Cadeaus & donaties": "Gifts & donations",
   "Sparen & beleggen": "Savings & investing",
   Overig: "Other",

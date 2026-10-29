@@ -9,6 +9,13 @@ import { normaliseCounterparty } from "@/lib/recurring/normalise";
 export const CATALOG_NL: Record<string, string[]> = {
   // Revolut's savings pot: moves to and from it are savings.
   savings: ["instant access savings"],
+  taxes: [
+    "belastingdienst",
+    "gemeentelijke belastingen",
+    "waterschapsbelasting",
+    "motorrijtuigenbelasting",
+    "cjib",
+  ],
   groceries: [
     "albert heijn",
     "jumbo",
@@ -351,7 +358,6 @@ export const AMBIGUOUS_NL = [
   "aliexpress",
   "temu",
   "shein",
-  "belastingdienst",
   "anwb",
   "ing",
   "rabobank",

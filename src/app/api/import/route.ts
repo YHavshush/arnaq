@@ -6,7 +6,8 @@ import { isPdf } from "@/lib/import/pdf";
 import { ImportError, importStatement } from "@/lib/import/service";
 import { clearSample } from "@/lib/sample/sample";
 
-const MAX_BYTES = 2 * 1024 * 1024;
+/** Vercel refuses request bodies above 4.5 MB before the app sees them, so 4 MB (plus form overhead) is the most that can work. */
+const MAX_BYTES = 4 * 1024 * 1024;
 
 /** POST multipart/form-data: file (required), accountId (optional), month=YYYY-MM (optional). */
 export async function POST(request: Request) {
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   }
   // Refuse before buffering the body. (A reverse proxy should enforce the same cap, see deploy notes.)
   const declared = Number(request.headers.get("content-length") ?? "0");
-  if (declared > MAX_BYTES + 64 * 1024) return errorResponse("File too large (max 2 MB).", 413);
+  if (declared > MAX_BYTES + 64 * 1024) return errorResponse("File too large (max 4 MB).", 413);
 
   let form: FormData;
   try {
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
 
   const file = form.get("file");
   if (!(file instanceof File)) return errorResponse("Missing file.", 400);
-  if (file.size > MAX_BYTES) return errorResponse("File too large (max 2 MB).", 413);
+  if (file.size > MAX_BYTES) return errorResponse("File too large (max 4 MB).", 413);
 
   const accountRaw = form.get("accountId");
   const monthRaw = form.get("month");

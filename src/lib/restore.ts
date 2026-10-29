@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { wipeMyData } from "@/lib/account";
-import { ensureSavingsCategory, seedDefaults } from "@/lib/categories/seed";
+import { ensureSavingsCategory, ensureTaxesCategory, seedDefaults } from "@/lib/categories/seed";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/defaults";
 import { EXPORT_VERSION } from "@/lib/export";
 import { SavingsError, setSavingsSettings } from "@/lib/savings/settings";
@@ -268,6 +268,7 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
   }
   // A backup from before the Savings category existed does not have it.
   await ensureSavingsCategory(db);
+  await ensureTaxesCategory(db);
 
   return Object.fromEntries([
     ["accounts", account.size],

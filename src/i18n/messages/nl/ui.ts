@@ -228,7 +228,7 @@ export const ui: typeof en = {
       submit: "Uploaden",
       busy: "Bezig met uploaden…",
       errType: "Kies een CSV- of PDF-bestand.",
-      errSize: "Dit bestand is te groot (maximaal 2 MB).",
+      errSize: "Dit bestand is te groot (maximaal 4 MB).",
       errNone: "Kies eerst een bestand.",
       errFailed: (status: number) => `Uploaden mislukt (${status}).`,
       processed: (bank: string, period: string) => `${bank}, ${period} verwerkt`,

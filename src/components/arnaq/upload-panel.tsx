@@ -42,7 +42,7 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
     setSummary(null);
     if (!f) return setFile(null);
     if (!/\.(csv|pdf)$/i.test(f.name)) return setError(p.errType);
-    if (f.size > 2 * 1024 * 1024) return setError(p.errSize);
+    if (f.size > 4 * 1024 * 1024) return setError(p.errSize);
     setFile(f);
   }
 

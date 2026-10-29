@@ -44,7 +44,7 @@ describe("localizeMessage", () => {
       "De begindatum moet tussen 1990-01-01 en 2100-12-31 liggen.",
     ],
     ["At most 500 recurring items are supported.", "Er kunnen maximaal 500 vaste posten zijn."],
-    ["File too large (max 2 MB).", "Dit bestand is te groot (maximaal 2 MB)."],
+    ["File too large (max 4 MB).", "Dit bestand is te groot (maximaal 4 MB)."],
     [
       "The savings goal must be a positive amount.",
       "Het spaardoel moet een bedrag boven nul zijn.",

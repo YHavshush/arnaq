@@ -222,7 +222,7 @@ export const ui = {
       submit: "Upload",
       busy: "Uploading…",
       errType: "Choose a CSV or PDF file.",
-      errSize: "This file is too large (maximum 2 MB).",
+      errSize: "This file is too large (maximum 4 MB).",
       errNone: "Choose a file first.",
       errFailed: (status: number) => `Upload failed (${status}).`,
       processed: (bank: string, period: string) => `${bank}, ${period} processed`,
