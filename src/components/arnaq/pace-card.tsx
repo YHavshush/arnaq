@@ -67,6 +67,12 @@ export async function PaceCard({ pace, month }: { pace: Pace; month: string }) {
         </div>
       )}
 
+      {pace.fixed > 0 && (
+        <p className="text-ink-muted num mt-3 text-[13px]">
+          {o.paceBridge(euro(pace.total), euro(pace.fixed), euro(pace.spent))}
+        </p>
+      )}
+
       <div aria-hidden className="mt-4 flex h-[72px] items-end gap-[3px]">
         {pace.days.map((d) => {
           const isHigh = d.amount >= pace.threshold;

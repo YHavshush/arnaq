@@ -42,7 +42,11 @@ export interface AttentionItem {
 
 /** The pace of everyday spending (money that is not a fixed cost) through the month. */
 export interface PaceCard {
+  /** Everyday spending: the month's spending without the fixed costs already paid. */
   spent: number;
+  /** All spending this month and the fixed costs paid in it: `fixed + spent === total` (unless fixed exceeds it). */
+  total: number;
+  fixed: number;
   /** Budget for everyday spending (total budget minus fixed costs); null when there is none. */
   budget: number | null;
   /** What should be spent by now at an even pace; null without a budget. */
@@ -429,6 +433,8 @@ export function buildOverzicht({
       hasVariableBudget && progress > 0 ? variableSpent / variableBudget / progress : null;
     pace = {
       spent: variableSpent,
+      total: spent,
+      fixed: Math.min(paidFixed, spent),
       budget: hasVariableBudget ? variableBudget : null,
       schedule,
       ahead: schedule === null ? null : schedule - variableSpent,

@@ -511,4 +511,16 @@ describe("buildOverzicht: the parts the design adds", () => {
       expect(worth(null, null)).toBeNull();
     });
   });
+
+  it("the pace card says how the month's spending splits into fixed and everyday, and the parts add up", () => {
+    const o = buildOverzicht({
+      overview: overview({ incomeActual: 300000 }, [line(1, "Huur", 196200, null)]),
+      occurrences: [occ(1, "matched", 90000)],
+      today: "2026-10-15",
+      locale: "en" as const,
+      daily: [5000, 12000],
+    });
+    expect(o.pace).toMatchObject({ total: 196200, fixed: 90000, spent: 106200 });
+    expect(o.pace!.fixed + o.pace!.spent).toBe(o.pace!.total);
+  });
 });

@@ -87,7 +87,9 @@ export const ui = {
     tagFixed: "fixed",
     allCategories: (n: number) => `All ${n} categories`,
     paceTitle: "Pace of the month",
-    paceAside: "without fixed costs",
+    paceAside: "everyday spending only",
+    paceBridge: (total: string, fixed: string, everyday: string) =>
+      `${total} spent = ${fixed} fixed + ${everyday} everyday`,
     paceOf: (budget: string) => `of ${budget}`,
     paceAhead: (amount: string) => `${amount} under pace`,
     paceBehind: (amount: string) => `${amount} over pace`,

@@ -63,6 +63,31 @@ describe("catalogSuggestion (words that hint at a category without settling it)"
   });
 });
 
+describe("words the owner named", () => {
+  it("a salsa shop is food and drink; a bare 'salsa' and a pool café are only suggested", () => {
+    expect(catalogLookup("Salsa Shop Utrecht", null)).toBe("eating-out");
+    expect(catalogLookup("Salsa Nights", null)).toBeNull();
+    expect(catalogSuggestion("Salsa Nights", null)).toBe("eating-out");
+    expect(catalogSuggestion("Poolcafé De Keu", null)).toBe("going-out");
+    expect(catalogSuggestion("Pool Cafe Noord", null)).toBe("going-out");
+  });
+  it("life insurance goes to the one insurance category; a bare 'insurance' is only suggested", () => {
+    expect(catalogLookup("Levensverzekering Voorbeeld", null)).toBe("health-insurance");
+    expect(catalogLookup("Reisverzekering Voorbeeld", null)).toBeNull();
+    expect(catalogSuggestion("Reisverzekering Voorbeeld", null)).toBeNull(); // not a whole word
+    expect(catalogSuggestion("Brand verzekering", null)).toBe("health-insurance");
+  });
+  it("knows more health insurers by name", () => {
+    for (const name of [
+      "Zorg en Zekerheid",
+      "Zorgverzekeraar Voorbeeld",
+      "Zorgpremie okt",
+      "FBTO ZORGVERZEKERINGEN NV",
+    ])
+      expect(catalogLookup(name, null)).toBe("health-insurance");
+  });
+});
+
 describe("applyAutomatic with the catalog", () => {
   async function setup() {
     const db = await createDb(":memory:");
@@ -172,5 +197,33 @@ describe("applyAutomatic with the catalog", () => {
     const refund = await tx("Cafe De Hoek", { amount: 500 });
     expect(await applyAutomatic(db)).toMatchObject({ applied: 0, suggested: 0 });
     expect((await get(refund.id)).suggestedCategoryId).toBeNull();
+  });
+
+  it("sorts moves to and from Instant Access Savings as Savings, in either direction, as no spending", async () => {
+    const { db, tx, get, cat } = await setup();
+    const out = await tx("To Instant Access Savings", { amount: -50000 });
+    const back = await tx("From Instant Access Savings", { amount: 10000 });
+    expect((await applyAutomatic(db)).applied).toBe(2);
+    for (const t of [out, back])
+      expect(await get(t.id)).toMatchObject({
+        categoryId: await cat("savings"),
+        categorySource: "catalog",
+        isInternalTransfer: true,
+      });
+  });
+
+  it("sorts a payment and its bounced-payment reversal into the same expense category", async () => {
+    const { db, tx, get, cat } = await setup();
+    const paid = await tx("FBTO ZORGVERZEKERINGEN NV", { amount: -15100 });
+    const reversed = await tx("FBTO ZORGVERZEKERINGEN NV", {
+      amount: 15100,
+      description: "Terugboeking: Onvoldoende saldo Kenmerk machtiging",
+    });
+    const plainIncome = await tx("FBTO ZORGVERZEKERINGEN NV", { amount: 500 }); // no hint it is a reversal
+    await applyAutomatic(db);
+    const insurance = await cat("health-insurance");
+    expect((await get(paid.id)).categoryId).toBe(insurance);
+    expect((await get(reversed.id)).categoryId).toBe(insurance);
+    expect((await get(plainIncome.id)).categoryId).toBeNull();
   });
 });
