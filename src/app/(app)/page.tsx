@@ -10,7 +10,6 @@ import { LoadSampleButton } from "@/components/arnaq/sample";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
 import { Row } from "@/components/arnaq/row";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
-import { StatusTile } from "@/components/arnaq/status-tile";
 import { UpcomingList } from "@/components/arnaq/upcoming-list";
 import { getI18n } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
@@ -27,6 +26,44 @@ export default function Overview({ searchParams }: PageProps<"/">) {
     <Suspense fallback={<HeroSkeleton screen="overview" />}>
       <Content searchParams={searchParams} />
     </Suspense>
+  );
+}
+
+function SavingsRow({
+  row,
+  t,
+  locale,
+}: {
+  row: NonNullable<Awaited<ReturnType<typeof loadOverzicht>>["savingsRow"]>;
+  t: Messages;
+  locale: Locale;
+}) {
+  const { euro, euroExact } = formatter(locale);
+  const s = t.ui.overview.savingsRow;
+  const sub =
+    row.goal !== null
+      ? s.ofGoal(euro(row.goal))
+      : row.thisMonth > 0
+        ? s.moved(euro(row.thisMonth))
+        : row.thisMonth < 0
+          ? s.taken(euro(-row.thisMonth))
+          : undefined;
+  return (
+    <Row
+      icon="Spaarrekening"
+      name={s.name}
+      amount={euroExact(row.saved)}
+      amountSub={sub}
+      bar={
+        row.goal !== null && row.goal > 0
+          ? {
+              filled: row.saved / row.goal,
+              planned: 0,
+              state: row.saved >= row.goal ? "done" : "none",
+            }
+          : undefined
+      }
+    />
   );
 }
 
@@ -114,20 +151,13 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         detail={o.detail}
       />
       <AttentionList items={o.attention} />
-      <div className="mt-6 grid grid-cols-2 gap-3 @min-[900px]/app:grid-cols-4">
-        {o.tiles.map((tile) => (
-          <StatusTile
-            key={tile.key}
-            tile={tile}
-            // With the savings goal as a full-width card on the phone, income takes the full width too, so no gap is left.
-            className={
-              tile.key === "inkomen" && o.tiles.some((t) => t.goal)
-                ? "col-span-2 @min-[900px]/app:col-span-1"
-                : ""
-            }
-          />
-        ))}
-      </div>
+      {o.facts.length > 0 && (
+        <div className="text-ink-muted mt-3 grid gap-1 px-1 text-[14px]">
+          {o.facts.map((fact) => (
+            <p key={fact}>{fact}</p>
+          ))}
+        </div>
+      )}
 
       {o.netWorth && (
         <Section
@@ -172,6 +202,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
             ) : (
               <div className="glass overflow-hidden">
                 <ul className="divide-hair divide-y">
+                  {o.savingsRow && <SavingsRow row={o.savingsRow} t={t} locale={locale} />}
                   {shown.map((r) => (
                     <Row key={r.categoryId ?? "none"} {...rowProps(r, t, locale)} />
                   ))}
