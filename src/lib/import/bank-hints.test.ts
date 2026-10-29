@@ -74,7 +74,7 @@ describe("every open row is sorted on every upload", () => {
 
 describe("the built-in list knows common words, not only names", () => {
   it.each([
-    ["Il Caffe", "eating-out"],
+    ["Il Caffe", null], // a café is only ever suggested, see catalogSuggestion
     ["Nori Bali Canggu Restaura", "eating-out"],
     ["Bar LUX", "going-out"],
     ["Poolcafé De Keu", null],

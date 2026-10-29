@@ -1,6 +1,6 @@
 import { and, eq, inArray, isNotNull, isNull, ne, or } from "drizzle-orm";
 import { schema, type Db } from "@/db";
-import { catalogLookup, INCOME_SLUGS } from "./catalog-nl";
+import { catalogLookup, catalogSuggestion, INCOME_SLUGS } from "./catalog-nl";
 import { decide } from "./decide";
 import { historyLookup, type HistoryEntry } from "./history";
 import { ensureMerchantKeys } from "./learned";
@@ -99,8 +99,12 @@ export async function applyAutomatic(
     const slug = catalogLookup(t.counterparty, t.description);
     const catalogId =
       slug && INCOME_SLUGS.has(slug) === t.amount > 0 ? (bySlug.get(slug) ?? null) : null;
+    const hintSlug = slug === null ? catalogSuggestion(t.counterparty, t.description) : null;
+    const hintId =
+      hintSlug && INCOME_SLUGS.has(hintSlug) === t.amount > 0 ? bySlug.get(hintSlug) : null;
     const decision = decide({
       catalog: catalogId !== null && fits(catalogId) ? catalogId : null,
+      hint: hintId != null && fits(hintId) ? hintId : null,
       history: historyLookup(t.key ?? "", history, fits),
     });
     if (decision.kind === "apply") {
