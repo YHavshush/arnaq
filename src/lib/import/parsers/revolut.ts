@@ -2,11 +2,12 @@ import { parseAmountToCents } from "@/lib/money";
 import { isDate } from "@/lib/recurring/dates";
 import { readCsv } from "../csv";
 import type { BankParser, ParsedRow, SkippedRow } from "../types";
+import { looksLikeRevolutStatement, parseRevolutStatement } from "./revolut-statement";
 
 const REQUIRED = ["Started Date", "Description", "Amount", "Currency", "State"];
 
 /**
- * Revolut CSV export.
+ * Revolut CSV export (the plain account export; the multi-part custom statement is read by revolut-statement.ts).
  * - Only COMPLETED rows are imported; PENDING and REVERTED are skipped.
  * - The fee column is folded into the amount (net effect on the balance).
  * - Non-EUR rows are imported with their own currency and are flagged downstream
@@ -20,6 +21,8 @@ export const revolutParser: BankParser = {
   detect: (headers) => REQUIRED.every((h) => headers.includes(h)) && headers.includes("Product"),
 
   parse(content) {
+    // The custom statement (several parts in one file) has its own reader; this one reads the plain export.
+    if (looksLikeRevolutStatement(content)) return parseRevolutStatement(content);
     const { headers, records } = readCsv(content);
     const missing = REQUIRED.filter((h) => !headers.includes(h));
     if (missing.length) throw new Error(`Not a Revolut export, missing: ${missing.join(", ")}`);

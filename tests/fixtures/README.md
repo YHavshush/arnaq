@@ -7,10 +7,11 @@ Anonymised sample bank exports used by the parser tests.
 
 ## Current files
 
-| File                  | Origin                                                                                                                             |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `rabobank-sample.csv` | **Synthetic**, written from the documented Rabobank column layout (comma separated, Dutch headers, `+1.234,56` amounts).           |
-| `revolut-sample.csv`  | **Synthetic**, written from the documented Revolut layout (COMPLETED / PENDING / REVERTED, separate Fee column, mixed currencies). |
+| File                           | Origin                                                                                                                                                                                                                                                                     |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rabobank-sample.csv`          | **Synthetic**, written from the documented Rabobank column layout (comma separated, Dutch headers, `+1.234,56` amounts).                                                                                                                                                   |
+| `revolut-sample.csv`           | **Synthetic**, written from the documented Revolut layout (COMPLETED / PENDING / REVERTED, separate Fee column, mixed currencies).                                                                                                                                         |
+| `revolut-statement-sample.csv` | **Invented**, shaped like a Revolut "Custom Statement" CSV (summaries, one current-account transactions table with a running balance, a savings interest table). The numbers add up. The real statement was only used locally to check the format, and is never committed. |
 
 **Revolut: verified** against a real export (same columns and `State` values; one difference found and fixed: the date is the _Completed_ date, because the statement period is by completion). **Rabobank CSV: not verified.** The owner's Rabobank statements arrive as **PDF** ("Rekeningafschrift"), which is read by `src/lib/import/parsers/rabobank-pdf.ts` and tested with a generated, invented statement (`tests/helpers/statement-pdf.ts`). Real statements are never committed (`*.pdf` is git-ignored).
 
