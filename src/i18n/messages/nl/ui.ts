@@ -45,6 +45,10 @@ export const ui: typeof en = {
     retry: "Opnieuw proberen",
   },
   step: { to: (month: string) => `Naar ${month}` },
+  netWorth: {
+    title: "Vermogen",
+    aside: (accounts: string, savings: string) => `${accounts} op rekeningen + ${savings} gespaard`,
+  },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% van wat binnenkomt",

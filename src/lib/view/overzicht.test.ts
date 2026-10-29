@@ -397,18 +397,28 @@ describe("buildOverzicht: the parts the design adds", () => {
     expect(tile(summary({ goal: 500000, saved: 450000, lines: 7 }))).toMatchObject({
       word: "Onderweg",
     });
-    // Without a goal: this month's net, up or down.
-    expect(tile(summary({ saved: 90000, thisMonth: 10000, lines: 3 }))).toMatchObject({
-      word: "Gespaard",
+    // Without a goal: the total is the headline, this month's movement the sub-line.
+    expect(tile(summary({ saved: 90000, thisMonth: 10000, lines: 3 }), "en")).toMatchObject({
+      word: "€900.00",
+      sub: expect.stringContaining("€100"),
       tone: "good",
     });
-    expect(tile(summary({ saved: 80000, thisMonth: -10000, lines: 3 }))).toMatchObject({
-      word: "Opgenomen",
+    expect(tile(summary({ saved: 80000, thisMonth: -10000, lines: 3 }), "en")).toMatchObject({
+      word: "€800.00",
+      sub: expect.stringContaining("taken out"),
       tone: "warn",
     });
-    expect(tile(summary({ saved: 90000, thisMonth: 0, lines: 3 }))).toMatchObject({
-      word: "Gespaard",
+    expect(tile(summary({ saved: 90000, thisMonth: 0, lines: 3 }), "en")).toMatchObject({
+      word: "€900.00",
+      sub: "saved in total",
       tone: "accent",
+    });
+    // A balance read from the statement shows even before any move into savings was seen.
+    expect(
+      tile(summary({ saved: 20085, anchored: true, anchorDate: "2026-10-29" }), "en"),
+    ).toMatchObject({
+      word: "€200.85",
+      sub: "saved in total",
     });
     // No Savings lines and no goal: the old budget-based behaviour is unchanged.
     expect(tile(summary({}))).toMatchObject({ word: "Nog niets" });
@@ -468,6 +478,37 @@ describe("buildOverzicht: the parts the design adds", () => {
       });
       expect(o.basis).toBe("budget");
       expect(o.budget).toBe(200000);
+    });
+  });
+
+  describe("net worth: what is in the accounts plus savings", () => {
+    const worth = (accountsBalance: number | null, saved: number | null) =>
+      buildOverzicht({
+        overview: overview(),
+        occurrences: [],
+        today: "2026-10-22",
+        locale: "en" as const,
+        accountsBalance,
+        savings:
+          saved === null
+            ? null
+            : {
+                goal: null,
+                start: 0,
+                saved,
+                anchored: true,
+                anchorDate: "2026-10-22",
+                thisMonth: 0,
+                lines: 0,
+              },
+      }).netWorth;
+    it("adds the account balance and the savings", () => {
+      expect(worth(150000, 20085)).toEqual({ accounts: 150000, savings: 20085, total: 170085 });
+    });
+    it("counts a missing side as zero, and shows nothing when both are unknown", () => {
+      expect(worth(150000, null)).toEqual({ accounts: 150000, savings: 0, total: 150000 });
+      expect(worth(null, 20085)).toEqual({ accounts: 0, savings: 20085, total: 20085 });
+      expect(worth(null, null)).toBeNull();
     });
   });
 });

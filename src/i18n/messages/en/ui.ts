@@ -45,6 +45,10 @@ export const ui = {
     retry: "Try again",
   },
   step: { to: (month: string) => `Go to ${month}` },
+  netWorth: {
+    title: "Net worth",
+    aside: (accounts: string, savings: string) => `${accounts} in accounts + ${savings} saved`,
+  },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% of what arrives",

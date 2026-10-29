@@ -132,6 +132,20 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         ))}
       </div>
 
+      {o.netWorth && (
+        <Section
+          title={t.ui.netWorth.title}
+          aside={t.ui.netWorth.aside(
+            f.euroExact(o.netWorth.accounts),
+            f.euroExact(o.netWorth.savings),
+          )}
+        >
+          <div className="glass num p-4 text-2xl font-semibold tracking-tight">
+            {f.euroExact(o.netWorth.total)}
+          </div>
+        </Section>
+      )}
+
       {btw.hasData && (
         <Section title={t.ui.btw.title(btw.quarter.label.replace("-", " "))} aside={t.ui.btw.aside}>
           <BtwCard btw={btw} client={DEFAULT_BTW_INCOME_MATCH} t={t} locale={locale} />

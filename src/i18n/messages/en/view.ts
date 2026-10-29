@@ -90,6 +90,7 @@ export const view = {
         wordSaved: "Saved",
         wordNone: "Nothing yet",
         wordTaken: "Withdrawn",
+        subTotalOnly: "saved in total",
         subTotal: (amount: string) => `${amount} saved in total`,
         subMonthTaken: (amount: string) => `${amount} taken out this month`,
         subOf: (amount: string, goal: string) => `${amount} of ${goal}`,

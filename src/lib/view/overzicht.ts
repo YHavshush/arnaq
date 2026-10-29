@@ -93,6 +93,8 @@ export interface Overzicht {
    * this month, else nothing. A sum of some categories' budgets is not a total budget.
    */
   basis: "budget" | "income" | "none";
+  /** What the accounts hold plus what is saved, or null when neither is known. */
+  netWorth: { accounts: number; savings: number; total: number } | null;
   budget: number | null;
   spent: number;
   /** Fixed expenses still to come (expected, not yet matched). */
@@ -129,6 +131,8 @@ interface Input {
   otherIncome?: IncomeLine[];
   /** Money in and out of savings, and the goal, see getSavingsSummary. */
   savings?: SavingsSummary | null;
+  /** What the accounts hold now (cents) from the bank's own balances, see getOpeningBalance; null when unknown. */
+  accountsBalance?: number | null;
 }
 
 function sentenceFor(o: {
@@ -211,7 +215,7 @@ function sparenTile(
   savings?: SavingsSummary | null,
 ): Tile {
   const t = messages[locale].view.overzicht.tiles.sparen;
-  const { euro } = formatter(locale);
+  const { euro, euroExact } = formatter(locale);
   const own = { key: "sparen" as const, label: t.label };
   // Real savings (the Savings category) and the goal come first: a deposit raises the progress, a withdrawal lowers it.
   if (savings && savings.goal !== null) {
@@ -224,17 +228,14 @@ function sparenTile(
       goal: { saved: savings.saved, target: savings.goal },
     };
   }
-  if (savings && savings.lines > 0) {
+  if (savings && (savings.lines > 0 || savings.anchored)) {
+    // The total is the headline; this month's movement is the sub-line.
+    const word = euroExact(savings.saved);
     if (savings.thisMonth > 0)
-      return { ...own, word: t.wordSaved, sub: t.subMonth(euro(savings.thisMonth)), tone: "good" };
+      return { ...own, word, sub: t.subMonth(euro(savings.thisMonth)), tone: "good" };
     if (savings.thisMonth < 0)
-      return {
-        ...own,
-        word: t.wordTaken,
-        sub: t.subMonthTaken(euro(-savings.thisMonth)),
-        tone: "warn",
-      };
-    return { ...own, word: t.wordSaved, sub: t.subTotal(euro(savings.saved)), tone: "accent" };
+      return { ...own, word, sub: t.subMonthTaken(euro(-savings.thisMonth)), tone: "warn" };
+    return { ...own, word, sub: t.subTotalOnly, tone: "accent" };
   }
   const line = overview.expenses.find((l) => l.slug === SAVINGS_SLUG);
   const actual = line?.actual ?? 0;
@@ -264,6 +265,7 @@ export function buildOverzicht({
   daily = [],
   otherIncome = [],
   savings = null,
+  accountsBalance = null,
 }: Input): Overzicht {
   const t = messages[locale].view.overzicht;
   const { euro } = formatter(locale);
@@ -491,6 +493,14 @@ export function buildOverzicht({
     month,
     hasActivity,
     basis,
+    netWorth:
+      accountsBalance === null && (savings === null || (savings.saved === 0 && !savings.anchored))
+        ? null
+        : (() => {
+            const accounts = accountsBalance ?? 0;
+            const saved = savings?.saved ?? 0;
+            return { accounts, savings: saved, total: accounts + saved };
+          })(),
     budget,
     spent,
     planned,

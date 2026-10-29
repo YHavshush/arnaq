@@ -12,6 +12,7 @@ import { listRecurringItems } from "@/lib/recurring/items";
 import { getMissedOccurrences, getOccurrences } from "@/lib/recurring/occurrences";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
 import type { Locale } from "@/i18n/config";
+import { getOpeningBalance } from "@/lib/forecast/balance";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { buildOverzicht } from "./overzicht";
 import { buildPrognose } from "./prognose";
@@ -31,20 +32,32 @@ export function parseHorizon(raw: string | string[] | undefined): number {
 }
 
 export async function loadOverzicht(db: Db, month: string, today: string, locale: Locale) {
-  const [overview, allOccurrences, daily, otherIncome, savings, savingsIds] = await Promise.all([
-    getMonthOverview(db, month),
-    getOccurrences(db, { from: month, to: month }),
-    getDailySpend(db, month),
-    getOtherIncome(db, month),
-    getSavingsSummary(db, { today, month }),
-    savingsCategoryIds(db),
-  ]);
+  const [overview, allOccurrences, daily, otherIncome, savings, savingsIds, accountsBalance] =
+    await Promise.all([
+      getMonthOverview(db, month),
+      getOccurrences(db, { from: month, to: month }),
+      getDailySpend(db, month),
+      getOtherIncome(db, month),
+      getSavingsSummary(db, { today, month }),
+      savingsCategoryIds(db),
+      // The balance after the newest transaction: what the opening balance of next month is.
+      getOpeningBalance(db, addMonths(today.slice(0, 7), 1)),
+    ]);
   // A fixed deposit into savings (e.g. a BTW reserve) is money set aside, not a fixed cost or spending.
   const occurrences = allOccurrences.filter(
     (o) => o.categoryId === null || !savingsIds.has(o.categoryId),
   );
   return {
-    ...buildOverzicht({ overview, occurrences, today, locale, daily, otherIncome, savings }),
+    ...buildOverzicht({
+      overview,
+      occurrences,
+      today,
+      locale,
+      daily,
+      otherIncome,
+      savings,
+      accountsBalance,
+    }),
     prev: addMonths(month, -1),
     next: addMonths(month, 1),
   };

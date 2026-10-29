@@ -86,6 +86,7 @@ export const view: typeof en = {
         wordSaved: "Gespaard",
         wordNone: "Nog niets",
         wordTaken: "Opgenomen",
+        subTotalOnly: "in totaal gespaard",
         subTotal: (amount: string) => `${amount} in totaal gespaard`,
         subMonthTaken: (amount: string) => `${amount} deze maand opgenomen`,
         subOf: (amount: string, goal: string) => `${amount} van ${goal}`,
