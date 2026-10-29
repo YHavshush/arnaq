@@ -52,8 +52,6 @@ export const CATALOG_NL: Record<string, string[]> = {
     "flink",
   ],
   "eating-out": [
-    "cafe",
-    "caffe",
     "coffee",
     "koffie",
     "espresso",
@@ -434,6 +432,14 @@ export const CATALOG_NL: Record<string, string[]> = {
   "rent-allowance": ["huurtoeslag"],
 };
 
+/**
+ * Words that point at a category without settling it: a café is usually Food & drink, but some are really
+ * bars. These are offered as "Probably X?" for the person to confirm, never applied on their own.
+ */
+export const SUGGEST_NL: Record<string, string[]> = {
+  "eating-out": ["cafe", "caffe"],
+};
+
 /** Names used for many kinds of purchases: no answer from the catalog. */
 export const AMBIGUOUS_NL = [
   "bol.com",
@@ -511,4 +517,20 @@ export function catalogLookup(
       best = { length: e.phrase.length, slug: e.slug };
   }
   return best?.slug ?? null;
+}
+
+const SUGGEST_ENTRIES = Object.entries(SUGGEST_NL).flatMap(([slug, phrases]) =>
+  phrases.map((phrase) => ({ phrase: padded(phrase), slug })),
+);
+
+/**
+ * The category a name only hints at (see `SUGGEST_NL`), or null. Meant for names the catalog has no answer
+ * for; when the catalog does answer, that answer is used instead.
+ */
+export function catalogSuggestion(
+  counterparty: string | null,
+  description: string | null,
+): string | null {
+  const text = padded(`${counterparty ?? ""} ${description ?? ""}`);
+  return SUGGEST_ENTRIES.find((e) => text.includes(e.phrase))?.slug ?? null;
 }

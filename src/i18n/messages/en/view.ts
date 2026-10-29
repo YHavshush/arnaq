@@ -154,6 +154,8 @@ export const view = {
       "Forecast months are an estimate: fixed costs and income as you set them up, plus your average everyday spending.",
     noteMissed: (name: string, date: string) =>
       `${name} (expected ${date}) has not been seen and is not counted.`,
+    noteSetAside: (amount: string, month: string) =>
+      `Your fixed savings deposits put ${amount} aside through ${month}. That lowers the balance but is not counted as spending.`,
   },
   vasteLasten: {
     label: {

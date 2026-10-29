@@ -15,6 +15,8 @@ export interface PrognosePoint {
   net: number;
   /** The balance at the end of this month when the bank's balances are known, else the growth since the first month (cents). */
   cumulative: number;
+  /** Money moved into savings this month (cents): not spending, but no longer in the current account. */
+  setAside: number;
   /** Month is not (fully) real money yet: drawn dashed. */
   projected: boolean;
 }
@@ -54,7 +56,8 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     income: m.income,
     expenses: m.expenses,
     net: m.net,
-    cumulative: m.cumulativeNet + (f.openingBalance ?? 0),
+    cumulative: m.cumulativeNet - m.cumulativeSetAside + (f.openingBalance ?? 0),
+    setAside: m.setAside.total,
     projected: m.kind === "forecast" || m.kind === "mixed",
   }));
   // With no data at all every month nets to 0: that is "nothing to say", not "all in the plus".
@@ -107,6 +110,9 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
 
   const notes = [t.noteEstimate];
   if (f.openingBalance !== null) notes.push(t.noteBalance);
+  const planned = f.months.reduce((s, m) => s + m.setAside.planned, 0);
+  const lastPlanned = f.months.filter((m) => m.setAside.planned > 0).at(-1);
+  if (lastPlanned) notes.push(t.noteSetAside(euro(planned), monthName(lastPlanned.month)));
   for (const o of f.missed.slice(0, 3)) notes.push(t.noteMissed(o.name, dayLabel(o.expectedDate)));
 
   return {

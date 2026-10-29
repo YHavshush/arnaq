@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { createDb, one, schema } from "@/db";
 import { DEFAULT_CATEGORIES, DEFAULT_RULES } from "@/lib/categories/defaults";
 import { applyAutomatic } from "./auto";
-import { catalogLookup } from "./catalog-nl";
+import { catalogLookup, catalogSuggestion } from "./catalog-nl";
 
 describe("catalogLookup", () => {
   it("knows the shops and providers it lists, whatever the casing or the extras", () => {
@@ -43,6 +43,23 @@ describe("catalogLookup", () => {
       (r) => catalogLookup(r.pattern, null) !== slugOf.get(r.category),
     ).map((r) => r.pattern);
     expect(mismatches).toEqual([]);
+  });
+});
+
+describe("catalogSuggestion (words that hint at a category without settling it)", () => {
+  it("hints that a café is probably Food & drink, but the catalog itself stays silent", () => {
+    expect(catalogLookup("Cafe De Hoek", null)).toBeNull();
+    expect(catalogLookup("Caffè Roma", null)).toBeNull();
+    expect(catalogSuggestion("Cafe De Hoek", null)).toBe("eating-out");
+    expect(catalogSuggestion("Caffè Roma", null)).toBe("eating-out");
+    expect(catalogSuggestion(null, "Betaling Café Het Hoekje")).toBe("eating-out");
+  });
+  it("needs the whole word, and says nothing about other names", () => {
+    expect(catalogSuggestion("Cafeteria Noord", null)).toBeNull();
+    expect(catalogSuggestion("Lidl", null)).toBeNull();
+  });
+  it("leaves a name the catalog knows to the catalog (an eetcafe is a restaurant)", () => {
+    expect(catalogLookup("Eetcafe De Gouden Leeuw", null)).toBe("eating-out");
   });
 });
 
@@ -110,5 +127,50 @@ describe("applyAutomatic with the catalog", () => {
     await db.update(schema.categories).set({ slug: null });
     await tx("Lidl");
     expect((await applyAutomatic(db)).applied).toBe(0);
+  });
+
+  it("offers a café as 'Probably Food & drink?' instead of sorting it", async () => {
+    const { db, tx, get, cat } = await setup();
+    const cafe = await tx("Cafe De Hoek");
+    const result = await applyAutomatic(db);
+    expect(result).toMatchObject({ applied: 0, suggested: 1 });
+    expect(await get(cafe.id)).toMatchObject({
+      categoryId: null,
+      suggestedCategoryId: await cat("eating-out"),
+    });
+  });
+
+  it("lets the person's own history decide a café once they have taught it twice", async () => {
+    const { db, tx, get, cat } = await setup();
+    const bars = await cat("going-out");
+    for (let i = 0; i < 2; i++)
+      await tx("Cafe De Hoek", {
+        categoryId: bars,
+        categorySource: "user",
+        merchantKey: "cafe de hoek",
+      });
+    const again = await tx("Cafe De Hoek", { merchantKey: "cafe de hoek" });
+    await applyAutomatic(db);
+    expect(await get(again.id)).toMatchObject({ categoryId: bars, categorySource: "history" });
+  });
+
+  it("offers what the person taught once before, ahead of the café hint", async () => {
+    const { db, tx, get, cat } = await setup();
+    const bars = await cat("going-out");
+    await tx("Cafe De Hoek", {
+      categoryId: bars,
+      categorySource: "user",
+      merchantKey: "cafe de hoek",
+    });
+    const again = await tx("Cafe De Hoek", { merchantKey: "cafe de hoek" });
+    await applyAutomatic(db);
+    expect(await get(again.id)).toMatchObject({ categoryId: null, suggestedCategoryId: bars });
+  });
+
+  it("does not suggest a café for money coming in", async () => {
+    const { db, tx, get } = await setup();
+    const refund = await tx("Cafe De Hoek", { amount: 500 });
+    expect(await applyAutomatic(db)).toMatchObject({ applied: 0, suggested: 0 });
+    expect((await get(refund.id)).suggestedCategoryId).toBeNull();
   });
 });

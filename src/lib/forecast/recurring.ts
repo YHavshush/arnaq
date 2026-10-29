@@ -1,6 +1,6 @@
 import { schema, type Db } from "@/db";
 import { addDays, addMonths, monthOf } from "@/lib/recurring/dates";
-import { pairOccurrences, unmatchedCandidates } from "@/lib/recurring/matching";
+import { pairOccurrences, savingsCategoryIds, unmatchedCandidates } from "@/lib/recurring/matching";
 import {
   MATCH_WINDOW_DAYS,
   getOccurrences,
@@ -112,7 +112,8 @@ export async function projectRecurring(
   }
 
   const storedKeys = new Set(stored.map((o) => key(o.recurringItemId, o.month)));
-  const { lines, inMemoryMatched } = await plannedLines(db, items, storedKeys, w);
+  const savings = await savingsCategoryIds(db);
+  const { lines, inMemoryMatched } = await plannedLines(db, items, storedKeys, savings, w);
   for (const line of lines) add(line.month, line);
 
   for (const list of byMonth.values())
@@ -135,6 +136,7 @@ async function plannedLines(
   db: Db,
   items: Item[],
   storedKeys: Set<string>,
+  savings: Set<number>,
   w: { current: string; last: string },
 ): Promise<{ lines: Line[]; inMemoryMatched: Set<number> }> {
   const planned = items
@@ -144,7 +146,7 @@ async function plannedLines(
         .filter((p) => !storedKeys.has(key(item.id, p.month)))
         .map((p) => ({ item, ...p })),
     );
-  const paid = await matchInMemory(db, planned);
+  const paid = await matchInMemory(db, planned, savings);
   const inMemoryMatched = new Set([...paid.values()].map((t) => t.id));
   const lines = planned.map(({ item, month, expectedDate }, i): Line => {
     const t = paid.get(i);
@@ -170,7 +172,11 @@ async function plannedLines(
 }
 
 /** Planned index -> the unmatched transaction that already pays it (nothing is written). */
-async function matchInMemory(db: Db, planned: { item: Item; expectedDate: string }[]) {
+async function matchInMemory(
+  db: Db,
+  planned: { item: Item; expectedDate: string }[],
+  savings: Set<number>,
+) {
   const paid = new Map<number, { id: number; amount: number; date: string }>();
   if (planned.length === 0) return paid;
   const dates = planned.map((p) => p.expectedDate).sort();
@@ -185,6 +191,7 @@ async function matchInMemory(db: Db, planned: { item: Item; expectedDate: string
     expectedDate: p.expectedDate,
     expectedAmount: p.item.expectedAmount,
     item: p.item,
+    savings: p.item.categoryId !== null && savings.has(p.item.categoryId),
   }));
   for (const { o, t } of pairOccurrences(open, txs)) paid.set(o.key, t);
   return paid;
