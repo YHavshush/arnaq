@@ -11,8 +11,13 @@ import type { RecurringType } from "./occurrences";
 export const MIN_MONTHS = 3;
 /** Day-of-month spread allowed across the months (payment dates drift with weekends). */
 export const MAX_DAY_SPREAD = 5;
-/** Amounts must be within max(10% of the median, 2 euro) of the median. */
+/**
+ * Amounts must be within max(10% of the median, 2 euro) of the median. Income drifts more than a direct debit
+ * (a client pays when the invoice is settled), so it gets a wider day spread and 25% on the amount.
+ */
 const AMOUNT_SPREAD_PERCENT = 10;
+const INCOME_AMOUNT_SPREAD_PERCENT = 25;
+const INCOME_MAX_DAY_SPREAD = 12;
 const AMOUNT_SPREAD_MIN_CENTS = 200;
 /** More transactions than this per month on average looks like shopping, not a fixed charge. */
 const MAX_TX_PER_MONTH = 1.5;
@@ -82,7 +87,7 @@ interface Series {
 }
 
 /** The latest run of consecutive months under one framing, if it looks like a fixed charge. */
-function findSeries(txs: Tx[], framing: Framing): Series | null {
+function findSeries(txs: Tx[], framing: Framing, type: RecurringType): Series | null {
   const byPeriod = new Map<string, Tx[]>();
   for (const t of txs) {
     const { period } = place(t, framing);
@@ -111,7 +116,11 @@ function findSeries(txs: Tx[], framing: Framing): Series | null {
 
   const expectedAmount = median(picks.map((t) => t.amount));
   const allowed = Math.max(
-    Math.round((expectedAmount * AMOUNT_SPREAD_PERCENT) / 100),
+    Math.round(
+      (expectedAmount *
+        (type === "income" ? INCOME_AMOUNT_SPREAD_PERCENT : AMOUNT_SPREAD_PERCENT)) /
+        100,
+    ),
     AMOUNT_SPREAD_MIN_CENTS,
   );
   const deviations = picks.map((t) => Math.abs(t.amount - expectedAmount));
@@ -119,7 +128,7 @@ function findSeries(txs: Tx[], framing: Framing): Series | null {
 
   const positions = picks.map((t) => place(t, framing).pos);
   const spread = Math.max(...positions) - Math.min(...positions);
-  if (spread > MAX_DAY_SPREAD) return null;
+  if (spread > (type === "income" ? INCOME_MAX_DAY_SPREAD : MAX_DAY_SPREAD)) return null;
 
   const mid = median(positions);
   // Month-end offsets map back to a day: 0 -> 31 (clamped to the last day), -1 -> 30, 2 -> 2.
@@ -221,7 +230,7 @@ export async function detectSuggestions(db: Db, opts: { today: string }): Promis
     if (rejected.has(id)) continue;
     txs.sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
     const candidates = (["calendar", "month-end"] as const)
-      .map((f) => findSeries(txs, f))
+      .map((f) => findSeries(txs, f, type))
       .filter((s): s is Series => s !== null)
       .sort((a, b) => a.spread - b.spread || b.months.length - a.months.length);
     const series = candidates[0];
