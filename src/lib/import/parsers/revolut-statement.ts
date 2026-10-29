@@ -170,6 +170,7 @@ export function parseRevolutStatement(content: string): ParseResult {
         cell(r, cBalance),
       ].join("|"),
       balanceAfter,
+      bankCategory: cCat >= 0 ? cell(r, cCat) || null : null,
     });
   }
   if (previous !== closing)

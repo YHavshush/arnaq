@@ -14,6 +14,8 @@ export interface ParsedRow {
   sourceKey: string;
   /** The account balance after this row, in cents, when the file says so (or it can be worked out). */
   balanceAfter?: number | null;
+  /** The bank's own word for what the row is ("Top up", "Exchange", "Refund", "ATM", "Merchant"), when it gives one. */
+  bankCategory?: string | null;
 }
 
 export interface SkippedRow {

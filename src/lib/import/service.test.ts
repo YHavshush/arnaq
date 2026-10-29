@@ -175,7 +175,8 @@ describe("importCsv categorisation", () => {
     expect(await catOf("Spotify AB")).toBe("Abonnementen");
     expect(await catOf("Albert Heijn 1234 Amsterdam")).toBe("Boodschappen");
     expect(await catOf("Verhuurder Voorbeeld BV")).toBe("Huur");
-    expect(await catOf("Koffie Voorbeeld")).toBeNull();
+    // "Koffie" is a word the built-in list knows, so no rule is needed for it.
+    expect(await catOf("Koffie Voorbeeld")).toBe("Eten & drinken");
 
     await importCsv(db, { content: fixture("revolut-sample.csv"), filename: "rev.csv" });
     const transfers = await db

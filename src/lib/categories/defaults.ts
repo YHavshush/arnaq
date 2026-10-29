@@ -47,6 +47,7 @@ export const DEFAULT_RULES: { pattern: string; category: string; priority: numbe
   { pattern: "belastingdienst", category: TAXES_CATEGORY, priority: 20 },
   // Revolut's savings pot: moves to and from it are savings, not income or spending.
   { pattern: "instant access savings", category: SAVINGS_CATEGORY, priority: 30 },
+  { pattern: "eur btw", category: SAVINGS_CATEGORY, priority: 30 },
   { pattern: "albert heijn", category: "Boodschappen", priority: 10 },
   { pattern: "jumbo", category: "Boodschappen", priority: 10 },
   { pattern: "lidl", category: "Boodschappen", priority: 10 },

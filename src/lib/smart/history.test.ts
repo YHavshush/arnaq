@@ -23,23 +23,25 @@ const entry = (key: string, categoryId: number, count: number): HistoryEntry => 
 
 describe("historyLookup", () => {
   it("strong: a nearly identical shop, enough transactions, everyone agrees", () => {
-    const h = [entry("cafe de hoek", 1, 3), entry("cafe de hoeken", 1, 1)];
-    expect(historyLookup("cafe de hoek", h)).toEqual({ strong: 1, weak: null });
+    const h = [entry("zonnebloem de hoek", 1, 3), entry("zonnebloem de hoeken", 1, 1)];
+    expect(historyLookup("zonnebloem de hoek", h)).toEqual({ strong: 1, weak: null });
   });
 
   it("weak when only one transaction backs it (support 2)", () => {
-    expect(historyLookup("cafe de hoek", [entry("cafe de hoek", 1, 1)])).toEqual({
+    expect(historyLookup("zonnebloem de hoek", [entry("zonnebloem de hoek", 1, 1)])).toEqual({
       strong: null,
       weak: 1,
     });
   });
 
   it("weak when the close shops disagree (agreement 80%)", () => {
-    const h = [entry("cafe de hoek", 1, 3), entry("cafe de hoek", 2, 2)];
-    expect(historyLookup("cafe de hoek", h)).toEqual({ strong: null, weak: 1 });
+    const h = [entry("zonnebloem de hoek", 1, 3), entry("zonnebloem de hoek", 2, 2)];
+    expect(historyLookup("zonnebloem de hoek", h)).toEqual({ strong: null, weak: 1 });
     expect(
-      historyLookup("cafe de hoek", [entry("cafe de hoek", 1, 4), entry("cafe de hoek", 2, 1)])
-        .strong,
+      historyLookup("zonnebloem de hoek", [
+        entry("zonnebloem de hoek", 1, 4),
+        entry("zonnebloem de hoek", 2, 1),
+      ]).strong,
     ).toBe(1);
   });
 
@@ -130,10 +132,10 @@ describe("applyAutomatic with history", () => {
     const { db, tx, get, cat } = await setup();
     const goingOut = await cat("going-out");
     const own = { categoryId: goingOut, categorySource: "user" as const };
-    await tx("Cafe De Hoek", { ...own, merchantKey: "cafe de hoek" });
-    await tx("Cafe De Hoek", { ...own, merchantKey: "cafe de hoek" });
-    const same = await tx("Cafe De Hoek 1234 Utrecht");
-    const similar = await tx("Cafe De Horst");
+    await tx("Zonnebloem De Hoek", { ...own, merchantKey: "zonnebloem de hoek" });
+    await tx("Zonnebloem De Hoek", { ...own, merchantKey: "zonnebloem de hoek" });
+    const same = await tx("Zonnebloem De Hoek 1234 Utrecht");
+    const similar = await tx("Zonnebloem De Horst");
     const other = await tx("Bakker Piet");
     const result = await applyAutomatic(db);
     expect(await get(same.id)).toMatchObject({ categoryId: goingOut, categorySource: "history" });
@@ -149,9 +151,9 @@ describe("applyAutomatic with history", () => {
     const { db, tx, get, cat } = await setup();
     const goingOut = await cat("going-out");
     const guess = { categoryId: goingOut, categorySource: "model" as const };
-    await tx("Cafe De Hoek", { ...guess, merchantKey: "cafe de hoek" });
-    await tx("Cafe De Hoek", { ...guess, merchantKey: "cafe de hoek" });
-    const next = await tx("Cafe De Hoek");
+    await tx("Zonnebloem De Hoek", { ...guess, merchantKey: "zonnebloem de hoek" });
+    await tx("Zonnebloem De Hoek", { ...guess, merchantKey: "zonnebloem de hoek" });
+    const next = await tx("Zonnebloem De Hoek");
     await applyAutomatic(db);
     expect(await get(next.id)).toMatchObject({ categoryId: null, suggestedCategoryId: null });
   });

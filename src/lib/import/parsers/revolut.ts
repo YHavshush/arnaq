@@ -6,6 +6,9 @@ import { looksLikeRevolutStatement, parseRevolutStatement } from "./revolut-stat
 
 const REQUIRED = ["Started Date", "Description", "Amount", "Currency", "State"];
 
+/** The plain export names the kind of row in its Type column; these two are money moving between one's own accounts. */
+const PLAIN_TYPES: Record<string, string> = { TOPUP: "Top up", EXCHANGE: "Exchange" };
+
 /**
  * Revolut CSV export (the plain account export; the multi-part custom statement is read by revolut-statement.ts).
  * - Only COMPLETED rows are imported; PENDING and REVERTED are skipped.
@@ -67,6 +70,7 @@ export const revolutParser: BankParser = {
             "|",
           ),
           balanceAfter,
+          bankCategory: PLAIN_TYPES[(r["Type"] ?? "").trim().toUpperCase()] ?? null,
         });
       } catch (e) {
         skipped.push({ line, reason: e instanceof Error ? e.message : String(e) });

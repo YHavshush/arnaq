@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { applyRules } from "@/lib/categories/categorise";
+import { catalogLookup, INCOME_SLUGS } from "@/lib/smart/catalog-nl";
 import { applyAutomatic } from "@/lib/smart/auto";
 import { applyLearned } from "@/lib/smart/learned";
 import { merchantKey } from "@/lib/smart/merchant";
@@ -218,6 +219,25 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
       })
       .returning();
 
+    // What the bank itself says a row is. A refund goes back to the category its shop is known for. (Top-ups and
+    // exchanges are handled after transfers between the person's own banks have been paired, see below.)
+    const cats = await tx
+      .select({
+        id: schema.categories.id,
+        slug: schema.categories.slug,
+        type: schema.categories.type,
+      })
+      .from(schema.categories);
+    const idOfSlug = new Map(cats.filter((c) => c.slug).map((c) => [c.slug!, c]));
+    const sortedByBank = (row: ParsedRow) => {
+      if (row.bankCategory === "Refund" && row.amount > 0) {
+        const slug = catalogLookup(row.counterparty, row.description);
+        const cat = slug && !INCOME_SLUGS.has(slug) ? idOfSlug.get(slug) : undefined;
+        if (cat?.type === "expense")
+          return { categoryId: cat.id, source: "catalog" as const, internal: false };
+      }
+      return null;
+    };
     const hashes = buildImportHashes(accountId, parsed.rows);
     // Money the account already holds, even from a differently laid-out file, is not stored twice.
     const alreadyThere = await findExistingDuplicates(tx, account.id, parsed.rows);
@@ -250,6 +270,16 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
                   row.description === null ? null : cleanText(row.description, 1000),
                 ),
                 balanceAfter: row.balanceAfter ?? null,
+                ...(() => {
+                  const bank = sortedByBank(row);
+                  return bank
+                    ? {
+                        categoryId: bank.categoryId,
+                        categorySource: bank.source,
+                        isInternalTransfer: bank.internal,
+                      }
+                    : {};
+                })(),
                 importHash: hash,
               })),
             )
@@ -279,10 +309,29 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
 
     // New rows get categorised and own-account transfers are flagged straight away.
     await detectInternalTransfers(tx);
+    // Then what the bank itself calls a top-up or an exchange, and no other bank's withdrawal claimed: money moving
+    // between the person's own accounts, not income. Only rows that are still open, so a choice made is never undone.
+    const bankTransfers = fresh
+      .filter(({ row }) => row.bankCategory === "Top up" || row.bankCategory === "Exchange")
+      .map(({ hash }) => hash);
+    const transferId = idOfSlug.get("internal-transfer")?.id ?? null;
+    if (transferId !== null)
+      for (let i = 0; i < bankTransfers.length; i += 500)
+        await tx
+          .update(schema.transactions)
+          .set({ categoryId: transferId, categorySource: "rule", isInternalTransfer: true })
+          .where(
+            and(
+              inArray(schema.transactions.importHash, bankTransfers.slice(i, i + 500)),
+              isNull(schema.transactions.categoryId),
+              eq(schema.transactions.isInternalTransfer, false),
+            ),
+          );
+    // Every open row is sorted, not only the new ones, so a better list sorts what an earlier upload left open.
     // What the person taught beats a rule, so remembered shops go first.
-    await applyLearned(tx, { importId: imp.id });
-    await applyRules(tx, { importId: imp.id });
-    await applyAutomatic(tx, { importId: imp.id });
+    await applyLearned(tx);
+    await applyRules(tx);
+    await applyAutomatic(tx);
     // Then recurring items: plan through the newest data, match, and flag what is overdue.
     // Rules ran first, so an item's category only fills in what the rules left open.
     const recurring = await syncRecurring(tx, {

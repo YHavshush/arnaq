@@ -48,18 +48,9 @@ describe("import, review, budget and overview over HTTP", () => {
     const cats = (await (await h.categories.GET()).json()) as { id: number; name: string }[];
     const id = (name: string) => cats.find((c) => c.name === name)!.id;
 
-    // Two coffee rows, plus the Revolut-side-less transfer, need review.
+    // The two coffee rows are recognised by the built-in list (only the transfer without a Revolut side needs review).
     const review = (await (await h.review.GET()).json()) as { id: number }[];
-    expect(review).toHaveLength(3);
-
-    const put = await h.category.PUT(
-      json("PUT", "/x", { categoryId: id("Eten & drinken"), createRule: true }),
-      {
-        params: Promise.resolve({ id: String(review[0].id) }),
-      },
-    );
-    expect(await put.json()).toMatchObject({ alsoCategorised: 1 });
-    expect(await (await h.review.GET()).json()).toHaveLength(1);
+    expect(review).toHaveLength(1);
 
     expect(
       (
