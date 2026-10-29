@@ -150,6 +150,8 @@ export const view: typeof en = {
       "Voorspelde maanden zijn een schatting: vaste lasten en inkomen zoals je ze hebt ingesteld, plus je gemiddelde gewone uitgaven.",
     noteMissed: (name: string, date: string) =>
       `${name} (verwacht ${date}) is niet gezien en telt niet mee.`,
+    noteSetAside: (amount: string, month: string) =>
+      `Je vaste spaarstortingen zetten tot en met ${month} ${amount} opzij. Dat verlaagt het saldo maar telt niet als uitgaven.`,
   },
   vasteLasten: {
     label: {

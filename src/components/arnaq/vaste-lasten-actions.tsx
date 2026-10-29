@@ -277,7 +277,8 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
           <select name="categoryId" className={inputClass} defaultValue="0">
             <option value="0">{f.none}</option>
             {categories
-              .filter((c) => c.type === type)
+              // An outgoing item can also put money aside (a Savings category), e.g. a monthly BTW reserve.
+              .filter((c) => c.type === type || (type === "expense" && c.type === "savings"))
               .map((c) => (
                 <option key={c.id} value={c.id}>
                   {categoryLabel(c.name, locale)}

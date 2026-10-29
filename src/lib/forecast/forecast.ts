@@ -1,10 +1,11 @@
 import { getOpeningBalance } from "./balance";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getBudgetsByMonth, resolveTotalBudget, type MonthBudgets } from "@/lib/budget/budgets";
 import { getMonthOverview, sumTransactions, type MonthSums } from "@/lib/budget/overview";
 import { addMonths, isDate, monthOf } from "@/lib/recurring/dates";
 import { coveredMonths } from "@/lib/recurring/occurrences";
+import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { ForecastError } from "./errors";
 import { countedAs, projectRecurring, type ForecastOccurrence } from "./recurring";
 import { getVariableAverages, type VariableAverages } from "./variable";
@@ -65,6 +66,14 @@ export interface ForecastMonth {
   net: number;
   /** Running sum of `net` over the returned months up to and including this one. */
   cumulativeNet: number;
+  /**
+   * Money moved into savings (net of what came back out), cents. Neither income nor spending, so it is
+   * not in `net`, but it has left the current account: `actual` is what really moved, `planned` what fixed
+   * items still put aside this month or later.
+   */
+  setAside: { actual: number; planned: number; total: number };
+  /** Running sum of `setAside.total` over the returned months up to and including this one. */
+  cumulativeSetAside: number;
   /** The part of income and expenses that is real money already. */
   actual: { income: number; expenses: number };
   recurring: {
@@ -117,6 +126,10 @@ interface Context {
   budgets: Map<string, MonthBudgets>;
   occurrences: Map<string, Omit<ForecastOccurrence, "counted">[]>;
   inMemoryMatched: Set<number>;
+  /** Categories that put money aside; a fixed item in one of them is a deposit, not spending. */
+  savings: Set<number>;
+  /** Net money that really moved into savings, per month. */
+  movedToSavings: Map<string, number>;
 }
 
 /**
@@ -147,14 +160,18 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     budgets: await getBudgetsByMonth(db, first, last),
     occurrences: byMonth,
     inMemoryMatched,
+    savings: await savingsCategoryIds(db),
+    movedToSavings: await getMovedToSavings(db, first, last),
   };
 
   let cumulativeNet = 0;
+  let cumulativeSetAside = 0;
   const months: ForecastMonth[] = [];
   for (let m = first; m <= last; m = addMonths(m, 1)) {
     const month = await buildMonth(db, ctx, m);
     cumulativeNet += month.net;
-    months.push({ ...month, cumulativeNet });
+    cumulativeSetAside += month.setAside.total;
+    months.push({ ...month, cumulativeNet, cumulativeSetAside });
   }
 
   return {
@@ -181,19 +198,45 @@ function kindOf(ctx: Context, month: string): MonthKind {
   return ctx.uploaded.has(month) ? "actual" : "no-data";
 }
 
+/** Per month (YYYY-MM): deposits minus withdrawals on the savings category, in each account's own currency. */
+async function getMovedToSavings(db: Db, first: string, last: string) {
+  const month = sql<string>`substr(${schema.transactions.date}, 1, 7)`;
+  const rows = await db
+    .select({
+      month,
+      moved: sql<number>`coalesce(sum(-${schema.transactions.amount}), 0)`.mapWith(Number),
+    })
+    .from(schema.transactions)
+    .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
+    .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
+    .where(
+      and(
+        eq(schema.categories.type, "savings"),
+        eq(schema.transactions.currency, schema.accounts.currency),
+        gte(schema.transactions.date, `${first}-01`),
+        lte(schema.transactions.date, `${last}-31`),
+      ),
+    )
+    .groupBy(month);
+  return new Map(rows.map((r) => [r.month, r.moved]));
+}
+
 async function buildMonth(
   db: Db,
   ctx: Context,
   month: string,
-): Promise<Omit<ForecastMonth, "cumulativeNet">> {
+): Promise<Omit<ForecastMonth, "cumulativeNet" | "cumulativeSetAside">> {
   const kind = kindOf(ctx, month);
   const occurrences: ForecastOccurrence[] = (ctx.occurrences.get(month) ?? []).map((o) => ({
     ...o,
     counted: countedAs(o, month, kind),
   }));
   const projected = occurrences.filter((o) => o.counted === "projected");
+  const isDeposit = (o: ForecastOccurrence) =>
+    o.categoryId !== null && ctx.savings.has(o.categoryId);
   const projectedIncome = projected.filter((o) => o.type === "income");
-  const projectedExpenses = projected.filter((o) => o.type === "expense");
+  const projectedExpenses = projected.filter((o) => o.type === "expense" && !isDeposit(o));
+  const projectedDeposits = projected.filter((o) => o.type === "expense" && isDeposit(o));
 
   const overview = kind === "actual" || kind === "mixed" ? await getMonthOverview(db, month) : null;
   const soFar =
@@ -222,6 +265,10 @@ async function buildMonth(
     categories.map((c) => c.budget),
   );
 
+  const setAsideActual =
+    kind === "actual" || kind === "mixed" ? (ctx.movedToSavings.get(month) ?? 0) : 0;
+  const setAsidePlanned = sum(projectedDeposits);
+
   return {
     month,
     kind,
@@ -229,6 +276,11 @@ async function buildMonth(
     income,
     expenses,
     net: income - expenses,
+    setAside: {
+      actual: setAsideActual,
+      planned: setAsidePlanned,
+      total: setAsideActual + setAsidePlanned,
+    },
     actual,
     recurring: {
       income: sum(projectedIncome),

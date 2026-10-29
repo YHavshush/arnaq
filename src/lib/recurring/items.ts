@@ -92,7 +92,10 @@ async function clean(db: Db, input: RecurringItemInput): Promise<ItemValues> {
       ? await first(db.select().from(schema.categories).where(eq(schema.categories.id, categoryId)))
       : undefined;
     if (!category) throw new RecurringError(`Category ${categoryId} does not exist.`);
-    if (category.type !== input.type)
+    // An outgoing item may also put money aside (a Savings category): a deposit, not spending.
+    const fits =
+      category.type === input.type || (input.type === "expense" && category.type === "savings");
+    if (!fits)
       throw new RecurringError(`Category "${category.name}" is not an ${input.type} category.`);
   }
   const active = input.active ?? true;

@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNull, lte } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { addDays, dayNumber } from "./dates";
 import { identityMatches, type Identity } from "./normalise";
@@ -11,25 +11,55 @@ export interface MatchResult {
   unlinked: number;
 }
 
+/** The ids of the categories that put money aside (type "savings"). */
+export async function savingsCategoryIds(db: Db): Promise<Set<number>> {
+  const rows = await db
+    .select({ id: schema.categories.id })
+    .from(schema.categories)
+    .where(eq(schema.categories.type, "savings"));
+  return new Set(rows.map((r) => r.id));
+}
+
 /**
  * A matched transaction that later turned out to be an internal transfer (the other side of
  * the transfer was uploaded afterwards, or the user re-categorised it) is no payment to the
  * item after all. Release the occurrence so it can match something else or become missed.
  */
 async function unlinkInternalTransfers(db: Db): Promise<number> {
-  const stale = await db
-    .select({ occurrenceId: schema.recurringOccurrences.id, transactionId: schema.transactions.id })
-    .from(schema.recurringOccurrences)
-    .innerJoin(
-      schema.transactions,
-      eq(schema.transactions.id, schema.recurringOccurrences.transactionId),
-    )
-    .where(
-      and(
-        eq(schema.recurringOccurrences.status, "matched"),
-        eq(schema.transactions.isInternalTransfer, true),
+  const savings = await savingsCategoryIds(db);
+  const stale = (
+    await db
+      .select({
+        occurrenceId: schema.recurringOccurrences.id,
+        transactionId: schema.transactions.id,
+        transactionCategoryId: schema.transactions.categoryId,
+        itemCategoryId: schema.recurringItems.categoryId,
+      })
+      .from(schema.recurringOccurrences)
+      .innerJoin(
+        schema.transactions,
+        eq(schema.transactions.id, schema.recurringOccurrences.transactionId),
+      )
+      .innerJoin(
+        schema.recurringItems,
+        eq(schema.recurringItems.id, schema.recurringOccurrences.recurringItemId),
+      )
+      .where(
+        and(
+          eq(schema.recurringOccurrences.status, "matched"),
+          eq(schema.transactions.isInternalTransfer, true),
+        ),
+      )
+  ).filter(
+    // A deposit item is paid by a move into savings: that is no internal transfer in this sense.
+    (r) =>
+      !(
+        r.itemCategoryId !== null &&
+        savings.has(r.itemCategoryId) &&
+        r.transactionCategoryId !== null &&
+        savings.has(r.transactionCategoryId)
       ),
-    );
+  );
   for (const s of stale) {
     await db
       .update(schema.recurringOccurrences)
@@ -43,7 +73,10 @@ async function unlinkInternalTransfers(db: Db): Promise<number> {
   return stale.length;
 }
 
-export type MatchCandidate = typeof schema.transactions.$inferSelect;
+export type MatchCandidate = typeof schema.transactions.$inferSelect & {
+  /** The transaction is a move into or out of savings (it can only pay a deposit item). */
+  savingsMove?: boolean;
+};
 
 /** An occurrence waiting for its payment, stored or (in the forecast) only planned. */
 export interface OpenOccurrence {
@@ -53,11 +86,14 @@ export interface OpenOccurrence {
   /** Positive cents. */
   expectedAmount: number;
   item: Identity & { type: RecurringType; tolerance: number };
+  /** The item puts money aside (its category is Savings): it is paid by a savings move, and only by one. */
+  savings?: boolean;
 }
 
 /**
- * Transactions that may still pay an occurrence: not matched yet, not an internal transfer,
- * in their account's currency, dated from..to (inclusive).
+ * Transactions that may still pay an occurrence: not matched yet, not an internal transfer (a move
+ * into savings is the exception: it can pay a deposit item), in their account's currency, dated
+ * from..to (inclusive).
  */
 export async function unmatchedCandidates(
   db: Db,
@@ -66,20 +102,28 @@ export async function unmatchedCandidates(
 ): Promise<MatchCandidate[]> {
   return (
     await db
-      .select({ t: schema.transactions, accountCurrency: schema.accounts.currency })
+      .select({
+        t: schema.transactions,
+        accountCurrency: schema.accounts.currency,
+        categoryType: schema.categories.type,
+      })
       .from(schema.transactions)
       .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
+      .leftJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
       .where(
         and(
           isNull(schema.transactions.matchedOccurrenceId),
-          eq(schema.transactions.isInternalTransfer, false),
+          or(
+            eq(schema.transactions.isInternalTransfer, false),
+            eq(schema.categories.type, "savings"),
+          ),
           gte(schema.transactions.date, from),
           lte(schema.transactions.date, to),
         ),
       )
   )
     .filter(({ t, accountCurrency }) => t.currency === accountCurrency)
-    .map(({ t }) => t);
+    .map(({ t, categoryType }) => ({ ...t, savingsMove: categoryType === "savings" }));
 }
 
 /**
@@ -119,6 +163,7 @@ export function pairOccurrences<O extends OpenOccurrence>(
     for (let i = firstFrom(expectedDay - MATCH_WINDOW_DAYS); i < byDay.length; i++) {
       const { t, day } = byDay[i];
       if (day > expectedDay + MATCH_WINDOW_DAYS) break;
+      if (Boolean(o.savings) !== Boolean(t.savingsMove)) continue;
       if (item.type === "expense" ? t.amount >= 0 : t.amount <= 0) continue;
       const dateDiff = Math.abs(day - expectedDay);
       const amountDiff = Math.abs(Math.abs(t.amount) - o.expectedAmount);
@@ -162,6 +207,7 @@ export function pairOccurrences<O extends OpenOccurrence>(
 export async function matchOccurrences(db: Db): Promise<MatchResult> {
   const unlinked = await unlinkInternalTransfers(db);
 
+  const savings = await savingsCategoryIds(db);
   const open = (
     await db
       .select({ o: schema.recurringOccurrences, item: schema.recurringItems })
@@ -176,7 +222,12 @@ export async function matchOccurrences(db: Db): Promise<MatchResult> {
           eq(schema.recurringItems.active, true),
         ),
       )
-  ).map(({ o, item }) => ({ ...o, key: o.id, item }));
+  ).map(({ o, item }) => ({
+    ...o,
+    key: o.id,
+    item,
+    savings: item.categoryId !== null && savings.has(item.categoryId),
+  }));
   if (open.length === 0) return { matched: 0, unlinked };
 
   const dates = open.map((o) => o.expectedDate).sort();
