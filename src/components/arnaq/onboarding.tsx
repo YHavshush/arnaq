@@ -1,17 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Moon, Sun } from "lucide-react";
 import {
   useEffect,
   useRef,
   useState,
-  useSyncExternalStore,
   type CSSProperties,
   type ReactNode,
   type RefObject,
 } from "react";
-import { applyTheme, readTheme, subscribeTheme } from "@/design/theme-client";
 import { useI18n } from "@/i18n/client";
 import { SAMPLE_WISH_COOKIE, WELCOMED_COOKIE } from "@/lib/welcome";
 import { categoryLabel } from "@/lib/view/categories";
@@ -629,28 +626,6 @@ function Reveal({
 }
 
 /**
- * TEMPORARY (for testing the introduction on a phone): flips light and dark with one tap. Remove before launch.
- */
-function PreviewThemeToggle() {
-  const choice = useSyncExternalStore(subscribeTheme, readTheme, () => "system" as const);
-  const dark =
-    choice === "dark" ||
-    (choice === "system" &&
-      typeof matchMedia === "function" &&
-      matchMedia("(prefers-color-scheme: dark)").matches);
-  return (
-    <button
-      type="button"
-      onClick={() => applyTheme(dark ? "light" : "dark")}
-      className="glass text-ink-muted absolute top-6 left-1/2 z-10 inline-flex min-h-9 -translate-x-1/2 items-center gap-1.5 !rounded-full px-3 text-xs"
-    >
-      {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
-      {dark ? "light" : "dark"} (test)
-    </button>
-  );
-}
-
-/**
  * The three-screen introduction: swipe (or use the dots or the arrow keys), then create an account, or
  * look around with sample data. Works with the theme and the language, and without motion when the
  * device asks for less of it.
@@ -798,7 +773,6 @@ export function Onboarding() {
             </section>
           ))}
         </div>
-        <PreviewThemeToggle />
         <div
           className="absolute inset-x-0 bottom-4 z-10 flex justify-center gap-2"
           role="group"
