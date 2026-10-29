@@ -29,6 +29,7 @@ const forecast = (months: ForecastMonth[], lowConfidence = false): Forecast =>
     },
     missed: [],
     openingBalance: null,
+    openingSavings: null,
     months,
   }) as unknown as Forecast;
 

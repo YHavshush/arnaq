@@ -133,6 +133,17 @@ describe("the savings balance a statement reports (the anchor)", () => {
       anchorDate: "2026-10-29",
     });
   });
+  it("also counts what the BTW pocket held at that date: the savings account's own balance does not include it", async () => {
+    const { db, tx } = await setup();
+    await tx("2026-09-05", -30000, { counterparty: "To Instant Access Savings" }); // inside the reported balance
+    await tx("2026-09-10", -50000, { counterparty: "To EUR BTW" }); // not inside it
+    await tx("2026-10-02", 8000, { counterparty: "From EUR BTW" }); // pulled out again, still before the date
+    await tx("2026-11-02", -10000, { counterparty: "To EUR BTW" }); // after the date: counted once, as a move
+    await setSavingsAnchor(db, { amount: 20085, asOf: "2026-10-29" });
+    expect(await getSavingsSummary(db, { today: "2026-11-05" })).toMatchObject({
+      saved: 20085 + 42000 + 10000,
+    });
+  });
   it("is reported back with the settings, and cleared by nothing else", async () => {
     const { db } = await setup();
     await setSavingsAnchor(db, { amount: 20085, asOf: "2026-10-29" });

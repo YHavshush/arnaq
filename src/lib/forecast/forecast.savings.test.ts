@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createRecurringItem, RecurringError } from "@/lib/recurring/items";
 import { matchOccurrences } from "@/lib/recurring/matching";
 import { generateOccurrences } from "@/lib/recurring/occurrences";
+import { setSavingsAnchor } from "@/lib/savings/settings";
 import { setup } from "@/lib/recurring/test-utils";
 import { buildPrognose } from "@/lib/view/prognose";
 import { getForecast } from "./forecast";
@@ -146,19 +147,47 @@ describe("matching a deposit item", () => {
   });
 });
 
-describe("the balance over time with money set aside", () => {
-  it("takes the deposits out of the projected balance, not out of the spending", async () => {
+describe("net worth over time with money set aside", () => {
+  async function world() {
     const { db, addItem, cat, tx, cover } = await setup();
     await cover("2026-09");
     await tx("2026-09-10", -2000, { balanceAfter: 300000, counterparty: "Shop" });
+    await setSavingsAnchor(db, { amount: 100000, asOf: "2026-09-30" });
     await addItem({ ...reserve, type: "expense", categoryId: await cat("Spaarrekening") });
-    const f = await getForecast(db, { today: TODAY, months: 2, pastMonths: 1 });
-    const p = buildPrognose(f, "en");
+    return getForecast(db, { today: TODAY, months: 2, pastMonths: 1 });
+  }
+
+  it("the line is accounts plus savings: a deposit moves money between them, it does not lower net worth", async () => {
+    const p = buildPrognose(await world(), "en");
     const [september, october, november] = p.points;
     expect(p.hasBalance).toBe(true);
-    expect(october.cumulative).toBe(september.cumulative - 50000 + october.net);
-    expect(november.cumulative).toBe(october.cumulative - 50000 + november.net);
+    expect(october.cumulative).toBe(september.cumulative + october.net);
+    expect(november.cumulative).toBe(october.cumulative + november.net);
+    expect(september.accounts + september.savings).toBe(september.cumulative);
+    expect(october.accounts + october.savings).toBe(october.cumulative);
+  });
+
+  it("the deposit leaves the accounts and arrives in savings", async () => {
+    const p = buildPrognose(await world(), "en");
+    const [september, october, november] = p.points;
+    expect(october.savings).toBe(september.savings + 50000);
+    expect(november.savings).toBe(october.savings + 50000);
+    expect(october.accounts).toBe(september.accounts + october.net - 50000);
     expect(november.setAside).toBe(50000);
     expect(p.notes.some((n) => /aside|opzij/i.test(n))).toBe(true);
+  });
+
+  it("starts from the savings the statement reported", async () => {
+    const f = await world();
+    expect(f.openingSavings).toBe(100000);
+    expect(f.openingBalance).toBe(302000); // the balance before the September shop
+  });
+
+  it("without any savings known the line is just the accounts, as before", async () => {
+    const { db, tx, cover } = await setup();
+    await cover("2026-09");
+    await tx("2026-09-10", -2000, { balanceAfter: 300000, counterparty: "Shop" });
+    const f = await getForecast(db, { today: TODAY, months: 1, pastMonths: 1 });
+    expect(f.openingSavings).toBeNull();
   });
 });

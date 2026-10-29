@@ -65,7 +65,8 @@ const words = (s: string | null | undefined) =>
   ` ${normaliseCounterparty(s)
     .replace(/[^a-z0-9]+/g, " ")
     .trim()} `;
-const contains = (text: Array<string | null>, needle: string) =>
+/** True when the needle appears as a whole word in any of the texts. */
+export const mentions = (text: Array<string | null>, needle: string) =>
   words(text.filter(Boolean).join(" ")).includes(words(needle));
 
 /**
@@ -130,13 +131,13 @@ export async function getBtwSummary(
     r.description,
   ];
   const received = incoming
-    .filter((r) => contains(text(r), incomeMatch))
+    .filter((r) => mentions(text(r), incomeMatch))
     .reduce((s, r) => s + r.amount, 0);
   const owed = Math.round((received * BTW_RATE_PERCENT) / 100);
-  const mine = pocketMoves.filter((r) => contains(text(r), pocketMatch));
+  const mine = pocketMoves.filter((r) => mentions(text(r), pocketMatch));
   const pocket = mine.reduce((s, r) => s - r.amount, 0);
 
-  const paidRows = payments.filter((r) => contains(text(r), TAX_OFFICE_MATCH));
+  const paidRows = payments.filter((r) => mentions(text(r), TAX_OFFICE_MATCH));
   const paidAmount = paidRows.reduce((s, r) => s - r.amount, 0);
   const paid =
     paidRows.length > 0

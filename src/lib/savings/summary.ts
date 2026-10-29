@@ -1,5 +1,6 @@
 import { and, eq, gt, gte, lte, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
+import { DEFAULT_BTW_POCKET_MATCH, mentions } from "@/lib/btw/summary";
 import { getSavingsSettings } from "./settings";
 
 export interface SavingsSummary {
@@ -64,10 +65,28 @@ export async function getSavingsSummary(
       .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
       .where(and(base, gte(schema.transactions.date, from), lte(schema.transactions.date, to))),
   ]);
+  // A statement's savings balance is the savings account only. Money in the BTW pocket is savings too, but it
+  // is not in that balance, so what the pocket held on the statement's date is added once, here.
+  let pocket = 0;
+  if (settings.anchorDate !== null) {
+    const earlier = await db
+      .select({
+        amount: schema.transactions.amount,
+        counterparty: schema.transactions.counterparty,
+        description: schema.transactions.description,
+      })
+      .from(schema.transactions)
+      .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
+      .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
+      .where(and(base, lte(schema.transactions.date, settings.anchorDate)));
+    pocket = earlier
+      .filter((r) => mentions([r.counterparty, r.description], DEFAULT_BTW_POCKET_MATCH))
+      .reduce((s, r) => s - r.amount, 0);
+  }
   return {
     goal: settings.goal,
     start: settings.start,
-    saved: (settings.anchor ?? settings.start) + (all?.net ?? 0),
+    saved: (settings.anchor ?? settings.start) + pocket + (all?.net ?? 0),
     anchored: settings.anchor !== null,
     anchorDate: settings.anchorDate,
     thisMonth: month?.net ?? 0,

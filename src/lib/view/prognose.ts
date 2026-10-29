@@ -13,8 +13,11 @@ export interface PrognosePoint {
   income: number;
   expenses: number;
   net: number;
-  /** The balance at the end of this month when the bank's balances are known, else the growth since the first month (cents). */
+  /** Net worth at the end of this month (accounts plus savings) when balances are known, else the growth since the first month (cents). */
   cumulative: number;
+  /** The part of `cumulative` in the accounts and the part saved (cents); both 0 when no balances are known. */
+  accounts: number;
+  savings: number;
   /** Money moved into savings this month (cents): not spending, but no longer in the current account. */
   setAside: number;
   /** Month is not (fully) real money yet: drawn dashed. */
@@ -49,6 +52,7 @@ export interface Prognose {
 export function buildPrognose(f: Forecast, locale: Locale): Prognose {
   const t = messages[locale].view.prognose;
   const { euro, euroSigned, dayLabel, monthName, monthShort } = formatter(locale);
+  const hasBalance = f.openingBalance !== null || f.openingSavings !== null;
   const points: PrognosePoint[] = f.months.map((m) => ({
     month: m.month,
     label: monthShort(m.month),
@@ -56,7 +60,10 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     income: m.income,
     expenses: m.expenses,
     net: m.net,
-    cumulative: m.cumulativeNet - m.cumulativeSetAside + (f.openingBalance ?? 0),
+    // Money moved into savings leaves the accounts and arrives in savings: net worth only follows income and spending.
+    cumulative: m.cumulativeNet + (f.openingBalance ?? 0) + (f.openingSavings ?? 0),
+    accounts: hasBalance ? m.cumulativeNet - m.cumulativeSetAside + (f.openingBalance ?? 0) : 0,
+    savings: hasBalance ? m.cumulativeSetAside + (f.openingSavings ?? 0) : 0,
     setAside: m.setAside.total,
     projected: m.kind === "forecast" || m.kind === "mixed",
   }));
@@ -109,7 +116,7 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
   }
 
   const notes = [t.noteEstimate];
-  if (f.openingBalance !== null) notes.push(t.noteBalance);
+  if (hasBalance) notes.push(t.noteBalance);
   const planned = f.months.reduce((s, m) => s + m.setAside.planned, 0);
   const lastPlanned = f.months.filter((m) => m.setAside.planned > 0).at(-1);
   if (lastPlanned) notes.push(t.noteSetAside(euro(planned), monthName(lastPlanned.month)));
@@ -117,7 +124,7 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
 
   return {
     hasForecast: ahead.length > 0,
-    hasBalance: f.openingBalance !== null,
+    hasBalance,
     points,
     ahead: ahead.length,
     inThePlus,

@@ -6,6 +6,7 @@ import { getMonthOverview, sumTransactions, type MonthSums } from "@/lib/budget/
 import { addMonths, isDate, monthOf } from "@/lib/recurring/dates";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
+import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
 import { countedAs, projectRecurring, type ForecastOccurrence } from "./recurring";
 import { getVariableAverages, type VariableAverages } from "./variable";
@@ -103,6 +104,8 @@ export interface Forecast {
   missed: ForecastOccurrence[];
   /** What the person had at the start of the first month shown, from the bank's own balances; null when unknown. */
   openingBalance: number | null;
+  /** What was saved at the start of the first month shown (cents); null when no savings are known. */
+  openingSavings: number | null;
   months: ForecastMonth[];
 }
 
@@ -174,6 +177,11 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     months.push({ ...month, cumulativeNet, cumulativeSetAside });
   }
 
+  // Savings now, minus what moved in since the first month began, is what was saved when the chart starts.
+  const savingsNow = await getSavingsSummary(db, { today: opts.today });
+  const savingsKnown = savingsNow.anchored || savingsNow.start > 0 || savingsNow.lines > 0;
+  const movedSince = months.reduce((s, m) => s + m.setAside.actual, 0);
+
   return {
     today: opts.today,
     currentMonth: current,
@@ -189,6 +197,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     ),
     months,
     openingBalance: await getOpeningBalance(db, first),
+    openingSavings: savingsKnown ? savingsNow.saved - movedSince : null,
   };
 }
 
