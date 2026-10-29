@@ -453,11 +453,11 @@ describe("savings settings are per person", () => {
         )
       ).status,
     ).toBe(200);
-    expect(await get()).toEqual({ goal: 123456, start: 7000 });
+    expect(await get()).toMatchObject({ goal: 123456, start: 7000 });
     setTestUser(TEST_USER_B);
-    expect(await get()).toEqual({ goal: null, start: 0 });
+    expect(await get()).toMatchObject({ goal: null, start: 0 });
     setTestUser(TEST_USER_A);
-    expect(await get()).toEqual({ goal: 123456, start: 7000 });
+    expect(await get()).toMatchObject({ goal: 123456, start: 7000 });
   });
 });
 

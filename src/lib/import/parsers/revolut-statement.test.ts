@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { eq } from "drizzle-orm";
 import { createDb, schema } from "@/db";
+import { getSavingsSettings } from "@/lib/savings/settings";
 import { ImportError, importStatement } from "../service";
 import { detectBank } from ".";
 import { looksLikeRevolutStatement, parseRevolutStatement } from "./revolut-statement";
@@ -78,6 +79,16 @@ describe("parseRevolutStatement", () => {
   it("leaves the account to be found as before (no identifier), so an existing Revolut account is reused", () => {
     expect(result.accountIdentifier).toBeNull();
   });
+  it("reads the savings balance the statement reports, for the day the statement ends", () => {
+    expect(result.savingsBalance).toEqual({ amount: 20000, asOf: "2026-10-09" });
+  });
+  it("leaves the savings balance out when the statement has no savings account", () => {
+    const text = statement();
+    const withoutSavings =
+      text.slice(0, text.indexOf("Savings Accounts Summaries")) +
+      text.slice(text.indexOf("Current Accounts Transaction Statements"));
+    expect(parseRevolutStatement(withoutSavings).savingsBalance).toBeUndefined();
+  });
   it("ignores the savings interest table and the totals row", () => {
     expect(result.rows).toHaveLength(9);
     expect(result.rows.some((r) => /Net Interest/.test(r.description ?? ""))).toBe(false);
@@ -145,6 +156,12 @@ describe("importing a custom statement", () => {
     const rows = await db.select().from(schema.transactions).orderBy(schema.transactions.id);
     expect(rows).toHaveLength(9);
     expect(rows[8].balanceAfter).toBe(127450);
+  });
+  it("stores the savings balance from the statement, so the total never has to be typed", async () => {
+    const db = await createDb(":memory:");
+    const summary = await importStatement(db, { content: statement(), filename: "statement.csv" });
+    expect(await getSavingsSettings(db)).toMatchObject({ anchor: 20000, anchorDate: "2026-10-09" });
+    expect(summary.savingsBalance).toEqual({ amount: 20000, asOf: "2026-10-09" });
   });
   it("reuses the existing Revolut account instead of making a second one", async () => {
     const db = await createDb(":memory:");

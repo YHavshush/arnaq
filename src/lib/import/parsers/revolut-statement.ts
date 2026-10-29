@@ -177,11 +177,38 @@ export function parseRevolutStatement(content: string): ParseResult {
     throw new Error(`${NOT_RELIABLE} (the closing balance does not match the transactions)`);
 
   const dates = rows.map((r) => r.date).sort();
+  const asOf = dates.length ? dates[dates.length - 1] : null;
+  // The savings account's own closing balance (optional: a statement without savings simply has none). It is the
+  // balance for the end of the statement, which is the last day with a transaction.
+  let savingsBalance: ParseResult["savingsBalance"];
+  const savingsStart = at(TITLE.savingsSummary);
+  if (savingsStart >= 0 && asOf) {
+    const savingsEnd = Math.min(...[txStart].filter((i) => i > savingsStart), grid.length);
+    let savingsCurrency = "EUR";
+    for (let i = savingsStart + 1; i < savingsEnd; i++) {
+      const m = /\(([A-Z]{3})\)\s*$/.exec(cell(grid[i], 0));
+      if (m) {
+        savingsCurrency = m[1];
+        break;
+      }
+    }
+    for (let i = savingsStart + 1; i < savingsEnd && !savingsBalance; i++)
+      for (let c = 0; c < (grid[i]?.length ?? 0) - 1; c++)
+        if (cell(grid[i], c) === "Closing balance" && savingsCurrency === currency) {
+          try {
+            savingsBalance = { amount: parseMoney(cell(grid[i], c + 1)), asOf };
+          } catch {
+            // an unreadable savings balance is left out; the transactions are what the statement is accepted on
+          }
+          break;
+        }
+  }
   return {
     rows,
     skipped: [],
     // The plain export carries no account number either; leaving it out keeps an existing Revolut account in use.
     accountIdentifier: null,
     period: dates.length ? { from: dates[0], to: dates[dates.length - 1] } : undefined,
+    savingsBalance,
   };
 }

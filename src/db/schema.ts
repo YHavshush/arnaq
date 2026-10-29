@@ -372,12 +372,19 @@ export const userSettings = pgTable(
     savingsGoal: cents("savings_goal"),
     /** What they had saved before their first upload (cents): progress starts here. */
     savingsStart: cents("savings_start").notNull().default(0),
+    /** The savings balance a statement reported (cents) and the day it is for (YYYY-MM-DD): the total counts on from here. */
+    savingsAnchor: cents("savings_anchor"),
+    savingsAnchorDate: text("savings_anchor_date"),
   },
   () => [
     check("user_settings_provider_check", sql`smart_provider in ('off','claude','chatgpt')`),
     check(
       "user_settings_savings_check",
       sql`(savings_goal is null or savings_goal > 0) and savings_start >= 0`,
+    ),
+    check(
+      "user_settings_savings_anchor_check",
+      sql`(savings_anchor is null) = (savings_anchor_date is null) and (savings_anchor is null or savings_anchor >= 0)`,
     ),
   ],
 ).enableRLS();

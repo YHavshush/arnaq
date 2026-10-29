@@ -80,7 +80,12 @@ async function seeded() {
       .insert(schema.merchantLabels)
       .values({ merchantKey: "spar", categoryId: food.id, source: "user" });
     await tx.insert(schema.merchantLabels).values({ merchantKey: "guess", source: "model" });
-    await tx.insert(schema.userSettings).values({ savingsGoal: 500000, savingsStart: 120000 });
+    await tx.insert(schema.userSettings).values({
+      savingsGoal: 500000,
+      savingsStart: 120000,
+      savingsAnchor: 20085,
+      savingsAnchorDate: "2026-10-29",
+    });
   });
   const backup = JSON.parse(JSON.stringify(await withUser(db, A, (tx) => buildExport(tx))));
   return { db, backup };
@@ -190,7 +195,14 @@ describe("restoreFromBackup", () => {
     await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
     expect(
       await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)),
-    ).toMatchObject([{ savingsGoal: 500000, savingsStart: 120000 }]);
+    ).toMatchObject([
+      {
+        savingsGoal: 500000,
+        savingsStart: 120000,
+        savingsAnchor: 20085,
+        savingsAnchorDate: "2026-10-29",
+      },
+    ]);
 
     const edited = JSON.parse(JSON.stringify(backup));
     edited.tables.userSettings[0].savingsGoal = -5;

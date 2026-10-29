@@ -362,6 +362,8 @@ describe("buildOverzicht: the parts the design adds", () => {
       goal: null,
       start: 0,
       saved: 0,
+      anchored: false,
+      anchorDate: null,
       thisMonth: 0,
       lines: 0,
       ...over,

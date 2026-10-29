@@ -307,6 +307,8 @@ export const ui = {
       goalPlaceholder: "5000",
       startLabel: "Already saved before your first upload (€)",
       startHint: "Your progress starts from this amount. Leave empty if you started from zero.",
+      fromStatement: (amount: string, day: string) =>
+        `Your savings balance comes from your latest statement: ${amount} on ${day}. New savings moves are added to it.`,
       save: "Save",
       saved: "Saved",
       errAmount: "Enter an amount, for example 1250 or 1250.50.",

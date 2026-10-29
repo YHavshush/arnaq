@@ -50,6 +50,13 @@
       "when": 1792522386150,
       "tag": "0006_savings_goal",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793303506433,
+      "tag": "0007_savings_anchor",
+      "breakpoints": true
     }
   ]
 }

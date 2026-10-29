@@ -112,7 +112,12 @@ async function Content() {
             tone={reached ? "good" : "accent"}
           />
         )}
-        <SavingsGoal goal={savingsSettings.goal} start={savingsSettings.start} />
+        <SavingsGoal
+          goal={savingsSettings.goal}
+          start={savingsSettings.start}
+          anchor={savingsSettings.anchor}
+          anchorDate={savingsSettings.anchorDate}
+        />
       </Section>
 
       <Section title={s.smart.title}>

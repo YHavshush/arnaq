@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, sql } from "drizzle-orm";
+import { and, eq, gt, gte, lte, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getSavingsSettings } from "./settings";
 
@@ -6,8 +6,15 @@ export interface SavingsSummary {
   goal: number | null;
   /** Saved before the first upload (cents). */
   start: number;
-  /** Where the savings stand now: the start plus deposits minus withdrawals (cents; can be negative). */
+  /**
+   * Where the savings stand now (cents; can be negative). With a balance reported by a statement: that balance plus
+   * the savings moves after its date. Otherwise: the typed start plus every deposit minus withdrawal.
+   */
   saved: number;
+  /** True when `saved` is anchored to a balance a statement reported. */
+  anchored: boolean;
+  /** The day that reported balance is for. */
+  anchorDate: string | null;
   /** Deposits minus withdrawals in the month shown (cents). */
   thisMonth: number;
   /** How many transactions are in the Savings category. */
@@ -43,8 +50,11 @@ export async function getSavingsSummary(
     .from(schema.transactions)
     .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
     .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId));
-  const [[all], [month], settings] = await Promise.all([
-    rows.where(base),
+  const settings = await getSavingsSettings(db);
+  const afterAnchor =
+    settings.anchorDate !== null ? gt(schema.transactions.date, settings.anchorDate) : undefined;
+  const [[all], [month]] = await Promise.all([
+    rows.where(and(base, afterAnchor)),
     db
       .select({
         net: sql<number>`coalesce(sum(-${schema.transactions.amount}), 0)`.mapWith(Number),
@@ -53,12 +63,13 @@ export async function getSavingsSummary(
       .innerJoin(schema.categories, eq(schema.categories.id, schema.transactions.categoryId))
       .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
       .where(and(base, gte(schema.transactions.date, from), lte(schema.transactions.date, to))),
-    getSavingsSettings(db),
   ]);
   return {
     goal: settings.goal,
     start: settings.start,
-    saved: settings.start + (all?.net ?? 0),
+    saved: (settings.anchor ?? settings.start) + (all?.net ?? 0),
+    anchored: settings.anchor !== null,
+    anchorDate: settings.anchorDate,
     thisMonth: month?.net ?? 0,
     lines: all?.lines ?? 0,
   };
