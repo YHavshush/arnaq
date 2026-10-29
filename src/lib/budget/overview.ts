@@ -9,7 +9,12 @@ export interface CategoryLine {
   /** Stable key of a default category (survives renaming); null for the user's own categories. */
   slug: string | null;
   type: "expense" | "income";
-  budget: number | null; // cents
+  /** What the person typed, but at least the fixed items, cents. */
+  budget: number | null;
+  /** The part of `budget` that is fixed items (rent, insurance, subscriptions...), cents. */
+  fixed: number;
+  /** What the person typed as the budget; null when nothing (the fixed items are then the budget). */
+  extra: number | null;
   actual: number; // cents, positive: money spent (expense) or received (income)
   remaining: number | null; // budget - actual for expenses, actual - budget for income
 }
@@ -134,6 +139,8 @@ export async function getMonthOverview(db: Db, month: string): Promise<MonthOver
       slug: c.slug,
       type,
       budget: b,
+      fixed: budget?.fixed.get(c.id) ?? 0,
+      extra: budget?.explicit.get(c.id) ?? null,
       actual,
       remaining: b === null ? null : type === "expense" ? b - actual : actual - b,
     };

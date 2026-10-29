@@ -10,6 +10,8 @@ const line = (categoryId: number, name: string, actual: number, budget: number |
   slug: name === "Sparen & beleggen" || name === "Mijn spaarpot" ? "saving-investing" : null,
   type: "expense" as const,
   budget,
+  fixed: 0,
+  extra: budget,
   actual,
   remaining: budget === null ? null : budget - actual,
 });

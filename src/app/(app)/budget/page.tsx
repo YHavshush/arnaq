@@ -49,7 +49,8 @@ async function Content({ searchParams }: Pick<PageProps<"/budget">, "searchParam
         lines={o.expenses.map((l) => ({
           categoryId: l.categoryId!,
           name: l.name,
-          budget: l.budget,
+          budget: l.extra,
+          fixed: l.fixed,
         }))}
       />
     </div>

@@ -141,10 +141,11 @@ describe("getForecast: budget comparison and chart totals", () => {
     expect(sep.kind).toBe("actual");
     expect(sep.budget).toEqual({ total: 25000, isExplicit: false, difference: 25000 - 47000 });
 
+    // 110000 typed, plus 999 for the fixed subscription (fixed items are a category's budget).
     expect(oct.budget).toEqual({
-      total: 110000,
+      total: 110999,
       isExplicit: false,
-      difference: 110000 - oct.expenses,
+      difference: 110999 - oct.expenses,
     });
     expect(line(oct, "Boodschappen")).toMatchObject({
       budget: 30000,
@@ -154,8 +155,15 @@ describe("getForecast: budget comparison and chart totals", () => {
     expect(line(oct, "Huur")).toMatchObject({ budget: 80000, total: 80000, difference: 0 });
     expect(line(oct, "Overig")).toMatchObject({ budget: null, difference: null });
 
-    expect(nov.budget).toEqual({ total: null, isExplicit: false, difference: null });
-    expect(nov.categories.every((c) => c.budget === null && c.difference === null)).toBe(true);
+    // Nothing typed for November: only the fixed items are budgets (rent 80000, subscription 999), never an invented one.
+    expect(nov.budget).toEqual({
+      total: 80999,
+      isExplicit: false,
+      difference: 80999 - nov.expenses,
+    });
+    expect(nov.categories.filter((c) => c.budget !== null).map((c) => c.budget)).toEqual([
+      80000, 999,
+    ]);
 
     expect(dec.budget).toEqual({
       total: 150000,

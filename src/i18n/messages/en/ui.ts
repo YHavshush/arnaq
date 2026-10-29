@@ -313,6 +313,8 @@ export const ui = {
     copy: (month: string) => `Copy ${month}`,
     saved: "saved",
     errAmount: "Enter an amount, for example 250 or 12.50.",
+    fixedPart: (amount: string) => `${amount} fixed; type a budget to allow more`,
+    extraPlaceholder: "budget",
     forCategory: (name: string) => `Budget for ${name} in euros`,
   },
   settings: {

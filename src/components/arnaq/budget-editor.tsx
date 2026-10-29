@@ -6,14 +6,17 @@ import { useI18n } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
 import { api, euroInputToCents } from "@/lib/client/api";
 import { categoryLabel } from "@/lib/view/categories";
+import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, GhostButton, inputClass } from "./form";
 
 interface Line {
   categoryId: number;
   name: string;
-  /** Cents, or null when no budget is set. */
+  /** What the person typed on top of the fixed items (cents), or null when nothing. */
   budget: number | null;
+  /** The fixed items in this category (rent, insurance, subscriptions...): already a budget, cents. */
+  fixed: number;
 }
 
 const toInput = (cents: number | null, locale: Locale) =>
@@ -101,6 +104,11 @@ export function BudgetEditor({
               <CategoryIcon name={l.name} />
               <label htmlFor={`b-${l.categoryId}`} className="min-w-0 truncate font-semibold">
                 {categoryLabel(l.name, locale)}
+                {l.fixed > 0 && (
+                  <span className="text-ink-muted block text-[13px] font-normal">
+                    {t.ui.budget.fixedPart(formatter(locale).euroExact(l.fixed))}
+                  </span>
+                )}
                 {savedKey === `c${l.categoryId}` && (
                   <span className="text-good ml-2 text-[13px] font-medium">
                     {t.ui.budget.saved}
@@ -112,7 +120,7 @@ export function BudgetEditor({
                 inputMode="decimal"
                 defaultValue={toInput(l.budget, locale)}
                 key={`${l.categoryId}-${l.budget}`}
-                placeholder="€"
+                placeholder={l.fixed > 0 ? t.ui.budget.extraPlaceholder : "€"}
                 aria-label={t.ui.budget.forCategory(categoryLabel(l.name, locale))}
                 className={`${inputClass} num text-right`}
                 onBlur={(e) =>
