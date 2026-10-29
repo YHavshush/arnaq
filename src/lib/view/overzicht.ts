@@ -97,6 +97,10 @@ export interface Overzicht {
    * this month, else nothing. A sum of some categories' budgets is not a total budget.
    */
   basis: "budget" | "income" | "none";
+  /** Small lines under the header: over or under budget, income still to come, fixed costs still to pay (at most two). */
+  facts: string[];
+  /** The Savings row among the categories: the total saved, this month's movement and the goal. Null when unknown. */
+  savingsRow: { saved: number; thisMonth: number; goal: number | null } | null;
   /** What the accounts hold plus what is saved, or null when neither is known. */
   netWorth: { accounts: number; savings: number; total: number } | null;
   budget: number | null;
@@ -137,6 +141,15 @@ interface Input {
   savings?: SavingsSummary | null;
   /** What the accounts hold now (cents) from the bank's own balances, see getOpeningBalance; null when unknown. */
   accountsBalance?: number | null;
+}
+
+/** The header's main line: how many days are left in the month (the ring already shows what is over or under). */
+function daysToGo(month: string, today: string, locale: Locale): Sentence {
+  const t = messages[locale].view.overzicht;
+  if (today.slice(0, 7) !== month)
+    return today > month ? t.headerDone(formatter(locale).monthName(month)) : t.headerNotStarted;
+  const days = daysInMonth(month) - Number(today.slice(8, 10));
+  return days <= 0 ? t.headerLastDay : t.headerDays(days);
 }
 
 function sentenceFor(o: {
@@ -272,7 +285,7 @@ export function buildOverzicht({
   accountsBalance = null,
 }: Input): Overzicht {
   const t = messages[locale].view.overzicht;
-  const { euro } = formatter(locale);
+  const { euro, dayLabel } = formatter(locale);
   const { month, totals } = overview;
   // Only a total the person set counts. The sum of a few category budgets would call all other spending "over".
   const budget = totals.totalBudgetIsExplicit ? totals.totalBudget : null;
@@ -495,10 +508,42 @@ export function buildOverzicht({
           }))
       : [];
 
+  // Small lines under the header. Which ones show rotates with the day so the page is not the same every time.
+  function headerFacts(): string[] {
+    const f = messages[locale].view.overzicht.facts;
+    const withBudget = rows.filter((r) => r.categoryId !== null && r.budget !== null);
+    const gap = (r: OverzichtRow) => r.actual + r.planned - r.budget!;
+    const over = withBudget.filter((r) => gap(r) > 0).sort((a, b) => gap(b) - gap(a))[0];
+    const under = withBudget.filter((r) => gap(r) < 0).sort((a, b) => gap(a) - gap(b))[0];
+    const coming = incomeOcc
+      .filter((o) => o.status === "expected")
+      .sort((a, b) => a.expectedDate.localeCompare(b.expectedDate))[0];
+    const openFixed = expenseOcc.filter((o) => o.status === "expected");
+    const candidates: string[] = [];
+    if (over) candidates.push(f.over(categoryLabel(over.name, locale), euro(gap(over))));
+    if (coming)
+      candidates.push(
+        f.income(coming.itemName, euro(coming.expectedAmount), dayLabel(coming.expectedDate)),
+      );
+    if (openFixed.length > 0) candidates.push(f.fixed(openFixed.length, euro(planned)));
+    if (under) candidates.push(f.under(categoryLabel(under.name, locale), euro(-gap(under))));
+    if (candidates.length === 0) return [];
+    const start = Number(today.slice(8, 10)) % candidates.length;
+    return Array.from(
+      { length: Math.min(2, candidates.length) },
+      (_, i) => candidates[(start + i) % candidates.length],
+    );
+  }
+
   return {
     month,
     hasActivity,
     basis,
+    facts: incomeBasis ? headerFacts() : [],
+    savingsRow:
+      savings && (savings.anchored || savings.lines > 0 || savings.saved > 0)
+        ? { saved: savings.saved, thisMonth: savings.thisMonth, goal: savings.goal }
+        : null,
     netWorth:
       accountsBalance === null && (savings === null || (savings.saved === 0 && !savings.anchored))
         ? null
@@ -515,9 +560,11 @@ export function buildOverzicht({
     mood: moodForTone(tone),
     free,
     sentence: incomeBasis
-      ? messages[locale].view.overzicht.ofIncome(euro(spent), euro(totals.incomeActual))
+      ? daysToGo(month, today, locale)
       : sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
-    detail,
+    detail: incomeBasis
+      ? messages[locale].view.overzicht.headerTotals(euro(spent), euro(totals.incomeActual))
+      : detail,
     attention,
     tiles,
     pace,

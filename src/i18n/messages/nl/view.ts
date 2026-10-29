@@ -12,6 +12,23 @@ const cap = (text: string) => {
 export const view: typeof en = {
   overzicht: {
     uncategorised: "Zonder categorie",
+    headerDays: (n: number): Sentence => [
+      em(`${n} ${n === 1 ? "dag" : "dagen"}`),
+      plain(" te gaan"),
+    ],
+    headerLastDay: [em("Laatste dag"), plain(" van de maand")] as Sentence,
+    headerDone: (month: string): Sentence => [em(cap(month)), plain(" is klaar")],
+    headerNotStarted: [plain("Deze maand is nog niet begonnen")] as Sentence,
+    headerTotals: (spent: string, income: string) =>
+      `${spent} uitgegeven · ${income} binnengekomen`,
+    facts: {
+      over: (name: string, amount: string) => `Over budget bij ${name} (+${amount}).`,
+      under: (name: string, amount: string) => `Onder budget bij ${name}, nog ${amount} over.`,
+      income: (name: string, amount: string, date: string) =>
+        `Nog te verwachten: ${name}, ${amount} op ${date}.`,
+      fixed: (n: number, amount: string) =>
+        `Nog ${n} ${n === 1 ? "vaste last" : "vaste lasten"} te betalen (${amount}).`,
+    },
     ofIncome: (spent: string, income: string): Sentence => [
       plain("Je hebt "),
       em(spent),

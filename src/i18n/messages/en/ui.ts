@@ -88,6 +88,12 @@ export const ui = {
     whereTotal: (spent: string, budget: string) => `${spent} of ${budget}`,
     tagFixed: "fixed",
     allCategories: (n: number) => `All ${n} categories`,
+    savingsRow: {
+      name: "Savings",
+      ofGoal: (goal: string) => `of ${goal} goal`,
+      moved: (amount: string) => `+${amount} this month`,
+      taken: (amount: string) => `−${amount} this month`,
+    },
     paceTitle: "Pace of the month",
     paceAside: "everyday spending only",
     paceBridge: (total: string, fixed: string, everyday: string) =>

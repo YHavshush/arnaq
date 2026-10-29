@@ -88,6 +88,12 @@ export const ui: typeof en = {
     whereTotal: (spent: string, budget: string) => `${spent} van ${budget}`,
     tagFixed: "vast",
     allCategories: (n: number) => `Alle ${n} categorieën`,
+    savingsRow: {
+      name: "Sparen",
+      ofGoal: (goal: string) => `van doel ${goal}`,
+      moved: (amount: string) => `+${amount} deze maand`,
+      taken: (amount: string) => `−${amount} deze maand`,
+    },
     paceTitle: "Tempo van de maand",
     paceAside: "alleen dagelijkse uitgaven",
     paceBridge: (total: string, fixed: string, everyday: string) =>

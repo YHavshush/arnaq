@@ -458,7 +458,7 @@ describe("buildOverzicht: the parts the design adds", () => {
       expect(o.free).toBe(180000);
       expect(o.used).toBeCloseTo(0.4);
       expect(o.tone).toBe("good");
-      expect(text(o.sentence)).toContain("came in");
+      expect(o.detail).toContain("came in");
     });
     it("is bad when more went out than came in", () => {
       const o = run(100000, 150000);
@@ -524,5 +524,100 @@ describe("buildOverzicht: the parts the design adds", () => {
     });
     expect(o.pace).toMatchObject({ total: 196200, fixed: 90000, spent: 106200 });
     expect(o.pace!.fixed + o.pace!.spent).toBe(o.pace!.total);
+  });
+
+  describe("the header with income as the reference: days to go, the totals, and variable facts", () => {
+    // Groceries budgeted 400 and over (spent 480); Eten & drinken budgeted 300 and under (spent 100).
+    const rows = [line(1, "Boodschappen", 48000, 40000), line(2, "Eten & drinken", 10000, 30000)];
+    const header = (today: string, extra: Partial<Parameters<typeof buildOverzicht>[0]> = {}) =>
+      buildOverzicht({
+        overview: overview(
+          { totalBudget: null, totalBudgetIsExplicit: false, incomeActual: 185100 },
+          rows,
+        ),
+        occurrences: [
+          occ(1, "expected", 50000, {
+            type: "income",
+            itemName: "Oren",
+            expectedDate: "2026-10-28",
+          }),
+          occ(2, "expected", 15100, { itemName: "Zorg", expectedDate: "2026-10-30" }),
+        ],
+        today,
+        locale: "en" as const,
+        ...extra,
+      });
+
+    it("the main line says how many days are left, not what is over (the ring shows that)", () => {
+      expect(text(header("2026-10-19").sentence)).toBe("12 days to go");
+      expect(text(header("2026-10-30").sentence)).toBe("1 day to go");
+      expect(text(header("2026-10-31").sentence)).toBe("Last day of the month");
+      expect(text(header("2026-11-05").sentence)).toBe("October 2026 is done");
+      expect(text(header("2026-09-20").sentence)).toBe("This month hasn't started yet");
+    });
+    it("the line under it gives the totals", () => {
+      expect(header("2026-10-19").detail).toBe("€580 spent · €1,851 came in");
+    });
+    it("offers at most two facts, from over budget, under budget, income to come and fixed costs to pay", () => {
+      const facts = header("2026-10-19").facts;
+      expect(facts.length).toBeLessThanOrEqual(2);
+      expect(facts.length).toBeGreaterThan(0);
+      const all = new Set<string>();
+      for (const day of ["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05"])
+        for (const f of header(day).facts) all.add(f);
+      expect([...all].some((f) => /Over budget on Groceries \(\+€231\)/.test(f))).toBe(true);
+      expect([...all].some((f) => /Under budget on Food & drink, €200 left/.test(f))).toBe(true);
+      expect([...all].some((f) => /Still expecting Oren: €500 on 28 Oct/.test(f))).toBe(true);
+      expect([...all].some((f) => /1 fixed cost still to pay \(€151\)/.test(f))).toBe(true);
+    });
+    it("varies with the day but is the same for the same day", () => {
+      expect(header("2026-10-19").facts).toEqual(header("2026-10-19").facts);
+      expect(header("2026-10-19").facts).not.toEqual(header("2026-10-20").facts);
+    });
+    it("a budget screen with nothing to say gives no facts", () => {
+      const o = buildOverzicht({
+        overview: overview(
+          { totalBudget: null, totalBudgetIsExplicit: false, incomeActual: 100000 },
+          [line(1, "Boodschappen", 5000, null)],
+        ),
+        occurrences: [],
+        today: "2026-10-19",
+        locale: "en" as const,
+      });
+      expect(o.facts).toEqual([]);
+    });
+  });
+
+  describe("Savings is a row among the categories", () => {
+    const withSavings = (over: Partial<SavingsSummary>) =>
+      buildOverzicht({
+        overview: overview(),
+        occurrences: [],
+        today: "2026-10-22",
+        locale: "en" as const,
+        savings: {
+          goal: null,
+          start: 0,
+          saved: 20085,
+          anchored: true,
+          anchorDate: "2026-10-22",
+          thisMonth: 0,
+          lines: 0,
+          ...over,
+        },
+      }).savingsRow;
+    it("shows the total saved, with this month's movement", () => {
+      expect(withSavings({ thisMonth: 10000 })).toMatchObject({
+        saved: 20085,
+        thisMonth: 10000,
+        goal: null,
+      });
+    });
+    it("carries the goal when there is one", () => {
+      expect(withSavings({ goal: 100000 })).toMatchObject({ saved: 20085, goal: 100000 });
+    });
+    it("is absent when nothing is saved and nothing is known", () => {
+      expect(withSavings({ saved: 0, anchored: false, anchorDate: null })).toBeNull();
+    });
   });
 });
