@@ -101,7 +101,9 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         ringLabel={
           o.used === null
             ? t.ui.overview.ringNoBudget
-            : t.ui.overview.ringUsed(Math.round(o.used * 100))
+            : o.basis === "income"
+              ? t.ui.overview.ringIncomeUsed(Math.round(o.used * 100))
+              : t.ui.overview.ringUsed(Math.round(o.used * 100))
         }
         centre={o.free === null ? f.euro(o.spent) : f.euro(o.free)}
         caption={

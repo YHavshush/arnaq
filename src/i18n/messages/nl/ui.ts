@@ -67,6 +67,7 @@ export const ui: typeof en = {
     emptyTitle: (month: string) => `Nog niets in ${month}`,
     emptyBody:
       "Upload een afschrift van je bank om te zien hoe deze maand ervoor staat. Je kunt daarna een budget instellen.",
+    ringIncomeUsed: (pct: number) => `${pct}% van wat binnenkwam is uitgegeven of gepland`,
     ringNoBudget: "Geen budget ingesteld",
     ringUsed: (pct: number) => `${pct}% van het budget gebruikt of gepland`,
     captionSpent: "uitgegeven",
@@ -84,8 +85,8 @@ export const ui: typeof en = {
     paceTitle: "Tempo van de maand",
     paceAside: "zonder vaste lasten",
     paceOf: (budget: string) => `van ${budget}`,
-    paceAhead: (amount: string) => `${amount} voor op schema`,
-    paceBehind: (amount: string) => `${amount} achter op schema`,
+    paceAhead: (amount: string) => `${amount} onder het tempo`,
+    paceBehind: (amount: string) => `${amount} boven het tempo`,
     paceSchedule: (amount: string) => `schema ${amount}`,
     paceBars: (threshold: string) => `elke staaf is een dag, getal = dag boven ${threshold}`,
     paceSummary: (n: number, threshold: string) =>

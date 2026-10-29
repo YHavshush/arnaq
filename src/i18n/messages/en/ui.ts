@@ -67,6 +67,7 @@ export const ui = {
     emptyTitle: (month: string) => `Nothing in ${month} yet`,
     emptyBody:
       "Upload a statement from your bank to see how this month is going. You can set a budget afterwards.",
+    ringIncomeUsed: (pct: number) => `${pct}% of what came in is spent or planned`,
     ringNoBudget: "No budget set",
     ringUsed: (pct: number) => `${pct}% of the budget used or planned`,
     captionSpent: "spent",
@@ -84,8 +85,8 @@ export const ui = {
     paceTitle: "Pace of the month",
     paceAside: "without fixed costs",
     paceOf: (budget: string) => `of ${budget}`,
-    paceAhead: (amount: string) => `${amount} ahead of schedule`,
-    paceBehind: (amount: string) => `${amount} behind schedule`,
+    paceAhead: (amount: string) => `${amount} under pace`,
+    paceBehind: (amount: string) => `${amount} over pace`,
     paceSchedule: (amount: string) => `schedule ${amount}`,
     paceBars: (threshold: string) => `each bar is a day, number = day above ${threshold}`,
     paceSummary: (n: number, threshold: string) =>

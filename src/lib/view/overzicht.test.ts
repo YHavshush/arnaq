@@ -413,4 +413,61 @@ describe("buildOverzicht: the parts the design adds", () => {
     // No Savings lines and no goal: the old budget-based behaviour is unchanged.
     expect(tile(summary({}))).toMatchObject({ word: "Nog niets" });
   });
+
+  describe("without a total budget the top compares spending with what came in", () => {
+    // Only some categories have a budget (the total is just their sum, not a real budget).
+    const partial = (income: number, spent: number) =>
+      overview({ totalBudget: 40000, totalBudgetIsExplicit: false, incomeActual: income }, [
+        line(1, "Boodschappen", spent, 40000),
+      ]);
+    const run = (
+      income: number,
+      spent: number,
+      extra: Partial<Parameters<typeof buildOverzicht>[0]> = {},
+    ) =>
+      buildOverzicht({
+        overview: partial(income, spent),
+        occurrences: [],
+        today: "2026-10-15",
+        locale: "en" as const,
+        ...extra,
+      });
+
+    it("ignores a budget that only covers some categories (no 'over budget', no 'behind schedule')", () => {
+      const o = run(300000, 196200, { daily: [5000, 12000] });
+      expect(o.basis).toBe("income");
+      expect(o.budget).toBeNull();
+      expect(o.pace?.budget).toBeNull();
+      expect(o.pace?.schedule).toBeNull();
+      expect(o.pace?.ahead).toBeNull();
+    });
+    it("free = income - spent, the ring is the share of income spent", () => {
+      const o = run(300000, 120000);
+      expect(o.free).toBe(180000);
+      expect(o.used).toBeCloseTo(0.4);
+      expect(o.tone).toBe("good");
+      expect(text(o.sentence)).toContain("came in");
+    });
+    it("is bad when more went out than came in", () => {
+      const o = run(100000, 150000);
+      expect(o.free).toBe(-50000);
+      expect(o.tone).toBe("bad");
+    });
+    it("falls back to the plain spent line when nothing has come in", () => {
+      const o = run(0, 50000);
+      expect(o.basis).toBe("none");
+      expect(o.used).toBeNull();
+      expect(o.free).toBeNull();
+    });
+    it("a real total budget still wins", () => {
+      const o = buildOverzicht({
+        overview: overview({ incomeActual: 300000 }),
+        occurrences: [],
+        today: "2026-10-15",
+        locale: "en" as const,
+      });
+      expect(o.basis).toBe("budget");
+      expect(o.budget).toBe(200000);
+    });
+  });
 });

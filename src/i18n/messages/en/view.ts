@@ -12,6 +12,11 @@ const cap = (text: string) => {
 export const view = {
   overzicht: {
     uncategorised: "Uncategorised",
+    ofIncome: (spent: string, income: string): Sentence => [
+      plain("You've spent "),
+      em(spent),
+      plain(` of the ${income} that came in this month.`),
+    ],
     noBudget: (spent: string): Sentence => [
       plain("You've spent "),
       em(spent),

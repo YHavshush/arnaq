@@ -88,6 +88,11 @@ export interface Tile {
 export interface Overzicht {
   month: string;
   hasActivity: boolean;
+  /**
+   * What the ring and the sentence compare spending with: the person's own total budget, else what came in
+   * this month, else nothing. A sum of some categories' budgets is not a total budget.
+   */
+  basis: "budget" | "income" | "none";
   budget: number | null;
   spent: number;
   /** Fixed expenses still to come (expected, not yet matched). */
@@ -263,7 +268,8 @@ export function buildOverzicht({
   const t = messages[locale].view.overzicht;
   const { euro } = formatter(locale);
   const { month, totals } = overview;
-  const budget = totals.totalBudget;
+  // Only a total the person set counts. The sum of a few category budgets would call all other spending "over".
+  const budget = totals.totalBudgetIsExplicit ? totals.totalBudget : null;
   const spent = totals.expenseActual;
 
   const expenseOcc = occurrences.filter((o) => o.type === "expense");
@@ -277,9 +283,18 @@ export function buildOverzicht({
     .filter((o) => o.status !== "missed")
     .reduce((s, o) => s + o.amount, 0);
 
-  const used = budget !== null && budget > 0 ? (spent + planned) / budget : null;
+  const incomeBasis = budget === null && totals.incomeActual > 0;
+  const reference =
+    budget !== null && budget > 0 ? budget : incomeBasis ? totals.incomeActual : null;
+  const basis: Overzicht["basis"] = budget !== null ? "budget" : incomeBasis ? "income" : "none";
+  const used = reference !== null ? (spent + planned) / reference : null;
   const tone: Tone = used === null ? "accent" : toneForUsage(used);
-  const free = budget === null ? null : budget - spent - planned;
+  const free =
+    budget !== null
+      ? budget - spent - planned
+      : incomeBasis
+        ? totals.incomeActual - spent - planned
+        : null;
 
   const rows: OverzichtRow[] = overview.expenses
     .map((l) => {
@@ -374,7 +389,7 @@ export function buildOverzicht({
 
   // A line or two under the sentence: how much of the budget is gone and what is over.
   let detail: string | null = null;
-  if (used !== null && free !== null && progress > 0 && progress < 1) {
+  if (basis === "budget" && used !== null && free !== null && progress > 0 && progress < 1) {
     const d = messages[locale].view.overzicht.detail;
     const days = daysInMonth(month) - Number(today.slice(8, 10));
     const pct = Math.round(used * 100);
@@ -475,6 +490,7 @@ export function buildOverzicht({
   return {
     month,
     hasActivity,
+    basis,
     budget,
     spent,
     planned,
@@ -482,7 +498,9 @@ export function buildOverzicht({
     tone,
     mood: moodForTone(tone),
     free,
-    sentence: sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
+    sentence: incomeBasis
+      ? messages[locale].view.overzicht.ofIncome(euro(spent), euro(totals.incomeActual))
+      : sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
     detail,
     attention,
     tiles,
