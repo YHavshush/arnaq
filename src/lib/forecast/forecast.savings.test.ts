@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createRecurringItem, RecurringError } from "@/lib/recurring/items";
 import { matchOccurrences } from "@/lib/recurring/matching";
 import { generateOccurrences } from "@/lib/recurring/occurrences";
+import { setSavingsAnchor } from "@/lib/savings/settings";
 import { setup } from "@/lib/recurring/test-utils";
 import { buildPrognose } from "@/lib/view/prognose";
 import { getForecast } from "./forecast";
@@ -46,7 +47,7 @@ describe("getForecast: money set aside", () => {
     const future = f.months.filter((m) => m.kind === "forecast");
     expect(future).toHaveLength(3);
     for (const m of future) {
-      expect(m.setAside).toEqual({ actual: 0, planned: 50000, total: 50000 });
+      expect(m.setAside).toEqual({ actual: 0, planned: 50000, total: 50000, reserve: 50000 });
       expect(m.recurring.expenses).toBe(0);
       expect(m.expenses).toBe(m.variable); // only the everyday average, nothing from the deposit
       expect(m.categories.find((c) => c.categoryId === null)?.recurring).toBe(0);
@@ -67,7 +68,7 @@ describe("getForecast: money set aside", () => {
     });
     const f = await getForecast(db, { today: TODAY, months: 1, pastMonths: 0 });
     const current = f.months[0];
-    expect(current.setAside).toEqual({ actual: 50000, planned: 0, total: 50000 });
+    expect(current.setAside).toEqual({ actual: 50000, planned: 0, total: 50000, reserve: 50000 });
     const next = f.months[1];
     expect(next.setAside.planned).toBe(50000);
   });
@@ -96,7 +97,7 @@ describe("getForecast: money set aside", () => {
     });
     const f = await getForecast(db, { today: TODAY, months: 1, pastMonths: 0 });
     expect(f.months[1].recurring.expenses).toBe(80000);
-    expect(f.months[1].setAside).toEqual({ actual: 0, planned: 0, total: 0 });
+    expect(f.months[1].setAside).toEqual({ actual: 0, planned: 0, total: 0, reserve: 0 });
   });
 });
 
@@ -146,19 +147,77 @@ describe("matching a deposit item", () => {
   });
 });
 
-describe("the balance over time with money set aside", () => {
-  it("takes the deposits out of the projected balance, not out of the spending", async () => {
+describe("net worth over time with money set aside", () => {
+  async function world(name: string, counterparty: string) {
     const { db, addItem, cat, tx, cover } = await setup();
     await cover("2026-09");
     await tx("2026-09-10", -2000, { balanceAfter: 300000, counterparty: "Shop" });
-    await addItem({ ...reserve, type: "expense", categoryId: await cat("Spaarrekening") });
-    const f = await getForecast(db, { today: TODAY, months: 2, pastMonths: 1 });
-    const p = buildPrognose(f, "en");
+    await setSavingsAnchor(db, { amount: 100000, asOf: "2026-09-30" });
+    await addItem({
+      ...reserve,
+      name,
+      matchCounterparty: counterparty,
+      type: "expense",
+      categoryId: await cat("Spaarrekening"),
+    });
+    return getForecast(db, { today: TODAY, months: 2, pastMonths: 1 });
+  }
+
+  it("a deposit into real savings moves money between accounts and savings: net worth stays", async () => {
+    const p = buildPrognose(await world("Holiday pot", "Holiday pot"), "en");
     const [september, october, november] = p.points;
     expect(p.hasBalance).toBe(true);
-    expect(october.cumulative).toBe(september.cumulative - 50000 + october.net);
-    expect(november.cumulative).toBe(october.cumulative - 50000 + november.net);
+    expect(october.cumulative).toBe(september.cumulative + october.net);
+    expect(november.cumulative).toBe(october.cumulative + november.net);
+    expect(october.savings).toBe(september.savings + 50000);
+    expect(october.accounts).toBe(september.accounts + october.net - 50000);
+    expect(october.accounts + october.savings).toBe(october.cumulative);
+  });
+
+  it("money set aside for the BTW is owed, not saved: it lowers net worth and adds nothing to savings", async () => {
+    const p = buildPrognose(await world("BTW reserve", "EUR BTW"), "en");
+    const [september, october, november] = p.points;
+    expect(october.cumulative).toBe(september.cumulative + october.net - 50000);
+    expect(november.cumulative).toBe(october.cumulative + november.net - 50000);
+    expect(october.savings).toBe(september.savings);
+    expect(october.accounts).toBe(september.accounts + october.net - 50000);
     expect(november.setAside).toBe(50000);
     expect(p.notes.some((n) => /aside|opzij/i.test(n))).toBe(true);
+  });
+
+  it("starts from the savings the statement reported", async () => {
+    const f = await world("BTW reserve", "EUR BTW");
+    expect(f.openingSavings).toBe(100000);
+    expect(f.openingBalance).toBe(302000); // the balance before the September shop
+  });
+
+  it("without any savings known there is no opening savings", async () => {
+    const { db, tx, cover } = await setup();
+    await cover("2026-09");
+    await tx("2026-09-10", -2000, { balanceAfter: 300000, counterparty: "Shop" });
+    const f = await getForecast(db, { today: TODAY, months: 1, pastMonths: 1 });
+    expect(f.openingSavings).toBeNull();
+  });
+
+  it("taking the reserve out and paying the tax man costs net worth once, not twice", async () => {
+    const { db, tx, cat, cover } = await setup();
+    await cover("2026-08", "2026-09", "2026-10");
+    const savings = await cat("Spaarrekening");
+    const taxes = await cat("Belastingen");
+    const pocket = (date: string, amount: number) =>
+      tx(date, amount, { counterparty: "EUR BTW", categoryId: savings, isInternalTransfer: true });
+    await tx("2026-08-01", 0, { balanceAfter: 500000, counterparty: "start" });
+    await pocket("2026-08-05", -42000); // set aside
+    await pocket("2026-10-05", 42000); // taken out again
+    await tx("2026-10-06", -42000, { counterparty: "Belastingdienst", categoryId: taxes });
+    const f = await getForecast(db, { today: TODAY, months: 0 + 1, pastMonths: 2 });
+    const [aug, sep, oct] = f.months;
+    expect(aug.setAside.reserve).toBe(42000);
+    expect(oct.setAside.reserve).toBe(-42000);
+    // After the whole round trip the reserve is back to nothing, and the payment is one expense.
+    expect(oct.cumulativeReserve).toBe(0);
+    expect(aug.cumulativeNet - aug.cumulativeReserve).toBe(-42000);
+    expect(oct.cumulativeNet - oct.cumulativeReserve).toBe(-42000);
+    expect(sep.cumulativeReserve).toBe(42000);
   });
 });

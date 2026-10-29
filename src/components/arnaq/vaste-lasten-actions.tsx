@@ -30,7 +30,7 @@ interface SuggestionView {
 export function SuggestionList({ suggestions }: { suggestions: SuggestionView[] }) {
   const router = useRouter();
   const { locale, t } = useI18n();
-  const { euro } = formatter(locale);
+  const { euroExact: euro } = formatter(locale);
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -94,7 +94,7 @@ interface ItemView {
 export function ItemManager({ items }: { items: ItemView[] }) {
   const router = useRouter();
   const { locale, t } = useI18n();
-  const { euro } = formatter(locale);
+  const { euroExact: euro } = formatter(locale);
   const [busy, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);

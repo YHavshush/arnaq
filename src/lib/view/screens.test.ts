@@ -10,8 +10,9 @@ const fm = (month: string, kind: ForecastMonth["kind"], net: number, cumulativeN
     kind,
     net,
     cumulativeNet,
-    setAside: { actual: 0, planned: 0, total: 0 },
+    setAside: { actual: 0, planned: 0, total: 0, reserve: 0 },
     cumulativeSetAside: 0,
+    cumulativeReserve: 0,
     income: Math.max(net, 0),
     expenses: Math.max(-net, 0),
   }) as ForecastMonth;
@@ -29,6 +30,7 @@ const forecast = (months: ForecastMonth[], lowConfidence = false): Forecast =>
     },
     missed: [],
     openingBalance: null,
+    openingSavings: null,
     months,
   }) as unknown as Forecast;
 
@@ -45,7 +47,7 @@ describe("buildPrognose with the bank's balances", () => {
     expect(without.points.map((p) => p.cumulative)).toEqual([5000, 25000, 15000]);
     expect(withBalance.hasBalance).toBe(true);
     expect(withBalance.points.map((p) => p.cumulative)).toEqual([255000, 275000, 265000]);
-    expect(withBalance.notes.some((n) => /balance adds up/.test(n))).toBe(true);
+    expect(withBalance.notes.some((n) => /Net worth adds up/.test(n))).toBe(true);
     // Growth (the ring, the sentence) does not depend on the opening balance.
     expect(withBalance.growth).toBe(without.growth);
   });

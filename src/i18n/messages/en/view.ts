@@ -12,6 +12,11 @@ const cap = (text: string) => {
 export const view = {
   overzicht: {
     uncategorised: "Uncategorised",
+    ofIncome: (spent: string, income: string): Sentence => [
+      plain("You've spent "),
+      em(spent),
+      plain(` of the ${income} that came in this month.`),
+    ],
     noBudget: (spent: string): Sentence => [
       plain("You've spent "),
       em(spent),
@@ -85,6 +90,7 @@ export const view = {
         wordSaved: "Saved",
         wordNone: "Nothing yet",
         wordTaken: "Withdrawn",
+        subTotalOnly: "saved in total",
         subTotal: (amount: string) => `${amount} saved in total`,
         subMonthTaken: (amount: string) => `${amount} taken out this month`,
         subOf: (amount: string, goal: string) => `${amount} of ${goal}`,
@@ -149,7 +155,7 @@ export const view = {
     detailDown: (amount: string, month: string, plus: number, total: number) =>
       `In total your money shrinks by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
     noteBalance:
-      "The balance adds up the accounts you uploaded; money you have not uploaded is not in it.",
+      "Net worth adds up the accounts you uploaded and your savings; money you have not uploaded is not in it. Money set aside for the BTW is not counted: it is owed.",
     noteEstimate:
       "Forecast months are an estimate: fixed costs and income as you set them up, plus your average everyday spending.",
     noteMissed: (name: string, date: string) =>

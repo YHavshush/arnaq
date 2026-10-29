@@ -8,6 +8,9 @@ import { ensureMerchantKeys } from "./learned";
 /** Sources that come from the person (their choice, a shop they taught, a rule or fixed cost they set up). */
 const TRUSTED = ["user", "learned", "rule", "recurring", "confirmed"] as const;
 
+/** Words in a bank's description that mark money coming back from a payment, not new income. */
+const REVERSAL = /terugboeking|storno|refund|restitutie|terugbetaling|retour/i;
+
 export interface AutoResult {
   /** Categorised by the catalog or the history. */
   applied: number;
@@ -94,11 +97,17 @@ export async function applyAutomatic(
   let applied = 0;
   let suggested = 0;
   for (const t of todo) {
-    const wantsType = t.amount > 0 ? "income" : "expense";
-    const fits = (categoryId: number) => typeOf.get(categoryId) === wantsType;
+    // A reversal of a payment (a bounced direct debit, a refund) is money in for an expense category.
+    const reversal = t.amount > 0 && REVERSAL.test(t.description ?? "");
+    const wantsType = t.amount > 0 && !reversal ? "income" : "expense";
+    // Savings fits money in and out (a deposit and a withdrawal); the others must match the direction.
+    const fits = (categoryId: number) =>
+      typeOf.get(categoryId) === wantsType || typeOf.get(categoryId) === "savings";
     const slug = catalogLookup(t.counterparty, t.description);
     const catalogId =
-      slug && INCOME_SLUGS.has(slug) === t.amount > 0 ? (bySlug.get(slug) ?? null) : null;
+      slug && (slug === "savings" || reversal || INCOME_SLUGS.has(slug) === t.amount > 0)
+        ? (bySlug.get(slug) ?? null)
+        : null;
     const hintSlug = slug === null ? catalogSuggestion(t.counterparty, t.description) : null;
     const hintId =
       hintSlug && INCOME_SLUGS.has(hintSlug) === t.amount > 0 ? bySlug.get(hintSlug) : null;
@@ -125,6 +134,8 @@ export async function applyAutomatic(
           categoryId: Number(categoryId),
           categorySource: source as "catalog" | "history",
           suggestedCategoryId: null,
+          // Money into or out of savings is neither income nor spending.
+          ...(typeOf.get(Number(categoryId)) === "savings" ? { isInternalTransfer: true } : {}),
         })
         .where(inArray(schema.transactions.id, ids.slice(i, i + 500)));
   }

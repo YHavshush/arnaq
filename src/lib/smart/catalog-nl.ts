@@ -52,6 +52,7 @@ export const CATALOG_NL: Record<string, string[]> = {
     "flink",
   ],
   "eating-out": [
+    "salsa shop",
     "coffee",
     "koffie",
     "espresso",
@@ -254,6 +255,13 @@ export const CATALOG_NL: Record<string, string[]> = {
     "afvalstoffenheffing",
   ],
   "health-insurance": [
+    "fbto",
+    "zorgverzekeringen",
+    "levensverzekering",
+    "life insurance",
+    "zorg en zekerheid",
+    "zorgverzekeraar",
+    "zorgpremie",
     "zilveren kruis",
     "cz groep",
     "cz",
@@ -437,7 +445,10 @@ export const CATALOG_NL: Record<string, string[]> = {
  * bars. These are offered as "Probably X?" for the person to confirm, never applied on their own.
  */
 export const SUGGEST_NL: Record<string, string[]> = {
-  "eating-out": ["cafe", "caffe"],
+  "eating-out": ["cafe", "caffe", "salsa"],
+  "going-out": ["poolcafe", "pool cafe"],
+  // One insurance category covers them all (health, life, ...): a bare "insurance" is offered, not applied.
+  "health-insurance": ["verzekering", "insurance"],
 };
 
 /** Names used for many kinds of purchases: no answer from the catalog. */
@@ -532,5 +543,7 @@ export function catalogSuggestion(
   description: string | null,
 ): string | null {
   const text = padded(`${counterparty ?? ""} ${description ?? ""}`);
-  return SUGGEST_ENTRIES.find((e) => text.includes(e.phrase))?.slug ?? null;
+  // The longest phrase wins ("pool cafe" beats "cafe").
+  const hits = SUGGEST_ENTRIES.filter((e) => text.includes(e.phrase));
+  return hits.sort((a, b) => b.phrase.length - a.phrase.length)[0]?.slug ?? null;
 }

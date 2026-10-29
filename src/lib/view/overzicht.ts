@@ -42,7 +42,11 @@ export interface AttentionItem {
 
 /** The pace of everyday spending (money that is not a fixed cost) through the month. */
 export interface PaceCard {
+  /** Everyday spending: the month's spending without the fixed costs already paid. */
   spent: number;
+  /** All spending this month and the fixed costs paid in it: `fixed + spent === total` (unless fixed exceeds it). */
+  total: number;
+  fixed: number;
   /** Budget for everyday spending (total budget minus fixed costs); null when there is none. */
   budget: number | null;
   /** What should be spent by now at an even pace; null without a budget. */
@@ -88,6 +92,13 @@ export interface Tile {
 export interface Overzicht {
   month: string;
   hasActivity: boolean;
+  /**
+   * What the ring and the sentence compare spending with: the person's own total budget, else what came in
+   * this month, else nothing. A sum of some categories' budgets is not a total budget.
+   */
+  basis: "budget" | "income" | "none";
+  /** What the accounts hold plus what is saved, or null when neither is known. */
+  netWorth: { accounts: number; savings: number; total: number } | null;
   budget: number | null;
   spent: number;
   /** Fixed expenses still to come (expected, not yet matched). */
@@ -124,6 +135,8 @@ interface Input {
   otherIncome?: IncomeLine[];
   /** Money in and out of savings, and the goal, see getSavingsSummary. */
   savings?: SavingsSummary | null;
+  /** What the accounts hold now (cents) from the bank's own balances, see getOpeningBalance; null when unknown. */
+  accountsBalance?: number | null;
 }
 
 function sentenceFor(o: {
@@ -206,7 +219,7 @@ function sparenTile(
   savings?: SavingsSummary | null,
 ): Tile {
   const t = messages[locale].view.overzicht.tiles.sparen;
-  const { euro } = formatter(locale);
+  const { euro, euroExact } = formatter(locale);
   const own = { key: "sparen" as const, label: t.label };
   // Real savings (the Savings category) and the goal come first: a deposit raises the progress, a withdrawal lowers it.
   if (savings && savings.goal !== null) {
@@ -219,17 +232,14 @@ function sparenTile(
       goal: { saved: savings.saved, target: savings.goal },
     };
   }
-  if (savings && savings.lines > 0) {
+  if (savings && (savings.lines > 0 || savings.anchored)) {
+    // The total is the headline; this month's movement is the sub-line.
+    const word = euroExact(savings.saved);
     if (savings.thisMonth > 0)
-      return { ...own, word: t.wordSaved, sub: t.subMonth(euro(savings.thisMonth)), tone: "good" };
+      return { ...own, word, sub: t.subMonth(euro(savings.thisMonth)), tone: "good" };
     if (savings.thisMonth < 0)
-      return {
-        ...own,
-        word: t.wordTaken,
-        sub: t.subMonthTaken(euro(-savings.thisMonth)),
-        tone: "warn",
-      };
-    return { ...own, word: t.wordSaved, sub: t.subTotal(euro(savings.saved)), tone: "accent" };
+      return { ...own, word, sub: t.subMonthTaken(euro(-savings.thisMonth)), tone: "warn" };
+    return { ...own, word, sub: t.subTotalOnly, tone: "accent" };
   }
   const line = overview.expenses.find((l) => l.slug === SAVINGS_SLUG);
   const actual = line?.actual ?? 0;
@@ -259,11 +269,13 @@ export function buildOverzicht({
   daily = [],
   otherIncome = [],
   savings = null,
+  accountsBalance = null,
 }: Input): Overzicht {
   const t = messages[locale].view.overzicht;
   const { euro } = formatter(locale);
   const { month, totals } = overview;
-  const budget = totals.totalBudget;
+  // Only a total the person set counts. The sum of a few category budgets would call all other spending "over".
+  const budget = totals.totalBudgetIsExplicit ? totals.totalBudget : null;
   const spent = totals.expenseActual;
 
   const expenseOcc = occurrences.filter((o) => o.type === "expense");
@@ -277,9 +289,18 @@ export function buildOverzicht({
     .filter((o) => o.status !== "missed")
     .reduce((s, o) => s + o.amount, 0);
 
-  const used = budget !== null && budget > 0 ? (spent + planned) / budget : null;
+  const incomeBasis = budget === null && totals.incomeActual > 0;
+  const reference =
+    budget !== null && budget > 0 ? budget : incomeBasis ? totals.incomeActual : null;
+  const basis: Overzicht["basis"] = budget !== null ? "budget" : incomeBasis ? "income" : "none";
+  const used = reference !== null ? (spent + planned) / reference : null;
   const tone: Tone = used === null ? "accent" : toneForUsage(used);
-  const free = budget === null ? null : budget - spent - planned;
+  const free =
+    budget !== null
+      ? budget - spent - planned
+      : incomeBasis
+        ? totals.incomeActual - spent - planned
+        : null;
 
   const rows: OverzichtRow[] = overview.expenses
     .map((l) => {
@@ -374,7 +395,7 @@ export function buildOverzicht({
 
   // A line or two under the sentence: how much of the budget is gone and what is over.
   let detail: string | null = null;
-  if (used !== null && free !== null && progress > 0 && progress < 1) {
+  if (basis === "budget" && used !== null && free !== null && progress > 0 && progress < 1) {
     const d = messages[locale].view.overzicht.detail;
     const days = daysInMonth(month) - Number(today.slice(8, 10));
     const pct = Math.round(used * 100);
@@ -412,6 +433,8 @@ export function buildOverzicht({
       hasVariableBudget && progress > 0 ? variableSpent / variableBudget / progress : null;
     pace = {
       spent: variableSpent,
+      total: spent,
+      fixed: Math.min(paidFixed, spent),
       budget: hasVariableBudget ? variableBudget : null,
       schedule,
       ahead: schedule === null ? null : schedule - variableSpent,
@@ -475,6 +498,15 @@ export function buildOverzicht({
   return {
     month,
     hasActivity,
+    basis,
+    netWorth:
+      accountsBalance === null && (savings === null || (savings.saved === 0 && !savings.anchored))
+        ? null
+        : (() => {
+            const accounts = accountsBalance ?? 0;
+            const saved = savings?.saved ?? 0;
+            return { accounts, savings: saved, total: accounts + saved };
+          })(),
     budget,
     spent,
     planned,
@@ -482,7 +514,9 @@ export function buildOverzicht({
     tone,
     mood: moodForTone(tone),
     free,
-    sentence: sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
+    sentence: incomeBasis
+      ? messages[locale].view.overzicht.ofIncome(euro(spent), euro(totals.incomeActual))
+      : sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
     detail,
     attention,
     tiles,

@@ -45,9 +45,15 @@ export const ui = {
     retry: "Try again",
   },
   step: { to: (month: string) => `Go to ${month}` },
+  netWorth: {
+    title: "Net worth",
+    aside: (accounts: string, savings: string) => `${accounts} in accounts + ${savings} saved`,
+  },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% of what arrives",
+    pocketOf: (pocket: string, owed: string) => `${pocket} of ${owed}`,
+    basis: (received: string, client: string) => `21% of ${received} received from ${client}.`,
     received: (client: string) => `Received from ${client}`,
     owed: "21% to set aside",
     pocket: "In the BTW pocket",
@@ -67,6 +73,7 @@ export const ui = {
     emptyTitle: (month: string) => `Nothing in ${month} yet`,
     emptyBody:
       "Upload a statement from your bank to see how this month is going. You can set a budget afterwards.",
+    ringIncomeUsed: (pct: number) => `${pct}% of what came in is spent or planned`,
     ringNoBudget: "No budget set",
     ringUsed: (pct: number) => `${pct}% of the budget used or planned`,
     captionSpent: "spent",
@@ -82,10 +89,12 @@ export const ui = {
     tagFixed: "fixed",
     allCategories: (n: number) => `All ${n} categories`,
     paceTitle: "Pace of the month",
-    paceAside: "without fixed costs",
+    paceAside: "everyday spending only",
+    paceBridge: (total: string, fixed: string, everyday: string) =>
+      `${total} spent = ${fixed} fixed + ${everyday} everyday`,
     paceOf: (budget: string) => `of ${budget}`,
-    paceAhead: (amount: string) => `${amount} ahead of schedule`,
-    paceBehind: (amount: string) => `${amount} behind schedule`,
+    paceAhead: (amount: string) => `${amount} under pace`,
+    paceBehind: (amount: string) => `${amount} over pace`,
     paceSchedule: (amount: string) => `schedule ${amount}`,
     paceBars: (threshold: string) => `each bar is a day, number = day above ${threshold}`,
     paceSummary: (n: number, threshold: string) =>
@@ -129,9 +138,9 @@ export const ui = {
     },
     kindShort: { actual: "actual", "no-data": "no upload", mixed: "partial", forecast: "forecast" },
     viewTotal: "Total",
-    viewBalance: "Balance",
+    viewBalance: "Net worth",
     legendHelpBalance:
-      "Above each point is your balance at the end of that month, below it the growth of that month. Tap a month for details.",
+      "Above each point is your net worth at the end of that month, below it the growth of that month. Tap a month for details.",
     viewMonthly: "Per month",
     viewLabel: "Chart view",
     allMonths: "All months",

@@ -45,9 +45,15 @@ export const ui: typeof en = {
     retry: "Opnieuw proberen",
   },
   step: { to: (month: string) => `Naar ${month}` },
+  netWorth: {
+    title: "Vermogen",
+    aside: (accounts: string, savings: string) => `${accounts} op rekeningen + ${savings} gespaard`,
+  },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% van wat binnenkomt",
+    pocketOf: (pocket: string, owed: string) => `${pocket} van ${owed}`,
+    basis: (received: string, client: string) => `21% van ${received} ontvangen van ${client}.`,
     received: (client: string) => `Ontvangen van ${client}`,
     owed: "21% opzij te zetten",
     pocket: "In de BTW-pot",
@@ -67,6 +73,7 @@ export const ui: typeof en = {
     emptyTitle: (month: string) => `Nog niets in ${month}`,
     emptyBody:
       "Upload een afschrift van je bank om te zien hoe deze maand ervoor staat. Je kunt daarna een budget instellen.",
+    ringIncomeUsed: (pct: number) => `${pct}% van wat binnenkwam is uitgegeven of gepland`,
     ringNoBudget: "Geen budget ingesteld",
     ringUsed: (pct: number) => `${pct}% van het budget gebruikt of gepland`,
     captionSpent: "uitgegeven",
@@ -82,10 +89,12 @@ export const ui: typeof en = {
     tagFixed: "vast",
     allCategories: (n: number) => `Alle ${n} categorieën`,
     paceTitle: "Tempo van de maand",
-    paceAside: "zonder vaste lasten",
+    paceAside: "alleen dagelijkse uitgaven",
+    paceBridge: (total: string, fixed: string, everyday: string) =>
+      `${total} uitgegeven = ${fixed} vast + ${everyday} dagelijks`,
     paceOf: (budget: string) => `van ${budget}`,
-    paceAhead: (amount: string) => `${amount} voor op schema`,
-    paceBehind: (amount: string) => `${amount} achter op schema`,
+    paceAhead: (amount: string) => `${amount} onder het tempo`,
+    paceBehind: (amount: string) => `${amount} boven het tempo`,
     paceSchedule: (amount: string) => `schema ${amount}`,
     paceBars: (threshold: string) => `elke staaf is een dag, getal = dag boven ${threshold}`,
     paceSummary: (n: number, threshold: string) =>
@@ -134,9 +143,9 @@ export const ui: typeof en = {
       forecast: "prognose",
     },
     viewTotal: "Totaal",
-    viewBalance: "Saldo",
+    viewBalance: "Vermogen",
     legendHelpBalance:
-      "Boven elk punt staat je saldo aan het eind van die maand, eronder de groei van die maand. Tik op een maand voor details.",
+      "Boven elk punt staat je vermogen aan het eind van die maand, eronder de groei van die maand. Tik op een maand voor details.",
     viewMonthly: "Per maand",
     viewLabel: "Weergave van de grafiek",
     allMonths: "Alle maanden",

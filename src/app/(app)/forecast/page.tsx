@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
+import { BtwCard } from "@/components/arnaq/btw-card";
 import { Hero } from "@/components/arnaq/hero";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
@@ -9,6 +10,7 @@ import { PrognoseChart } from "@/components/arnaq/prognose-chart";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
+import { DEFAULT_BTW_INCOME_MATCH, getBtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
 import { HORIZONS, loadPrognose, parseHorizon } from "@/lib/view/load";
 
@@ -27,6 +29,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
   const today = todayIso();
   const months = parseHorizon((await searchParams).months);
   const p = await pageDb((db) => loadPrognose(db, today, months, locale));
+  const btw = await pageDb((db) => getBtwSummary(db, { today }));
 
   if (!p.hasForecast)
     return (
@@ -100,6 +103,11 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </p>
         )}
       </Section>
+      {btw.hasData && (
+        <Section title={t.ui.btw.title(btw.quarter.label.replace("-", " "))} aside={t.ui.btw.aside}>
+          <BtwCard btw={btw} client={DEFAULT_BTW_INCOME_MATCH} t={t} locale={locale} />
+        </Section>
+      )}
       {!p.incomeMissing && (
         <Section title={t.ui.chart.allMonths}>
           <MonthList points={p.points} />

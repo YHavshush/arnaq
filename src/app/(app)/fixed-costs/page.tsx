@@ -6,11 +6,7 @@ import { PageHeader, Section } from "@/components/arnaq/page-header";
 import { StatusChip } from "@/components/arnaq/status-chip";
 import { Row } from "@/components/arnaq/row";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
-import {
-  AddItemForm,
-  ItemManager,
-  SuggestionList,
-} from "@/components/arnaq/vaste-lasten-actions";
+import { AddItemForm, ItemManager, SuggestionList } from "@/components/arnaq/vaste-lasten-actions";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { formatter } from "@/lib/view/format";
@@ -28,7 +24,8 @@ export default function FixedCostsPage({ searchParams }: PageProps<"/fixed-costs
 async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "searchParams">) {
   await requestTime();
   const { locale, t } = await getI18n();
-  const { euro, dayLabel, monthName } = formatter(locale);
+  // Fixed costs are shown to the cent: 21.78 is not 22.
+  const { euroExact: euro, dayLabel, monthName } = formatter(locale);
   const today = todayIso();
   const month = parseMonth((await searchParams).month, today.slice(0, 7));
   const v = await pageDb((db) => loadVasteLasten(db, month, today, locale));

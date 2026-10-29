@@ -12,6 +12,11 @@ const cap = (text: string) => {
 export const view: typeof en = {
   overzicht: {
     uncategorised: "Zonder categorie",
+    ofIncome: (spent: string, income: string): Sentence => [
+      plain("Je hebt "),
+      em(spent),
+      plain(` uitgegeven van de ${income} die deze maand binnenkwam.`),
+    ],
     noBudget: (spent: string): Sentence => [
       plain("Je hebt deze maand "),
       em(spent),
@@ -81,6 +86,7 @@ export const view: typeof en = {
         wordSaved: "Gespaard",
         wordNone: "Nog niets",
         wordTaken: "Opgenomen",
+        subTotalOnly: "in totaal gespaard",
         subTotal: (amount: string) => `${amount} in totaal gespaard`,
         subMonthTaken: (amount: string) => `${amount} deze maand opgenomen`,
         subOf: (amount: string, goal: string) => `${amount} van ${goal}`,
@@ -145,7 +151,7 @@ export const view: typeof en = {
     detailDown: (amount: string, month: string, plus: number, total: number) =>
       `Je geld krimpt in totaal met ${amount} tot en met ${month}. ${plus} van ${total} maanden sluit je in de plus.`,
     noteBalance:
-      "Het saldo telt de rekeningen op die je hebt geüpload; geld dat je niet hebt geüpload zit er niet in.",
+      "Je vermogen telt de rekeningen die je hebt geüpload en je spaargeld op; geld dat je niet hebt geüpload zit er niet in. Geld dat voor de BTW opzij staat telt niet mee: dat ben je verschuldigd.",
     noteEstimate:
       "Voorspelde maanden zijn een schatting: vaste lasten en inkomen zoals je ze hebt ingesteld, plus je gemiddelde gewone uitgaven.",
     noteMissed: (name: string, date: string) =>

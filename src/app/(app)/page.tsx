@@ -6,7 +6,6 @@ import { Hero } from "@/components/arnaq/hero";
 import { IncomeList } from "@/components/arnaq/income-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PaceCard } from "@/components/arnaq/pace-card";
-import { BtwCard } from "@/components/arnaq/btw-card";
 import { LoadSampleButton } from "@/components/arnaq/sample";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
 import { Row } from "@/components/arnaq/row";
@@ -17,7 +16,6 @@ import { getI18n } from "@/i18n/server";
 import type { Messages } from "@/i18n/messages";
 import type { Locale } from "@/i18n/config";
 import { requestTime, todayIso } from "@/lib/api";
-import { DEFAULT_BTW_INCOME_MATCH, getBtwSummary } from "@/lib/btw/summary";
 import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { canLoadSample } from "@/lib/sample/sample";
@@ -65,7 +63,6 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const today = todayIso();
   const month = parseMonth((await searchParams).month, today.slice(0, 7));
   const o = await pageDb((db) => loadOverzicht(db, month, today, locale));
-  const btw = await pageDb((db) => getBtwSummary(db, { today }));
   const offerSample = !o.hasActivity && (await pageDb((db) => canLoadSample(db)));
   const step = {
     prev: `/?month=${o.prev}`,
@@ -101,7 +98,9 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         ringLabel={
           o.used === null
             ? t.ui.overview.ringNoBudget
-            : t.ui.overview.ringUsed(Math.round(o.used * 100))
+            : o.basis === "income"
+              ? t.ui.overview.ringIncomeUsed(Math.round(o.used * 100))
+              : t.ui.overview.ringUsed(Math.round(o.used * 100))
         }
         centre={o.free === null ? f.euro(o.spent) : f.euro(o.free)}
         caption={
@@ -130,9 +129,17 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         ))}
       </div>
 
-      {btw.hasData && (
-        <Section title={t.ui.btw.title(btw.quarter.label.replace("-", " "))} aside={t.ui.btw.aside}>
-          <BtwCard btw={btw} client={DEFAULT_BTW_INCOME_MATCH} t={t} locale={locale} />
+      {o.netWorth && (
+        <Section
+          title={t.ui.netWorth.title}
+          aside={t.ui.netWorth.aside(
+            f.euroExact(o.netWorth.accounts),
+            f.euroExact(o.netWorth.savings),
+          )}
+        >
+          <div className="glass num p-4 text-2xl font-semibold tracking-tight">
+            {f.euroExact(o.netWorth.total)}
+          </div>
         </Section>
       )}
 

@@ -397,20 +397,130 @@ describe("buildOverzicht: the parts the design adds", () => {
     expect(tile(summary({ goal: 500000, saved: 450000, lines: 7 }))).toMatchObject({
       word: "Onderweg",
     });
-    // Without a goal: this month's net, up or down.
-    expect(tile(summary({ saved: 90000, thisMonth: 10000, lines: 3 }))).toMatchObject({
-      word: "Gespaard",
+    // Without a goal: the total is the headline, this month's movement the sub-line.
+    expect(tile(summary({ saved: 90000, thisMonth: 10000, lines: 3 }), "en")).toMatchObject({
+      word: "€900.00",
+      sub: expect.stringContaining("€100"),
       tone: "good",
     });
-    expect(tile(summary({ saved: 80000, thisMonth: -10000, lines: 3 }))).toMatchObject({
-      word: "Opgenomen",
+    expect(tile(summary({ saved: 80000, thisMonth: -10000, lines: 3 }), "en")).toMatchObject({
+      word: "€800.00",
+      sub: expect.stringContaining("taken out"),
       tone: "warn",
     });
-    expect(tile(summary({ saved: 90000, thisMonth: 0, lines: 3 }))).toMatchObject({
-      word: "Gespaard",
+    expect(tile(summary({ saved: 90000, thisMonth: 0, lines: 3 }), "en")).toMatchObject({
+      word: "€900.00",
+      sub: "saved in total",
       tone: "accent",
+    });
+    // A balance read from the statement shows even before any move into savings was seen.
+    expect(
+      tile(summary({ saved: 20085, anchored: true, anchorDate: "2026-10-29" }), "en"),
+    ).toMatchObject({
+      word: "€200.85",
+      sub: "saved in total",
     });
     // No Savings lines and no goal: the old budget-based behaviour is unchanged.
     expect(tile(summary({}))).toMatchObject({ word: "Nog niets" });
+  });
+
+  describe("without a total budget the top compares spending with what came in", () => {
+    // Only some categories have a budget (the total is just their sum, not a real budget).
+    const partial = (income: number, spent: number) =>
+      overview({ totalBudget: 40000, totalBudgetIsExplicit: false, incomeActual: income }, [
+        line(1, "Boodschappen", spent, 40000),
+      ]);
+    const run = (
+      income: number,
+      spent: number,
+      extra: Partial<Parameters<typeof buildOverzicht>[0]> = {},
+    ) =>
+      buildOverzicht({
+        overview: partial(income, spent),
+        occurrences: [],
+        today: "2026-10-15",
+        locale: "en" as const,
+        ...extra,
+      });
+
+    it("ignores a budget that only covers some categories (no 'over budget', no 'behind schedule')", () => {
+      const o = run(300000, 196200, { daily: [5000, 12000] });
+      expect(o.basis).toBe("income");
+      expect(o.budget).toBeNull();
+      expect(o.pace?.budget).toBeNull();
+      expect(o.pace?.schedule).toBeNull();
+      expect(o.pace?.ahead).toBeNull();
+    });
+    it("free = income - spent, the ring is the share of income spent", () => {
+      const o = run(300000, 120000);
+      expect(o.free).toBe(180000);
+      expect(o.used).toBeCloseTo(0.4);
+      expect(o.tone).toBe("good");
+      expect(text(o.sentence)).toContain("came in");
+    });
+    it("is bad when more went out than came in", () => {
+      const o = run(100000, 150000);
+      expect(o.free).toBe(-50000);
+      expect(o.tone).toBe("bad");
+    });
+    it("falls back to the plain spent line when nothing has come in", () => {
+      const o = run(0, 50000);
+      expect(o.basis).toBe("none");
+      expect(o.used).toBeNull();
+      expect(o.free).toBeNull();
+    });
+    it("a real total budget still wins", () => {
+      const o = buildOverzicht({
+        overview: overview({ incomeActual: 300000 }),
+        occurrences: [],
+        today: "2026-10-15",
+        locale: "en" as const,
+      });
+      expect(o.basis).toBe("budget");
+      expect(o.budget).toBe(200000);
+    });
+  });
+
+  describe("net worth: what is in the accounts plus savings", () => {
+    const worth = (accountsBalance: number | null, saved: number | null) =>
+      buildOverzicht({
+        overview: overview(),
+        occurrences: [],
+        today: "2026-10-22",
+        locale: "en" as const,
+        accountsBalance,
+        savings:
+          saved === null
+            ? null
+            : {
+                goal: null,
+                start: 0,
+                saved,
+                anchored: true,
+                anchorDate: "2026-10-22",
+                thisMonth: 0,
+                lines: 0,
+              },
+      }).netWorth;
+    it("adds the account balance and the savings", () => {
+      expect(worth(150000, 20085)).toEqual({ accounts: 150000, savings: 20085, total: 170085 });
+    });
+    it("counts a missing side as zero, and shows nothing when both are unknown", () => {
+      expect(worth(150000, null)).toEqual({ accounts: 150000, savings: 0, total: 150000 });
+      expect(worth(null, 20085)).toEqual({ accounts: 0, savings: 20085, total: 20085 });
+      expect(worth(null, null)).toBeNull();
+    });
+  });
+
+  it("the pace card says how the month's spending splits into fixed and everyday, and the parts add up", () => {
+    const o = buildOverzicht({
+      overview: overview({ incomeActual: 300000 }, [line(1, "Huur", 196200, null)]),
+      occurrences: [occ(1, "matched", 90000)],
+      today: "2026-10-15",
+      locale: "en" as const,
+      daily: [5000, 12000],
+    });
+    expect(o.pace).toMatchObject({ total: 196200, fixed: 90000, spent: 106200 });
+    expect(o.pace!.fixed + o.pace!.spent).toBe(o.pace!.total);
   });
 });
