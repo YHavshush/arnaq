@@ -26,12 +26,13 @@ describe("BtwCard", () => {
     const out = html(base);
     expect(out).toContain("Set aside");
     expect(out).toContain("31 Oct");
-    expect(out).toContain("Received from Featurn");
+    expect(out).toContain("€3,000 of €4,200".replace("€3,000", "€300").replace("€4,200", "€420"));
+    expect(out).toContain("received from Featurn");
   });
   it("says the pocket covers it, and shows no 'missing' line", () => {
     const out = html({ ...base, pocket: 50000, toSetAside: 0 });
     expect(out).toContain("The pocket covers it");
-    expect(out).not.toContain("Still to set aside");
+    expect(out).not.toContain("Set aside €");
   });
   it("shows the payment, own money and what is left once paid", () => {
     const out = html({

@@ -52,6 +52,8 @@ export const ui = {
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% of what arrives",
+    pocketOf: (pocket: string, owed: string) => `${pocket} of ${owed}`,
+    basis: (received: string, client: string) => `21% of ${received} received from ${client}.`,
     received: (client: string) => `Received from ${client}`,
     owed: "21% to set aside",
     pocket: "In the BTW pocket",

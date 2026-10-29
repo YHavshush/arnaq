@@ -52,6 +52,8 @@ export const ui: typeof en = {
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% van wat binnenkomt",
+    pocketOf: (pocket: string, owed: string) => `${pocket} van ${owed}`,
+    basis: (received: string, client: string) => `21% van ${received} ontvangen van ${client}.`,
     received: (client: string) => `Ontvangen van ${client}`,
     owed: "21% opzij te zetten",
     pocket: "In de BTW-pot",
