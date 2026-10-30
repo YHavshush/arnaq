@@ -12,9 +12,28 @@ const cap = (text: string) => {
 export const view: typeof en = {
   overzicht: {
     uncategorised: "Zonder categorie",
-    headerDays: (n: number): Sentence => [
-      em(`${n} ${n === 1 ? "dag" : "dagen"}`),
-      plain(" te gaan"),
+    daysText: (n: number) => `${n} ${n === 1 ? "dag" : "dagen"}`,
+    headerOk: [
+      (d: string): Sentence => [plain("Ruim genoeg, nog "), em(d), plain(" te gaan")],
+      (d: string): Sentence => [plain("Rustig: nog "), em(d), plain(", en het ziet er goed uit")],
+      (d: string): Sentence => [em(d), plain(" te gaan, en het ziet er prima uit")],
+    ],
+    headerTight: [
+      (d: string): Sentence => [plain("Het wordt krap, nog "), em(d), plain(" te gaan")],
+      (d: string): Sentence => [plain("Houd het in de gaten: nog "), em(d)],
+    ],
+    headerOver: [
+      (d: string): Sentence => [
+        plain("Over de streep, nog "),
+        em(d),
+        plain(" om het niet erger te maken"),
+      ],
+      (d: string): Sentence => [em(d), plain(" te gaan: geef nu zo weinig mogelijk uit")],
+      (d: string): Sentence => [
+        plain("Een zware maand tot nu toe, nog "),
+        em(d),
+        plain(" te gaan"),
+      ],
     ],
     headerLastDay: [em("Laatste dag"), plain(" van de maand")] as Sentence,
     headerDone: (month: string): Sentence => [em(cap(month)), plain(" is klaar")],

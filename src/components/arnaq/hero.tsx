@@ -15,6 +15,8 @@ interface HeroProps {
   sentence: Sentence;
   /** A short paragraph under the sentence that explains it (optional). */
   detail?: ReactNode;
+  /** Small lines under the detail (optional): what is over, under, or still to come. */
+  facts?: string[];
 }
 
 /** Room for the number inside the ring (px) and the widest a character gets (em); see `numberSize`. */
@@ -32,7 +34,16 @@ export function numberSize(chars: number): number {
  * Phone: stacked and centred. Laptop (app width 900px or more): the ring on the left, the sentence
  * and its explanation on the right, as in the design.
  */
-export function Hero({ tone, value, ringLabel, centre, caption, sentence, detail }: HeroProps) {
+export function Hero({
+  tone,
+  value,
+  ringLabel,
+  centre,
+  caption,
+  sentence,
+  detail,
+  facts,
+}: HeroProps) {
   return (
     <section className="flex flex-col items-center gap-5 pt-2 pb-2 text-center @min-[900px]/app:flex-row @min-[900px]/app:gap-12 @min-[900px]/app:text-left">
       <Ring value={value} tone={tone} label={ringLabel}>
@@ -50,6 +61,13 @@ export function Hero({ tone, value, ringLabel, centre, caption, sentence, detail
         </p>
         {detail ? (
           <p className="text-ink-muted max-w-[52ch] text-[15px] leading-snug">{detail}</p>
+        ) : null}
+        {facts && facts.length > 0 ? (
+          <ul className="text-ink-muted grid max-w-[52ch] gap-1 text-[14px] leading-snug">
+            {facts.map((fact) => (
+              <li key={fact}>{fact}</li>
+            ))}
+          </ul>
         ) : null}
       </div>
     </section>

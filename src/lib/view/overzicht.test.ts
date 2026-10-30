@@ -548,12 +548,35 @@ describe("buildOverzicht: the parts the design adds", () => {
         ...extra,
       });
 
-    it("the main line says how many days are left, not what is over (the ring shows that)", () => {
-      expect(text(header("2026-10-19").sentence)).toBe("12 days to go");
-      expect(text(header("2026-10-30").sentence)).toBe("1 day to go");
-      expect(text(header("2026-10-31").sentence)).toBe("Last day of the month");
-      expect(text(header("2026-11-05").sentence)).toBe("October 2026 is done");
-      expect(text(header("2026-09-20").sentence)).toBe("This month hasn't started yet");
+    it("the main line talks about the days left and fits how the month is going", () => {
+      const days = (today: string, income = 185100) =>
+        text(
+          header(today, {
+            overview: overview(
+              { totalBudget: null, totalBudgetIsExplicit: false, incomeActual: income },
+              rows,
+            ),
+          }).sentence,
+        );
+      // Comfortable: 580 of 1851 spent (31%).
+      expect(days("2026-10-19")).toMatch(/12 days/);
+      // Over: more went out than came in.
+      expect(days("2026-10-29", 40000)).toMatch(/2 days/);
+      expect(days("2026-10-29", 40000)).toMatch(/over the line|spend as little|heavy month/i);
+      expect(days("2026-10-30", 40000)).toMatch(/1 day\b/);
+      expect(days("2026-10-31")).toBe("Last day of the month");
+      expect(days("2026-11-05")).toBe("October 2026 is done");
+      expect(days("2026-09-20")).toBe("This month hasn't started yet");
+    });
+    it("rotates the wording with the day but is the same for the same day", () => {
+      const line = (today: string) => text(header(today).sentence);
+      expect(line("2026-10-19")).toBe(line("2026-10-19"));
+      const seen = new Set(
+        ["2026-10-12", "2026-10-13", "2026-10-14", "2026-10-15"].map((d) =>
+          line(d).replace(/\d+ days/, "N days"),
+        ),
+      );
+      expect(seen.size).toBeGreaterThan(1);
     });
     it("the line under it gives the totals", () => {
       expect(header("2026-10-19").detail).toBe("€580 spent · €1,851 came in");
@@ -565,7 +588,7 @@ describe("buildOverzicht: the parts the design adds", () => {
       const all = new Set<string>();
       for (const day of ["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05"])
         for (const f of header(day).facts) all.add(f);
-      expect([...all].some((f) => /Over budget on Groceries \(\+€231\)/.test(f))).toBe(true);
+      expect([...all].some((f) => /Over budget on Groceries \(\+€80\)/.test(f))).toBe(true);
       expect([...all].some((f) => /Under budget on Food & drink, €200 left/.test(f))).toBe(true);
       expect([...all].some((f) => /Still expecting Oren: €500 on 28 Oct/.test(f))).toBe(true);
       expect([...all].some((f) => /1 fixed cost still to pay \(€151\)/.test(f))).toBe(true);
@@ -573,6 +596,21 @@ describe("buildOverzicht: the parts the design adds", () => {
     it("varies with the day but is the same for the same day", () => {
       expect(header("2026-10-19").facts).toEqual(header("2026-10-19").facts);
       expect(header("2026-10-19").facts).not.toEqual(header("2026-10-20").facts);
+    });
+    it("skips trivial and meaningless facts: pennies over, and fixed costs that are only not paid yet", () => {
+      const o = buildOverzicht({
+        overview: overview(
+          { totalBudget: null, totalBudgetIsExplicit: false, incomeActual: 100000 },
+          [
+            line(1, "Abonnementen", 2001, 2000), // €0.01 over
+            line(2, "Huur", 0, 80000), // rent not paid yet: "under budget" means nothing
+          ],
+        ),
+        occurrences: [occ(1, "expected", 80000, { categoryId: 2 })],
+        today: "2026-10-19",
+        locale: "en" as const,
+      });
+      expect(o.facts.join(" ")).not.toMatch(/Subscriptions|Rent/);
     });
     it("a budget screen with nothing to say gives no facts", () => {
       const o = buildOverzicht({

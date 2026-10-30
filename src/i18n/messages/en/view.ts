@@ -12,7 +12,29 @@ const cap = (text: string) => {
 export const view = {
   overzicht: {
     uncategorised: "Uncategorised",
-    headerDays: (n: number): Sentence => [em(`${n} ${n === 1 ? "day" : "days"}`), plain(" to go")],
+    daysText: (n: number) => `${n} ${n === 1 ? "day" : "days"}`,
+    headerOk: [
+      (d: string): Sentence => [plain("Plenty of room, "), em(d), plain(" to go")],
+      (d: string): Sentence => [
+        plain("All calm: "),
+        em(d),
+        plain(" left, and you're in good shape"),
+      ],
+      (d: string): Sentence => [em(d), plain(" to go, and it looks fine")],
+    ],
+    headerTight: [
+      (d: string): Sentence => [plain("Getting close, "), em(d), plain(" to go")],
+      (d: string): Sentence => [plain("Keep an eye on it: "), em(d), plain(" left")],
+    ],
+    headerOver: [
+      (d: string): Sentence => [
+        plain("Over the line, with "),
+        em(d),
+        plain(" left to keep it from growing"),
+      ],
+      (d: string): Sentence => [em(d), plain(" to go: spend as little as you can now")],
+      (d: string): Sentence => [plain("A heavy month so far, "), em(d), plain(" to go")],
+    ],
     headerLastDay: [em("Last day"), plain(" of the month")] as Sentence,
     headerDone: (month: string): Sentence => [em(cap(month)), plain(" is done")],
     headerNotStarted: [plain("This month hasn't started yet")] as Sentence,

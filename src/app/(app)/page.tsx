@@ -139,7 +139,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
               ? t.ui.overview.ringIncomeUsed(Math.round(o.used * 100))
               : t.ui.overview.ringUsed(Math.round(o.used * 100))
         }
-        centre={o.free === null ? f.euro(o.spent) : f.euro(o.free)}
+        centre={o.free === null ? f.euro(o.spent) : f.euro(Math.abs(o.free))}
         caption={
           o.free === null
             ? t.ui.overview.captionSpent
@@ -149,15 +149,9 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         }
         sentence={o.sentence}
         detail={o.detail}
+        facts={o.facts}
       />
       <AttentionList items={o.attention} />
-      {o.facts.length > 0 && (
-        <div className="text-ink-muted mt-3 grid gap-1 px-1 text-[14px]">
-          {o.facts.map((fact) => (
-            <p key={fact}>{fact}</p>
-          ))}
-        </div>
-      )}
 
       {o.netWorth && (
         <Section

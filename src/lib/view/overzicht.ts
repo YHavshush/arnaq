@@ -143,13 +143,24 @@ interface Input {
   accountsBalance?: number | null;
 }
 
-/** The header's main line: how many days are left in the month (the ring already shows what is over or under). */
-function daysToGo(month: string, today: string, locale: Locale): Sentence {
+/**
+ * The header's main line: the days left in the month, worded for how the month is going (the ring already shows how
+ * much is over or under). The wording rotates with the day, so the page is not the same every time.
+ */
+function daysToGo(month: string, today: string, locale: Locale, used: number | null): Sentence {
   const t = messages[locale].view.overzicht;
   if (today.slice(0, 7) !== month)
     return today > month ? t.headerDone(formatter(locale).monthName(month)) : t.headerNotStarted;
-  const days = daysInMonth(month) - Number(today.slice(8, 10));
-  return days <= 0 ? t.headerLastDay : t.headerDays(days);
+  const day = Number(today.slice(8, 10));
+  const days = daysInMonth(month) - day;
+  if (days <= 0) return t.headerLastDay;
+  const variants =
+    used !== null && used > 1
+      ? t.headerOver
+      : used !== null && used > 0.85
+        ? t.headerTight
+        : t.headerOk;
+  return variants[day % variants.length](t.daysText(days));
 }
 
 function sentenceFor(o: {
@@ -511,22 +522,31 @@ export function buildOverzicht({
   // Small lines under the header. Which ones show rotates with the day so the page is not the same every time.
   function headerFacts(): string[] {
     const f = messages[locale].view.overzicht.facts;
+    // Only what is worth a line: a real overspend (at least 5 euro), and room left in a category that is spent on
+    // (rent that is simply not paid yet is not "under budget").
     const withBudget = rows.filter((r) => r.categoryId !== null && r.budget !== null);
-    const gap = (r: OverzichtRow) => r.actual + r.planned - r.budget!;
-    const over = withBudget.filter((r) => gap(r) > 0).sort((a, b) => gap(b) - gap(a))[0];
-    const under = withBudget.filter((r) => gap(r) < 0).sort((a, b) => gap(a) - gap(b))[0];
+    const over = withBudget
+      .filter((r) => r.actual - r.budget! >= 500)
+      .sort((a, b) => b.actual - b.budget! - (a.actual - a.budget!))[0];
+    const under = withBudget
+      .filter((r) => !r.fixed && r.actual > 0 && r.budget! - r.actual >= 2000)
+      .sort((a, b) => b.budget! - b.actual - (a.budget! - a.actual))[0];
     const coming = incomeOcc
       .filter((o) => o.status === "expected")
       .sort((a, b) => a.expectedDate.localeCompare(b.expectedDate))[0];
     const openFixed = expenseOcc.filter((o) => o.status === "expected");
     const candidates: string[] = [];
-    if (over) candidates.push(f.over(categoryLabel(over.name, locale), euro(gap(over))));
+    if (over)
+      candidates.push(f.over(categoryLabel(over.name, locale), euro(over.actual - over.budget!)));
     if (coming)
       candidates.push(
         f.income(coming.itemName, euro(coming.expectedAmount), dayLabel(coming.expectedDate)),
       );
     if (openFixed.length > 0) candidates.push(f.fixed(openFixed.length, euro(planned)));
-    if (under) candidates.push(f.under(categoryLabel(under.name, locale), euro(-gap(under))));
+    if (under)
+      candidates.push(
+        f.under(categoryLabel(under.name, locale), euro(under.budget! - under.actual)),
+      );
     if (candidates.length === 0) return [];
     const start = Number(today.slice(8, 10)) % candidates.length;
     return Array.from(
@@ -560,7 +580,7 @@ export function buildOverzicht({
     mood: moodForTone(tone),
     free,
     sentence: incomeBasis
-      ? daysToGo(month, today, locale)
+      ? daysToGo(month, today, locale, used)
       : sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
     detail: incomeBasis
       ? messages[locale].view.overzicht.headerTotals(euro(spent), euro(totals.incomeActual))
