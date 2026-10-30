@@ -126,6 +126,11 @@ export const ui: typeof en = {
       "Upload minstens een maand en voeg je vaste posten toe. Daarna zie je hier hoe je geld zich ontwikkelt.",
     ring: (a: number, b: number) => `${a} van ${b} maanden eindigen in de plus`,
     caption: (label: string) => `groei tot en met ${label}`,
+    captionWorth: (label: string) => `vermogen in ${label}`,
+    progressWorth: "Vermogen over tijd",
+    needIncomeTitle: "Voeg je inkomen toe om te zien waar je naartoe gaat",
+    needIncomeBody:
+      "Zonder je vaste inkomsten en vaste lasten zou de prognose alleen uitgaven aftrekken, en dat is geen echte prognose. Accepteer je inkomen en vaste lasten bij Vast en de lijn verschijnt.",
     captionSpend: (label: string) => `uitgaven tot en met ${label}`,
     addIncome: "Voeg je inkomen toe",
     progress: "Verloop",

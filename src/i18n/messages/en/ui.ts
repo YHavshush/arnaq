@@ -126,6 +126,11 @@ export const ui = {
       "Upload at least one month and add your fixed items. Then you'll see here how your money develops.",
     ring: (a: number, b: number) => `${a} of ${b} months end in the plus`,
     caption: (label: string) => `growth through ${label}`,
+    captionWorth: (label: string) => `net worth by ${label}`,
+    progressWorth: "Net worth over time",
+    needIncomeTitle: "Add your income to see where you're heading",
+    needIncomeBody:
+      "Without your fixed income and fixed costs, the forecast would only subtract spending, and that is not a real forecast. Accept your income and your fixed costs on the Fixed screen and the line appears.",
     captionSpend: (label: string) => `spending through ${label}`,
     addIncome: "Add your income",
     progress: "Over time",

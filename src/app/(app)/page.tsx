@@ -153,20 +153,6 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       />
       <AttentionList items={o.attention} />
 
-      {o.netWorth && (
-        <Section
-          title={t.ui.netWorth.title}
-          aside={t.ui.netWorth.aside(
-            f.euroExact(o.netWorth.accounts),
-            f.euroExact(o.netWorth.savings),
-          )}
-        >
-          <div className="glass num p-4 text-2xl font-semibold tracking-tight">
-            {f.euroExact(o.netWorth.total)}
-          </div>
-        </Section>
-      )}
-
       <div className="@min-[900px]/app:grid @min-[900px]/app:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] @min-[900px]/app:items-start @min-[900px]/app:gap-8">
         <div className="min-w-0">
           {o.pace && (

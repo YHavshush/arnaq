@@ -53,6 +53,32 @@ describe("buildPrognose with the bank's balances", () => {
   });
 });
 
+describe("buildPrognose: net worth in the header", () => {
+  const months = [
+    fm("2026-09", "actual", 5000, 5000),
+    fm("2026-10", "mixed", 20000, 25000),
+    fm("2026-11", "forecast", 10000, 35000),
+  ];
+  it("gives the net worth where the real months end and where the forecast ends", () => {
+    const p = buildPrognose({ ...forecast(months), openingBalance: 250000 }, "en");
+    expect(p.netWorth).toEqual({ start: 255000, end: 285000 });
+    expect(p.detail).toContain("€2,550");
+    expect(p.detail).toContain("€2,850");
+  });
+  it("is null (and the detail is the plain growth one) without any balance", () => {
+    const p = buildPrognose(forecast(months), "en");
+    expect(p.netWorth).toBeNull();
+    expect(p.detail).not.toContain("Net worth");
+  });
+  it("counts savings in it", () => {
+    const p = buildPrognose(
+      { ...forecast(months), openingBalance: 100000, openingSavings: 50000 },
+      "en",
+    );
+    expect(p.netWorth).toEqual({ start: 155000, end: 185000 });
+  });
+});
+
 describe("buildPrognose", () => {
   it("says what is missing when real income exists but none is planned (no fixed income items)", () => {
     const p = buildPrognose(

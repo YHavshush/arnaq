@@ -26,6 +26,8 @@ export interface PrognosePoint {
 
 export interface Prognose {
   hasForecast: boolean;
+  /** Net worth (accounts plus savings, cents) where the real months end and where the forecast ends; null without balances. */
+  netWorth: { start: number; end: number } | null;
   /** `cumulative` is a real balance (the person's money), not just growth since the first month. */
   hasBalance: boolean;
   points: PrognosePoint[];
@@ -117,6 +119,22 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     );
   }
 
+  // Net worth: from where the real months end to where the forecast ends. Without income planned the end is not real.
+  const lastReal = [...points].reverse().find((p) => !p.projected) ?? points[0];
+  const lastPoint = points[points.length - 1];
+  const netWorth =
+    hasBalance && lastReal && lastPoint && ahead.length > 0
+      ? { start: lastReal.cumulative, end: lastPoint.cumulative }
+      : null;
+  if (netWorth && !incomeMissing && ahead.length > 0)
+    detail = t.detailWorth(
+      euro(netWorth.start),
+      euro(netWorth.end),
+      monthName(ahead[ahead.length - 1].month),
+      inThePlus,
+      ahead.length,
+    );
+
   const notes = [t.noteEstimate];
   if (hasBalance) notes.push(t.noteBalance);
   const planned = f.months.reduce((s, m) => s + m.setAside.planned, 0);
@@ -126,6 +144,7 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
 
   return {
     hasForecast: ahead.length > 0,
+    netWorth,
     hasBalance,
     points,
     ahead: ahead.length,

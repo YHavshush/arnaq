@@ -53,11 +53,13 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         tone={p.tone}
         value={p.share}
         ringLabel={t.ui.forecast.ring(p.inThePlus, p.ahead)}
-        centre={f.euroSigned(p.growth)}
+        centre={p.netWorth && !p.incomeMissing ? f.euro(p.netWorth.end) : f.euroSigned(p.growth)}
         caption={
           p.incomeMissing
             ? t.ui.forecast.captionSpend(p.points.at(-1)?.label ?? "")
-            : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
+            : p.netWorth
+              ? t.ui.forecast.captionWorth(p.points.at(-1)?.label ?? "")
+              : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
         }
         sentence={p.sentence}
         detail={p.detail}
@@ -73,7 +75,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         </div>
       )}
       <Section
-        title={t.ui.forecast.progress}
+        title={p.hasBalance ? t.ui.forecast.progressWorth : t.ui.forecast.progress}
         aside={
           <nav aria-label={t.ui.forecast.horizon} className="liquid seg">
             {HORIZONS.map((h) => (
@@ -89,13 +91,20 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </nav>
         }
       >
-        <div className="glass p-3">
-          <PrognoseChart
-            points={p.points}
-            currentMonth={today.slice(0, 7)}
-            balance={p.hasBalance}
-          />
-        </div>
+        {p.incomeMissing ? (
+          <div className="glass p-4">
+            <p className="font-semibold">{t.ui.forecast.needIncomeTitle}</p>
+            <p className="text-ink-muted mt-1 text-[15px]">{t.ui.forecast.needIncomeBody}</p>
+          </div>
+        ) : (
+          <div className="glass p-3">
+            <PrognoseChart
+              points={p.points}
+              currentMonth={today.slice(0, 7)}
+              balance={p.hasBalance}
+            />
+          </div>
+        )}
         {p.lowConfidence && (
           <p className="text-ink-muted mt-3 px-2 text-sm">
             <strong className="text-ink font-semibold">{t.ui.forecast.note}</strong>{" "}

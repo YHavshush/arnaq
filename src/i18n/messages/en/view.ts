@@ -185,6 +185,8 @@ export const view = {
       em(cap(best)),
       plain(` is your best month, ${tight} the tightest.`),
     ],
+    detailWorth: (start: string, end: string, month: string, plus: number, total: number) =>
+      `Net worth goes from ${start} to about ${end} by ${month}. ${plus} of ${total} months end in the plus.`,
     detailUp: (amount: string, month: string, plus: number, total: number) =>
       `In total your money grows by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
     detailDown: (amount: string, month: string, plus: number, total: number) =>

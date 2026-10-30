@@ -182,6 +182,8 @@ export const view: typeof en = {
       em(cap(best)),
       plain(` is je beste maand, ${tight} de krapste.`),
     ],
+    detailWorth: (start: string, end: string, month: string, plus: number, total: number) =>
+      `Je vermogen gaat van ${start} naar ongeveer ${end} in ${month}. ${plus} van ${total} maanden sluit je in de plus.`,
     detailUp: (amount: string, month: string, plus: number, total: number) =>
       `Je geld groeit in totaal met ${amount} tot en met ${month}. ${plus} van ${total} maanden sluit je in de plus.`,
     detailDown: (amount: string, month: string, plus: number, total: number) =>
