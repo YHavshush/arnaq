@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
+import { useToast } from "./toast";
 import { ErrorLine, GhostButton } from "./form";
 
 const MAX_BYTES = 25 * 1024 * 1024;
@@ -19,6 +20,8 @@ export function RestoreBackup() {
   const [working, setWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [inputKey, setInputKey] = useState(0);
+  const { toast } = useToast();
 
   async function restore() {
     if (!file) return;
@@ -36,7 +39,9 @@ export function RestoreBackup() {
     setWorking(false);
     if (!res.ok) return setError(res.error);
     setDone(true);
+    toast(s.done);
     setFile(null);
+    setInputKey((k) => k + 1); // empties the file chooser too, so it does not keep showing the old name
     setAgreed(false);
     startTransition(() => router.refresh());
   }
@@ -47,6 +52,7 @@ export function RestoreBackup() {
       <label className="grid gap-1 text-[15px] font-semibold">
         {s.choose}
         <input
+          key={inputKey}
           type="file"
           accept="application/json,.json"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}

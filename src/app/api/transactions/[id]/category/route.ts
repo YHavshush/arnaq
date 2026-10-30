@@ -1,5 +1,5 @@
 import { userDb } from "@/lib/auth/request";
-import { handle, isInt, parseId } from "@/lib/api";
+import { handle, isInt, parseId, errorResponse } from "@/lib/api";
 import { assignCategory } from "@/lib/categories/categorise";
 
 /** PUT JSON: { categoryId, learn?, createRule?, pattern?, priority? } */
@@ -8,7 +8,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const id = parseId((await params).id);
     const body = await request.json();
     if (id === null || !isInt(body?.categoryId)) {
-      return Response.json({ error: "Valid id and categoryId are required." }, { status: 400 });
+      return errorResponse("Valid id and categoryId are required.", 400);
     }
     return Response.json(
       await userDb((db) =>

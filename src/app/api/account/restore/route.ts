@@ -1,4 +1,4 @@
-import { handle } from "@/lib/api";
+import { handle, errorResponse } from "@/lib/api";
 import { userDb } from "@/lib/auth/request";
 import { RestoreError, restoreFromBackup } from "@/lib/restore";
 
@@ -11,18 +11,17 @@ const MAX_BYTES = 25 * 1024 * 1024;
 export async function POST(request: Request) {
   return await handle(async () => {
     const length = Number(request.headers.get("content-length") ?? 0);
-    if (length > MAX_BYTES)
-      return Response.json({ error: "That file is too large." }, { status: 413 });
+    if (length > MAX_BYTES) return errorResponse("That file is too large.", 413);
     let backup: unknown;
     try {
       backup = await request.json();
     } catch {
-      return Response.json({ error: "That is not a backup file." }, { status: 400 });
+      return errorResponse("That is not a backup file.", 400);
     }
     try {
       return Response.json({ restored: await userDb((db) => restoreFromBackup(db, backup)) });
     } catch (e) {
-      if (e instanceof RestoreError) return Response.json({ error: e.message }, { status: 422 });
+      if (e instanceof RestoreError) return errorResponse(e.message, 422);
       throw e;
     }
   });

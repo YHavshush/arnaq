@@ -1,4 +1,4 @@
-import { handle } from "@/lib/api";
+import { handle, errorResponse } from "@/lib/api";
 import { userDb } from "@/lib/auth/request";
 import { deleteAllMyData } from "@/lib/account";
 
@@ -6,8 +6,7 @@ import { deleteAllMyData } from "@/lib/account";
 export async function POST(request: Request) {
   return await handle(async () => {
     const body = await request.json();
-    if (body?.confirm !== "delete")
-      return Response.json({ error: 'Type "delete" to confirm.' }, { status: 400 });
+    if (body?.confirm !== "delete") return errorResponse('Type "delete" to confirm.', 400);
     await userDb((db) => deleteAllMyData(db));
     return Response.json({ ok: true });
   });

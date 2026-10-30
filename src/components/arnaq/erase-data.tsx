@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
-import { ErrorLine, Field, GhostButton, inputClass } from "./form";
+import { useToast } from "./toast";
+import { ErrorLine, Field, DangerButton, inputClass } from "./form";
 
 /** Deletes everything the person has stored; asks them to type a word first. */
 export function EraseData() {
@@ -15,12 +16,14 @@ export function EraseData() {
   const [typed, setTyped] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const { toast } = useToast();
 
   async function erase() {
     setError(null);
     const res = await api("POST", "/api/account/delete", { confirm: "delete" });
     if (!res.ok) return setError(res.error);
     setDone(true);
+    toast(s.done);
     setTyped("");
     startTransition(() => router.refresh());
   }
@@ -37,13 +40,13 @@ export function EraseData() {
         />
       </Field>
       <div>
-        <GhostButton
+        <DangerButton
           type="button"
           disabled={busy || typed.trim().toLowerCase() !== s.word}
           onClick={erase}
         >
           {s.button}
-        </GhostButton>
+        </DangerButton>
       </div>
       <div aria-live="polite">
         {error ? (

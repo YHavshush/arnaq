@@ -312,6 +312,12 @@ export const ui = {
       skippedLine: (line: number, reason: string) => `Line ${line} skipped: ${reason}`,
       skippedMore: (n: number) => `… and ${n} more`,
     },
+    toast: {
+      sorted: "Sorted",
+      changed: "Category changed",
+      undone: "Back in the list to sort",
+      confirmed: "All confirmed",
+    },
     review: {
       remember: "Remember my choice for the same shop",
       category: (name: string) => `Category for ${name}`,
@@ -455,6 +461,7 @@ export const ui = {
       aside: (n: number) => `${n} shops`,
       none: 'Nothing yet. When you choose a category and keep "remember my choice", the shop shows up here.',
       forget: "Forget",
+      forgotten: "Forgotten",
       forgetFor: (shop: string) => `Forget ${shop}`,
       meta: (category: string, way: "in" | "out" | null) =>
         way === null ? category : `${category}, ${way === "in" ? "money in" : "money out"}`,

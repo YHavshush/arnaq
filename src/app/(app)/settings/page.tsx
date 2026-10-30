@@ -120,13 +120,16 @@ async function Content() {
         />
       </Section>
 
-      <Section title={s.smart.title}>
-        <SmartSettings
-          provider={smart.provider}
-          entitled={isEntitled(user.id)}
-          available={PROVIDERS.claude !== undefined}
-        />
-      </Section>
+      {/* Smart sorting has no provider yet: showing a consent flow for a feature that cannot run would only confuse. */}
+      {Object.keys(PROVIDERS).length > 0 && (
+        <Section title={s.smart.title}>
+          <SmartSettings
+            provider={smart.provider}
+            entitled={isEntitled(user.id)}
+            available={PROVIDERS.claude !== undefined}
+          />
+        </Section>
+      )}
 
       <Section title={s.restore.title}>
         <RestoreBackup />

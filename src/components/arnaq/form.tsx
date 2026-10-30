@@ -43,6 +43,18 @@ export function GhostButton({ children, ...rest }: React.ComponentProps<"button"
   );
 }
 
+/** For what cannot be undone (erase everything): it does not look like a harmless button. */
+export function DangerButton({ children, ...rest }: React.ComponentProps<"button">) {
+  return (
+    <button
+      {...rest}
+      className="border-bad text-bad min-h-11 rounded-full border bg-transparent px-5 text-[15px] font-semibold transition-transform active:scale-[.97] disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
+    >
+      {children}
+    </button>
+  );
+}
+
 export function ErrorLine({ message }: { message: string | null }) {
   return message ? (
     <p role="alert" className="text-bad text-sm font-medium">

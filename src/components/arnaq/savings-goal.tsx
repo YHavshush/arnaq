@@ -7,6 +7,7 @@ import type { Locale } from "@/i18n/config";
 import { api, euroInputToCents } from "@/lib/client/api";
 import { formatter } from "@/lib/view/format";
 import { ErrorLine, Field, PrimaryButton, inputClass } from "./form";
+import { useToast } from "./toast";
 
 const toInput = (cents: number | null, locale: Locale) =>
   cents === null ? "" : (cents / 100).toFixed(2).replace(".", locale === "nl" ? "," : ".");
@@ -36,6 +37,7 @@ export function SavingsGoal({
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, startTransition] = useTransition();
+  const { toast } = useToast();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,6 +55,7 @@ export function SavingsGoal({
     );
     if (!res.ok) return setError(res.error);
     setSaved(true);
+    toast(s.saved);
     startTransition(() => router.refresh());
   }
 

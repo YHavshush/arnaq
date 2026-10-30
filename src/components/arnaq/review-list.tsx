@@ -8,6 +8,7 @@ import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { CategorySheet, type PickerCategory } from "./category-picker";
+import { useToast } from "./toast";
 import { ErrorLine } from "./form";
 
 interface Item {
@@ -51,6 +52,7 @@ export function ReviewList({
   const [saved, setSaved] = useState<number | null>(null);
   const [sending, setSending] = useState(false);
   const [sheetFor, setSheetFor] = useState<Item | null>(null);
+  const { toast } = useToast();
 
   async function choose(item: Item, categoryId: number) {
     if (!categoryId || sending) return;
@@ -64,6 +66,7 @@ export function ReviewList({
     setSending(false);
     if (!res.ok) return setError(res.error);
     setSaved(item.id);
+    toast(msg.ui.upload.toast.sorted);
     startTransition(() => router.refresh());
   }
 

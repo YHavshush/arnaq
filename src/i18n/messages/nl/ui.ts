@@ -318,6 +318,12 @@ export const ui: typeof en = {
       skippedLine: (line: number, reason: string) => `Regel ${line} overgeslagen: ${reason}`,
       skippedMore: (n: number) => `… en ${n} meer`,
     },
+    toast: {
+      sorted: "Gesorteerd",
+      changed: "Categorie aangepast",
+      undone: "Terug in de lijst om te sorteren",
+      confirmed: "Alles bevestigd",
+    },
     review: {
       remember: "Onthoud mijn keuze voor dezelfde winkel",
       category: (name: string) => `Categorie voor ${name}`,
@@ -463,6 +469,7 @@ export const ui: typeof en = {
       aside: (n: number) => `${n} winkels`,
       none: 'Nog niets. Kies je een categorie en laat je "onthoud mijn keuze" aan staan, dan verschijnt de winkel hier.',
       forget: "Vergeet",
+      forgotten: "Vergeten",
       forgetFor: (shop: string) => `Vergeet ${shop}`,
       meta: (category: string, way: "in" | "out" | null) =>
         way === null ? category : `${category}, ${way === "in" ? "geld erbij" : "geld eraf"}`,

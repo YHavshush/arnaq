@@ -9,6 +9,7 @@ import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { CategorySheet, type PickerCategory } from "./category-picker";
+import { useToast } from "./toast";
 import { ErrorLine, GhostButton } from "./form";
 
 interface Item {
@@ -45,8 +46,11 @@ export function AutoList({
   const [sending, setSending] = useState(false);
   const byId = new Map(categories.map((c) => [c.id, c]));
 
-  const done = (res: { ok: boolean; error?: string }) => {
+  const { toast } = useToast();
+  const toasts = msg.ui.upload.toast;
+  const done = (res: { ok: boolean; error?: string }, message?: string) => {
     if (!res.ok) return setError(res.error ?? "");
+    if (message) toast(message);
     startTransition(() => router.refresh());
   };
 
@@ -67,7 +71,7 @@ export function AutoList({
     if (res.ok && res.data.alsoCategorised > 0)
       setNote(m.auto.alsoChanged(res.data.alsoCategorised));
     else setNote(null);
-    done(res);
+    done(res, toasts.changed);
   }
 
   const nameOf = (it: Item) => it.counterparty || it.description || msg.ui.common.unknown;
@@ -113,7 +117,7 @@ export function AutoList({
                   onClick={async () => {
                     setError(null);
                     setNote(null);
-                    done(await api("POST", `/api/transactions/${it.id}/undo`, {}));
+                    done(await api("POST", `/api/transactions/${it.id}/undo`, {}), toasts.undone);
                   }}
                 >
                   {m.auto.undo}
@@ -132,7 +136,10 @@ export function AutoList({
           disabled={busy || sending}
           onClick={async () => {
             setError(null);
-            done(await api("POST", "/api/transactions/confirm", { ids: items.map((i) => i.id) }));
+            done(
+              await api("POST", "/api/transactions/confirm", { ids: items.map((i) => i.id) }),
+              toasts.confirmed,
+            );
           }}
         >
           {m.auto.allCorrect}

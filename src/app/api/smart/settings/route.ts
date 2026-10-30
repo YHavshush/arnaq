@@ -1,4 +1,4 @@
-import { handle } from "@/lib/api";
+import { handle, errorResponse } from "@/lib/api";
 import { userDb } from "@/lib/auth/request";
 import { currentUserId } from "@/lib/auth/session";
 import { SMART_PROVIDERS } from "@/db/schema";
@@ -22,8 +22,7 @@ export async function GET() {
 export async function PUT(request: Request) {
   return await handle(async () => {
     const body = await request.json();
-    if (!SMART_PROVIDERS.includes(body?.provider))
-      return Response.json({ error: "Unknown provider." }, { status: 400 });
+    if (!SMART_PROVIDERS.includes(body?.provider)) return errorResponse("Unknown provider.", 400);
     const entitled = isEntitled(await currentUserId());
     try {
       await userDb((db) =>
@@ -33,7 +32,7 @@ export async function PUT(request: Request) {
         }),
       );
     } catch (e) {
-      if (e instanceof SettingsError) return Response.json({ error: e.message }, { status: 403 });
+      if (e instanceof SettingsError) return errorResponse(e.message, 403);
       throw e;
     }
     return Response.json({ ok: true });

@@ -1,11 +1,10 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, GhostButton } from "./form";
+import { useAction } from "./use-action";
 
 interface Shop {
   id: number;
@@ -18,11 +17,9 @@ interface Shop {
 
 /** The shops arnaq has been taught: see them, forget one. */
 export function LearnedShops({ shops }: { shops: Shop[] }) {
-  const router = useRouter();
   const { t } = useI18n();
   const s = t.ui.settings.learned;
-  const [busy, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { run, pending: busy, error } = useAction();
 
   if (shops.length === 0) return <p className="text-ink-muted px-1 text-[15px]">{s.none}</p>;
   return (
@@ -44,12 +41,11 @@ export function LearnedShops({ shops }: { shops: Shop[] }) {
               type="button"
               disabled={busy}
               aria-label={s.forgetFor(shop.key)}
-              onClick={async () => {
-                setError(null);
-                const res = await api("DELETE", `/api/merchant-labels/${shop.id}`);
-                if (!res.ok) return setError(res.error);
-                startTransition(() => router.refresh());
-              }}
+              onClick={() =>
+                run(() => api("DELETE", `/api/merchant-labels/${shop.id}`), {
+                  success: s.forgotten,
+                })
+              }
             >
               {s.forget}
             </GhostButton>

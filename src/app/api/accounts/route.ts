@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { first, schema } from "@/db";
 import { BANKS } from "@/db/schema";
-import { handle, requestTime } from "@/lib/api";
+import { handle, requestTime, errorResponse } from "@/lib/api";
 import { userDb } from "@/lib/auth/request";
 
 export async function GET() {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
         ? body.iban.replaceAll(/\s/g, "").toUpperCase()
         : null;
     if (iban !== null && !/^[A-Z]{2}\d{2}[A-Z0-9]{1,30}$/.test(iban)) {
-      return Response.json({ error: "Invalid IBAN." }, { status: 400 });
+      return errorResponse("Invalid IBAN.", 400);
     }
     const currency = typeof body.currency === "string" && body.currency ? body.currency : "EUR";
     if (!CURRENCY_RE.test(currency)) {
