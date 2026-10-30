@@ -49,6 +49,28 @@ export const ui = {
     title: "Net worth",
     aside: (accounts: string, savings: string) => `${accounts} in accounts + ${savings} saved`,
   },
+  category: {
+    back: "Today",
+    ofBudget: (budget: string) => `of ${budget} budget`,
+    over: (amount: string) => `${amount} over`,
+    count: (n: number) => `${n} ${n === 1 ? "transaction" : "transactions"}`,
+    empty: "Nothing in this category this month.",
+    hint: "Tap a row to move it to another category.",
+    moved: "Moved",
+    moveTitle: (name: string) => `Category for ${name}`,
+    probably: (name: string) => `Probably ${name}?`,
+    source: {
+      user: "Your choice",
+      learned: "Learned shop",
+      rule: "Sorted by rule",
+      recurring: "Fixed item",
+      catalog: "Sorted automatically",
+      history: "Sorted automatically",
+      model: "Smart sorting",
+      confirmed: "Confirmed",
+      undone: "Undone",
+    } as Record<string, string>,
+  },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% of what arrives",
@@ -263,6 +285,18 @@ export const ui = {
       errNone: "Choose a file first.",
       errFailed: (status: number) => `Upload failed (${status}).`,
       processed: (bank: string, period: string) => `${bank}, ${period} processed`,
+      doneTitle: "Statement added",
+      upToDateTitle: "Already up to date",
+      sortedLine: (sorted: number, open: number) =>
+        open === 0
+          ? `${sorted} sorted automatically. Everything is sorted.`
+          : `${sorted} sorted automatically. ${open} still need you.`,
+      nothingNew: (known: number) =>
+        `Every one of the ${known} transactions was already in. Nothing was added twice.`,
+      latestNote: (day: string) =>
+        `The newest transaction is from ${day}. Upload a newer statement when you have one.`,
+      sortCta: (n: number) => `Sort the ${n}`,
+      seeToday: "See today",
       statNew: "New",
       statKnown: "Already known",
       statSkipped: "Skipped",

@@ -2,7 +2,8 @@
 
 import { FileUp } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
+import Link from "next/link";
 import { useI18n } from "@/i18n/client";
 import { formatter } from "@/lib/view/format";
 import { ErrorLine, Field, PrimaryButton, inputClass } from "./form";
@@ -19,6 +20,9 @@ interface Summary {
   foreignCurrencyRows: number;
   warnings: string[];
   recurring: { matched: number; occurrencesCreated: number; missed: number };
+  sortedNow: number;
+  openAfter: number;
+  latest: string | null;
 }
 
 const BANK = { rabobank: "Rabobank", revolut: "Revolut" } as Record<string, string>;
@@ -36,6 +40,14 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [, startTransition] = useTransition();
+  const done = useRef<HTMLDivElement>(null);
+
+  // The result is the point of the upload: bring it into view so "did it work?" is answered at once.
+  useEffect(() => {
+    if (!summary) return;
+    const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    done.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "center" });
+  }, [summary]);
 
   function choose(f: File | undefined | null) {
     setError(null);
@@ -151,33 +163,56 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
       </div>
 
       {summary && (
-        <div role="status" className="glass fade-in grid gap-3 p-4">
-          <h3 className="font-display flex items-center gap-2 text-xl font-medium">
-            <DoneRing />
-            {p.processed(
-              BANK[summary.bank] ?? summary.bank,
-              summary.period
-                ? t.ui.upload.period(dayLabel(summary.period.from), dayLabel(summary.period.to))
-                : monthName(summary.month),
-            )}
+        <div
+          ref={done}
+          role="status"
+          className="glass fade-in grid justify-items-center gap-3 p-5 text-center"
+        >
+          <DoneRing className="size-20" />
+          <h3 className="font-display text-[26px] leading-tight font-medium">
+            {summary.rowsImported > 0 ? p.doneTitle : p.upToDateTitle}
           </h3>
-          <dl className="num grid grid-cols-3 gap-2 text-center">
-            {[
-              [p.statNew, summary.rowsImported],
-              [p.statKnown, summary.rowsDuplicate],
-              [p.statSkipped, summary.rowsSkipped],
-            ].map(([k, v]) => (
-              <div key={k} className="bg-soft rounded-2xl px-2 py-3">
-                <dt className="text-ink-muted text-[13px]">{k}</dt>
-                <dd className="text-2xl font-semibold">{v}</dd>
-              </div>
-            ))}
-          </dl>
+          <p className="text-ink-muted text-sm">
+            {BANK[summary.bank] ?? summary.bank} ·{" "}
+            {summary.period
+              ? t.ui.upload.period(dayLabel(summary.period.from), dayLabel(summary.period.to))
+              : monthName(summary.month)}
+          </p>
+          {summary.rowsImported > 0 ? (
+            <>
+              <dl className="num grid w-full grid-cols-3 gap-2 text-center">
+                {[
+                  [p.statNew, summary.rowsImported],
+                  [p.statKnown, summary.rowsDuplicate],
+                  [p.statSkipped, summary.rowsSkipped],
+                ].map(([k, v]) => (
+                  <div key={k} className="bg-soft rounded-2xl px-2 py-3">
+                    <dt className="text-ink-muted text-[13px]">{k}</dt>
+                    <dd className="text-2xl font-semibold">{v}</dd>
+                  </div>
+                ))}
+              </dl>
+              <p className="text-ink-muted text-sm">
+                {p.sortedLine(summary.sortedNow, summary.openAfter)}
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="text-ink-muted max-w-[40ch] text-sm">
+                {p.nothingNew(summary.rowsDuplicate)}
+              </p>
+              {summary.latest && (
+                <p className="bg-soft max-w-[40ch] rounded-2xl px-3 py-2.5 text-sm">
+                  {p.latestNote(dayLabel(summary.latest))}
+                </p>
+              )}
+            </>
+          )}
           {summary.recurring.matched > 0 && (
             <p className="text-ink-muted text-sm">{p.matched(summary.recurring.matched)}</p>
           )}
           {summary.skipped.length > 0 && (
-            <ul className="text-ink-muted list-disc pl-5 text-sm">
+            <ul className="text-ink-muted list-disc pl-5 text-left text-sm">
               {summary.skipped.slice(0, 5).map((r) => (
                 <li key={r.line}>{p.skippedLine(r.line, r.reason)}</li>
               ))}
@@ -189,6 +224,24 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
               {w}
             </p>
           ))}
+          <div className="grid w-full gap-2 pt-1">
+            {summary.openAfter > 0 && (
+              <a
+                href="#sort"
+                className="bg-action text-action-ink inline-flex min-h-11 items-center justify-center rounded-full px-5 text-[15px] font-semibold"
+              >
+                {p.sortCta(summary.openAfter)}
+              </a>
+            )}
+            <Link
+              href="/"
+              className={`inline-flex min-h-11 items-center justify-center rounded-full px-5 text-[15px] font-semibold ${
+                summary.openAfter > 0 ? "liquid" : "bg-action text-action-ink"
+              }`}
+            >
+              {p.seeToday}
+            </Link>
+          </div>
         </div>
       )}
     </form>

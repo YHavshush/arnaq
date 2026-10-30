@@ -49,6 +49,28 @@ export const ui: typeof en = {
     title: "Vermogen",
     aside: (accounts: string, savings: string) => `${accounts} op rekeningen + ${savings} gespaard`,
   },
+  category: {
+    back: "Vandaag",
+    ofBudget: (budget: string) => `van ${budget} budget`,
+    over: (amount: string) => `${amount} over`,
+    count: (n: number) => `${n} ${n === 1 ? "transactie" : "transacties"}`,
+    empty: "Deze maand staat hier niets in.",
+    hint: "Tik op een rij om hem naar een andere categorie te verplaatsen.",
+    moved: "Verplaatst",
+    moveTitle: (name: string) => `Categorie voor ${name}`,
+    probably: (name: string) => `Waarschijnlijk ${name}?`,
+    source: {
+      user: "Jouw keuze",
+      learned: "Geleerde winkel",
+      rule: "Via regel gesorteerd",
+      recurring: "Vaste post",
+      catalog: "Automatisch gesorteerd",
+      history: "Automatisch gesorteerd",
+      model: "Slim sorteren",
+      confirmed: "Bevestigd",
+      undone: "Ongedaan gemaakt",
+    } as Record<string, string>,
+  },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "21% van wat binnenkomt",
@@ -269,6 +291,18 @@ export const ui: typeof en = {
       errNone: "Kies eerst een bestand.",
       errFailed: (status: number) => `Uploaden mislukt (${status}).`,
       processed: (bank: string, period: string) => `${bank}, ${period} verwerkt`,
+      doneTitle: "Afschrift toegevoegd",
+      upToDateTitle: "Al helemaal bij",
+      sortedLine: (sorted: number, open: number) =>
+        open === 0
+          ? `${sorted} automatisch gesorteerd. Alles is gesorteerd.`
+          : `${sorted} automatisch gesorteerd. Bij ${open} heb je nog je hulp nodig.`,
+      nothingNew: (known: number) =>
+        `Alle ${known} transacties stonden er al in. Er is niets dubbel toegevoegd.`,
+      latestNote: (day: string) =>
+        `De nieuwste transactie is van ${day}. Upload een nieuwer afschrift als je er een hebt.`,
+      sortCta: (n: number) => `Sorteer de ${n}`,
+      seeToday: "Naar vandaag",
       statNew: "Nieuw",
       statKnown: "Al bekend",
       statSkipped: "Overgeslagen",

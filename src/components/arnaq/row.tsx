@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { CategoryIcon } from "./category-icon";
 
@@ -21,13 +22,18 @@ interface RowProps {
   amountSub?: ReactNode;
   /** Optional status bar: filled share and the share that is planned but not yet spent. */
   bar?: { filled: number; planned?: number; state: keyof typeof BAR };
+  /** Makes the whole row a link (a stretched link, so the amount and the bar stay selectable text). */
+  href?: string;
 }
 
 /** Icon chip + name + amount, with an optional thin status bar. */
-export function Row({ icon, name, tag, meta, amount, amountSub, bar }: RowProps) {
+export function Row({ icon, name, tag, meta, amount, amountSub, bar, href }: RowProps) {
   const pct = (n: number) => `${Math.max(0, Math.min(n, 1)) * 100}%`;
   return (
-    <li className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+    <li className="relative grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+      {href && (
+        <Link href={href} aria-label={name} className="absolute inset-0 z-10 active:bg-black/5" />
+      )}
       <CategoryIcon name={icon} />
       <div className="min-w-0">
         <div className="truncate text-base leading-tight font-semibold">

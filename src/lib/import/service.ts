@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, eq, inArray, isNull } from "drizzle-orm";
+import { and, count, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { applyRules } from "@/lib/categories/categorise";
 import { catalogLookup, INCOME_SLUGS } from "@/lib/smart/catalog-nl";
@@ -55,6 +55,12 @@ export interface ImportSummary {
   recurring: SyncResult;
   /** The savings balance the file reported and now anchors the savings total, when it had one. */
   savingsBalance: { amount: number; asOf: string } | null;
+  /** Of the rows this upload added, how many were sorted on their own (rules, learned shops, the built-in list). */
+  sortedNow: number;
+  /** Transactions still without a category, across everything (what is left for the person to sort). */
+  openAfter: number;
+  /** The date of the newest transaction in the file, or null for an empty one. */
+  latest: string | null;
 }
 
 export class ImportError extends Error {}
@@ -345,6 +351,26 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
     // A savings balance in the file is where the savings total counts on from: nothing to type.
     if (parsed.savingsBalance) await setSavingsAnchor(tx, parsed.savingsBalance);
 
+    const [sorted] = await tx
+      .select({ n: count() })
+      .from(schema.transactions)
+      .where(
+        and(eq(schema.transactions.importId, imp.id), isNotNull(schema.transactions.categoryId)),
+      );
+    const [open] = await tx
+      .select({ n: count() })
+      .from(schema.transactions)
+      .where(
+        and(
+          isNull(schema.transactions.categoryId),
+          eq(schema.transactions.isInternalTransfer, false),
+        ),
+      );
+    const latest = parsed.rows.reduce<string | null>(
+      (best, r) => (best === null || r.date > best ? r.date : best),
+      null,
+    );
+
     if (foreign > 0)
       warnings.push(`${foreign} row(s) are not in ${account.currency}; review them manually.`);
 
@@ -363,6 +389,9 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
       warnings,
       recurring,
       savingsBalance: parsed.savingsBalance ?? null,
+      sortedNow: sorted?.n ?? 0,
+      openAfter: open?.n ?? 0,
+      latest,
     };
   });
 }

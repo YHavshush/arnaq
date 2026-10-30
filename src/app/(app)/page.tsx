@@ -67,7 +67,7 @@ function SavingsRow({
   );
 }
 
-function rowProps(r: OverzichtRow, t: Messages, locale: Locale) {
+function rowProps(r: OverzichtRow, t: Messages, locale: Locale, month: string) {
   const { euro, dayLabel } = formatter(locale);
   const o = t.ui.overview;
   const onlyPlanned = r.actual === 0 && r.planned > 0;
@@ -75,6 +75,7 @@ function rowProps(r: OverzichtRow, t: Messages, locale: Locale) {
   const total = r.actual + r.planned;
   const over = r.budget !== null && total > r.budget;
   return {
+    href: uncategorised ? "/upload#sort" : `/category/${r.categoryId}?month=${month}`,
     icon: uncategorised ? null : r.name,
     name: uncategorised ? r.name : categoryLabel(r.name, locale),
     tag: r.fixed ? o.tagFixed : undefined,
@@ -184,7 +185,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                 <ul className="divide-hair divide-y">
                   {o.savingsRow && <SavingsRow row={o.savingsRow} t={t} locale={locale} />}
                   {shown.map((r) => (
-                    <Row key={r.categoryId ?? "none"} {...rowProps(r, t, locale)} />
+                    <Row key={r.categoryId ?? "none"} {...rowProps(r, t, locale, month)} />
                   ))}
                 </ul>
                 {rest.length > 0 && (
@@ -194,7 +195,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                     </summary>
                     <ul className="divide-hair divide-y">
                       {rest.map((r) => (
-                        <Row key={r.categoryId ?? "none"} {...rowProps(r, t, locale)} />
+                        <Row key={r.categoryId ?? "none"} {...rowProps(r, t, locale, month)} />
                       ))}
                     </ul>
                   </details>

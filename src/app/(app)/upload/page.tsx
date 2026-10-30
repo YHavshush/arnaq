@@ -58,26 +58,28 @@ async function Content() {
       </Section>
 
       {u.review.length > 0 && (
-        <Section title={m.sectionSort} aside={m.sortAside(u.reviewCount)}>
-          <ReviewList
-            items={u.review.map((r) => ({
-              id: r.id,
-              date: r.date,
-              amount: r.amount,
-              counterparty: r.counterparty,
-              description: r.description,
-              reason: r.reason,
-              currency: r.currency,
-              suggestedCategoryId: r.suggestedCategoryId,
-            }))}
-            categories={u.categories}
-            special={u.special}
-            quick={u.quick}
-          />
-          {u.reviewCount > u.review.length && (
-            <p className="text-ink-muted mt-2 px-2 text-sm">{m.sortMore(u.review.length)}</p>
-          )}
-        </Section>
+        <div id="sort" className="scroll-mt-6">
+          <Section title={m.sectionSort} aside={m.sortAside(u.reviewCount)}>
+            <ReviewList
+              items={u.review.map((r) => ({
+                id: r.id,
+                date: r.date,
+                amount: r.amount,
+                counterparty: r.counterparty,
+                description: r.description,
+                reason: r.reason,
+                currency: r.currency,
+                suggestedCategoryId: r.suggestedCategoryId,
+              }))}
+              categories={u.categories}
+              special={u.special}
+              quick={u.quick}
+            />
+            {u.reviewCount > u.review.length && (
+              <p className="text-ink-muted mt-2 px-2 text-sm">{m.sortMore(u.review.length)}</p>
+            )}
+          </Section>
+        </div>
       )}
 
       {u.automatic.rows.length > 0 && (
