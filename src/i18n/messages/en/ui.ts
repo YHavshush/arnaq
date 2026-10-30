@@ -90,6 +90,17 @@ export const ui = {
     sentenceCovered: (date: string) => `The pocket covers it. Pay by ${date}.`,
     sentencePaid: (date: string) => `Paid on ${date}.`,
     note: "Based on 21% of the money received; deductions can make the real bill lower.",
+    settings: {
+      title: "BTW",
+      intro:
+        "arnaq sets 21% aside of what your client pays you, and counts a move to savings as BTW money when its name has the BTW word in it. That money is owed, so it is not part of your savings or net worth.",
+      clientLabel: "Client who pays your invoices",
+      clientHint: "The name as it appears on your statement. Leave empty for Featurn.",
+      pocketLabel: "Word that marks BTW money",
+      pocketHint: "Put it in the name of the savings move, for example To BTW. Leave empty for BTW.",
+      save: "Save",
+      saved: "BTW settings saved",
+    },
   },
   overview: {
     title: "today",

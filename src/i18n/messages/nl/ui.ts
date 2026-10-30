@@ -90,6 +90,18 @@ export const ui: typeof en = {
     sentenceCovered: (date: string) => `De pot dekt het. Betaal uiterlijk ${date}.`,
     sentencePaid: (date: string) => `Betaald op ${date}.`,
     note: "Gebaseerd op 21% van het ontvangen geld; aftrekposten kunnen de echte rekening lager maken.",
+    settings: {
+      title: "BTW",
+      intro:
+        "arnaq zet 21% opzij van wat je klant je betaalt, en telt een overboeking naar sparen als BTW-geld wanneer het BTW-woord in de naam staat. Dat geld is verschuldigd, dus het telt niet mee in je spaargeld of vermogen.",
+      clientLabel: "Klant die je facturen betaalt",
+      clientHint: "De naam zoals op je afschrift. Laat leeg voor Featurn.",
+      pocketLabel: "Woord dat BTW-geld aanwijst",
+      pocketHint:
+        "Zet het in de naam van de overboeking naar sparen, bijvoorbeeld Naar BTW. Laat leeg voor BTW.",
+      save: "Opslaan",
+      saved: "BTW-instellingen opgeslagen",
+    },
   },
   overview: {
     title: "vandaag",

@@ -3,6 +3,7 @@ import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { localizeMessage } from "@/i18n/server-messages";
 import { MAX_CENTS } from "@/lib/money";
+import { BtwError } from "@/lib/btw/settings";
 import { BudgetError } from "@/lib/budget/budgets";
 import { CategoriseError } from "@/lib/categories/categorise";
 import { ForecastError } from "@/lib/forecast/errors";
@@ -13,6 +14,7 @@ import { SampleError } from "@/lib/sample/sample";
 import { SavingsError } from "@/lib/savings/settings";
 
 const DOMAIN_ERRORS = [
+  BtwError,
   BudgetError,
   CategoriseError,
   ForecastError,

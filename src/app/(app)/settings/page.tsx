@@ -11,6 +11,7 @@ import { ChangePasswordForm } from "@/components/arnaq/auth-forms";
 import { EraseData } from "@/components/arnaq/erase-data";
 import { LearnedShops } from "@/components/arnaq/learned-shops";
 import { AppearanceSettings } from "@/components/arnaq/appearance-settings";
+import { BtwSettings } from "@/components/arnaq/btw-settings";
 import { SavingsGoal } from "@/components/arnaq/savings-goal";
 import { RestoreBackup } from "@/components/arnaq/restore-backup";
 import { SmartSettings } from "@/components/arnaq/smart-settings";
@@ -20,6 +21,7 @@ import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
+import { getBtwSettings } from "@/lib/btw/settings";
 import { getSavingsSettings } from "@/lib/savings/settings";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { SavingsProgress } from "@/components/arnaq/savings-progress";
@@ -44,7 +46,7 @@ async function Content() {
   await requestTime();
   const { locale, t } = await getI18n();
   const s = t.ui.settings;
-  const [rules, categories, labels, smart, savingsSettings, savingsNow] = await pageDb(
+  const [rules, categories, labels, smart, savingsSettings, savingsNow, btwSettings] = await pageDb(
     async (db) => [
       await db.select().from(schema.categorisationRules),
       await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
@@ -52,6 +54,7 @@ async function Content() {
       await getSmartSettings(db),
       await getSavingsSettings(db),
       await getSavingsSummary(db, { today: todayIso() }),
+      await getBtwSettings(db),
     ],
   );
   const tiles = messages[locale].view.overzicht.tiles.sparen;
@@ -118,6 +121,10 @@ async function Content() {
           anchor={savingsSettings.anchor}
           anchorDate={savingsSettings.anchorDate}
         />
+      </Section>
+
+      <Section title={t.ui.btw.settings.title}>
+        <BtwSettings client={btwSettings.client} pocket={btwSettings.pocket} />
       </Section>
 
       {/* Smart sorting has no provider yet: showing a consent flow for a feature that cannot run would only confuse. */}

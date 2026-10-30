@@ -6,7 +6,8 @@ import { getMonthOverview, sumTransactions, type MonthSums } from "@/lib/budget/
 import { addMonths, isDate, monthOf } from "@/lib/recurring/dates";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
-import { DEFAULT_BTW_POCKET_MATCH, mentions } from "@/lib/btw/summary";
+import { getBtwSettings } from "@/lib/btw/settings";
+import { mentions } from "@/lib/btw/summary";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
 import { countedAs, projectRecurring, type ForecastOccurrence } from "./recurring";
@@ -137,6 +138,8 @@ interface Context {
   savings: Set<number>;
   /** Net money that really moved into savings, per month, and the part of it that went to the BTW pocket. */
   movedToSavings: Map<string, { total: number; reserve: number }>;
+  /** The word that marks a move or a planned deposit as BTW money. */
+  pocket: string;
 }
 
 /**
@@ -155,6 +158,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     history: settings.history,
   });
   const { byMonth, inMemoryMatched } = await projectRecurring(db, { first, current, last });
+  const { pocket } = await getBtwSettings(db);
   const ctx: Context = {
     current,
     uploaded: await coveredMonths(db),
@@ -168,7 +172,8 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     occurrences: byMonth,
     inMemoryMatched,
     savings: await savingsCategoryIds(db),
-    movedToSavings: await getMovedToSavings(db, first, last),
+    pocket,
+    movedToSavings: await getMovedToSavings(db, first, last, pocket),
   };
 
   let cumulativeNet = 0;
@@ -217,7 +222,7 @@ function kindOf(ctx: Context, month: string): MonthKind {
 }
 
 /** Per month (YYYY-MM): deposits minus withdrawals on the savings category, in each account's own currency. */
-async function getMovedToSavings(db: Db, first: string, last: string) {
+async function getMovedToSavings(db: Db, first: string, last: string, pocket: string) {
   const rows = await db
     .select({
       date: schema.transactions.date,
@@ -240,7 +245,7 @@ async function getMovedToSavings(db: Db, first: string, last: string) {
   for (const r of rows) {
     const entry = byMonth.get(r.date.slice(0, 7)) ?? { total: 0, reserve: 0 };
     entry.total -= r.amount;
-    if (mentions([r.counterparty, r.description], DEFAULT_BTW_POCKET_MATCH))
+    if (mentions([r.counterparty, r.description], pocket))
       entry.reserve -= r.amount;
     byMonth.set(r.date.slice(0, 7), entry);
   }
@@ -296,7 +301,7 @@ async function buildMonth(
   const setAsidePlanned = sum(projectedDeposits);
   // A planned deposit named for the BTW is the reserve: owed money, not savings.
   const plannedReserve = sum(
-    projectedDeposits.filter((o) => mentions([o.name], DEFAULT_BTW_POCKET_MATCH)),
+    projectedDeposits.filter((o) => mentions([o.name], ctx.pocket)),
   );
 
   return {

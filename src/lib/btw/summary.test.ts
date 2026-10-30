@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { setup } from "@/lib/recurring/test-utils";
+import { setBtwSettings } from "./settings";
 import { btwQuarter, getBtwSummary } from "./summary";
 
 describe("btwQuarter (the quarter the card is about)", () => {
@@ -118,5 +119,17 @@ describe("getBtwSummary", () => {
       pocketMatch: "tax pot",
     });
     expect(s).toMatchObject({ received: 100000, owed: 21000, pocket: 5000 });
+  });
+
+  it("follows the client and pocket word the person saved", async () => {
+    const w = await world();
+    await w.income("2026-08-01", 100000, "Acme Consulting");
+    await w.pocket("2026-08-05", -5000, "To Tax pot");
+    await setBtwSettings(w.db, { client: "Acme", pocket: "Tax pot" });
+    expect(await run(w.db, "2026-10-20")).toMatchObject({
+      received: 100000,
+      owed: 21000,
+      pocket: 5000,
+    });
   });
 });

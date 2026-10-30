@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
-import { DEFAULT_BTW_POCKET_MATCH, mentions } from "@/lib/btw/summary";
+import { getBtwSettings } from "@/lib/btw/settings";
+import { mentions } from "@/lib/btw/summary";
 import { getSavingsSettings } from "./settings";
 
 export interface SavingsSummary {
@@ -41,6 +42,7 @@ export async function getSavingsSummary(
   // `month` (YYYY-MM) is the month shown on the page; without it, the month of `today`.
   const { from, to } = monthRange(opts.month ? `${opts.month}-01` : opts.today);
   const settings = await getSavingsSettings(db);
+  const pocket = (await getBtwSettings(db)).pocket;
   const moves = (
     await db
       .select({
@@ -58,7 +60,7 @@ export async function getSavingsSummary(
           eq(schema.transactions.currency, schema.accounts.currency),
         ),
       )
-  ).filter((r) => !mentions([r.counterparty, r.description], DEFAULT_BTW_POCKET_MATCH));
+  ).filter((r) => !mentions([r.counterparty, r.description], pocket));
   // With a statement's savings balance, only the moves after its date add to it.
   const counted = moves.filter((r) => settings.anchorDate === null || r.date > settings.anchorDate);
   const deposited = (rows: typeof moves) => rows.reduce((s, r) => s - r.amount, 0);

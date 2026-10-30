@@ -34,6 +34,7 @@ const ROUTES: Record<string, string[]> = {
   "recurring/[id]": ["GET", "PATCH", "DELETE"],
   "smart/settings": ["GET", "PUT"],
   "savings/settings": ["GET", "PUT"],
+  "btw/settings": ["GET", "PUT"],
   sample: ["GET", "POST", "DELETE"],
   "categorise/smart": ["POST"],
   "account/delete": ["POST"],
@@ -458,6 +459,31 @@ describe("savings settings are per person", () => {
     expect(await get()).toMatchObject({ goal: null, start: 0 });
     setTestUser(TEST_USER_A);
     expect(await get()).toMatchObject({ goal: 123456, start: 7000 });
+  });
+});
+
+describe("BTW settings are per person", () => {
+  it("B keeps the defaults while A's client stays", async () => {
+    const get = async () =>
+      await (await call("btw/settings", "GET", new Request(url("/api/btw/settings")))).json();
+    setTestUser(TEST_USER_A);
+    expect(
+      (
+        await call(
+          "btw/settings",
+          "PUT",
+          json("PUT", "/api/btw/settings", { client: "Acme", pocket: "Tax pot" }),
+        )
+      ).status,
+    ).toBe(200);
+    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot" });
+    setTestUser(TEST_USER_B);
+    expect(await get()).toEqual({ client: "Featurn", pocket: "BTW" });
+    expect(
+      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { client: 5 }))).status,
+    ).toBe(422);
+    setTestUser(TEST_USER_A);
+    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot" });
   });
 });
 

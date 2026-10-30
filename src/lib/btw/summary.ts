@@ -1,13 +1,14 @@
 import { and, eq, gte, lt, lte } from "drizzle-orm";
 import { schema, type Db } from "@/db";
+import { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH } from "./defaults";
+import { getBtwSettings } from "./settings";
 import { addDays, addMonths, clampDay } from "@/lib/recurring/dates";
 import { normaliseCounterparty } from "@/lib/recurring/normalise";
 
 /** The standard Dutch rate. */
 export const BTW_RATE_PERCENT = 21;
-/** Who pays the person, and what marks a move into the BTW pocket. Defaults until they can be changed. */
-export const DEFAULT_BTW_INCOME_MATCH = "Featurn";
-export const DEFAULT_BTW_POCKET_MATCH = "BTW";
+/** Who pays the person, and what marks a move into the BTW pocket: the defaults, until the person changes them. */
+export { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH };
 /** Where the person pays the quarterly BTW. */
 const TAX_OFFICE_MATCH = "Belastingdienst";
 /** A payment to the tax office counts for a quarter up to this many days after its due date. */
@@ -78,8 +79,9 @@ export async function getBtwSummary(
   db: Db,
   opts: { today: string; incomeMatch?: string; pocketMatch?: string },
 ): Promise<BtwSummary> {
-  const incomeMatch = opts.incomeMatch ?? DEFAULT_BTW_INCOME_MATCH;
-  const pocketMatch = opts.pocketMatch ?? DEFAULT_BTW_POCKET_MATCH;
+  const settings = await getBtwSettings(db);
+  const incomeMatch = opts.incomeMatch ?? settings.client;
+  const pocketMatch = opts.pocketMatch ?? settings.pocket;
   const quarter = btwQuarter(opts.today);
   const t = schema.transactions;
   const ownCurrency = eq(t.currency, schema.accounts.currency);

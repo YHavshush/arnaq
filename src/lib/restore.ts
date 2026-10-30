@@ -4,6 +4,7 @@ import { wipeMyData } from "@/lib/account";
 import { ensureSavingsCategory, ensureTaxesCategory, seedDefaults } from "@/lib/categories/seed";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/defaults";
 import { EXPORT_VERSION } from "@/lib/export";
+import { BtwError, setBtwSettings } from "@/lib/btw/settings";
 import { SavingsError, setSavingsAnchor, setSavingsSettings } from "@/lib/savings/settings";
 
 export class RestoreError extends Error {}
@@ -278,6 +279,13 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
       } catch (e) {
         if (!(e instanceof SavingsError)) throw e;
       }
+    }
+    // Who the BTW is for and the pocket word (null or damaged: the defaults stay).
+    const text = (v: unknown) => (typeof v === "string" ? v : undefined);
+    try {
+      await setBtwSettings(db, { client: text(settings.btwClient), pocket: text(settings.btwPocket) });
+    } catch (e) {
+      if (!(e instanceof BtwError)) throw e;
     }
   }
   // A backup from before the Savings category existed does not have it.

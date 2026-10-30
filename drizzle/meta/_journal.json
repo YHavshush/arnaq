@@ -57,6 +57,13 @@
       "when": 1793303506433,
       "tag": "0007_savings_anchor",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793358525158,
+      "tag": "0008_btw_settings",
+      "breakpoints": true
     }
   ]
 }
