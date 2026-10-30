@@ -32,12 +32,15 @@ export function BudgetEditor({
   lines,
   total,
   prevLabel,
+  savings = null,
 }: {
   month: string;
   prevMonth: string;
   lines: Line[];
   total: number | null;
   prevLabel: string;
+  /** The savings total and its goal: one total, edited like a budget. */
+  savings?: { saved: number; goal: number | null } | null;
 }) {
   const router = useRouter();
   const { locale, t } = useI18n();
@@ -93,6 +96,63 @@ export function BudgetEditor({
           </GhostButton>
         </div>
       </div>
+
+      {savings && (
+        <div className="glass grid gap-3 p-4">
+          <div className="flex items-baseline justify-between gap-3">
+            <b className="text-base">{t.ui.budget.savings.title}</b>
+            {savedKey === "savings" && (
+              <span className="text-good text-[13px] font-semibold">✓ {t.ui.budget.saved}</span>
+            )}
+          </div>
+          <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] items-end gap-3">
+            <div>
+              <div className="num text-[26px] leading-none font-semibold">
+                {formatter(locale).euroExact(savings.saved)}
+              </div>
+              <div className="text-ink-muted mt-1 text-[13px]">{t.ui.budget.savings.saved}</div>
+            </div>
+            <label className="grid gap-1 text-right text-[13px]">
+              <span className="text-ink-muted">{t.ui.budget.savings.goal}</span>
+              <input
+                inputMode="decimal"
+                defaultValue={toInput(savings.goal, locale)}
+                key={`goal-${savings.goal}`}
+                placeholder="€"
+                aria-label={t.ui.budget.savings.goal}
+                className={`${inputClass} num text-right`}
+                onBlur={(e) =>
+                  save("savings", e.target.value, savings.goal, (goal) =>
+                    api("PUT", "/api/savings/settings", { goal }),
+                  )
+                }
+              />
+            </label>
+          </div>
+          {savings.goal !== null && savings.goal > 0 ? (
+            <>
+              <div aria-hidden className="bg-track h-2 overflow-hidden rounded-full">
+                <i
+                  className="bg-accent block h-full rounded-full transition-[width] duration-500"
+                  style={{
+                    width: `${Math.min(Math.max(savings.saved / savings.goal, 0), 1) * 100}%`,
+                  }}
+                />
+              </div>
+              <p className="text-ink-muted text-[13px]">
+                {savings.saved >= savings.goal
+                  ? t.ui.budget.savings.reached
+                  : t.ui.budget.savings.progress(
+                      Math.round((Math.max(savings.saved, 0) / savings.goal) * 100),
+                      formatter(locale).euro(savings.goal - savings.saved),
+                    )}
+              </p>
+            </>
+          ) : (
+            <p className="text-ink-muted text-[13px]">{t.ui.budget.savings.none}</p>
+          )}
+        </div>
+      )}
 
       <div className="glass overflow-hidden">
         <ul className="divide-hair divide-y">

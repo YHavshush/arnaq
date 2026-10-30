@@ -365,7 +365,16 @@ export const ui: typeof en = {
     copy: (month: string) => `Kopieer ${month}`,
     saved: "bewaard",
     errAmount: "Vul een bedrag in, bijvoorbeeld 250 of 12,50.",
-    fixedPart: (amount: string) => `${amount} vast; vul een budget in voor meer`,
+    savings: {
+      title: "Spaardoel",
+      saved: "tot nu toe gespaard",
+      goal: "doel",
+      progress: (pct: number, left: string) =>
+        `${pct}% bereikt · nog ${left} · één totaal, geen potjes`,
+      reached: "Doel bereikt",
+      none: "Stel een doel in om je voortgang te zien. Eén totaal, geen potjes.",
+    },
+    fixedPart: (amount: string) => `${amount} vast`,
     extraPlaceholder: "budget",
     forCategory: (name: string) => `Budget voor ${name} in euro`,
   },
