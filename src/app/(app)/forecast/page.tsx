@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
 import { BtwCard } from "@/components/arnaq/btw-card";
+import { StepLink } from "@/components/arnaq/step-link";
 import { Hero } from "@/components/arnaq/hero";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
@@ -79,14 +80,14 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         aside={
           <nav aria-label={t.ui.forecast.horizon} className="liquid seg">
             {HORIZONS.map((h) => (
-              <Link
+              <StepLink
                 key={h}
                 href={`/forecast?months=${h}`}
-                aria-current={h === months ? "true" : undefined}
+                current={h === months}
                 className="seg-item inline-flex min-h-9 min-w-9 items-center justify-center px-2.5 text-sm font-semibold"
               >
                 {h}
-              </Link>
+              </StepLink>
             ))}
           </nav>
         }

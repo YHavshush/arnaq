@@ -50,6 +50,7 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
   }, [summary]);
 
   function choose(f: File | undefined | null) {
+    if (busy) return; // a file picked mid-upload would clear the result that is about to arrive
     setError(null);
     setSummary(null);
     if (!f) return setFile(null);
@@ -71,7 +72,8 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
     try {
       const res = await fetch("/api/import", { method: "POST", body });
       const data = await res.json().catch(() => null);
-      if (!res.ok) setError(data?.error ?? p.errFailed(res.status));
+      if (!res.ok)
+        setError(res.status === 413 ? p.errSize : (data?.error ?? p.errFailed(res.status)));
       else {
         setSummary(data as Summary);
         setFile(null);
@@ -119,6 +121,7 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
           accept=".csv,.pdf,text/csv,application/pdf"
           className="peer sr-only"
           id="csv"
+          disabled={busy}
           onChange={(e) => choose(e.target.files?.[0])}
         />
         <label

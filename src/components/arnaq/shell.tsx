@@ -1,3 +1,4 @@
+import { FocusRefresh } from "./focus-refresh";
 import { ToastProvider } from "./toast";
 import { Settings } from "lucide-react";
 import Link from "next/link";
@@ -52,6 +53,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="@container/app min-h-dvh">
       <ThemeFollower />
+      <FocusRefresh />
       <a
         href="#main"
         className="bg-action text-action-ink sr-only z-40 rounded-full px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"

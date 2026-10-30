@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import Link from "next/link";
+import { StepLink } from "./step-link";
 import type { ReactNode } from "react";
 
 /** Serif page title with an optional subtitle and a month stepper. */
@@ -22,20 +22,20 @@ export function PageHeader({
       </div>
       {step && (
         <div className="flex shrink-0 gap-2">
-          <Link
+          <StepLink
             href={step.prev}
-            aria-label={step.prevLabel}
+            label={step.prevLabel}
             className="liquid grid size-11 place-items-center rounded-full"
           >
             <ChevronLeft className="size-[18px]" />
-          </Link>
-          <Link
+          </StepLink>
+          <StepLink
             href={step.next}
-            aria-label={step.nextLabel}
+            label={step.nextLabel}
             className="liquid grid size-11 place-items-center rounded-full"
           >
             <ChevronRight className="size-[18px]" />
-          </Link>
+          </StepLink>
         </div>
       )}
     </header>
