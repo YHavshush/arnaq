@@ -53,3 +53,18 @@ describe("currentUser", () => {
     setClaims(undefined);
   });
 });
+
+describe("hasRecentRecovery (a password may only be reset without the old one right after a recovery link)", () => {
+  const now = 1_800_000_000;
+  it("accepts a recent recovery or one-time-code sign-in", () => {
+    expect(real.hasRecentRecovery([{ method: "recovery", timestamp: now - 60 }], now)).toBe(true);
+    expect(real.hasRecentRecovery([{ method: "otp", timestamp: now - 600 }], now)).toBe(true);
+  });
+  it("refuses an old one, a password sign-in, and a missing record", () => {
+    expect(real.hasRecentRecovery([{ method: "recovery", timestamp: now - 901 }], now)).toBe(false);
+    expect(real.hasRecentRecovery([{ method: "password", timestamp: now - 5 }], now)).toBe(false);
+    expect(real.hasRecentRecovery(undefined, now)).toBe(false);
+    expect(real.hasRecentRecovery("nonsense", now)).toBe(false);
+    expect(real.hasRecentRecovery([{ method: "recovery" }], now)).toBe(false);
+  });
+});

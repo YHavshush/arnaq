@@ -168,6 +168,8 @@ export async function assignCategory(
 
   const pattern = (opts.pattern ?? t.counterparty ?? t.description ?? "").trim();
   if (!pattern) throw new CategoriseError("Cannot create a rule without a pattern.");
+  if (pattern.length > 100)
+    throw new CategoriseError("A rule pattern can be at most 100 characters.");
   const [rule] = await db
     .insert(schema.categorisationRules)
     .values({ pattern, categoryId, priority: opts.priority ?? 10 })

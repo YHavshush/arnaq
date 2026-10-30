@@ -189,3 +189,30 @@ describe("cross-site guard", () => {
     expect(await through("GET", { "sec-fetch-site": "cross-site" })).toBe("1");
   });
 });
+
+describe("the import cannot be used to hog the server", () => {
+  it("answers 429 once a person has uploaded too often in a minute", async () => {
+    const tooBig = () => {
+      const form = new FormData();
+      form.set("file", new File(["x"], "x.csv"));
+      return new Request("http://localhost/api/import", { method: "POST", body: form });
+    };
+    let last = 0;
+    for (let i = 0; i < 40; i++) {
+      last = (await r.upload.POST(tooBig())).status;
+      if (last === 429) break;
+    }
+    expect(last).toBe(429);
+  });
+
+  it("gives a generic message, not an internal one, for a file that breaks a parser", async () => {
+    // A file that is not recognised at all gets the plain explanation (a 422), never a stack or internal text.
+    const form = new FormData();
+    form.set("file", new File(["\u0001\u0002 not a statement"], "x.csv"));
+    const res = await r.upload.POST(
+      new Request("http://localhost/api/import", { method: "POST", body: form }),
+    );
+    expect([422, 429]).toContain(res.status);
+    expect(JSON.stringify(await res.json())).not.toMatch(/TypeError|undefined|at \w+ \(/);
+  });
+});

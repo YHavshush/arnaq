@@ -183,7 +183,10 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
         ? parseRabobankStatement(source.pages)
         : getParser(bank).parse(source.text);
   } catch (e) {
-    throw new ImportError(e instanceof Error ? e.message : String(e));
+    // The parsers explain themselves with plain errors; anything else (a TypeError, a RangeError) is a bug or an attack
+    // and its message is nobody's business.
+    const ours = e instanceof Error && (e instanceof ImportError || e.constructor === Error);
+    throw new ImportError(ours ? (e as Error).message : "This file could not be read.");
   }
   // Revolut puts the period in the file name; for other files a name is not evidence.
   if (accountId !== undefined && parsed.accountIdentifier) {

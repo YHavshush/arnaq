@@ -3,7 +3,7 @@ import { merchantKey } from "./merchant";
 const MAX_DESCRIPTION = 80;
 
 const IBAN = /\b[a-z]{2}\d{2}[a-z0-9]{4}\d{6,}\b/gi;
-const EMAIL = /\S+@\S+\.\S+/g;
+const EMAIL = /[^\s@]+@[^\s@]+\.[^\s@]+/g;
 const URL_PATH = /https?:\/\/\S+|www\.\S+/gi;
 const LONG_NUMBER = /\d{4,}/g;
 const BOOKKEEPING =

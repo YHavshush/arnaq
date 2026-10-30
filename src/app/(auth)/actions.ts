@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { UnauthenticatedError, currentUser } from "@/lib/auth/session";
+import { UnauthenticatedError, currentUser, sessionIsRecentRecovery } from "@/lib/auth/session";
 import { isEmail, isOtpType, passwordProblem, safeNext } from "@/lib/auth/validate";
 import { checkRate, clientAddress, type Action } from "@/lib/auth/rate-limit";
 import { supabaseServer } from "@/lib/supabase/server";
@@ -104,6 +104,8 @@ export async function updatePassword(_prev: FormState, form: FormData): Promise<
     if (e instanceof UnauthenticatedError) redirect("/login");
     throw e;
   }
+  // Only right after a recovery link: with a stolen session cookie alone this must not set a new password.
+  if (!(await sessionIsRecentRecovery())) return { error: "link" };
   const password = text(form, "password");
   const bad = passwordError(password, text(form, "repeat"));
   if (bad) return { error: bad };

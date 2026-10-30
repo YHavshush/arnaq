@@ -105,6 +105,19 @@ const NL: Rule[] = [
   ],
   // upload route and API
   [/^File too large \(max 4 MB\)\.$/, () => "Dit bestand is te groot (maximaal 4 MB)."],
+  [
+    /^Too many uploads\. Wait a minute and try again\.$/,
+    () => "Te veel uploads. Wacht even en probeer het opnieuw.",
+  ],
+  [
+    /^The server is busy\. Try again in a moment\.$/,
+    () => "De server is druk. Probeer het zo opnieuw.",
+  ],
+  [/^This file could not be read\.$/, () => "Dit bestand kon niet worden gelezen."],
+  [
+    /^A rule pattern can be at most 100 characters\.$/,
+    () => "Een regelpatroon mag maximaal 100 tekens bevatten.",
+  ],
   [/^Expected multipart\/form-data\.$/, () => "Verwacht een bestand (multipart/form-data)."],
   [/^Missing file\.$/, () => "Er is geen bestand meegestuurd."],
   [/^Invalid accountId\.$/, () => "Ongeldige rekening."],

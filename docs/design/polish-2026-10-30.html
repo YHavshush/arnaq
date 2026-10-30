@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq polish: upload done, category detail, savings goal</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1180px; margin:0 auto; display:grid; gap:28px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:80ch; }
+.sec { display:grid; gap:12px; padding-top:16px; border-top:1px solid var(--line); }
+.row3 { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,330px)); gap:18px; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+.scene { width:100%; border-radius:26px; padding:16px; display:grid; gap:12px; align-content:start; overflow:hidden; min-height:520px; }
+.scene.light { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.62); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --track:rgba(23,32,46,.09); --fill:#243b73; --fillInk:#fff;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8); }
+.scene.dark { --ink:#eef1f5; --muted:#a8b1bf; --soft:rgba(143,208,255,.10); --card:rgba(255,255,255,.07); --hair:rgba(255,255,255,.12); --accent:#8fd0ff; --good:#7fd3a8; --bad:#ff8f84; --track:rgba(255,255,255,.12); --fill:#8fd0ff; --fillInk:#06121c;
+  color:#eef1f5; background:linear-gradient(165deg,color-mix(in oklab,#2ac9ff 26%,#141b28),color-mix(in oklab,#7d8bff 22%,#141b28) 55%,#141b28); }
+.card { border-radius:20px; background:var(--card); padding:14px 16px; display:grid; gap:10px; border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); }
+.title { font:500 26px/1.15 Georgia,serif; }
+.muted { color:var(--muted); } .small { font-size:13px; } .num { font-variant-numeric:tabular-nums; }
+.btn { min-height:46px; padding:0 22px; border-radius:999px; border:0; font:600 15px/1 inherit; font-family:inherit; display:inline-flex; align-items:center; justify-content:center; background:var(--fill); color:var(--fillInk); }
+.btn.soft { background:var(--soft); color:var(--ink); }
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; }
+.stat { background:var(--soft); border-radius:16px; padding:10px 4px; } .stat b { display:block; font-size:24px; font-weight:600; }
+/* done ring: draws itself, then the tick, then a soft pulse */
+.done { width:84px; height:84px; margin:6px auto 0; display:block; }
+.done circle { fill:none; stroke:var(--good); stroke-width:5; stroke-linecap:round; stroke-dasharray:289; stroke-dashoffset:289; animation:draw .7s .1s cubic-bezier(.3,.8,.3,1) forwards; transform:rotate(-90deg); transform-origin:50% 50%; }
+.done path { fill:none; stroke:var(--good); stroke-width:6; stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:60; stroke-dashoffset:60; animation:draw .45s .65s cubic-bezier(.3,.8,.3,1) forwards; }
+.done.static circle,.done.static path { animation:none; stroke-dashoffset:0; }
+@keyframes draw { to { stroke-dashoffset:0; } }
+.pop { animation:pop .5s .9s both cubic-bezier(.2,1.4,.4,1); } @keyframes pop { from { transform:scale(.92); opacity:0; } to { transform:none; opacity:1; } }
+.bar { height:8px; border-radius:99px; background:var(--track); overflow:hidden; } .bar i { display:block; height:100%; border-radius:99px; }
+.li { display:grid; grid-template-columns:2.4rem minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 0; border-top:1px solid var(--hair); }
+.li:first-child { border-top:0; }
+.ic { width:2.4rem; height:2.4rem; border-radius:12px; background:var(--soft); display:grid; place-items:center; font-size:15px; }
+.day { font-size:12px; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; padding-top:4px; }
+input.f { width:100%; min-height:44px; border-radius:14px; border:1px solid var(--hair); background:var(--soft); padding:0 12px; font:600 16px inherit; color:var(--ink); text-align:right; font-family:inherit; }
+.chip { display:inline-block; font-size:12px; font-weight:600; border-radius:99px; padding:3px 10px; background:var(--soft); }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>Polish: done moments, category detail, savings goal</h1>
+  <p class="note">Demo numbers only. Phone width, light and dark. The ring and tick draw themselves when the page loads (reload to replay).</p>
+</header>
+
+<section class="sec">
+  <h2>1 · Upload done: something new, and nothing new</h2>
+  <div class="row3">
+    <div><div class="cap">Something new · light</div>
+      <div class="scene light">
+        <div class="card" style="text-align:center;gap:8px">
+          <svg class="done" viewBox="0 0 104 104"><circle cx="52" cy="52" r="46"/><path d="M32 54 L46 68 L73 38"/></svg>
+          <div class="title">Statement added</div>
+          <p class="muted small">Revolut · 1 Feb – 29 Oct</p>
+          <div class="stats pop"><div class="stat"><b class="num">42</b><span class="muted small">new</span></div><div class="stat"><b class="num">874</b><span class="muted small">known</span></div><div class="stat"><b class="num">0</b><span class="muted small">skipped</span></div></div>
+          <p class="muted small pop">29 sorted automatically. 13 still need you.</p>
+          <div style="display:grid;gap:8px;margin-top:4px" class="pop"><span class="btn">Sort the 13</span><span class="btn soft">See today</span></div>
+        </div>
+      </div></div>
+    <div><div class="cap">Nothing new · dark</div>
+      <div class="scene dark">
+        <div class="card" style="text-align:center;gap:8px">
+          <svg class="done" viewBox="0 0 104 104"><circle cx="52" cy="52" r="46"/><path d="M32 54 L46 68 L73 38"/></svg>
+          <div class="title">Already up to date</div>
+          <p class="muted small">Every one of the 916 transactions was already in. Nothing was added twice.</p>
+          <p class="small pop" style="background:var(--soft);border-radius:14px;padding:10px 12px">The newest transaction is from 29 Oct. Upload a newer statement when you have one.</p>
+          <div style="display:grid;gap:8px;margin-top:4px" class="pop"><span class="btn">See today</span></div>
+        </div>
+      </div></div>
+  </div>
+  <p class="note">Why: today the result sits quietly under the drop zone. Now the card takes the screen, scrolls into view, and answers "did it work?" in one line before any numbers. "0 new" gets its own explanation instead of three confusing counters.</p>
+</section>
+
+<section class="sec">
+  <h2>2 · Tap a category: all its transactions</h2>
+  <div class="row3">
+    <div><div class="cap">Food &amp; drink · light</div>
+      <div class="scene light">
+        <div><p class="muted small">October 2026</p><div class="title">Food &amp; drink</div></div>
+        <div class="card" style="gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline"><b class="num" style="font-size:26px">€312</b><span class="muted small">of €300 budget</span></div>
+          <div class="bar"><i style="width:100%;background:var(--bad)"></i></div><p class="small" style="color:var(--bad);font-weight:600">€12 over · 14 transactions</p></div>
+        <div class="card" style="gap:0;padding-top:6px">
+          <div class="day">Tue 28 Oct</div>
+          <div class="li"><span class="ic">🍕</span><div><b>Thuisbezorgd</b><div class="muted small">Sorted by rule</div></div><b class="num">−€13.33</b></div>
+          <div class="day">Sat 25 Oct</div>
+          <div class="li"><span class="ic">☕</span><div><b>Cafe De Hoek</b><div class="muted small">Suggested</div></div><b class="num">−€4.20</b></div>
+          <div class="li"><span class="ic">🌮</span><div><b>Salsa Shop</b><div class="muted small">Sorted automatically</div></div><b class="num">−€11.61</b></div>
+          <div class="day">Wed 22 Oct</div>
+          <div class="li"><span class="ic">🍔</span><div><b>McDonald's</b><div class="muted small">Sorted by rule</div></div><b class="num">−€9.45</b></div>
+        </div>
+      </div></div>
+    <div><div class="cap">Same, dark · with the "move" action</div>
+      <div class="scene dark">
+        <div><p class="muted small">October 2026</p><div class="title">Food &amp; drink</div></div>
+        <div class="card" style="gap:8px"><div style="display:flex;justify-content:space-between;align-items:baseline"><b class="num" style="font-size:26px">€312</b><span class="muted small">of €300 budget</span></div>
+          <div class="bar"><i style="width:100%;background:var(--bad)"></i></div><p class="small" style="color:var(--bad);font-weight:600">€12 over · 14 transactions</p></div>
+        <div class="card" style="gap:0;padding-top:6px">
+          <div class="day">Tue 28 Oct</div>
+          <div class="li"><span class="ic">🍕</span><div><b>Thuisbezorgd</b><div class="muted small">Sorted by rule</div></div><b class="num">−€13.33</b></div>
+          <div class="day">Sat 25 Oct</div>
+          <div class="li"><span class="ic">🍸</span><div><b>Pool Cafe Noord</b><div class="muted small"><span class="chip">Probably Going out?</span></div></div><b class="num">−€35.10</b></div>
+        </div>
+        <p class="muted small" style="text-align:center">Tap a row to move it to another category</p>
+      </div></div>
+  </div>
+  <p class="note">Why: to double-check a number. Rows are grouped by day, newest first; the header repeats the budget status; a tap on a row opens the same category sheet the review list uses, so a mistake is fixed where you find it.</p>
+</section>
+
+<section class="sec">
+  <h2>3 · Savings goal on the budget screen</h2>
+  <div class="row3">
+    <div><div class="cap">Budget · light</div>
+      <div class="scene light">
+        <div class="title">Budget</div>
+        <div class="card"><b>Savings goal</b>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:12px;align-items:end"><div><b class="num" style="font-size:26px">€200.85</b><div class="muted small">saved so far</div></div><div><div class="muted small" style="text-align:right;margin-bottom:4px">goal</div><input class="f" value="€ 5,000" aria-label="goal"></div></div>
+          <div class="bar"><i style="width:4%;background:var(--accent)"></i></div><p class="muted small">4% there · €4,799 to go · one total, no pots</p></div>
+        <div class="card" style="gap:0;padding-top:6px">
+          <div class="li"><span class="ic">🏠</span><div><b>Rent</b><div class="muted small">€790 fixed</div></div><input class="f" style="width:96px" placeholder="budget"></div>
+          <div class="li"><span class="ic">🛒</span><div><b>Groceries</b></div><input class="f" style="width:96px" value="€ 400"></div>
+        </div>
+      </div></div>
+    <div><div class="cap">Budget · dark · after saving</div>
+      <div class="scene dark">
+        <div class="title">Budget</div>
+        <div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><b>Savings goal</b><span style="color:var(--good);font-weight:600" class="small">✓ Saved</span></div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 112px;gap:12px;align-items:end"><div><b class="num" style="font-size:26px">€200.85</b><div class="muted small">saved so far</div></div><div><div class="muted small" style="text-align:right;margin-bottom:4px">goal</div><input class="f" value="€ 2,500" aria-label="goal"></div></div>
+          <div class="bar"><i style="width:8%;background:var(--accent)"></i></div><p class="muted small">8% there · €2,299 to go</p></div>
+      </div></div>
+  </div>
+  <p class="note">Why: you asked for the savings goal to behave like a budget. Same one-number box as the other budgets, same "Saved" tick, and the progress bar is the one already on Today.</p>
+</section>
+</main>
+</body>
+</html>

@@ -46,3 +46,29 @@ export const currentUser = cache(async (): Promise<SessionUser> => {
 export async function currentUserId(): Promise<string> {
   return (await currentUser()).id;
 }
+
+/**
+ * Was this session started by a recovery link (or a one-time code) in the last few minutes? A new password may be set
+ * without the old one only then: a stolen session cookie alone must not be able to take the account over.
+ * `amr` is the sign-in record inside the signed session token.
+ */
+export function hasRecentRecovery(amr: unknown, nowSeconds: number, maxAgeSeconds = 900): boolean {
+  if (!Array.isArray(amr)) return false;
+  return amr.some((entry) => {
+    if (typeof entry !== "object" || entry === null) return false;
+    const { method, timestamp } = entry as { method?: unknown; timestamp?: unknown };
+    return (
+      (method === "recovery" || method === "otp") &&
+      typeof timestamp === "number" &&
+      timestamp <= nowSeconds &&
+      nowSeconds - timestamp <= maxAgeSeconds
+    );
+  });
+}
+
+/** True when the current session came from a recovery link just now (see `hasRecentRecovery`). */
+export async function sessionIsRecentRecovery(): Promise<boolean> {
+  if (devAuthEnabled()) return true;
+  const { data } = await (await supabaseServer()).auth.getClaims();
+  return hasRecentRecovery(data?.claims?.amr, Math.floor(Date.now() / 1000));
+}

@@ -1,4 +1,5 @@
 import { userDb } from "@/lib/auth/request";
+import { allow } from "@/lib/auth/rate-limit";
 import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { localizeMessage } from "@/i18n/server-messages";
 import { MAX_ID, errorResponse, requestLocale, todayIso } from "@/lib/api";
@@ -9,15 +10,25 @@ import { clearSample } from "@/lib/sample/sample";
 /** Vercel refuses request bodies above 4.5 MB before the app sees them, so 4 MB (plus form overhead) is the most that can work. */
 const MAX_BYTES = 4 * 1024 * 1024;
 
+/** Uploads per person per minute, and how many parses one server runs at once (a PDF parse holds a database connection). */
+const IMPORTS_PER_MINUTE = 30;
+const MAX_PARALLEL = 3;
+let running = 0;
+
 /** POST multipart/form-data: file (required), accountId (optional), month=YYYY-MM (optional). */
 export async function POST(request: Request) {
   // Who is asking, before any of the body is read.
+  let userId: string;
   try {
-    await currentUserId();
+    userId = await currentUserId();
   } catch (e) {
     if (e instanceof UnauthenticatedError) return errorResponse("Not signed in.", 401);
     throw e;
   }
+  if (!allow(`import:${userId}`, { max: IMPORTS_PER_MINUTE, windowMs: 60_000 }))
+    return errorResponse("Too many uploads. Wait a minute and try again.", 429);
+  if (running >= MAX_PARALLEL)
+    return errorResponse("The server is busy. Try again in a moment.", 503);
   // Refuse before buffering the body. (A reverse proxy should enforce the same cap, see deploy notes.)
   const declared = Number(request.headers.get("content-length") ?? "0");
   if (declared > MAX_BYTES + 64 * 1024) return errorResponse("File too large (max 4 MB).", 413);
@@ -43,6 +54,7 @@ export async function POST(request: Request) {
     return errorResponse("Invalid accountId.", 400);
   }
 
+  running++;
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
     const summary = await userDb(async (db) => {
@@ -69,5 +81,7 @@ export async function POST(request: Request) {
     if (e instanceof UnauthenticatedError) return errorResponse("Not signed in.", 401);
     if (e instanceof ImportError) return errorResponse(e.message, 422);
     throw e;
+  } finally {
+    running--;
   }
 }

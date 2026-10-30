@@ -25,7 +25,7 @@ export async function wipeMyData(db: Db): Promise<void> {
   await db.delete(schema.monthlyTotalBudget);
   await db.delete(schema.categorisationRules);
   await db.delete(schema.merchantLabels);
-  await db.delete(schema.aiUsage);
+  // ai_usage stays: wiping it would reset the daily cap on smart sorting, which is a cost limit, not the person's data.
   await db.delete(schema.userSettings);
   await db.delete(schema.accounts);
   await db.delete(schema.categories);
