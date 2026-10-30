@@ -56,6 +56,7 @@ export const ui = {
     count: (n: number) => `${n} ${n === 1 ? "transaction" : "transactions"}`,
     empty: "Nothing in this category this month.",
     hint: "Tap a row to move it to another category.",
+    moving: "Moving…",
     moved: "Moved",
     moveTitle: (name: string) => `Category for ${name}`,
     probably: (name: string) => `Probably ${name}?`,

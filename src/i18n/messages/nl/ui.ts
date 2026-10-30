@@ -56,6 +56,7 @@ export const ui: typeof en = {
     count: (n: number) => `${n} ${n === 1 ? "transactie" : "transacties"}`,
     empty: "Deze maand staat hier niets in.",
     hint: "Tik op een rij om hem naar een andere categorie te verplaatsen.",
+    moving: "Verplaatsen…",
     moved: "Verplaatst",
     moveTitle: (name: string) => `Categorie voor ${name}`,
     probably: (name: string) => `Waarschijnlijk ${name}?`,

@@ -10,6 +10,7 @@ import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { CategorySheet, type PickerCategory } from "./category-picker";
 import { ErrorLine } from "./form";
+import { useToast } from "./toast";
 
 /**
  * The transactions behind one category, grouped by day. A tap on a row opens the category sheet, so a wrong sort is
@@ -35,6 +36,7 @@ export function CategoryTransactions({
   const [sheetFor, setSheetFor] = useState<CategoryDetailRow | null>(null);
   const [moved, setMoved] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
   const [, startTransition] = useTransition();
   const all = new Map([...categories, ...special].map((x) => [x.id, x]));
 
@@ -42,12 +44,16 @@ export function CategoryTransactions({
     setSheetFor(null);
     if (categoryId === currentId) return;
     setError(null);
+    setMoved(row.id); // at once: the row dims and says "Moving…" while the request and the refresh run
     const res = await api("PUT", `/api/transactions/${row.id}/category`, {
       categoryId,
       learn: !!(row.counterparty || row.description),
     });
-    if (!res.ok) return setError(res.error);
-    setMoved(row.id);
+    if (!res.ok) {
+      setMoved(null);
+      return setError(res.error);
+    }
+    toast(c.moved);
     startTransition(() => router.refresh());
   }
 
@@ -83,7 +89,7 @@ export function CategoryTransactions({
                         </span>
                         <span className="text-ink-muted block truncate text-[13px]">
                           {moved === r.id
-                            ? c.moved
+                            ? c.moving
                             : hint
                               ? c.probably(categoryLabel(hint.name, locale))
                               : (c.source[r.source ?? ""] ?? "")}
