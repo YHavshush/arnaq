@@ -452,3 +452,29 @@
   --onb-glow-vault: var(--onb-glow);
   --onb-glow-vault-2: var(--onb-glow-2);
 }
+
+/* A confirmation toast: rises in, fades out. Without motion it simply appears and disappears. */
+@media (prefers-reduced-motion: no-preference) {
+  .toast {
+    animation: toast-in 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .toast.toast-out {
+    animation: toast-out 0.3s ease-in both;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

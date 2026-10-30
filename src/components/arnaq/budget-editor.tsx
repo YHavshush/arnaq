@@ -1,7 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useI18n } from "@/i18n/client";
 import type { Locale } from "@/i18n/config";
 import { api, euroInputToCents } from "@/lib/client/api";
@@ -9,6 +8,7 @@ import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, GhostButton, inputClass } from "./form";
+import { useAction } from "./use-action";
 
 interface Line {
   categoryId: number;
@@ -42,11 +42,11 @@ export function BudgetEditor({
   /** The savings total and its goal: one total, edited like a budget. */
   savings?: { saved: number; goal: number | null } | null;
 }) {
-  const router = useRouter();
   const { locale, t } = useI18n();
-  const [busy, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { run, pending: busy, error: apiError } = useAction();
+  const [fieldError, setFieldError] = useState<{ key: string; message: string } | null>(null);
   const [savedKey, setSavedKey] = useState<string | null>(null);
+  const failed = (key: string) => (fieldError?.key === key ? fieldError.message : null);
 
   async function save(
     key: string,
@@ -56,20 +56,23 @@ export function BudgetEditor({
   ) {
     const trimmed = raw.trim();
     const cents = trimmed === "" ? null : euroInputToCents(trimmed);
-    if (trimmed !== "" && cents === null) return setError(t.ui.budget.errAmount);
+    if (trimmed !== "" && cents === null)
+      return setFieldError({ key, message: t.ui.budget.errAmount });
     if (cents === before) return;
-    setError(null);
-    const res = await call(cents);
-    if (!res.ok) return setError(res.error);
-    setSavedKey(key);
-    startTransition(() => router.refresh());
+    setFieldError(null);
+    if (await run(() => call(cents), { success: t.ui.budget.saved })) {
+      setSavedKey(key);
+      window.setTimeout(() => setSavedKey((k) => (k === key ? null : k)), 2200);
+    }
   }
 
-  async function copy() {
-    setError(null);
-    const res = await api("POST", "/api/budgets/copy", { from: prevMonth, to: month });
-    if (!res.ok) return setError(res.error);
-    startTransition(() => router.refresh());
+  function copy() {
+    return run(() => api("POST", "/api/budgets/copy", { from: prevMonth, to: month }), {
+      success: (data) => {
+        const n = (data as { copied?: number } | null)?.copied ?? 0;
+        return n > 0 ? t.ui.budget.copied(n) : t.ui.budget.copyNothing;
+      },
+    });
   }
 
   return (
@@ -82,6 +85,7 @@ export function BudgetEditor({
             defaultValue={toInput(total, locale)}
             key={`total-${total}`}
             placeholder={t.ui.budget.totalPlaceholder}
+            aria-invalid={failed("total") ? true : undefined}
             className={inputClass}
             onBlur={(e) =>
               save("total", e.target.value, total, (amount) =>
@@ -89,6 +93,7 @@ export function BudgetEditor({
               )
             }
           />
+          <ErrorLine message={failed("total")} />
         </label>
         <div>
           <GhostButton type="button" disabled={busy} onClick={copy}>
@@ -164,6 +169,11 @@ export function BudgetEditor({
               <CategoryIcon name={l.name} />
               <label htmlFor={`b-${l.categoryId}`} className="min-w-0 truncate font-semibold">
                 {categoryLabel(l.name, locale)}
+                {failed(`c${l.categoryId}`) && (
+                  <span role="alert" className="text-bad block text-[13px] font-medium">
+                    {failed(`c${l.categoryId}`)}
+                  </span>
+                )}
                 {l.fixed > 0 && (
                   <span className="text-ink-muted block text-[13px] font-normal">
                     {t.ui.budget.fixedPart(formatter(locale).euroExact(l.fixed))}
@@ -182,6 +192,7 @@ export function BudgetEditor({
                 key={`${l.categoryId}-${l.budget}`}
                 placeholder={l.fixed > 0 ? t.ui.budget.extraPlaceholder : "€"}
                 aria-label={t.ui.budget.forCategory(categoryLabel(l.name, locale))}
+                aria-invalid={failed(`c${l.categoryId}`) ? true : undefined}
                 className={`${inputClass} num text-right`}
                 onBlur={(e) =>
                   save(`c${l.categoryId}`, e.target.value, l.budget, (amount) =>
@@ -193,7 +204,7 @@ export function BudgetEditor({
           ))}
         </ul>
       </div>
-      <ErrorLine message={error} />
+      <ErrorLine message={apiError} />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { ToastProvider } from "./toast";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
@@ -81,9 +82,11 @@ export async function AppShell({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <SampleNotice />
           </Suspense>
-          <main id="main">
-            <PageMotion>{children}</PageMotion>
-          </main>
+          <ToastProvider>
+            <main id="main">
+              <PageMotion>{children}</PageMotion>
+            </main>
+          </ToastProvider>
         </div>
       </div>
     </div>

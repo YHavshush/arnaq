@@ -1,14 +1,15 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useI18n } from "@/i18n/client";
 import { api, euroInputToCents } from "@/lib/client/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, Field, GhostButton, PrimaryButton, inputClass } from "./form";
+import { ChaseSpinner } from "./motion";
+import { useAction } from "./use-action";
 
 interface Cat {
   id: number;
@@ -28,20 +29,16 @@ interface SuggestionView {
 
 /** Detected recurring payments: accept (becomes a fixed cost) or reject (never offered again). */
 export function SuggestionList({ suggestions }: { suggestions: SuggestionView[] }) {
-  const router = useRouter();
   const { locale, t } = useI18n();
   const { euroExact: euro } = formatter(locale);
-  const [busy, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { run, pending: busy, error } = useAction();
+  const done = t.ui.fixed.done;
 
-  async function act(path: "accept" | "reject", s: SuggestionView) {
-    setError(null);
-    const res = await api("POST", `/api/recurring/suggestions/${path}`, {
-      key: s.key,
-      type: s.type,
-    });
-    if (!res.ok) return setError(res.error);
-    startTransition(() => router.refresh());
+  function act(path: "accept" | "reject", s: SuggestionView) {
+    return run(
+      () => api("POST", `/api/recurring/suggestions/${path}`, { key: s.key, type: s.type }),
+      { success: path === "accept" ? done.added : done.dismissed },
+    );
   }
 
   return (
@@ -92,19 +89,14 @@ interface ItemView {
 
 /** All fixed costs with pause/resume and delete. Delete asks twice (it cannot be undone). */
 export function ItemManager({ items }: { items: ItemView[] }) {
-  const router = useRouter();
   const { locale, t } = useI18n();
   const { euroExact: euro } = formatter(locale);
-  const [busy, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const { run: act, pending: busy, error } = useAction();
   const [confirming, setConfirming] = useState<number | null>(null);
+  const done = t.ui.fixed.done;
 
-  async function run(res: ReturnType<typeof api>) {
-    setError(null);
-    const r = await res;
-    if (!r.ok) return setError(r.error);
-    setConfirming(null);
-    startTransition(() => router.refresh());
+  async function run(call: () => ReturnType<typeof api>, success: string) {
+    if (await act(call, { success })) setConfirming(null);
   }
 
   if (items.length === 0) return null;
@@ -134,7 +126,12 @@ export function ItemManager({ items }: { items: ItemView[] }) {
               <GhostButton
                 type="button"
                 disabled={busy}
-                onClick={() => run(api("PATCH", `/api/recurring/${it.id}`, { active: !it.active }))}
+                onClick={() =>
+                  run(
+                    () => api("PATCH", `/api/recurring/${it.id}`, { active: !it.active }),
+                    it.active ? done.paused : done.resumed,
+                  )
+                }
               >
                 {it.active ? t.ui.fixed.item.pause : t.ui.fixed.item.resume}
               </GhostButton>
@@ -143,7 +140,9 @@ export function ItemManager({ items }: { items: ItemView[] }) {
                   <PrimaryButton
                     type="button"
                     disabled={busy}
-                    onClick={() => run(api("DELETE", `/api/recurring/${it.id}`))}
+                    onClick={() =>
+                      run(() => api("DELETE", `/api/recurring/${it.id}`), done.removed)
+                    }
                   >
                     {t.ui.fixed.item.confirmRemove}
                   </PrimaryButton>
@@ -171,36 +170,38 @@ export function ItemManager({ items }: { items: ItemView[] }) {
 
 /** Add a fixed cost by hand. */
 export function AddItemForm({ categories, today }: { categories: Cat[]; today: string }) {
-  const router = useRouter();
   const { locale, t } = useI18n();
   const f = t.ui.fixed.form;
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<"expense" | "income">("expense");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, startTransition] = useTransition();
+  const [formError, setFormError] = useState<string | null>(null);
+  const { run, pending: busy, error: apiError } = useAction();
+  const error = formError ?? apiError;
 
   async function submit(form: FormData) {
-    setError(null);
+    setFormError(null);
     const cents = euroInputToCents(String(form.get("amount") ?? ""));
-    if (cents === null || cents === 0) return setError(f.errAmount);
+    if (cents === null || cents === 0) return setFormError(f.errAmount);
     const name = String(form.get("name") ?? "").trim();
-    if (!name) return setError(f.errName);
+    if (!name) return setFormError(f.errName);
     const counterparty = String(form.get("counterparty") ?? "").trim();
     const categoryId = Number(form.get("categoryId"));
-    const res = await api("POST", "/api/recurring", {
-      name,
-      type,
-      expectedAmount: cents,
-      dayOfMonth: Number(form.get("day")),
-      frequency: String(form.get("frequency")),
-      matchCounterparty: counterparty || name,
-      categoryId: categoryId > 0 ? categoryId : null,
-      startDate: String(form.get("start")),
-      tolerance: Math.round(cents * 0.1),
-    });
-    if (!res.ok) return setError(res.error);
-    setOpen(false);
-    startTransition(() => router.refresh());
+    const ok = await run(
+      () =>
+        api("POST", "/api/recurring", {
+          name,
+          type,
+          expectedAmount: cents,
+          dayOfMonth: Number(form.get("day")),
+          frequency: String(form.get("frequency")),
+          matchCounterparty: counterparty || name,
+          categoryId: categoryId > 0 ? categoryId : null,
+          startDate: String(form.get("start")),
+          tolerance: Math.round(cents * 0.1),
+        }),
+      { success: t.ui.fixed.done.created },
+    );
+    if (ok) setOpen(false);
   }
 
   if (!open)
@@ -302,7 +303,14 @@ export function AddItemForm({ categories, today }: { categories: Cat[]; today: s
       <ErrorLine message={error} />
       <div className="flex gap-2">
         <PrimaryButton type="submit" disabled={busy}>
-          {f.save}
+          {busy ? (
+            <span className="inline-flex items-center gap-2">
+              <ChaseSpinner />
+              {f.save}
+            </span>
+          ) : (
+            f.save
+          )}
         </PrimaryButton>
         <GhostButton type="button" onClick={() => setOpen(false)}>
           {t.ui.common.cancel}

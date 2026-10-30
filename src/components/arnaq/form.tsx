@@ -25,7 +25,7 @@ export function PrimaryButton({ children, ...rest }: React.ComponentProps<"butto
   return (
     <button
       {...rest}
-      className="bg-action text-action-ink min-h-11 rounded-full px-5 text-[15px] font-semibold disabled:opacity-50"
+      className="bg-action text-action-ink min-h-11 rounded-full px-5 text-[15px] font-semibold transition-transform active:scale-[.97] disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
     >
       {children}
     </button>
@@ -36,7 +36,7 @@ export function GhostButton({ children, ...rest }: React.ComponentProps<"button"
   return (
     <button
       {...rest}
-      className="bg-soft text-accent min-h-11 rounded-full px-4 text-[15px] font-semibold disabled:opacity-50"
+      className="bg-soft text-accent min-h-11 rounded-full px-4 text-[15px] font-semibold transition-transform active:scale-[.97] disabled:opacity-50 motion-reduce:transition-none motion-reduce:active:scale-100"
     >
       {children}
     </button>

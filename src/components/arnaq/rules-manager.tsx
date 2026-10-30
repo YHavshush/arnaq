@@ -1,12 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, Field, GhostButton, PrimaryButton, inputClass } from "./form";
+import { useAction } from "./use-action";
 
 interface Rule {
   id: number;
@@ -22,35 +22,33 @@ interface Cat {
 
 /** The rules that sort transactions: see them, remove one, add one. A rule matches a piece of text in the name or description. */
 export function RulesManager({ rules, categories }: { rules: Rule[]; categories: Cat[] }) {
-  const router = useRouter();
   const { locale, t } = useI18n();
   const r18 = t.ui.settings.rule;
-  const [busy, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
+  const { run, pending: busy, error: apiError } = useAction();
+  const [formError, setFormError] = useState<string | null>(null);
+  const error = formError ?? apiError;
 
-  async function remove(id: number) {
-    setError(null);
-    setNote(null);
-    const res = await api("DELETE", `/api/rules/${id}`);
-    if (!res.ok) return setError(res.error);
-    startTransition(() => router.refresh());
+  function remove(id: number) {
+    setFormError(null);
+    return run(() => api("DELETE", `/api/rules/${id}`), { success: r18.removed });
   }
 
-  async function add(form: FormData) {
-    setError(null);
-    setNote(null);
+  /** True when the rule was added, so the form is only cleared then (a failure keeps what was typed). */
+  async function add(form: FormData): Promise<boolean> {
+    setFormError(null);
     const pattern = String(form.get("pattern") ?? "").trim();
     const categoryId = Number(form.get("categoryId"));
-    if (pattern.length < 2) return setError(r18.errPattern);
-    if (!categoryId) return setError(r18.errCategory);
-    const res = await api<{ alsoCategorised: number }>("POST", "/api/rules", {
-      pattern,
-      categoryId,
-    });
-    if (!res.ok) return setError(res.error);
-    setNote(res.data.alsoCategorised > 0 ? r18.addedSorted(res.data.alsoCategorised) : r18.added);
-    startTransition(() => router.refresh());
+    if (pattern.length < 2) return (setFormError(r18.errPattern), false);
+    if (!categoryId) return (setFormError(r18.errCategory), false);
+    return run(
+      () => api<{ alsoCategorised: number }>("POST", "/api/rules", { pattern, categoryId }),
+      {
+        success: (data) => {
+          const n = (data as { alsoCategorised?: number } | null)?.alsoCategorised ?? 0;
+          return n > 0 ? r18.addedSorted(n) : r18.added;
+        },
+      },
+    );
   }
 
   return (
@@ -59,7 +57,7 @@ export function RulesManager({ rules, categories }: { rules: Rule[]; categories:
         onSubmit={(e) => {
           e.preventDefault();
           const f = e.currentTarget;
-          void add(new FormData(f)).then(() => f.reset());
+          void add(new FormData(f)).then((added) => added && f.reset());
         }}
         className="glass grid gap-3 p-4"
       >
@@ -77,11 +75,6 @@ export function RulesManager({ rules, categories }: { rules: Rule[]; categories:
           </select>
         </Field>
         <ErrorLine message={error} />
-        {note && (
-          <p role="status" className="text-good text-sm font-medium">
-            {note}
-          </p>
-        )}
         <div>
           <PrimaryButton type="submit" disabled={busy}>
             {r18.add}

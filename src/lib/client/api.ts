@@ -1,5 +1,7 @@
-// Tiny fetch helper for the client components. Always resolves; errors become a Dutch message.
+// Tiny fetch helper for the client components. Always resolves; a failure becomes a message in the page language.
 export type ApiResult<T = unknown> = { ok: true; data: T } | { ok: false; error: string };
+
+const nl = () => typeof document !== "undefined" && document.documentElement.lang.startsWith("nl");
 
 export async function api<T = unknown>(
   method: "POST" | "PUT" | "PATCH" | "DELETE",
@@ -13,10 +15,19 @@ export async function api<T = unknown>(
       body: body === undefined ? undefined : JSON.stringify(body),
     });
     const data = (await res.json().catch(() => null)) as { error?: string } | null;
-    if (!res.ok) return { ok: false, error: data?.error ?? `Er ging iets mis (${res.status}).` };
+    if (!res.ok)
+      return {
+        ok: false,
+        error:
+          data?.error ??
+          (nl() ? `Er ging iets mis (${res.status}).` : `Something went wrong (${res.status}).`),
+      };
     return { ok: true, data: data as T };
   } catch {
-    return { ok: false, error: "Geen verbinding. Probeer het opnieuw." };
+    return {
+      ok: false,
+      error: nl() ? "Geen verbinding. Probeer het opnieuw." : "No connection. Try again.",
+    };
   }
 }
 
