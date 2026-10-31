@@ -95,7 +95,7 @@ export async function getBtwSummary(
     description: t.description,
   };
 
-  const [incoming, pocketMoves, payments] = await Promise.all([
+  const [incoming, pocketMoves, payments, allOutflows] = await Promise.all([
     db
       .select(columns)
       .from(t)
@@ -128,6 +128,12 @@ export async function getBtwSummary(
           lte(t.date, addDays(quarter.due, PAYMENT_GRACE_DAYS)),
         ),
       ),
+    // Everything paid out, to tell the tax office's quarterly BTW from what it takes every month.
+    db
+      .select(columns)
+      .from(t)
+      .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
+      .where(and(ownCurrency, eq(t.isInternalTransfer, false), lt(t.amount, 0))),
   ]);
 
   const text = (r: { counterparty: string | null; description: string | null }) => [
@@ -143,7 +149,18 @@ export async function getBtwSummary(
   const mine = pocketMoves.filter((r) => mentions(text(r), pocketMatch));
   const pocket = mine.reduce((s, r) => s - r.amount, 0);
 
-  const paidRows = payments.filter((r) => mentions(text(r), TAX_OFFICE_MATCH));
+  // The same amount to the tax office in three or more months is something monthly (an allowance, an instalment),
+  // not the quarterly BTW.
+  const monthsByAmount = new Map<number, Set<string>>();
+  for (const r of allOutflows.filter((r) => mentions(text(r), TAX_OFFICE_MATCH))) {
+    const months = monthsByAmount.get(r.amount) ?? new Set<string>();
+    months.add(r.date.slice(0, 7));
+    monthsByAmount.set(r.amount, months);
+  }
+  const monthly = (amount: number) => (monthsByAmount.get(amount)?.size ?? 0) >= 3;
+  const paidRows = payments.filter(
+    (r) => mentions(text(r), TAX_OFFICE_MATCH) && !monthly(r.amount),
+  );
   const paidAmount = paidRows.reduce((s, r) => s - r.amount, 0);
   const paid =
     paidRows.length > 0

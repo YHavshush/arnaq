@@ -132,4 +132,15 @@ describe("getBtwSummary", () => {
       pocket: 5000,
     });
   });
+
+  it("does not count what the tax office takes every month (a 20 euro instalment) as the BTW payment", async () => {
+    const w = await world();
+    await w.income("2026-08-01", 138000);
+    // 20 euro on the 27th of four months in a row, then the real BTW payment.
+    for (const d of ["2026-07-27", "2026-08-27", "2026-09-27", "2026-10-27"]) await w.tax(d, -2000);
+    await w.tax("2026-10-29", -30000);
+    const s = await run(w.db, "2026-10-30");
+    expect(s.paid).toEqual({ amount: 30000, date: "2026-10-29" });
+    expect(s.fromOwnMoney).toBe(30000);
+  });
 });

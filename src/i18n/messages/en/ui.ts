@@ -113,6 +113,9 @@ export const ui = {
     sentenceMissing: (amount: string, date: string) => `Set aside ${amount} more before ${date}.`,
     sentenceCovered: (date: string) => `The pocket covers it. Pay by ${date}.`,
     sentencePaid: (date: string) => `Paid on ${date}.`,
+    paidAmount: (amount: string) => `${amount} paid`,
+    paidEstimate: (estimate: string, received: string, client: string) =>
+      `What you paid is what counts. arnaq estimated ${estimate} from the ${received} received from ${client}; the real bill depends on invoice dates and deductions.`,
     note: "Your payments include BTW, so this is 21 of every 121 euro; deductions can make the real bill lower.",
     settings: {
       title: "BTW",

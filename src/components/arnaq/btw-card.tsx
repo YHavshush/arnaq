@@ -23,7 +23,7 @@ export function BtwCard({
     : btw.toSetAside > 0
       ? b.sentenceMissing(euro(btw.toSetAside), dayLabel(btw.quarter.due))
       : b.sentenceCovered(dayLabel(btw.quarter.due));
-  const fill = btw.owed > 0 ? Math.min(Math.max(btw.pocket, 0) / btw.owed, 1) : 0;
+  const fill = btw.paid ? 1 : btw.owed > 0 ? Math.min(Math.max(btw.pocket, 0) / btw.owed, 1) : 0;
   const lines: [string, string][] = [];
   if (btw.paid) lines.push([b.paid, euro(btw.paid.amount)]);
   if (btw.paid && btw.fromOwnMoney > 0) lines.push([b.ownMoney, euro(btw.fromOwnMoney)]);
@@ -33,13 +33,19 @@ export function BtwCard({
     <div className="glass p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <p className="text-[15px] font-semibold">{sentence}</p>
-        <p className="num text-[15px]">{b.pocketOf(euro(btw.pocket), euro(btw.owed))}</p>
+        <p className="num text-[15px]">
+          {btw.paid
+            ? b.paidAmount(euro(btw.paid.amount))
+            : b.pocketOf(euro(btw.pocket), euro(btw.owed))}
+        </p>
       </div>
       <div aria-hidden className="bg-track mt-2 h-1.5 overflow-hidden rounded-full">
         <i className="bg-accent block h-full rounded-full" style={{ width: `${fill * 100}%` }} />
       </div>
       <p className="text-ink-muted mt-2 text-[13px]">
-        {b.basis(euro(btw.received), client)} {b.note}
+        {btw.paid
+          ? b.paidEstimate(euro(btw.owed), euro(btw.received), client)
+          : `${b.basis(euro(btw.received), client)} ${b.note}`}
       </p>
       {lines.length > 0 && (
         <dl className="mt-2 grid gap-1 text-[14px]">

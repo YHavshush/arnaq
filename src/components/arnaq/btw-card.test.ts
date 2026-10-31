@@ -46,6 +46,21 @@ describe("BtwCard", () => {
     expect(out).toContain("Of which your own money");
     expect(out).toContain("Left over after paying");
   });
+  it("once paid, the amount paid counts and the estimate is only mentioned", () => {
+    const out = html({
+      ...base,
+      received: 137300,
+      owed: 23834,
+      pocket: 0,
+      toSetAside: 0,
+      paid: { amount: 30000, date: "2026-10-29" },
+      fromOwnMoney: 30000,
+    });
+    expect(out).toContain("€300 paid");
+    expect(out).toContain("What you paid is what counts");
+    expect(out).toContain("estimated €238");
+    expect(out).not.toContain("€0 of €238");
+  });
   it("speaks Dutch too", () => {
     expect(html(base, "nl")).toContain("Zet nog");
   });

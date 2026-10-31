@@ -115,6 +115,9 @@ export const ui: typeof en = {
     sentenceMissing: (amount: string, date: string) => `Zet nog ${amount} opzij vóór ${date}.`,
     sentenceCovered: (date: string) => `De pot dekt het. Betaal uiterlijk ${date}.`,
     sentencePaid: (date: string) => `Betaald op ${date}.`,
+    paidAmount: (amount: string) => `${amount} betaald`,
+    paidEstimate: (estimate: string, received: string, client: string) =>
+      `Wat je betaalde telt. arnaq schatte ${estimate} uit de ${received} ontvangen van ${client}; de echte rekening hangt af van factuurdata en aftrekposten.`,
     note: "Je betalingen bevatten BTW, dus dit is 21 van elke 121 euro; aftrekposten kunnen de echte rekening lager maken.",
     settings: {
       title: "BTW",
