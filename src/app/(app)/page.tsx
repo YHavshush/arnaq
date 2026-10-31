@@ -181,7 +181,7 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
               <span className="flex items-baseline gap-3">
                 {o.budget !== null && (
                   <span className="num hidden @min-[560px]/app:inline">
-                    {t.ui.overview.whereTotal(f.euro(o.spent + o.planned), f.euro(o.budget))}
+                    {t.ui.overview.whereTotal(f.euro(o.budgetSpent + o.planned), f.euro(o.budget))}
                   </span>
                 )}
                 <Link href={`/budget?month=${month}`} className="text-accent font-semibold">

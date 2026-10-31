@@ -40,6 +40,8 @@ export const view: typeof en = {
     headerNotStarted: [plain("Deze maand is nog niet begonnen")] as Sentence,
     headerTotals: (spent: string, income: string) =>
       `${spent} uitgegeven · ${income} binnengekomen`,
+    headerTotalsBudget: (spent: string, budget: string, income: string) =>
+      `${spent} van je budget van ${budget} uitgegeven · ${income} binnengekomen`,
     facts: {
       over: (name: string, amount: string) => `Over budget bij ${name} (+${amount}).`,
       under: (name: string, amount: string) => `Onder budget bij ${name}, nog ${amount} over.`,
@@ -47,6 +49,7 @@ export const view: typeof en = {
         `Nog te verwachten: ${name}, ${amount} op ${date}.`,
       fixed: (n: number, amount: string) =>
         `Nog ${n} ${n === 1 ? "vaste last" : "vaste lasten"} te betalen (${amount}).`,
+      unbudgeted: (amount: string) => `Nog ${amount} ging naar categorieën zonder budget.`,
     },
     ofIncome: (spent: string, income: string): Sentence => [
       plain("Je hebt "),

@@ -426,11 +426,45 @@ describe("buildOverzicht: the parts the design adds", () => {
     expect(tile(summary({}))).toMatchObject({ word: "Nog niets" });
   });
 
-  describe("without a total budget the top compares spending with what came in", () => {
-    // Only some categories have a budget (the total is just their sum, not a real budget).
-    const partial = (income: number, spent: number) =>
-      overview({ totalBudget: 40000, totalBudgetIsExplicit: false, incomeActual: income }, [
-        line(1, "Boodschappen", spent, 40000),
+  describe("without a typed total, the total budget is the sum of the category budgets", () => {
+    const sumOf = (rows: ReturnType<typeof line>[], income = 0) =>
+      overview({ totalBudget: 40000, totalBudgetIsExplicit: false, incomeActual: income }, rows);
+    const run = (
+      ov: ReturnType<typeof overview>,
+      extra: Partial<Parameters<typeof buildOverzicht>[0]> = {},
+    ) =>
+      buildOverzicht({
+        overview: ov,
+        occurrences: [],
+        today: "2026-10-15",
+        locale: "en" as const,
+        ...extra,
+      });
+
+    it("compares the sum with spending in the budgeted categories only, and says what is outside", () => {
+      const o = run(
+        sumOf([line(1, "Boodschappen", 20000, 40000), line(2, "Overig", 150000, null)], 65100),
+      );
+      expect(o.basis).toBe("budget");
+      expect(o.budget).toBe(40000);
+      expect(o.spent).toBe(170000);
+      expect(o.budgetSpent).toBe(20000);
+      expect(o.free).toBe(20000);
+      expect(o.used).toBeCloseTo(0.5);
+      expect(o.facts.join(" ")).toContain("€1,500 more went to categories without a budget");
+      expect(o.detail).toContain("€200 of your €400 budget spent");
+    });
+    it("is over budget only when the budgeted categories together are over the sum", () => {
+      const o = run(sumOf([line(1, "Boodschappen", 45000, 40000), line(2, "Overig", 1000, null)]));
+      expect(o.free).toBe(-5000);
+      expect(o.tone).toBe("bad");
+    });
+  });
+
+  describe("without any budget the top compares spending with what came in", () => {
+    const noBudget = (income: number, spent: number) =>
+      overview({ totalBudget: null, totalBudgetIsExplicit: false, incomeActual: income }, [
+        line(1, "Boodschappen", spent, null),
       ]);
     const run = (
       income: number,
@@ -438,14 +472,14 @@ describe("buildOverzicht: the parts the design adds", () => {
       extra: Partial<Parameters<typeof buildOverzicht>[0]> = {},
     ) =>
       buildOverzicht({
-        overview: partial(income, spent),
+        overview: noBudget(income, spent),
         occurrences: [],
         today: "2026-10-15",
         locale: "en" as const,
         ...extra,
       });
 
-    it("ignores a budget that only covers some categories (no 'over budget', no 'behind schedule')", () => {
+    it("has no budget, no pace schedule and no 'behind schedule'", () => {
       const o = run(300000, 196200, { daily: [5000, 12000] });
       expect(o.basis).toBe("income");
       expect(o.budget).toBeNull();
@@ -480,6 +514,7 @@ describe("buildOverzicht: the parts the design adds", () => {
       });
       expect(o.basis).toBe("budget");
       expect(o.budget).toBe(200000);
+      expect(o.budgetSpent).toBe(o.spent);
     });
   });
 

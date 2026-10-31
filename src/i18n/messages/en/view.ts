@@ -39,6 +39,8 @@ export const view = {
     headerDone: (month: string): Sentence => [em(cap(month)), plain(" is done")],
     headerNotStarted: [plain("This month hasn't started yet")] as Sentence,
     headerTotals: (spent: string, income: string) => `${spent} spent · ${income} came in`,
+    headerTotalsBudget: (spent: string, budget: string, income: string) =>
+      `${spent} of your ${budget} budget spent · ${income} came in`,
     facts: {
       over: (name: string, amount: string) => `Over budget on ${name} (+${amount}).`,
       under: (name: string, amount: string) => `Under budget on ${name}, ${amount} left.`,
@@ -46,6 +48,7 @@ export const view = {
         `Still expecting ${name}: ${amount} on ${date}.`,
       fixed: (n: number, amount: string) =>
         `${n} fixed ${n === 1 ? "cost" : "costs"} still to pay (${amount}).`,
+      unbudgeted: (amount: string) => `${amount} more went to categories without a budget.`,
     },
     ofIncome: (spent: string, income: string): Sentence => [
       plain("You've spent "),

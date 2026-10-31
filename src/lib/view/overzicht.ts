@@ -93,8 +93,8 @@ export interface Overzicht {
   month: string;
   hasActivity: boolean;
   /**
-   * What the ring and the sentence compare spending with: the person's own total budget, else what came in
-   * this month, else nothing. A sum of some categories' budgets is not a total budget.
+   * What the ring and the sentence compare spending with: the total budget (the one typed, else the sum of the
+   * category budgets), else what came in this month, else nothing.
    */
   basis: "budget" | "income" | "none";
   /** Small lines under the header: over or under budget, income still to come, fixed costs still to pay (at most two). */
@@ -105,6 +105,8 @@ export interface Overzicht {
   netWorth: { accounts: number; savings: number; total: number } | null;
   budget: number | null;
   spent: number;
+  /** What the budget is compared with: all spending for a typed total, the budgeted categories only for a sum. */
+  budgetSpent: number;
   /** Fixed expenses still to come (expected, not yet matched). */
   planned: number;
   /** Share of the budget that is spent or already planned; null without a budget. */
@@ -298,9 +300,22 @@ export function buildOverzicht({
   const t = messages[locale].view.overzicht;
   const { euro, dayLabel } = formatter(locale);
   const { month, totals } = overview;
-  // Only a total the person set counts. The sum of a few category budgets would call all other spending "over".
-  const budget = totals.totalBudgetIsExplicit ? totals.totalBudget : null;
   const spent = totals.expenseActual;
+  // The total budget is the one typed, else the sum of the category budgets (fixed costs included).
+  const sumBudget =
+    !totals.totalBudgetIsExplicit && totals.totalBudget !== null && totals.totalBudget > 0
+      ? totals.totalBudget
+      : null;
+  const budget = totals.totalBudgetIsExplicit ? totals.totalBudget : sumBudget;
+  // A sum covers only the categories that have a budget, so it is compared with their spending only; the rest is
+  // reported next to it, never called "over budget".
+  const budgetedSpent = overview.expenses
+    .filter((l) => l.budget !== null)
+    .reduce((s, l) => s + l.actual, 0);
+  const budgetSpent = sumBudget !== null ? budgetedSpent : spent;
+  const unbudgeted = sumBudget !== null ? spent - budgetedSpent : 0;
+  // The header with days to go and the facts: for a budget that is a sum, and when there is only income to go by.
+  const compact = sumBudget !== null || (budget === null && totals.incomeActual > 0);
 
   const expenseOcc = occurrences.filter((o) => o.type === "expense");
   const planned = expenseOcc
@@ -317,11 +332,11 @@ export function buildOverzicht({
   const reference =
     budget !== null && budget > 0 ? budget : incomeBasis ? totals.incomeActual : null;
   const basis: Overzicht["basis"] = budget !== null ? "budget" : incomeBasis ? "income" : "none";
-  const used = reference !== null ? (spent + planned) / reference : null;
+  const used = reference !== null ? (budgetSpent + planned) / reference : null;
   const tone: Tone = used === null ? "accent" : toneForUsage(used);
   const free =
     budget !== null
-      ? budget - spent - planned
+      ? budget - budgetSpent - planned
       : incomeBasis
         ? totals.incomeActual - spent - planned
         : null;
@@ -380,7 +395,7 @@ export function buildOverzicht({
       sub:
         budget === null
           ? t.tiles.budget.subNone
-          : t.tiles.budget.sub(euro(spent + planned), euro(budget)),
+          : t.tiles.budget.sub(euro(budgetSpent + planned), euro(budget)),
       tone,
     },
     {
@@ -414,7 +429,7 @@ export function buildOverzicht({
 
   const progress = monthProgress(month, today);
   const variableBudget = budget === null ? null : budget - fixedTotal;
-  const variableSpent = Math.max(spent - paidFixed, 0);
+  const variableSpent = Math.max(budgetSpent - paidFixed, 0);
   const attention = buildAttention({ overview, occurrences, today, locale });
 
   // A line or two under the sentence: how much of the budget is gone and what is over.
@@ -547,19 +562,21 @@ export function buildOverzicht({
       candidates.push(
         f.under(categoryLabel(under.name, locale), euro(under.budget! - under.actual)),
       );
-    if (candidates.length === 0) return [];
+    // Spending outside the budget is always said, so the total never seems to leave something out.
+    const outside = unbudgeted >= 500 ? [f.unbudgeted(euro(unbudgeted))] : [];
+    if (candidates.length === 0) return outside;
     const start = Number(today.slice(8, 10)) % candidates.length;
     return Array.from(
-      { length: Math.min(2, candidates.length) },
+      { length: Math.min(2 - outside.length, candidates.length) },
       (_, i) => candidates[(start + i) % candidates.length],
-    );
+    ).concat(outside);
   }
 
   return {
     month,
     hasActivity,
     basis,
-    facts: incomeBasis ? headerFacts() : [],
+    facts: compact ? headerFacts() : [],
     savingsRow:
       savings && (savings.anchored || savings.lines > 0 || savings.saved > 0)
         ? { saved: savings.saved, thisMonth: savings.thisMonth, goal: savings.goal }
@@ -574,16 +591,23 @@ export function buildOverzicht({
           })(),
     budget,
     spent,
+    budgetSpent,
     planned,
     used,
     tone,
     mood: moodForTone(tone),
     free,
-    sentence: incomeBasis
+    sentence: compact
       ? daysToGo(month, today, locale, used)
-      : sentenceFor({ month, today, budget, spent, fixedTotal, paidFixed, locale }),
-    detail: incomeBasis
-      ? messages[locale].view.overzicht.headerTotals(euro(spent), euro(totals.incomeActual))
+      : sentenceFor({ month, today, budget, spent: budgetSpent, fixedTotal, paidFixed, locale }),
+    detail: compact
+      ? budget !== null
+        ? messages[locale].view.overzicht.headerTotalsBudget(
+            euro(budgetSpent),
+            euro(budget),
+            euro(totals.incomeActual),
+          )
+        : messages[locale].view.overzicht.headerTotals(euro(spent), euro(totals.incomeActual))
       : detail,
     attention,
     tiles,
