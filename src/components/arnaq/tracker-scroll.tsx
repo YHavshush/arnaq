@@ -15,11 +15,11 @@ export function TrackerScroll({ label, children }: { label: string; children: Re
     const col = el?.querySelector<HTMLElement>("[data-focus-col]");
     const first = el?.querySelector<HTMLElement>("th");
     if (!el || !col || !first) return;
-    const box = el.getBoundingClientRect();
+    const boxRect = el.getBoundingClientRect();
     const c = col.getBoundingClientRect();
     const room = el.clientWidth - first.offsetWidth;
     // Where the column sits inside the scrolled content, then half of the free room before it.
-    const left = c.left - box.left + el.scrollLeft;
+    const left = c.left - boxRect.left + el.scrollLeft;
     el.scrollLeft = Math.max(0, left - first.offsetWidth - (room - c.width) / 2);
   }, []);
   return (
