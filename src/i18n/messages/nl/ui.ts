@@ -99,11 +99,12 @@ export const ui: typeof en = {
   },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
-    aside: "21% van wat binnenkomt",
+    aside: "de BTW in wat binnenkomt",
     pocketOf: (pocket: string, owed: string) => `${pocket} van ${owed}`,
-    basis: (received: string, client: string) => `21% van ${received} ontvangen van ${client}.`,
+    basis: (received: string, client: string) =>
+      `De BTW in de ${received} ontvangen van ${client} (21 van elke 121).`,
     received: (client: string) => `Ontvangen van ${client}`,
-    owed: "21% opzij te zetten",
+    owed: "BTW opzij te zetten",
     pocket: "In de BTW-pot",
     missing: "Nog opzij te zetten",
     covered: "Gedekt",
@@ -114,11 +115,11 @@ export const ui: typeof en = {
     sentenceMissing: (amount: string, date: string) => `Zet nog ${amount} opzij vóór ${date}.`,
     sentenceCovered: (date: string) => `De pot dekt het. Betaal uiterlijk ${date}.`,
     sentencePaid: (date: string) => `Betaald op ${date}.`,
-    note: "Gebaseerd op 21% van het ontvangen geld; aftrekposten kunnen de echte rekening lager maken.",
+    note: "Je betalingen bevatten BTW, dus dit is 21 van elke 121 euro; aftrekposten kunnen de echte rekening lager maken.",
     settings: {
       title: "BTW",
       intro:
-        "arnaq zet 21% opzij van wat je klant je betaalt, en telt een overboeking naar sparen als BTW-geld wanneer het BTW-woord in de naam staat. Dat geld is verschuldigd, dus het telt niet mee in je spaargeld of vermogen.",
+        "arnaq zet de BTW opzij die in wat je klant je betaalt zit (de betaling is inclusief BTW), en telt een overboeking naar sparen als BTW-geld wanneer het BTW-woord in de naam staat. Dat geld is verschuldigd, dus het telt niet mee in je spaargeld of vermogen.",
       clientLabel: "Klant die je facturen betaalt",
       clientHint: "De naam zoals op je afschrift. Laat leeg voor Featurn.",
       pocketLabel: "Woord dat BTW-geld aanwijst",

@@ -97,11 +97,12 @@ export const ui = {
   },
   btw: {
     title: (quarter: string) => `BTW ${quarter}`,
-    aside: "21% of what arrives",
+    aside: "the BTW in what arrives",
     pocketOf: (pocket: string, owed: string) => `${pocket} of ${owed}`,
-    basis: (received: string, client: string) => `21% of ${received} received from ${client}.`,
+    basis: (received: string, client: string) =>
+      `The BTW in the ${received} received from ${client} (21 of every 121).`,
     received: (client: string) => `Received from ${client}`,
-    owed: "21% to set aside",
+    owed: "BTW to set aside",
     pocket: "In the BTW pocket",
     missing: "Still to set aside",
     covered: "Covered",
@@ -112,11 +113,11 @@ export const ui = {
     sentenceMissing: (amount: string, date: string) => `Set aside ${amount} more before ${date}.`,
     sentenceCovered: (date: string) => `The pocket covers it. Pay by ${date}.`,
     sentencePaid: (date: string) => `Paid on ${date}.`,
-    note: "Based on 21% of the money received; deductions can make the real bill lower.",
+    note: "Your payments include BTW, so this is 21 of every 121 euro; deductions can make the real bill lower.",
     settings: {
       title: "BTW",
       intro:
-        "arnaq sets 21% aside of what your client pays you, and counts a move to savings as BTW money when its name has the BTW word in it. That money is owed, so it is not part of your savings or net worth.",
+        "arnaq sets aside the BTW inside what your client pays you (the payment includes BTW), and counts a move to savings as BTW money when its name has the BTW word in it. That money is owed, so it is not part of your savings or net worth.",
       clientLabel: "Client who pays your invoices",
       clientHint: "The name as it appears on your statement. Leave empty for Featurn.",
       pocketLabel: "Word that marks BTW money",

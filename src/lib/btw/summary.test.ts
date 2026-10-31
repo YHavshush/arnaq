@@ -46,7 +46,7 @@ describe("getBtwSummary", () => {
   const run = (db: Awaited<ReturnType<typeof world>>["db"], today: string) =>
     getBtwSummary(db, { today });
 
-  it("is 21% of what Featurn paid in the quarter, in whole cents, ignoring other money", async () => {
+  it("is the BTW inside what Featurn paid in the quarter (21 of every 121), in whole cents, ignoring other money", async () => {
     const w = await world();
     await w.income("2026-07-15", 100001);
     await w.income("2026-09-30", 50000);
@@ -55,7 +55,7 @@ describe("getBtwSummary", () => {
     await w.income("2026-08-02", -3000, "Featurn B.V."); // money out, not received
     const s = await run(w.db, "2026-10-20");
     expect(s.received).toBe(150001);
-    expect(s.owed).toBe(31500); // 31500.21 rounded
+    expect(s.owed).toBe(26033); // 150001 x 21 / 121 = 26033.2 rounded
     expect(s.hasData).toBe(true);
   });
 
@@ -67,9 +67,9 @@ describe("getBtwSummary", () => {
     await w.pocket("2026-09-20", 3000, "From EUR BTW");
     await w.pocket("2026-09-21", -99900, "To Instant Access Savings"); // another savings pot
     const s = await run(w.db, "2026-10-20");
-    expect(s.owed).toBe(42000);
+    expect(s.owed).toBe(34711); // 200000 x 21 / 121
     expect(s.pocket).toBe(32000);
-    expect(s.toSetAside).toBe(10000);
+    expect(s.toSetAside).toBe(2711);
     expect(s.paid).toBeNull();
   });
 
@@ -79,7 +79,7 @@ describe("getBtwSummary", () => {
     await w.pocket("2026-08-05", -30000);
     const s = await run(w.db, "2026-10-20");
     expect(s.toSetAside).toBe(0);
-    expect(s.pocket - s.owed).toBe(9000);
+    expect(s.pocket - s.owed).toBe(12645); // 100000 x 21 / 121 = 17355 owed
   });
 
   it("recognises the payment to the Belastingdienst and shows what came from the person's own money", async () => {
@@ -118,7 +118,7 @@ describe("getBtwSummary", () => {
       incomeMatch: "acme",
       pocketMatch: "tax pot",
     });
-    expect(s).toMatchObject({ received: 100000, owed: 21000, pocket: 5000 });
+    expect(s).toMatchObject({ received: 100000, owed: 17355, pocket: 5000 });
   });
 
   it("follows the client and pocket word the person saved", async () => {
@@ -128,7 +128,7 @@ describe("getBtwSummary", () => {
     await setBtwSettings(w.db, { client: "Acme", pocket: "Tax pot" });
     expect(await run(w.db, "2026-10-20")).toMatchObject({
       received: 100000,
-      owed: 21000,
+      owed: 17355,
       pocket: 5000,
     });
   });

@@ -7,6 +7,8 @@ import { normaliseCounterparty } from "@/lib/recurring/normalise";
 
 /** The standard Dutch rate. */
 export const BTW_RATE_PERCENT = 21;
+/** The client pays the price plus BTW, so the BTW is 21 parts of every 121 received. */
+const BTW_SHARE_OF_PAYMENT = { numerator: BTW_RATE_PERCENT, denominator: 100 + BTW_RATE_PERCENT };
 /** Who pays the person, and what marks a move into the BTW pocket: the defaults, until the person changes them. */
 export { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH };
 /** Where the person pays the quarterly BTW. */
@@ -47,7 +49,7 @@ export interface BtwSummary {
   quarter: BtwQuarter;
   /** Cents the client paid in the quarter. */
   received: number;
-  /** 21% of what was received (cents). */
+  /** The BTW inside what was received: 21 parts of every 121 (cents). */
   owed: number;
   /** Cents in the BTW pocket now: moved in minus moved out. */
   pocket: number;
@@ -71,7 +73,7 @@ export const mentions = (text: Array<string | null>, needle: string) =>
   words(text.filter(Boolean).join(" ")).includes(words(needle));
 
 /**
- * The BTW to set aside, per quarter, from the statements alone: 21% of what the client paid, what is
+ * The BTW to set aside, per quarter, from the statements alone: the BTW inside what the client paid (which includes BTW), what is
  * in the pocket, what is still missing, and what was paid to the tax office. Deductions are not known
  * here, so `owed` is the safe side: the surplus after paying is real money left over.
  */
@@ -135,7 +137,9 @@ export async function getBtwSummary(
   const received = incoming
     .filter((r) => mentions(text(r), incomeMatch))
     .reduce((s, r) => s + r.amount, 0);
-  const owed = Math.round((received * BTW_RATE_PERCENT) / 100);
+  const owed = Math.round(
+    (received * BTW_SHARE_OF_PAYMENT.numerator) / BTW_SHARE_OF_PAYMENT.denominator,
+  );
   const mine = pocketMoves.filter((r) => mentions(text(r), pocketMatch));
   const pocket = mine.reduce((s, r) => s - r.amount, 0);
 
