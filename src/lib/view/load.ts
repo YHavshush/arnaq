@@ -10,6 +10,7 @@ import { addMonths } from "@/lib/recurring/dates";
 import { getAutomatic } from "@/lib/smart/review";
 import { listRecurringItems } from "@/lib/recurring/items";
 import { getMissedOccurrences, getOccurrences } from "@/lib/recurring/occurrences";
+import { listLinkableTransactions } from "@/lib/recurring/linkable";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
 import type { Locale } from "@/i18n/config";
 import { getOpeningBalance } from "@/lib/forecast/balance";
@@ -70,12 +71,13 @@ export async function loadPrognose(db: Db, today: string, months: number, locale
 }
 
 export async function loadVasteLasten(db: Db, month: string, today: string, locale: Locale) {
-  const [occurrences, items, missed, suggestions, categories] = await Promise.all([
+  const [occurrences, items, missed, suggestions, categories, linkable] = await Promise.all([
     getOccurrences(db, { from: month, to: month }),
     listRecurringItems(db),
     getMissedOccurrences(db),
     detectSuggestions(db, { today }),
     db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
+    listLinkableTransactions(db, { today }),
   ]);
   return {
     ...buildVasteLasten(occurrences, locale),
@@ -84,6 +86,7 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
     suggestionsCosts: suggestions.filter((s) => s.type === "expense"),
     suggestionsIncome: suggestions.filter((s) => s.type === "income"),
     categories,
+    linkable,
     prev: addMonths(month, -1),
     next: addMonths(month, 1),
   };

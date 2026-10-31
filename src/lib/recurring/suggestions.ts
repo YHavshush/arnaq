@@ -31,7 +31,7 @@ export interface Suggestion {
   name: string;
   matchCounterparty: string;
   matchIban: string | null;
-  expectedAmount: number; // positive cents, median of the months
+  expectedAmount: number; // positive cents, median of the latest months
   tolerance: number; // cents
   dayOfMonth: number;
   /** Only monthly series are detected (see detectSuggestions). */
@@ -51,6 +51,9 @@ interface Tx {
   counterpartyIban: string | null;
   categoryId: number | null;
 }
+
+/** How many of the latest months say what a charge costs now. */
+const RECENT_MONTHS = 3;
 
 /** Lower median: always one of the inputs, so integer cents stay integer. */
 function median(values: number[]): number {
@@ -114,7 +117,8 @@ function findSeries(txs: Tx[], framing: Framing, type: RecurringType): Series | 
       )[0],
   );
 
-  const expectedAmount = median(picks.map((t) => t.amount));
+  // What it costs now: a rent that went up in July is the new amount, not the average of the old and the new.
+  const expectedAmount = median(picks.slice(-RECENT_MONTHS).map((t) => t.amount));
   const allowed = Math.max(
     Math.round(
       (expectedAmount *

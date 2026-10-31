@@ -38,7 +38,7 @@ describe("detectSuggestions", () => {
     expect(await h.keys()).toEqual(["expense:netflix"]);
   });
 
-  it("describes the suggestion with medians, tolerance, IBAN, category and evidence", async () => {
+  it("describes the suggestion with the current amount, tolerance, IBAN, category and evidence", async () => {
     const h = await history();
     const txs = await h.series(
       "Netflix International BV",
@@ -57,7 +57,7 @@ describe("detectSuggestions", () => {
         name: "Netflix International BV",
         matchCounterparty: "Netflix International BV",
         matchIban: "NL00NFLX0000000001",
-        expectedAmount: 1399, // lower median keeps it an observed amount
+        expectedAmount: 1499, // the median of the latest three months: what it costs now, an observed amount
         tolerance: 100, // max(spread 100, 5% = 70, 1 euro)
         dayOfMonth: 5,
         frequency: "monthly",
@@ -108,6 +108,21 @@ describe("detectSuggestions", () => {
         categoryId: await h.cat("Salaris / bijbaan"),
       }),
     ]);
+  });
+
+  it("suggests what a charge costs now after a raise (rent), not the average of old and new", async () => {
+    const h = await history();
+    await h.series("Stichting DUWO", [
+      ["2026-03-02", -46848],
+      ["2026-04-01", -46848],
+      ["2026-05-04", -46848],
+      ["2026-06-01", -46848],
+      ["2026-07-01", -48145],
+      ["2026-08-03", -48145],
+      ["2026-09-01", -48145],
+    ]);
+    const [rent] = await h.suggestions();
+    expect(rent.expectedAmount).toBe(48145);
   });
 
   it("does not suggest variable amounts", async () => {

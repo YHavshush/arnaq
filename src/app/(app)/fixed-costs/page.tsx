@@ -146,7 +146,7 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
             }))}
           />
           <div>
-            <AddItemForm categories={v.categories} today={today} />
+            <AddItemForm categories={v.categories} today={today} linkable={v.linkable} />
           </div>
         </div>
       </Section>
