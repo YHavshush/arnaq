@@ -1,6 +1,7 @@
 import { count, isNull } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { applyRules } from "@/lib/categories/categorise";
+import { flagCardTopUps } from "@/lib/categories/transfers";
 import { applyAutomatic } from "@/lib/smart/auto";
 import { applyLearned } from "@/lib/smart/learned";
 
@@ -17,6 +18,7 @@ export async function resortOpen(db: Db): Promise<{ sorted: number; open: number
     return row?.n ?? 0;
   };
   const before = await openCount();
+  await flagCardTopUps(db);
   await applyLearned(db);
   await applyRules(db);
   await applyAutomatic(db);

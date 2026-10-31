@@ -1,4 +1,4 @@
-import { count, desc, eq, inArray } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import { first, schema, type Db } from "@/db";
 import { INTERNAL_TRANSFER_CATEGORY } from "./defaults";
 
@@ -82,6 +82,36 @@ export async function detectInternalTransfers(
       .where(inArray(schema.transactions.id, ids.slice(i, i + 500)));
   }
   return flagged.size;
+}
+
+/**
+ * A card payment to "Revolut**1234*" is the person topping up their own Revolut: the bank statement names the card, not
+ * the account, so it can never be paired by IBAN. It is money between the person's own accounts, not spending. Only
+ * open rows are touched, so a choice made (or undone) is never overridden. Returns how many it flagged.
+ */
+export async function flagCardTopUps(db: Db): Promise<number> {
+  const category = await first(
+    db
+      .select()
+      .from(schema.categories)
+      .where(eq(schema.categories.name, INTERNAL_TRANSFER_CATEGORY)),
+  );
+  if (!category) return 0;
+  const t = schema.transactions;
+  const rows = await db
+    .update(t)
+    .set({ isInternalTransfer: true, categoryId: category.id, categorySource: "rule" })
+    .where(
+      and(
+        isNull(t.categoryId),
+        eq(t.isInternalTransfer, false),
+        lt(t.amount, 0),
+        sql`${t.counterparty} ~* '^revolut\\s*\\*\\*\\s*[0-9]+\\*?$'`,
+        or(isNull(t.categorySource), ne(t.categorySource, "undone"))!,
+      ),
+    )
+    .returning({ id: t.id });
+  return rows.length;
 }
 
 /**

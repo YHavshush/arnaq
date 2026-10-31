@@ -1,7 +1,7 @@
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { one, createDb, schema } from "@/db";
-import { detectInternalTransfers, listTransfers } from "./transfers";
+import { detectInternalTransfers, flagCardTopUps, listTransfers } from "./transfers";
 
 async function setup() {
   const db = await createDb(":memory:");
@@ -98,5 +98,27 @@ describe("listTransfers", () => {
     expect(total).toBe(2);
     expect(rows.map((r) => r.id)).toEqual([recent!.id]);
     expect((await listTransfers(db)).rows.map((r) => r.id)).toEqual([recent!.id, old!.id]);
+  });
+});
+
+describe("flagCardTopUps", () => {
+  it("flags a card payment to Revolut**1234* as a transfer between own accounts", async () => {
+    const { db, rabo, tx, flagged } = await setup();
+    const a = await tx(rabo.id, "2026-08-24", -60000, { counterparty: "Revolut**4270*" });
+    const b = await tx(rabo.id, "2026-03-05", -15000, { counterparty: "REVOLUT**1345*" });
+    expect(await flagCardTopUps(db)).toBe(2);
+    expect((await flagged(a.id)) && (await flagged(b.id))).toBe(true);
+  });
+
+  it("leaves other payments, money in, sorted rows and undone rows alone", async () => {
+    const { db, rabo, tx, flagged } = await setup();
+    const shop = await tx(rabo.id, "2026-08-24", -6000, { counterparty: "Revolut Bank Shop" });
+    const inn = await tx(rabo.id, "2026-08-24", 6000, { counterparty: "Revolut**4270*" });
+    const undone = await tx(rabo.id, "2026-08-25", -6000, {
+      counterparty: "Revolut**4270*",
+      categorySource: "undone",
+    });
+    expect(await flagCardTopUps(db)).toBe(0);
+    for (const t of [shop, inn, undone]) expect(await flagged(t.id)).toBe(false);
   });
 });

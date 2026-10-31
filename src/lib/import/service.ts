@@ -6,7 +6,7 @@ import { catalogLookup, INCOME_SLUGS } from "@/lib/smart/catalog-nl";
 import { applyAutomatic } from "@/lib/smart/auto";
 import { applyLearned } from "@/lib/smart/learned";
 import { merchantKey } from "@/lib/smart/merchant";
-import { detectInternalTransfers } from "@/lib/categories/transfers";
+import { detectInternalTransfers, flagCardTopUps } from "@/lib/categories/transfers";
 import { isDate } from "@/lib/recurring/dates";
 import { latestTransactionMonth, syncRecurring, type SyncResult } from "@/lib/recurring/sync";
 import { detectBank, getParser } from "./parsers";
@@ -321,6 +321,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
 
     // New rows get categorised and own-account transfers are flagged straight away.
     await detectInternalTransfers(tx);
+    await flagCardTopUps(tx);
     // Then what the bank itself calls a top-up or an exchange, and no other bank's withdrawal claimed: money moving
     // between the person's own accounts, not income. Only rows that are still open, so a choice made is never undone.
     const bankTransfers = fresh
