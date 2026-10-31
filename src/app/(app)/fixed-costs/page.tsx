@@ -34,6 +34,16 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
   const nameOf = (id: number | null) => (id === null ? null : (catName.get(id) ?? null));
   const f = t.ui.fixed;
 
+  const sum = (rows: VasteLastRow[]) => rows.reduce((s, r) => s + r.amount, 0);
+  const expenseTotal = sum(v.expenses);
+  const incomeTotal = sum(v.income);
+  const totalRow = (label: string, amount: number, strong = false) => (
+    <li className="bg-soft/50 grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4 px-4 py-3">
+      <span className={strong ? "font-semibold" : "text-ink-muted"}>{label}</span>
+      <span className="num font-semibold">{euro(amount)}</span>
+    </li>
+  );
+
   const toRow = (r: VasteLastRow) => (
     <Row
       key={r.occurrenceId}
@@ -74,18 +84,32 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
           {v.expenses.length > 0 && (
             <Section title={f.expenses} aside={f.toGo(euro(v.toCome))}>
               <div className="glass overflow-hidden">
-                <ul className="divide-hair divide-y">{v.expenses.map(toRow)}</ul>
+                <ul className="divide-hair divide-y">
+                  {v.expenses.map(toRow)}
+                  {totalRow(f.totalExpenses, expenseTotal, true)}
+                </ul>
               </div>
             </Section>
           )}
           {v.income.length > 0 && (
             <Section title={f.income}>
               <div className="glass overflow-hidden">
-                <ul className="divide-hair divide-y">{v.income.map(toRow)}</ul>
+                <ul className="divide-hair divide-y">
+                  {v.income.map(toRow)}
+                  {totalRow(f.totalIncome, incomeTotal, true)}
+                </ul>
               </div>
             </Section>
           )}
         </>
+      )}
+
+      {v.expenses.length > 0 && v.income.length > 0 && (
+        <div className="glass mb-6 overflow-hidden">
+          <ul className="divide-hair divide-y">
+            {totalRow(f.leftAfterFixed, incomeTotal - expenseTotal, true)}
+          </ul>
+        </div>
       )}
 
       {v.missed.length > 0 && (

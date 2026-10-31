@@ -248,6 +248,9 @@ export const ui: typeof en = {
     emptyBody:
       "Voeg ze hieronder toe, of accepteer een suggestie zodra er genoeg maanden zijn geüpload.",
     expenses: "Uitgaven",
+    totalExpenses: "Totaal vaste uitgaven",
+    totalIncome: "Totaal vast inkomen",
+    leftAfterFixed: "Over na vaste lasten",
     toGo: (amount: string) => `${amount} te gaan`,
     income: "Inkomen",
     missed: "Gemist",
