@@ -199,6 +199,22 @@ export const view: typeof en = {
       `${name} (verwacht ${date}) is niet gezien en telt niet mee.`,
     noteSetAside: (amount: string, month: string) =>
       `Je vaste spaarstortingen zetten tot en met ${month} ${amount} opzij. Dat verlaagt het saldo maar telt niet als uitgaven.`,
+    parts: {
+      expected: "verwacht",
+      received: "ontvangen",
+      paid: "betaald",
+      partlyPaid: (paid: string, total: string) => `${paid} van ${total} betaald`,
+      otherIncome: "Overig inkomen",
+      fixedCosts: "Vaste lasten",
+      everyday: "Gewone uitgaven",
+      items: (n: number) => `${n} ${n === 1 ? "post" : "posten"}`,
+      more: (n: number) => `${n} meer`,
+      basisAverages: "je gemiddelden",
+      basisActual: "werkelijk",
+      basisMixed: "tot nu toe plus gemiddelden",
+      setAsideNote: (amount: string) =>
+        `Telt hierboven niet mee: ${amount} is opzij gezet voor sparen en de BTW.`,
+    },
   },
   vasteLasten: {
     label: {

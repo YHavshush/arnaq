@@ -202,6 +202,23 @@ export const view = {
       `${name} (expected ${date}) has not been seen and is not counted.`,
     noteSetAside: (amount: string, month: string) =>
       `Your fixed savings deposits put ${amount} aside through ${month}. That lowers the balance but is not counted as spending.`,
+    /** What is inside a month's Income and Expenses tiles (see src/lib/view/month-parts.ts). */
+    parts: {
+      expected: "expected",
+      received: "received",
+      paid: "paid",
+      partlyPaid: (paid: string, total: string) => `${paid} of ${total} paid`,
+      otherIncome: "Other income",
+      fixedCosts: "Fixed costs",
+      everyday: "Everyday spending",
+      items: (n: number) => `${n} ${n === 1 ? "item" : "items"}`,
+      more: (n: number) => `${n} more`,
+      basisAverages: "your averages",
+      basisActual: "actual",
+      basisMixed: "so far plus averages",
+      setAsideNote: (amount: string) =>
+        `Not counted above: ${amount} was set aside for savings and the BTW.`,
+    },
   },
   vasteLasten: {
     label: {

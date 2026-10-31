@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useI18n } from "@/i18n/client";
 import { formatter } from "@/lib/view/format";
 import type { PrognosePoint } from "@/lib/view/prognose";
+import { MonthDetail } from "./month-detail";
 
 const H = 300;
 const PAD = { l: 24, r: 24, t: 46 };
@@ -361,24 +362,7 @@ export function PrognoseChart({
           <h3 className="font-display text-xl font-medium">{monthName(selected.month)}</h3>
           <span className="text-ink-muted text-[13px]">{t.ui.chart.kind[selected.kind]}</span>
         </div>
-        <dl className="num grid grid-cols-3 gap-2 text-center">
-          {(
-            [
-              [t.ui.chart.income, euro(selected.income), ""],
-              [t.ui.chart.expenses, euro(selected.expenses), ""],
-              [
-                t.ui.chart.growth,
-                euroSigned(selected.net),
-                selected.net > 0 ? "text-good" : selected.net < 0 ? "text-bad" : "",
-              ],
-            ] as const
-          ).map(([k, v, colour]) => (
-            <div key={k} className="bg-soft rounded-2xl px-2 py-3">
-              <dt className="text-ink-muted text-[13px]">{k}</dt>
-              <dd className={`text-lg font-semibold tracking-tight ${colour}`}>{v}</dd>
-            </div>
-          ))}
-        </dl>
+        <MonthDetail point={selected} />
       </div>
 
       <table className="sr-only">

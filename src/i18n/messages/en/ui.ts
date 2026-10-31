@@ -231,6 +231,15 @@ export const ui = {
     expenses: "Expenses",
     growth: "Growth",
     table: { caption: "Forecast per month", month: "Month", total: "Total", growth: "Growth" },
+    /** The parts under a month's Income and Expenses tiles. */
+    parts: {
+      tap: "Tap for parts",
+      total: "Total",
+      incomeCount: (n: number) => `${n} ${n === 1 ? "source" : "sources"}`,
+      expenseCount: (n: number) => `${n} ${n === 1 ? "part" : "parts"}`,
+      noIncome: "No income is known for this month.",
+      noExpenses: "No spending is known for this month.",
+    },
   },
   fixed: {
     title: "fixed",
