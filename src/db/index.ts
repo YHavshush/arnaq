@@ -70,9 +70,16 @@ const APP_ROLE = "kasboek_app";
 export async function createDb(location: string, opts: CreateOptions = {}): Promise<Db> {
   if (isPostgresUrl(location)) {
     // prepare: false keeps this working through Supabase's transaction pooler (port 6543).
-    const db = drizzlePostgres(postgres(location, { prepare: false, ssl: sslFor(location) }), {
-      schema,
+    // Every serverless instance keeps its own connections, and Supabase's session pooler (port 5432) allows only 15 in
+    // all: few per instance, and let idle ones go, so old instances do not hold the pool full ("max clients reached").
+    const client = postgres(location, {
+      prepare: false,
+      ssl: sslFor(location),
+      max: 3,
+      idle_timeout: 10,
+      connect_timeout: 15,
     });
+    const db = drizzlePostgres(client, { schema });
     if (opts.migrate) await migratePostgres(db, { migrationsFolder: migrationsFolder() });
     return db;
   }
