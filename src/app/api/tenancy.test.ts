@@ -37,6 +37,7 @@ const ROUTES: Record<string, string[]> = {
   "btw/settings": ["GET", "PUT"],
   sample: ["GET", "POST", "DELETE"],
   "categorise/smart": ["POST"],
+  "categorise/auto": ["POST"],
   "account/delete": ["POST"],
   "account/restore": ["POST"],
   "recurring/missed": ["GET"],

@@ -1,3 +1,4 @@
+import { SortAgain } from "@/components/arnaq/sort-again";
 import { Check } from "lucide-react";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
@@ -59,7 +60,15 @@ async function Content() {
 
       {u.review.length > 0 && (
         <div id="sort" className="scroll-mt-6">
-          <Section title={m.sectionSort} aside={m.sortAside(u.reviewCount)}>
+          <Section
+            title={m.sectionSort}
+            aside={
+              <span className="flex items-baseline gap-3">
+                {m.sortAside(u.reviewCount)}
+                <SortAgain />
+              </span>
+            }
+          >
             <ReviewList
               items={u.review.map((r) => ({
                 id: r.id,

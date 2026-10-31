@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { api } from "@/lib/client/api";
+import { isReversal } from "@/lib/smart/reversal";
 import { useI18n } from "@/i18n/client";
 import { categoryLabel } from "@/lib/view/categories";
 import { formatter } from "@/lib/view/format";
@@ -73,7 +74,8 @@ export function ReviewList({
   const byId = new Map(categories.map((c) => [c.id, c]));
   const nameOf = (t: Item) => t.counterparty ?? t.description ?? msg.ui.upload.review.transaction;
   const chipsFor = (t: Item) =>
-    (t.amount > 0 ? quick.income : quick.expense)
+    // Money coming back from a payment (a bounced direct debit, a refund) belongs with the expense it reverses.
+    (t.amount > 0 && !isReversal(t.description) ? quick.income : quick.expense)
       .filter((id) => id !== t.suggestedCategoryId)
       .map((id) => byId.get(id))
       .filter((c): c is Cat => c !== undefined);

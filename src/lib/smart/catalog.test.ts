@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { createDb, one, schema } from "@/db";
 import { DEFAULT_CATEGORIES, DEFAULT_RULES } from "@/lib/categories/defaults";
+import { resortOpen } from "@/lib/categories/resort";
 import { applyAutomatic } from "./auto";
 import { catalogLookup, catalogSuggestion } from "./catalog-nl";
 
@@ -225,5 +226,65 @@ describe("applyAutomatic with the catalog", () => {
     expect((await get(paid.id)).categoryId).toBe(insurance);
     expect((await get(reversed.id)).categoryId).toBe(insurance);
     expect((await get(plainIncome.id)).categoryId).toBeNull();
+  });
+
+  it("sorting again without an upload sorts what an older list left open, and the bounce cancels out", async () => {
+    const { db, tx, get, cat } = await setup();
+    const paid = await tx("FBTO ZORGVERZEKERINGEN NV", { amount: -15100, date: "2026-10-01" });
+    const reversed = await tx("FBTO ZORGVERZEKERINGEN NV", {
+      amount: 15100,
+      date: "2026-10-07",
+      description: "Terugboeking: Onvoldoende saldo Kenmerk machtiging",
+    });
+    expect(await resortOpen(db)).toEqual({ sorted: 2, open: 0 });
+    const insurance = await cat("health-insurance");
+    expect((await get(paid.id)).categoryId).toBe(insurance);
+    expect((await get(reversed.id)).categoryId).toBe(insurance);
+    expect(await resortOpen(db)).toEqual({ sorted: 0, open: 0 });
+  });
+
+  describe("money back from a shop that was paid shortly before is a refund", () => {
+    const shop = (cat: number, date: string, amount: number) => ({
+      categoryId: cat,
+      categorySource: "user" as const,
+      merchantKey: "uniqlo",
+      date,
+      amount,
+    });
+
+    it("the same amount goes to the category of the payment", async () => {
+      const { db, tx, get, cat } = await setup();
+      const clothing = await cat("clothing-care");
+      await tx("UNIQLO", shop(clothing, "2026-09-12", -4980));
+      const back = await tx("UNIQLO", { merchantKey: "uniqlo", date: "2026-09-15", amount: 4980 });
+      await applyAutomatic(db);
+      expect(await get(back.id)).toMatchObject({ categoryId: clothing, suggestedCategoryId: null });
+    });
+
+    it("less than the payment (a partial refund) is offered, not applied", async () => {
+      const { db, tx, get, cat } = await setup();
+      const clothing = await cat("clothing-care");
+      await tx("UNIQLO", shop(clothing, "2026-09-12", -4980));
+      const back = await tx("UNIQLO", { merchantKey: "uniqlo", date: "2026-09-15", amount: 2490 });
+      expect(await applyAutomatic(db)).toMatchObject({ applied: 0, suggested: 1 });
+      expect(await get(back.id)).toMatchObject({
+        categoryId: null,
+        suggestedCategoryId: clothing,
+      });
+    });
+
+    it("is not a refund when it is more than the payment, long after it, or from a payment app", async () => {
+      const { db, tx, get, cat } = await setup();
+      const clothing = await cat("clothing-care");
+      await tx("UNIQLO", shop(clothing, "2026-06-01", -4980));
+      const late = await tx("UNIQLO", { merchantKey: "uniqlo", date: "2026-09-15", amount: 2490 });
+      await tx("UNIQLO", shop(clothing, "2026-09-12", -1000));
+      const more = await tx("UNIQLO", { merchantKey: "uniqlo", date: "2026-09-15", amount: 2490 });
+      await tx("Tikkie", { ...shop(clothing, "2026-09-12", -1000), merchantKey: "tikkie" });
+      const app = await tx("Tikkie", { merchantKey: "tikkie", date: "2026-09-15", amount: 1000 });
+      await applyAutomatic(db);
+      for (const t of [late, more, app])
+        expect(await get(t.id)).toMatchObject({ categoryId: null, suggestedCategoryId: null });
+    });
   });
 });

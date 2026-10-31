@@ -131,8 +131,8 @@ export const ui: typeof en = {
     savingsRow: {
       name: "Sparen",
       ofGoal: (goal: string) => `van doel ${goal}`,
-      moved: (amount: string) => `+${amount} deze maand`,
-      taken: (amount: string) => `−${amount} deze maand`,
+      moved: (amount: string) => `${amount} erbij deze maand`,
+      taken: (amount: string) => `${amount} eruit gehaald deze maand`,
     },
     paceTitle: "Tempo van de maand",
     paceAside: "alleen dagelijkse uitgaven",
@@ -294,6 +294,7 @@ export const ui: typeof en = {
     sectionUpload: "Bestand uploaden",
     sectionSort: "Te sorteren",
     sortAside: (n: number) => `${n} open`,
+    sortAgain: "Opnieuw sorteren",
     sortMore: (shown: number) => `De ${shown} nieuwste staan hier; de rest komt erna.`,
     sectionPrevious: "Eerder geüpload",
     newCount: (n: number) => `${n} nieuw`,
@@ -338,6 +339,8 @@ export const ui: typeof en = {
     },
     toast: {
       sorted: "Gesorteerd",
+      sortedAgain: (n: number) => `Nog ${n} gesorteerd`,
+      nothingMore: "arnaq kan zelf niets meer sorteren",
       changed: "Categorie aangepast",
       undone: "Terug in de lijst om te sorteren",
       confirmed: "Alles bevestigd",

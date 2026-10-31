@@ -4,12 +4,11 @@ import { catalogLookup, catalogSuggestion, INCOME_SLUGS } from "./catalog-nl";
 import { decide } from "./decide";
 import { historyLookup, type HistoryEntry } from "./history";
 import { ensureMerchantKeys } from "./learned";
+import { isReversal } from "./reversal";
+import { findRefundPayment, loadPayments } from "./refund";
 
 /** Sources that come from the person (their choice, a shop they taught, a rule or fixed cost they set up). */
 const TRUSTED = ["user", "learned", "rule", "recurring", "confirmed"] as const;
-
-/** Words in a bank's description that mark money coming back from a payment, not new income. */
-const REVERSAL = /terugboeking|storno|refund|restitutie|terugbetaling|retour/i;
 
 export interface AutoResult {
   /** Categorised by the catalog or the history. */
@@ -65,6 +64,7 @@ export async function applyAutomatic(
   const typeOf = new Map(categories.map((c) => [c.id, c.type]));
   const bySlug = new Map(categories.filter((c) => c.slug).map((c) => [c.slug!, c.id]));
   const history = await loadHistory(db);
+  const payments = await loadPayments(db);
 
   const where = [
     isNull(schema.transactions.categoryId),
@@ -82,6 +82,7 @@ export async function applyAutomatic(
       description: schema.transactions.description,
       amount: schema.transactions.amount,
       key: schema.transactions.merchantKey,
+      date: schema.transactions.date,
     })
     .from(schema.transactions)
     .where(and(...where));
@@ -98,7 +99,7 @@ export async function applyAutomatic(
   let suggested = 0;
   for (const t of todo) {
     // A reversal of a payment (a bounced direct debit, a refund) is money in for an expense category.
-    const reversal = t.amount > 0 && REVERSAL.test(t.description ?? "");
+    const reversal = t.amount > 0 && isReversal(t.description);
     const wantsType = t.amount > 0 && !reversal ? "income" : "expense";
     // Savings fits money in and out (a deposit and a withdrawal); the others must match the direction.
     const fits = (categoryId: number) =>
@@ -116,6 +117,22 @@ export async function applyAutomatic(
       hint: hintId != null && fits(hintId) ? hintId : null,
       history: historyLookup(t.key ?? "", history, fits),
     });
+    // Money in from a shop that was paid shortly before, for no more than that payment, is a refund: it goes
+    // to the category of the payment, so the spending nets out. The same amount is certain enough to apply;
+    // less (a partial refund, one item sent back) is offered.
+    if (t.amount > 0 && !reversal && decision.kind !== "apply") {
+      const refund = findRefundPayment(payments, t);
+      if (refund && typeOf.get(refund.payment.categoryId) === "expense") {
+        if (refund.exact) {
+          push(apply, `${refund.payment.categoryId}|history`, t.id);
+          applied++;
+        } else {
+          push(suggest, refund.payment.categoryId, t.id);
+          suggested++;
+        }
+        continue;
+      }
+    }
     if (decision.kind === "apply") {
       push(apply, `${decision.categoryId}|${decision.source}`, t.id);
       applied++;

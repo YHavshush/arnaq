@@ -129,8 +129,8 @@ export const ui = {
     savingsRow: {
       name: "Savings",
       ofGoal: (goal: string) => `of ${goal} goal`,
-      moved: (amount: string) => `+${amount} this month`,
-      taken: (amount: string) => `−${amount} this month`,
+      moved: (amount: string) => `${amount} put in this month`,
+      taken: (amount: string) => `${amount} taken out this month`,
     },
     paceTitle: "Pace of the month",
     paceAside: "everyday spending only",
@@ -286,6 +286,7 @@ export const ui = {
     sectionUpload: "Upload a file",
     sectionSort: "To sort",
     sortAside: (n: number) => `${n} open`,
+    sortAgain: "Sort again",
     sortMore: (shown: number) => `The ${shown} newest are shown here; the rest follows.`,
     sectionPrevious: "Uploaded before",
     newCount: (n: number) => `${n} new`,
@@ -330,6 +331,8 @@ export const ui = {
     },
     toast: {
       sorted: "Sorted",
+      sortedAgain: (n: number) => `${n} more sorted`,
+      nothingMore: "Nothing more arnaq can sort by itself",
       changed: "Category changed",
       undone: "Back in the list to sort",
       confirmed: "All confirmed",
