@@ -361,6 +361,14 @@ export const ui: typeof en = {
           : `${sorted} automatisch gesorteerd. Bij ${open} heb je nog je hulp nodig.`,
       nothingNew: (known: number) =>
         `Alle ${known} transacties stonden er al in. Er is niets dubbel toegevoegd.`,
+      savingsCheck: {
+        match: (actual: string, _expected: string, _diff: string, day: string) =>
+          `Spaarcheck: ${actual} op ${day}, precies wat arnaq verwachtte.`,
+        interest: (actual: string, expected: string, diff: string, day: string) =>
+          `Spaarcheck: ${actual} op ${day}. arnaq verwachtte ${expected}; die ${diff} extra is waarschijnlijk rente.`,
+        off: (actual: string, expected: string, diff: string, day: string) =>
+          `Spaarcheck: je afschrift zegt ${actual} op ${day}, arnaq verwachtte ${expected} (${diff} verschil). Een overboeking van of naar sparen ontbreekt misschien of staat onder een andere categorie.`,
+      },
       latestNote: (day: string) =>
         `De nieuwste transactie is van ${day}. Upload een nieuwer afschrift als je er een hebt.`,
       sortCta: (n: number) => `Sorteer de ${n}`,

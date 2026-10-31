@@ -23,6 +23,14 @@ interface Summary {
   sortedNow: number;
   openAfter: number;
   latest: string | null;
+  savingsCheck: {
+    expected: number;
+    actual: number;
+    difference: number;
+    from: string;
+    asOf: string;
+    status: "match" | "interest" | "off";
+  } | null;
 }
 
 const BANK = { rabobank: "Rabobank", revolut: "Revolut" } as Record<string, string>;
@@ -32,7 +40,7 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
   const router = useRouter();
   const { locale, t } = useI18n();
   const p = t.ui.upload.panel;
-  const { dayLabel, monthName } = formatter(locale);
+  const { dayLabel, monthName, euroExact } = formatter(locale);
   const input = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [drag, setDrag] = useState(false);
@@ -210,6 +218,20 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
                 </p>
               )}
             </>
+          )}
+          {summary.savingsCheck && (
+            <p
+              className={`max-w-[44ch] rounded-2xl px-3 py-2.5 text-left text-sm ${
+                summary.savingsCheck.status === "off" ? "bg-soft text-warn font-medium" : "bg-soft"
+              }`}
+            >
+              {p.savingsCheck[summary.savingsCheck.status](
+                euroExact(summary.savingsCheck.actual),
+                euroExact(summary.savingsCheck.expected),
+                euroExact(Math.abs(summary.savingsCheck.difference)),
+                dayLabel(summary.savingsCheck.asOf),
+              )}
+            </p>
           )}
           {summary.recurring.matched > 0 && (
             <p className="text-ink-muted text-sm">{p.matched(summary.recurring.matched)}</p>

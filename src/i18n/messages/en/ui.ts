@@ -352,6 +352,14 @@ export const ui = {
           : `${sorted} sorted automatically. ${open} still need you.`,
       nothingNew: (known: number) =>
         `Every one of the ${known} transactions was already in. Nothing was added twice.`,
+      savingsCheck: {
+        match: (actual: string, _expected: string, _diff: string, day: string) =>
+          `Savings check: ${actual} on ${day}, exactly what arnaq expected.`,
+        interest: (actual: string, expected: string, diff: string, day: string) =>
+          `Savings check: ${actual} on ${day}. arnaq expected ${expected}; the ${diff} extra is probably interest.`,
+        off: (actual: string, expected: string, diff: string, day: string) =>
+          `Savings check: your statement says ${actual} on ${day}, arnaq expected ${expected} (${diff} apart). A move to or from savings may be missing or sorted under another category.`,
+      },
       latestNote: (day: string) =>
         `The newest transaction is from ${day}. Upload a newer statement when you have one.`,
       sortCta: (n: number) => `Sort the ${n}`,

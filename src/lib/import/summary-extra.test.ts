@@ -27,4 +27,36 @@ describe("what the upload reports back for the done screen", () => {
     expect(again).toMatchObject({ rowsImported: 0, sortedNow: 0, latest: "2026-10-09" });
     expect(again.openAfter).toBe(first.openAfter);
   });
+
+  describe("the savings check", () => {
+    // The same statement a few days on, with a different savings balance.
+    const later = (closing: string) =>
+      statement
+        .replace(/Oct 9, 2026/g, "Oct 20, 2026")
+        .replace("Closing balance,€200.00", `Closing balance,${closing}`);
+
+    it("has nothing to compare with on the first statement", async () => {
+      const db = await createDb(":memory:");
+      const s = await importStatement(db, { content: statement, filename: "s.csv" });
+      expect(s.savingsBalance).toEqual({ amount: 20000, asOf: "2026-10-09" });
+      expect(s.savingsCheck).toBeNull();
+    });
+
+    it("compares the next statement's savings balance with the last one and the sorted moves", async () => {
+      const db = await createDb(":memory:");
+      await importStatement(db, { content: statement, filename: "s.csv" });
+      const same = await importStatement(db, { content: later("€200.00"), filename: "a.csv" });
+      expect(same.savingsCheck).toMatchObject({ expected: 20000, actual: 20000, status: "match" });
+      const interest = await importStatement(db, {
+        content: later("€200.60").replace(/Oct 20, 2026/g, "Oct 25, 2026"),
+        filename: "b.csv",
+      });
+      expect(interest.savingsCheck).toMatchObject({ difference: 60, status: "interest" });
+      const off = await importStatement(db, {
+        content: later("€900.00").replace(/Oct 20, 2026/g, "Oct 28, 2026"),
+        filename: "c.csv",
+      });
+      expect(off.savingsCheck).toMatchObject({ actual: 90000, status: "off" });
+    });
+  });
 });

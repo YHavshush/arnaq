@@ -15,6 +15,7 @@ import {
   looksLikeRabobankStatement,
   parseRabobankStatement,
 } from "./parsers/rabobank-pdf";
+import { checkSavingsBalance, type SavingsCheck } from "@/lib/savings/check";
 import { setSavingsAnchor } from "@/lib/savings/settings";
 import { cleanText } from "./clean";
 import { findExistingDuplicates } from "./dedupe";
@@ -55,6 +56,8 @@ export interface ImportSummary {
   recurring: SyncResult;
   /** The savings balance the file reported and now anchors the savings total, when it had one. */
   savingsBalance: { amount: number; asOf: string } | null;
+  /** The savings balance against what arnaq expected from the last statement and the sorted moves; null when there was nothing to compare. */
+  savingsCheck: SavingsCheck | null;
   /** Of the rows this upload added, how many were sorted on their own (rules, learned shops, the built-in list). */
   sortedNow: number;
   /** Transactions still without a category, across everything (what is left for the person to sort). */
@@ -353,6 +356,10 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
     });
 
     // A savings balance in the file is where the savings total counts on from: nothing to type.
+    // First it is checked against what was expected, then it becomes the new starting point.
+    const savingsCheck = parsed.savingsBalance
+      ? await checkSavingsBalance(tx, parsed.savingsBalance)
+      : null;
     if (parsed.savingsBalance) await setSavingsAnchor(tx, parsed.savingsBalance);
 
     const [sorted] = await tx
@@ -393,6 +400,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
       warnings,
       recurring,
       savingsBalance: parsed.savingsBalance ?? null,
+      savingsCheck,
       sortedNow: sorted?.n ?? 0,
       openAfter: open?.n ?? 0,
       latest,
