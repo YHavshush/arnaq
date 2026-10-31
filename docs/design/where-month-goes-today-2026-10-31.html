@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq where the month goes on today</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1240px; margin:0 auto; display:grid; gap:30px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:82ch; }
+.sec { display:grid; gap:14px; padding-top:18px; border-top:1px solid var(--line); }
+.frames { display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+/* the app, light */
+.app { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.62); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --warn:#a8691b; --track:rgba(23,32,46,.09);
+  --c1:#243b73; --c2:#5b7fd1; --c3:#b8860b; --c4:#2f7d5b; --c5:#c9ccd4;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 55%,#f6e8d8); position:relative; overflow:hidden; }
+.phone { width:375px; border-radius:34px; border:9px solid #1b2230; padding:16px 14px 20px; display:grid; gap:12px; align-content:start; }
+.laptop { width:min(100%,1000px); border-radius:14px; border:8px solid #1b2230; display:grid; grid-template-columns:150px 1fr; min-height:640px; }
+.side { background:rgba(255,255,255,.5); padding:16px 12px; display:grid; gap:8px; align-content:start; font-size:14px; }
+.side b { font:500 18px/1 Georgia,serif; margin-bottom:8px; } .side span { padding:7px 10px; border-radius:10px; } .side .on { background:var(--soft); font-weight:600; }
+.page { padding:18px 22px 22px; display:grid; gap:14px; align-content:start; }
+.hdr small { display:block; color:var(--muted); font-size:13px; } .hdr b { font:500 30px/1.1 Georgia,serif; }
+.hero { display:grid; gap:10px; justify-items:center; text-align:center; }
+.laptop .hero { grid-template-columns:auto 1fr; justify-items:start; text-align:left; gap:26px; align-items:center; }
+.ring { width:150px; height:150px; position:relative; flex:none; }
+.ring svg { width:100%; height:100%; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:11; }
+.ring .t { stroke:var(--track); } .ring .v { stroke:var(--bad); stroke-linecap:round; }
+.ring .c { position:absolute; inset:0; display:grid; place-content:center; text-align:center; } .ring .c b { font-size:30px; font-weight:500; } .ring .c small { color:var(--muted); font-size:12px; }
+.sentence { font:500 24px/1.2 Georgia,serif; } .sentence i { font-style:italic; }
+.facts { color:var(--muted); font-size:13px; display:grid; gap:3px; }
+.card { border-radius:20px; background:var(--card); padding:12px 14px; display:grid; gap:9px; border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); }
+.attn { display:flex; gap:10px; align-items:center; font-size:14px; } .attn i { width:9px; height:9px; border-radius:50%; background:var(--bad); flex:none; } .attn small { color:var(--muted); display:block; }
+.sech { display:flex; justify-content:space-between; align-items:baseline; margin-top:2px; } .sech b { font:500 19px/1.2 Georgia,serif; } .sech small { color:var(--muted); font-size:12px; }
+.li { display:grid; grid-template-columns:2.2rem minmax(0,1fr) auto; gap:10px; align-items:center; padding:7px 0; border-top:1px solid var(--hair); font-size:14px; } .li:first-child { border-top:0; }
+.ic { width:2.2rem; height:2.2rem; border-radius:11px; background:var(--soft); }
+.bar { height:6px; border-radius:99px; background:var(--track); overflow:hidden; grid-column:2 / -1; } .bar i { display:block; height:100%; }
+.muted { color:var(--muted); } .num { font-variant-numeric:tabular-nums; } .good { color:var(--good); }
+/* the new card */
+.new { outline:2px dashed color-mix(in oklab,var(--accent) 55%,transparent); outline-offset:3px; }
+.tag { position:absolute; right:10px; top:-11px; background:var(--accent); color:#fff; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px; }
+.slot { position:relative; }
+.stackw { position:relative; } .stack { height:26px; border-radius:10px; overflow:hidden; display:flex; gap:2px; } .stack i { display:block; height:100%; }
+.legend { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:12.5px; } .legend span { white-space:nowrap; } .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; }
+.cols { display:grid; grid-template-columns:minmax(0,1.2fr) minmax(0,1fr); gap:20px; align-items:start; }
+.compact { display:grid; gap:6px; } .hd2 { display:flex; justify-content:space-between; align-items:baseline; font-size:14px; }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>Today with "where the month goes"</h1>
+  <p class="note">Where the extra card would sit on the Today page, on a phone and on a laptop. The dashed outline marks the new card; everything else is what Today already shows. Demo numbers.</p>
+</header>
+
+<section class="sec">
+  <h2>Placement: right under the top of the page, above "Pace of the month"</h2>
+  <p class="note">It is one card, one bar, one line of legend. It reads left to right as the month's income being used up. It sits between the headline (ring, "days to go", totals) and the detail sections, so you meet the overview first and the details after.</p>
+  <div class="frames">
+    <div><div class="cap">Phone</div>
+      <div class="app phone">
+        <div class="hdr"><small>October 2026</small><b>today</b></div>
+        <div class="hero">
+          <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle class="v" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="c"><b class="num">€1,311</b><small>over your budget</small></div></div>
+          <div class="sentence"><i>Last day</i> of the month</div>
+          <div class="muted small" style="font-size:14px">€1,962 spent · €651 came in</div>
+        </div>
+        <div class="card attn"><i></i><div><b>10 transactions without a category</b><small>Sort them and arnaq remembers your choice</small></div></div>
+        <div class="slot"><span class="tag">NEW</span>
+          <div class="card new">
+            <div class="hd2"><b style="font:500 17px Georgia,serif">Where October went</b><span class="muted small" style="font-size:12px">€1,468 came in</span></div>
+            <div class="stack"><i style="width:46%;background:var(--c1)"></i><i style="width:30%;background:var(--c2)"></i><i style="width:11%;background:var(--c3)"></i><i style="width:7%;background:var(--c4)"></i><i style="flex:1;background:var(--c5)"></i></div>
+            <div class="legend"><span><i class="dot" style="background:var(--c1)"></i>Fixed €675</span><span><i class="dot" style="background:var(--c2)"></i>Everyday €440</span><span><i class="dot" style="background:var(--c3)"></i>BTW €168</span><span><i class="dot" style="background:var(--c4)"></i>Saved €100</span><span><i class="dot" style="background:var(--c5)"></i><b>Left €85</b></span></div>
+          </div>
+        </div>
+        <div class="sech"><b>Pace of the month</b><small>everyday spending only</small></div>
+        <div class="card"><div class="hd2"><b class="num" style="font-size:22px">€1,962</b><span class="muted small" style="font-size:12px">of €2,100</span></div><div class="bar" style="grid-column:auto"><i style="width:93%;background:var(--c1)"></i></div></div>
+        <div class="muted small" style="text-align:center;font-size:12px">… the rest of Today continues as before</div>
+      </div></div>
+
+    <div style="flex:1;min-width:560px"><div class="cap">Laptop</div>
+      <div class="app laptop">
+        <div class="side"><b>arnaq</b><span class="on">today</span><span>ahead</span><span>fixed</span><span>add</span></div>
+        <div class="page">
+          <div class="hdr"><small>October 2026</small><b>today</b></div>
+          <div class="hero">
+            <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle class="v" cx="50" cy="50" r="44" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="c"><b class="num">€1,311</b><small>over your budget</small></div></div>
+            <div style="display:grid;gap:8px"><div class="sentence"><i>Last day</i> of the month</div><div class="muted" style="font-size:14px">€1,962 spent · €651 came in</div><div class="facts"><span>Under budget on Going out, €54 left.</span><span>Over budget on Food &amp; drink (+€6).</span></div></div>
+          </div>
+          <div class="card attn"><i></i><div><b>10 transactions without a category</b><small>Sort them and arnaq remembers your choice</small></div></div>
+          <div class="slot"><span class="tag">NEW</span>
+            <div class="card new" style="grid-template-columns:200px 1fr;align-items:center;gap:18px">
+              <div><b style="font:500 18px Georgia,serif">Where October went</b><div class="muted" style="font-size:12px;margin-top:2px">€1,468 came in</div></div>
+              <div style="display:grid;gap:8px">
+                <div class="stack"><i style="width:46%;background:var(--c1)"></i><i style="width:30%;background:var(--c2)"></i><i style="width:11%;background:var(--c3)"></i><i style="width:7%;background:var(--c4)"></i><i style="flex:1;background:var(--c5)"></i></div>
+                <div class="legend"><span><i class="dot" style="background:var(--c1)"></i>Fixed costs €675</span><span><i class="dot" style="background:var(--c2)"></i>Everyday €440</span><span><i class="dot" style="background:var(--c3)"></i>BTW set aside €168</span><span><i class="dot" style="background:var(--c4)"></i>Saved €100</span><span><i class="dot" style="background:var(--c5)"></i><b>Left €85</b></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="cols">
+            <div style="display:grid;gap:8px"><div class="sech"><b>Pace of the month</b><small>everyday spending only</small></div><div class="card"><div class="hd2"><b class="num" style="font-size:24px">€1,962</b><span class="muted" style="font-size:12px">of €2,100</span></div><div class="bar" style="grid-column:auto"><i style="width:93%;background:var(--c1)"></i></div></div>
+              <div class="sech"><b>Where it went</b><small>€1,962 of €2,100</small></div>
+              <div class="card"><div class="li"><div class="ic"></div><span>Rent</span><b class="num">€481</b></div><div class="li"><div class="ic"></div><span>Groceries</span><b class="num">€412</b></div></div></div>
+            <div style="display:grid;gap:8px"><div class="sech"><b>Income</b></div><div class="card"><div class="li"><div class="ic"></div><span>featurn B.V.</span><b class="num">€968</b></div><div class="li"><div class="ic"></div><span>Oren Havshush</span><b class="num">€500</b></div></div></div>
+          </div>
+        </div>
+      </div></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>My honest view</h2>
+  <p class="note">Today already has the ring, the totals line, the category list and the Pace card, and most of what this bar says is repeated there in another form: fixed and everyday spending are in the Pace card, what is left is the ring. What the bar adds is the single picture of income against everything it was used for (including BTW and saved), and the comparison with earlier months. If that is not something you reach for, the better home for it is not Today at all but the Ahead page month detail (idea 1), which already shows exactly these parts when you tap Income and Expenses. I would skip it on Today and keep Today calm.</p>
+  <p class="note">If you still want it, this placement works: full width under the headline on a phone and a laptop, no extra navigation, about 90 px tall on a phone and 110 px on a laptop.</p>
+</section>
+</main>
+</body>
+</html>
