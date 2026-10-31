@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq income and expense mockups</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1180px; margin:0 auto; display:grid; gap:32px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:80ch; }
+.sec { display:grid; gap:14px; padding-top:18px; border-top:1px solid var(--line); }
+.row3 { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,340px)); gap:18px; align-items:start; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+.scene { width:100%; border-radius:26px; padding:16px; display:grid; gap:12px; align-content:start; overflow:hidden; }
+.scene.light { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.62); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --warn:#a8691b; --track:rgba(23,32,46,.09); --fill:#243b73; --fillInk:#fff;
+  --c1:#243b73; --c2:#5b7fd1; --c3:#b8860b; --c4:#2f7d5b; --c5:#c9ccd4; --cs:#f8f4ef;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 50%,#f6e8d8); }
+.scene.dark { --ink:#eef1f5; --muted:#a8b1bf; --soft:rgba(143,208,255,.10); --card:rgba(255,255,255,.07); --hair:rgba(255,255,255,.12); --accent:#8fd0ff; --good:#7fd3a8; --bad:#ff8f84; --warn:#f0b868; --track:rgba(255,255,255,.12); --fill:#8fd0ff; --fillInk:#06121c;
+  --c1:#8fd0ff; --c2:#7d8bff; --c3:#f0c36b; --c4:#7fd3a8; --c5:#5c6577; --cs:#222a39;
+  color:#eef1f5; background:linear-gradient(165deg,color-mix(in oklab,#2ac9ff 26%,#141b28),color-mix(in oklab,#7d8bff 22%,#141b28) 55%,#141b28); }
+.card { border-radius:20px; background:var(--card); padding:14px 16px; display:grid; gap:10px; border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); }
+.title { font:500 24px/1.15 Georgia,serif; }
+.muted { color:var(--muted); } .small { font-size:13px; } .num { font-variant-numeric:tabular-nums; }
+.good { color:var(--good); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+.hd { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.hd b { font:500 19px/1.2 Georgia,serif; }
+.tiles { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+.tile { background:var(--soft); border-radius:16px; padding:10px 8px; text-align:center; }
+.tile .l { font-size:12px; color:var(--muted); } .tile b { display:block; font-size:19px; font-weight:600; }
+.tile.open { outline:2px solid color-mix(in oklab,var(--accent) 60%,transparent); }
+.line { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 10px; align-items:baseline; padding:8px 0; border-top:1px solid var(--hair); }
+.line:first-child { border-top:0; }
+.line .bar { grid-column:1 / -1; }
+.line.sub { padding-left:14px; border-top:0; padding-top:3px; padding-bottom:3px; font-size:14px; }
+.line.total { font-weight:600; border-top:1px solid var(--ink); }
+.bar { height:7px; border-radius:99px; background:var(--track); overflow:hidden; display:flex; }
+.bar i { display:block; height:100%; }
+.dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px; vertical-align:middle; }
+/* tracker */
+.scroll { overflow-x:auto; margin:0 -4px; padding:0 4px; }
+table.grid { border-collapse:separate; border-spacing:0; width:100%; min-width:540px; table-layout:fixed; font-size:13px; }
+table.grid col.first { width:128px; }
+table.grid th { font-weight:600; color:var(--muted); text-align:right; padding:6px 8px; white-space:nowrap; }
+table.grid th:first-child, table.grid td:first-child { text-align:left; position:sticky; left:0; background:var(--cs); padding-left:4px; z-index:1; }
+.card.flush { padding:10px 12px; background:var(--cs); }
+table.grid td { padding:8px; text-align:right; border-top:1px solid var(--hair); white-space:nowrap; }
+table.grid td:first-child { font-weight:600; overflow:hidden; text-overflow:ellipsis; }
+table.grid tr.sum td { font-weight:700; border-top:1px solid var(--ink); }
+.cell { display:inline-flex; align-items:center; gap:4px; }
+.cell.paid { color:var(--good); } .cell.missed { color:var(--bad); font-weight:700; } .cell.exp { color:var(--muted); }
+.cell.late { color:var(--warn); }
+.now { background:color-mix(in oklab,var(--accent) 12%,var(--cs)); }
+/* where the month goes */
+.stackw { position:relative; }
+.stack { height:34px; border-radius:12px; overflow:hidden; display:flex; gap:2px; }
+.mark { position:absolute; top:-5px; bottom:-5px; width:2px; background:var(--ink); border-radius:2px; }
+.markl { position:absolute; top:-20px; transform:translateX(-50%); font-size:11px; color:var(--muted); white-space:nowrap; }
+.stack i { display:block; height:100%; }
+.legend { display:grid; gap:6px; }
+.legend .li { display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:baseline; font-size:14px; }
+.mini { display:grid; gap:7px; }
+.mini .m { display:grid; grid-template-columns:34px 1fr auto; gap:8px; align-items:center; font-size:12px; color:var(--muted); }
+.chip { display:inline-block; font-size:12px; font-weight:600; border-radius:99px; padding:3px 10px; background:var(--soft); }
+.tap { font-size:12px; color:var(--accent); font-weight:600; }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>Income and expense: three ways to see how it is built up</h1>
+  <p class="note">Mockups with demo numbers, phone width, light and dark. All three can live together: 1 on Ahead, 2 on Fixed, 3 on Today. Each answers a different question.</p>
+</header>
+
+<!-- ============ 1 ============ -->
+<section class="sec">
+  <h2>1 · Ahead: tap a month, see what is inside the totals</h2>
+  <p class="note">Question it answers: "Where does this month's income and expense come from, and is it planned or already happened?" The three tiles stay. Tapping Income or Expenses opens the parts underneath. For a month that is still ahead every part says "expected"; for a month in progress each part also says how much is already paid.</p>
+  <div class="row3">
+    <div><div class="cap">Closed (what you see now) · light</div>
+      <div class="scene light">
+        <div class="hd"><b>February 2027</b><span class="muted small">Forecast</span></div>
+        <div class="tiles">
+          <div class="tile"><div class="l">Income</div><b class="num">€1,468</b><span class="tap">Tap for parts</span></div>
+          <div class="tile"><div class="l">Expenses</div><b class="num">€3,227</b><span class="tap">Tap for parts</span></div>
+          <div class="tile"><div class="l">Growth</div><b class="num bad">−€1,759</b></div>
+        </div>
+      </div></div>
+    <div><div class="cap">Income open · light</div>
+      <div class="scene light">
+        <div class="hd"><b>February 2027</b><span class="muted small">Forecast</span></div>
+        <div class="tiles">
+          <div class="tile open"><div class="l">Income</div><b class="num">€1,468</b></div>
+          <div class="tile"><div class="l">Expenses</div><b class="num">€3,227</b></div>
+          <div class="tile"><div class="l">Growth</div><b class="num bad">−€1,759</b></div>
+        </div>
+        <div class="card">
+          <div class="hd"><b style="font-size:16px">Income</b><span class="muted small">2 sources</span></div>
+          <div class="line"><span>Featurn B.V.</span><span class="num">€968</span>
+            <div class="bar"><i style="width:66%;background:var(--c1)"></i></div></div>
+          <div class="line sub"><span class="muted">usually paid around the 14th</span><span class="muted num">expected</span></div>
+          <div class="line"><span>Oren Havshush</span><span class="num">€500</span>
+            <div class="bar"><i style="width:34%;background:var(--c2)"></i></div></div>
+          <div class="line sub"><span class="muted">family support, the 5th</span><span class="muted num">expected</span></div>
+          <div class="line total"><span>Total</span><span class="num">€1,468</span></div>
+        </div>
+      </div></div>
+    <div><div class="cap">Expenses open · dark</div>
+      <div class="scene dark">
+        <div class="hd"><b>February 2027</b><span class="muted small">Forecast</span></div>
+        <div class="tiles">
+          <div class="tile"><div class="l">Income</div><b class="num">€1,468</b></div>
+          <div class="tile open"><div class="l">Expenses</div><b class="num">€3,227</b></div>
+          <div class="tile"><div class="l">Growth</div><b class="num bad">−€1,759</b></div>
+        </div>
+        <div class="card">
+          <div class="hd"><b style="font-size:16px">Expenses</b><span class="muted small">3 parts</span></div>
+          <div class="line"><span><i class="dot" style="background:var(--c1)"></i>Fixed costs <span class="muted small">4 items</span></span><span class="num">€675</span>
+            <div class="bar"><i style="width:21%;background:var(--c1)"></i></div></div>
+          <div class="line sub"><span class="muted">Rent €481 · Health insurance €151 · 2 subscriptions €43</span><span></span></div>
+          <div class="line"><span><i class="dot" style="background:var(--c2)"></i>Everyday <span class="muted small">your averages</span></span><span class="num">€2,384</span>
+            <div class="bar"><i style="width:74%;background:var(--c2)"></i></div></div>
+          <div class="line sub"><span class="muted">Groceries €412 · Going out €301 · Other…</span><span></span></div>
+          <div class="line"><span><i class="dot" style="background:var(--c3)"></i>BTW set aside</span><span class="num">€168</span>
+            <div class="bar"><i style="width:5%;background:var(--c3)"></i></div></div>
+          <div class="line total"><span>Total</span><span class="num">€3,227</span></div>
+        </div>
+      </div></div>
+  </div>
+  <p class="note">Why this is useful: the chart says "−€1,759 a month" and you can immediately see it is the everyday spending (€2,384) that is large compared with the two income lines. The "expected" tags show what is still a plan, not a fact.</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="sec">
+  <h2>2 · Fixed: a tracker, items down, months across</h2>
+  <p class="note">Question it answers: "Did every fixed item arrive or get paid, every month, and what do they add up to?" One cell per item and month: paid (green, with the real amount), late, missed (red) or still expected (grey). The column for this month is highlighted. Totals per month underneath. Scrolls sideways on a phone, the item names stay put.</p>
+  <div class="row3">
+    <div style="grid-column:1/-1;max-width:700px"><div class="cap">Tracker · light</div>
+      <div class="scene light">
+        <div class="hd"><b>Fixed income</b><span class="muted small">Aug to Dec</span></div>
+        <div class="card flush"><div class="scroll"><table class="grid"><colgroup><col class="first"><col><col><col><col><col></colgroup>
+          <thead><tr><th>Item</th><th>Aug</th><th>Sep</th><th>Oct</th><th class="now">Nov</th><th>Dec</th></tr></thead>
+          <tbody>
+            <tr><td>Featurn B.V.</td><td><span class="cell paid">✓ 439</span></td><td><span class="cell paid">✓ 439</span></td><td><span class="cell late">✓ 968 <span class="small">+10d</span></span></td><td class="now"><span class="cell exp">968</span></td><td><span class="cell exp">968</span></td></tr>
+            <tr><td>Oren Havshush</td><td><span class="cell paid">✓ 500</span></td><td><span class="cell paid">✓ 500</span></td><td><span class="cell paid">✓ 500</span></td><td class="now"><span class="cell exp">500</span></td><td><span class="cell exp">500</span></td></tr>
+            <tr class="sum"><td>Total income</td><td>939</td><td>939</td><td>1,468</td><td class="now">1,468</td><td>1,468</td></tr>
+          </tbody></table></div></div>
+        <div class="hd" style="margin-top:6px"><b>Fixed expenses</b></div>
+        <div class="card flush"><div class="scroll"><table class="grid"><colgroup><col class="first"><col><col><col><col><col></colgroup>
+          <thead><tr><th>Item</th><th>Aug</th><th>Sep</th><th>Oct</th><th class="now">Nov</th><th>Dec</th></tr></thead>
+          <tbody>
+            <tr><td>Stichting DUWO</td><td><span class="cell paid">✓ 481</span></td><td><span class="cell paid">✓ 481</span></td><td><span class="cell paid">✓ 481</span></td><td class="now"><span class="cell exp">481</span></td><td><span class="cell exp">481</span></td></tr>
+            <tr><td>FBTO health</td><td><span class="cell paid">✓ 151</span></td><td><span class="cell missed">✗ bounced</span></td><td><span class="cell paid">✓ 151</span></td><td class="now"><span class="cell exp">151</span></td><td><span class="cell exp">151</span></td></tr>
+            <tr><td>Claude</td><td><span class="cell paid">✓ 22</span></td><td><span class="cell paid">✓ 22</span></td><td><span class="cell paid">✓ 22</span></td><td class="now"><span class="cell exp">22</span></td><td><span class="cell exp">22</span></td></tr>
+            <tr><td>Netflix</td><td><span class="cell paid">✓ 21</span></td><td><span class="cell paid">✓ 21</span></td><td><span class="cell paid">✓ 21</span></td><td class="now"><span class="cell exp">21</span></td><td><span class="cell exp">21</span></td></tr>
+            <tr class="sum"><td>Total expenses</td><td>675</td><td>524</td><td>675</td><td class="now">675</td><td>675</td></tr>
+          </tbody></table></div></div>
+        <p class="small muted"><span class="good">✓</span> paid &nbsp; <span class="warn">✓ +10d</span> paid late &nbsp; <span class="bad">✗</span> missed or bounced &nbsp; grey = still expected</p>
+        <div class="line total" style="border-top:1px solid var(--ink)"><span>Left after fixed costs, this month</span><span class="num good">€793</span></div>
+      </div></div>
+  </div>
+  <p class="note">Why this is useful: you can see a pattern at a glance, for example that the Featurn payment drifts later each month (the "+10d"), or the September bounce of the health insurance. Tap a cell to open the transaction it is linked to, which also makes fixing a wrong link easy.</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="sec">
+  <h2>3 · Today: where the month goes, in one bar</h2>
+  <p class="note">Question it answers: "Of what came in this month, what is already gone, to what, and what is left?" One bar equals the month's income. Segments are fixed costs, everyday spending, BTW set aside, savings, and what is left. When a month costs more than it brought in, the bar grows past the "came in" mark and the overspend is red. Under it, the last few months as small bars so you can compare.</p>
+  <div class="row3">
+    <div><div class="cap">Month in credit · light</div>
+      <div class="scene light">
+        <div class="hd"><b>Where October went</b><span class="muted small">€1,468 came in</span></div>
+        <div class="card">
+          <div class="stack">
+            <i style="width:46%;background:var(--c1)"></i><i style="width:30%;background:var(--c2)"></i><i style="width:11%;background:var(--c3)"></i><i style="width:7%;background:var(--c4)"></i><i style="flex:1;background:var(--c5)"></i>
+          </div>
+          <div class="legend">
+            <div class="li"><span><i class="dot" style="background:var(--c1)"></i>Fixed costs</span><span class="num">€675</span><span class="muted small num">46%</span></div>
+            <div class="li"><span><i class="dot" style="background:var(--c2)"></i>Everyday</span><span class="num">€440</span><span class="muted small num">30%</span></div>
+            <div class="li"><span><i class="dot" style="background:var(--c3)"></i>BTW set aside</span><span class="num">€168</span><span class="muted small num">11%</span></div>
+            <div class="li"><span><i class="dot" style="background:var(--c4)"></i>Saved</span><span class="num">€100</span><span class="muted small num">7%</span></div>
+            <div class="li"><b><i class="dot" style="background:var(--c5)"></i>Left</b><b class="num good">€85</b><span class="muted small num">6%</span></div>
+          </div>
+        </div></div></div>
+    <div><div class="cap">Month in the red · dark</div>
+      <div class="scene dark">
+        <div class="hd"><b>Where September went</b><span class="muted small">€939 came in</span></div>
+        <div class="card">
+          <div class="stackw" style="margin-top:14px">
+            <div class="stack">
+              <i style="width:48%;background:var(--c1)"></i><i style="width:38%;background:var(--c2)"></i><i style="flex:1;background:var(--bad)"></i>
+            </div>
+            <span class="mark" style="left:86%"></span><span class="markl" style="left:86%">came in</span>
+          </div>
+          <p class="small bad" style="font-weight:600">€150 more went out than came in</p>
+          <div class="legend">
+            <div class="li"><span><i class="dot" style="background:var(--c1)"></i>Fixed costs</span><span class="num">€524</span><span class="muted small num">56%</span></div>
+            <div class="li"><span><i class="dot" style="background:var(--c2)"></i>Everyday</span><span class="num">€415</span><span class="muted small num">44%</span></div>
+            <div class="li"><b><i class="dot" style="background:var(--bad)"></i>Over</b><b class="num bad">−€150</b><span class="muted small num"></span></div>
+          </div>
+        </div></div></div>
+    <div><div class="cap">Compare months · light</div>
+      <div class="scene light">
+        <div class="hd"><b>Last 4 months</b><span class="muted small">each bar = that month's income</span></div>
+        <div class="card mini">
+          <div class="m"><span>Jul</span><div class="stack" style="height:14px;border-radius:7px"><i style="width:50%;background:var(--c1)"></i><i style="width:35%;background:var(--c2)"></i><i style="width:10%;background:var(--c3)"></i><i style="flex:1;background:var(--c5)"></i></div><span class="num good">+€60</span></div>
+          <div class="m"><span>Aug</span><div class="stack" style="height:14px;border-radius:7px"><i style="width:49%;background:var(--c1)"></i><i style="width:41%;background:var(--c2)"></i><i style="width:10%;background:var(--c3)"></i></div><span class="num">€0</span></div>
+          <div class="m"><span>Sep</span><div class="stackw"><div class="stack" style="height:14px;border-radius:7px"><i style="width:48%;background:var(--c1)"></i><i style="width:38%;background:var(--c2)"></i><i style="flex:1;background:var(--bad)"></i></div><span class="mark" style="left:86%;top:-3px;bottom:-3px"></span></div><span class="num bad">−€150</span></div>
+          <div class="m"><span>Oct</span><div class="stack" style="height:14px;border-radius:7px"><i style="width:46%;background:var(--c1)"></i><i style="width:30%;background:var(--c2)"></i><i style="width:11%;background:var(--c3)"></i><i style="width:7%;background:var(--c4)"></i><i style="flex:1;background:var(--c5)"></i></div><span class="num good">+€85</span></div>
+          <p class="small muted">Tap a bar to open that month on Today.</p>
+        </div>
+      </div></div>
+  </div>
+  <p class="note">Why this is useful: it is the "high level" view in one glance, and it is the only one that mixes income and expense into a single picture. It also catches a month that cost more than it brought in without you doing any maths.</p>
+</section>
+
+<section class="sec">
+  <h2>My recommendation</h2>
+  <p class="note">Build 1 first (small: the tiles you already have gain a tap, and the data exists in the forecast). Then 2 (the tracker makes linking and finding mistakes much easier, and uses data the Fixed page already loads). 3 last, as it needs a clear rule for what counts as "everyday" and "saved" (so it matches the ring on Today). All three use the same colours as the app and the same few numbers, so they never disagree with each other.</p>
+</section>
+</main>
+</body>
+</html>
