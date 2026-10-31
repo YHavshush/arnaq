@@ -275,6 +275,36 @@ export const ui = {
       resumed: "Resumed",
       removed: "Deleted",
     },
+    tracker: {
+      incomeTitle: "Fixed income, month by month",
+      expensesTitle: "Fixed expenses, month by month",
+      range: (from: string, to: string) => `${from} to ${to}`,
+      item: "Item",
+      totalIncome: "Total income",
+      totalExpenses: "Total expenses",
+      region: (title: string) => `${title}. Scroll sideways to see more months.`,
+      thisMonth: "this month",
+      paused: "paused",
+      legend: {
+        paid: "paid",
+        late: "paid late",
+        missed: "missed or bounced",
+        expected: "still expected",
+        none: "nothing that month",
+      },
+      status: {
+        paid: (amount: string) => `paid ${amount}`,
+        late: (amount: string, days: number) =>
+          `paid ${amount}, ${days} ${days === 1 ? "day" : "days"} late`,
+        missed: (amount: string) => `missed, ${amount} was expected`,
+        expected: (amount: string) => `expected ${amount}`,
+        none: "nothing planned",
+      },
+      cell: (item: string, month: string, status: string) => `${item}, ${month}: ${status}`,
+      open: (item: string, month: string, status: string) =>
+        `${item}, ${month}: ${status}. Open the transactions`,
+      lateShort: (days: number) => `+${days}d`,
+    },
     freq: { monthly: "per month", quarterly: "per quarter", yearly: "per year" },
     form: {
       open: "Add a fixed item",

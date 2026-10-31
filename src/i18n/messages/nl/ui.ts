@@ -284,6 +284,36 @@ export const ui: typeof en = {
       resumed: "Hervat",
       removed: "Verwijderd",
     },
+    tracker: {
+      incomeTitle: "Vast inkomen, maand voor maand",
+      expensesTitle: "Vaste uitgaven, maand voor maand",
+      range: (from: string, to: string) => `${from} tot ${to}`,
+      item: "Post",
+      totalIncome: "Totaal inkomen",
+      totalExpenses: "Totaal uitgaven",
+      region: (title: string) => `${title}. Scroll opzij om meer maanden te zien.`,
+      thisMonth: "deze maand",
+      paused: "gepauzeerd",
+      legend: {
+        paid: "betaald",
+        late: "te laat betaald",
+        missed: "gemist of teruggeboekt",
+        expected: "nog te verwachten",
+        none: "niets die maand",
+      },
+      status: {
+        paid: (amount: string) => `betaald ${amount}`,
+        late: (amount: string, days: number) =>
+          `betaald ${amount}, ${days} ${days === 1 ? "dag" : "dagen"} te laat`,
+        missed: (amount: string) => `gemist, ${amount} werd verwacht`,
+        expected: (amount: string) => `verwacht ${amount}`,
+        none: "niets gepland",
+      },
+      cell: (item: string, month: string, status: string) => `${item}, ${month}: ${status}`,
+      open: (item: string, month: string, status: string) =>
+        `${item}, ${month}: ${status}. Open de transacties`,
+      lateShort: (days: number) => `+${days}d`,
+    },
     freq: { monthly: "per maand", quarterly: "per kwartaal", yearly: "per jaar" },
     form: {
       open: "Vaste post toevoegen",
