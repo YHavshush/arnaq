@@ -1,4 +1,5 @@
 import { FocusRefresh } from "./focus-refresh";
+import { RecurringSync } from "./recurring-sync";
 import { ToastProvider } from "./toast";
 import { Settings } from "lucide-react";
 import Link from "next/link";
@@ -54,6 +55,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
     <div className="@container/app min-h-dvh">
       <ThemeFollower />
       <FocusRefresh />
+      <RecurringSync />
       <a
         href="#main"
         className="bg-action text-action-ink sr-only z-40 rounded-full px-4 py-2 font-semibold focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
