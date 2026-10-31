@@ -1,4 +1,5 @@
 import { createDb, type Db } from "./index";
+import { forTransactionPooler } from "./pooler";
 
 // The root database handle. It is NOT scoped to a user: queries on it without a user fail closed,
 // and with a user set they see only that user's rows, but it is the thing `withUser` wraps. App code
@@ -10,7 +11,7 @@ const globalForDb = globalThis as unknown as { __kasboekDb?: Promise<Db> };
 /** Where the app's database lives: DATABASE_URL, or PGlite in ./data/pglite for local use. */
 function appDatabaseLocation(): string {
   const url = process.env.DATABASE_URL?.trim();
-  if (url) return url;
+  if (url) return forTransactionPooler(url);
   // A forgotten variable on the server must not quietly start an empty, throwaway database.
   if (process.env.NODE_ENV === "production" && process.env.KASBOEK_ALLOW_LOCAL_DB !== "1")
     throw new Error("DATABASE_URL is not set. Production needs a postgres:// connection string.");
