@@ -273,6 +273,31 @@ describe("applyAutomatic with the catalog", () => {
       });
     });
 
+    it("matches the shop across the direction words of a bank app when the amount is the same", async () => {
+      const { db, tx, get, cat } = await setup();
+      const other = await cat("clothing-care");
+      await tx("To Amazon Payments Europe SCA", {
+        categoryId: other,
+        categorySource: "user",
+        merchantKey: "to amazon payments",
+        date: "2026-06-30",
+        amount: -999,
+      });
+      const same = await tx("Payment from AMAZON MARKETPLACE", {
+        merchantKey: "payment from amazon",
+        date: "2026-07-20",
+        amount: 999,
+      });
+      const less = await tx("Payment from AMAZON MARKETPLACE", {
+        merchantKey: "payment from amazon",
+        date: "2026-07-20",
+        amount: 500,
+      });
+      await applyAutomatic(db);
+      expect(await get(same.id)).toMatchObject({ categoryId: other });
+      expect(await get(less.id)).toMatchObject({ categoryId: null, suggestedCategoryId: null });
+    });
+
     it("is not a refund when it is more than the payment, long after it, or from a payment app", async () => {
       const { db, tx, get, cat } = await setup();
       const clothing = await cat("clothing-care");
