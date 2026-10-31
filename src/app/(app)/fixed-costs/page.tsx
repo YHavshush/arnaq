@@ -4,6 +4,7 @@ import { Hero } from "@/components/arnaq/hero";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
 import { StatusChip } from "@/components/arnaq/status-chip";
+import { FixedTrackerTable, TrackerLegend } from "@/components/arnaq/fixed-tracker";
 import { Row } from "@/components/arnaq/row";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
 import { AddItemForm, ItemManager, SuggestionList } from "@/components/arnaq/vaste-lasten-actions";
@@ -25,7 +26,8 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
   await requestTime();
   const { locale, t } = await getI18n();
   // Fixed costs are shown to the cent: 21.78 is not 22.
-  const { euroExact: euro, dayLabel, monthName } = formatter(locale);
+  const fmt = formatter(locale);
+  const { euroExact: euro, dayLabel, monthName } = fmt;
   const today = todayIso();
   const month = parseMonth((await searchParams).month, today.slice(0, 7));
   const v = await pageDb((db) => loadVasteLasten(db, month, today, locale));
@@ -110,6 +112,41 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
             {totalRow(f.leftAfterFixed, incomeTotal - expenseTotal, true)}
           </ul>
         </div>
+      )}
+
+      {(v.tracker.income.rows.length > 0 || v.tracker.expenses.rows.length > 0) && (
+        <>
+          {(
+            [
+              [f.tracker.incomeTitle, f.tracker.totalIncome, v.tracker.income],
+              [f.tracker.expensesTitle, f.tracker.totalExpenses, v.tracker.expenses],
+            ] as const
+          ).map(
+            ([title, totalLabel, table]) =>
+              table.rows.length > 0 && (
+                <Section
+                  key={title}
+                  title={title}
+                  aside={f.tracker.range(
+                    fmt.monthShort(v.tracker.months[0]),
+                    fmt.monthShort(v.tracker.months[v.tracker.months.length - 1]),
+                  )}
+                >
+                  <FixedTrackerTable
+                    title={title}
+                    totalLabel={totalLabel}
+                    table={table}
+                    months={v.tracker.months}
+                    nowMonth={v.tracker.nowMonth}
+                    focusMonth={month}
+                    t={f.tracker}
+                    f={fmt}
+                  />
+                </Section>
+              ),
+          )}
+          <TrackerLegend t={f.tracker} />
+        </>
       )}
 
       {v.missed.length > 0 && (

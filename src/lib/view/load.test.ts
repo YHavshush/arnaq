@@ -3,6 +3,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { createDb } from "@/db";
 import { importCsv } from "@/lib/import/service";
+import { createRecurringItem } from "@/lib/recurring/items";
 import { setup } from "@/lib/recurring/test-utils";
 import {
   HORIZONS,
@@ -74,6 +75,76 @@ describe("screen loaders on an imported month", () => {
     expect((await loadOverzicht(empty, "2026-09", "2026-09-20", "nl")).hasActivity).toBe(false);
     expect((await loadUpload(empty)).share).toBe(0);
     expect((await loadPrognose(empty, "2026-09-20", 6, "nl")).hasForecast).toBe(false);
+  });
+});
+
+describe("loadVasteLasten tracker", () => {
+  it("covers 4 months back to 2 ahead and its current month agrees with the page sums", async () => {
+    const h = await setup();
+    const food = await h.cat("Eten & drinken");
+    await h.cover("2026-07", "2026-08", "2026-09", "2026-10");
+    for (const [date, amount, counterparty] of [
+      ["2026-07-05", -1399, "Netflix"],
+      ["2026-08-05", -1399, "Netflix"],
+      ["2026-09-09", -1399, "Netflix"], // 4 days after the expected date: late, still in the window
+      ["2026-10-05", -1450, "Netflix"],
+      ["2026-10-25", 250000, "Werkgever BV"],
+    ] as const)
+      await h.tx(date, amount, { counterparty, categoryId: food });
+    const today = "2026-10-15";
+    await createRecurringItem(
+      h.db,
+      {
+        name: "Netflix",
+        type: "expense",
+        matchCounterparty: "Netflix",
+        expectedAmount: 1399,
+        tolerance: 100,
+        dayOfMonth: 5,
+        categoryId: food,
+        startDate: "2026-07-01",
+      },
+      { today },
+    );
+    await createRecurringItem(
+      h.db,
+      {
+        name: "Werkgever",
+        type: "income",
+        matchCounterparty: "Werkgever BV",
+        expectedAmount: 250000,
+        dayOfMonth: 25,
+        startDate: "2026-07-01",
+      },
+      { today },
+    );
+    const v = await loadVasteLasten(h.db, "2026-10", today, "en");
+    expect(v.tracker.months).toEqual([
+      "2026-06",
+      "2026-07",
+      "2026-08",
+      "2026-09",
+      "2026-10",
+      "2026-11",
+      "2026-12",
+    ]);
+    const netflix = v.tracker.expenses.rows[0];
+    expect(netflix.name).toBe("Netflix");
+    expect(netflix.cells.map((c) => c.kind)).toEqual([
+      "none",
+      "paid",
+      "paid",
+      "late",
+      "paid",
+      "expected",
+      "expected",
+    ]);
+    expect(netflix.cells[3].lateDays).toBe(4);
+    // The current month's totals are the sums the page shows above the tracker.
+    const sum = (rows: { amount: number }[]) => rows.reduce((s, r) => s + r.amount, 0);
+    expect(v.tracker.expenses.totals[4]).toBe(sum(v.expenses));
+    expect(v.tracker.income.totals[4]).toBe(sum(v.income));
+    expect(v.tracker.expenses.totals[4]).toBe(1450);
   });
 });
 
