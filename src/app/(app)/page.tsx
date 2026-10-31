@@ -144,13 +144,27 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         caption={
           o.free === null
             ? t.ui.overview.captionSpent
-            : o.free < 0
-              ? t.ui.overview.captionOver
-              : t.ui.overview.captionFree
+            : o.basis === "income"
+              ? o.free < 0
+                ? t.ui.overview.captionOverIncome
+                : t.ui.overview.captionFreeIncome
+              : o.free < 0
+                ? t.ui.overview.captionOver
+                : t.ui.overview.captionFree
         }
         sentence={o.sentence}
         detail={o.detail}
         facts={o.facts}
+        action={
+          o.basis === "budget" ? undefined : (
+            <>
+              <span className="text-ink-muted">{t.ui.overview.noTotalBudget}</span>{" "}
+              <Link href={`/budget?month=${month}`} className="text-accent font-semibold">
+                {t.ui.overview.setTotalBudget}
+              </Link>
+            </>
+          )
+        }
       />
       <AttentionList items={o.attention} />
 

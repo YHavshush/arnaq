@@ -17,6 +17,8 @@ interface HeroProps {
   detail?: ReactNode;
   /** Small lines under the detail (optional): what is over, under, or still to come. */
   facts?: string[];
+  /** Something to do about it (optional), for example a link, under the facts. */
+  action?: ReactNode;
 }
 
 /** Room for the number inside the ring (px) and the widest a character gets (em); see `numberSize`. */
@@ -43,6 +45,7 @@ export function Hero({
   sentence,
   detail,
   facts,
+  action,
 }: HeroProps) {
   return (
     <section className="flex flex-col items-center gap-5 pt-2 pb-2 text-center @min-[900px]/app:flex-row @min-[900px]/app:gap-12 @min-[900px]/app:text-left">
@@ -69,6 +72,7 @@ export function Hero({
             ))}
           </ul>
         ) : null}
+        {action ? <div className="text-[14px]">{action}</div> : null}
       </div>
     </section>
   );

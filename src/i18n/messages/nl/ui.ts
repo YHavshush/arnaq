@@ -114,6 +114,11 @@ export const ui: typeof en = {
     captionSpent: "uitgegeven",
     captionOver: "over je budget",
     captionFree: "nog vrij",
+    captionOverIncome: "meer dan er binnenkwam",
+    captionFreeIncome: "over van wat binnenkwam",
+    noTotalBudget:
+      "Er is geen totaalbudget ingesteld, dus de ring vergelijkt met wat deze maand binnenkwam.",
+    setTotalBudget: "Stel een totaalbudget in",
     setBudget: "Budget instellen",
     noExpenses: "Geen uitgaven in deze maand.",
     subDue: (date: string) => `komt ${date}`,
