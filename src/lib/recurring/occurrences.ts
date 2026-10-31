@@ -10,6 +10,10 @@ export type OccurrenceStatus = (typeof OCCURRENCE_STATUSES)[number];
 
 /** A payment counts for an occurrence up to this many days before or after its expected date. */
 export const MATCH_WINDOW_DAYS = 5;
+/** Income arrives when the client gets round to it (a different day each month), so it has a wider window. */
+export const INCOME_MATCH_WINDOW_DAYS = 15;
+export const matchWindowDays = (type: RecurringType) =>
+  type === "income" ? INCOME_MATCH_WINDOW_DAYS : MATCH_WINDOW_DAYS;
 
 const STEP: Record<Frequency, number> = { monthly: 1, quarterly: 3, yearly: 12 };
 
@@ -150,7 +154,7 @@ export async function coveredMonths(db: Db): Promise<Set<string>> {
 
 /**
  * Flip `expected` occurrences to `missed` once their match window has fully passed
- * (expectedDate + MATCH_WINDOW_DAYS is before `today`) and we hold the data to judge it:
+ * (expectedDate + the window, 5 days, 15 for income, is before `today`) and we hold the data to judge it:
  * the occurrence's own month must be uploaded, and so must the month the window reaches into
  * after it. A window reaching back into a month before the very first upload counts as
  * covered (there is nothing earlier to upload), so rent on the 1st is judged normally for the
@@ -167,10 +171,18 @@ export async function markMissed(db: Db, opts: { today: string }): Promise<numbe
     .select()
     .from(schema.recurringOccurrences)
     .where(eq(schema.recurringOccurrences.status, "expected"));
+  const typeOf = new Map(
+    (
+      await db
+        .select({ id: schema.recurringItems.id, type: schema.recurringItems.type })
+        .from(schema.recurringItems)
+    ).map((i) => [i.id, i.type]),
+  );
   let n = 0;
   for (const o of open) {
-    const windowStart = addDays(o.expectedDate, -MATCH_WINDOW_DAYS);
-    const windowEnd = addDays(o.expectedDate, MATCH_WINDOW_DAYS);
+    const window = matchWindowDays(typeOf.get(o.recurringItemId) ?? "expense");
+    const windowStart = addDays(o.expectedDate, -window);
+    const windowEnd = addDays(o.expectedDate, window);
     if (windowEnd >= opts.today) continue;
     const own = monthOf(o.expectedDate);
     const before = monthOf(windowStart);

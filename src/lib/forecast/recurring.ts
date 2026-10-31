@@ -2,8 +2,9 @@ import { schema, type Db } from "@/db";
 import { addDays, addMonths, monthOf } from "@/lib/recurring/dates";
 import { pairOccurrences, savingsCategoryIds, unmatchedCandidates } from "@/lib/recurring/matching";
 import {
-  MATCH_WINDOW_DAYS,
+  INCOME_MATCH_WINDOW_DAYS,
   getOccurrences,
+  matchWindowDays,
   planOccurrences,
   type OccurrenceStatus,
   type OccurrenceView,
@@ -106,7 +107,7 @@ export async function projectRecurring(
   for (const o of stored) {
     const line = fromStored(o);
     if (o.month >= w.first) add(o.month, line);
-    const windowEnd = addDays(o.expectedDate, MATCH_WINDOW_DAYS);
+    const windowEnd = addDays(o.expectedDate, matchWindowDays(o.type));
     if (o.month < w.current && o.status === "expected" && monthOf(windowEnd) >= w.current)
       add(w.current, { ...line, carriedOver: true });
   }
@@ -182,8 +183,8 @@ async function matchInMemory(
   const dates = planned.map((p) => p.expectedDate).sort();
   const txs = await unmatchedCandidates(
     db,
-    addDays(dates[0], -MATCH_WINDOW_DAYS),
-    addDays(dates[dates.length - 1], MATCH_WINDOW_DAYS),
+    addDays(dates[0], -INCOME_MATCH_WINDOW_DAYS),
+    addDays(dates[dates.length - 1], INCOME_MATCH_WINDOW_DAYS),
   );
   if (txs.length === 0) return paid;
   const open = planned.map((p, i) => ({

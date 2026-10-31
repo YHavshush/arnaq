@@ -2,7 +2,7 @@ import { and, eq, gte, inArray, isNull, lte, or } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { addDays, dayNumber } from "./dates";
 import { identityMatches, type Identity } from "./normalise";
-import { MATCH_WINDOW_DAYS, type RecurringType } from "./occurrences";
+import { INCOME_MATCH_WINDOW_DAYS, matchWindowDays, type RecurringType } from "./occurrences";
 
 export interface MatchResult {
   /** Occurrences newly linked to a transaction. */
@@ -130,7 +130,7 @@ export async function unmatchedCandidates(
  * Pure: choose which transaction pays which occurrence. A transaction is a candidate for an
  * occurrence when it has the item's sign (expense = outgoing, income = incoming), matches the
  * item's IBAN or counterparty, its absolute amount is within the item's tolerance of the
- * expected amount and its date is within MATCH_WINDOW_DAYS of the expected date.
+ * expected amount and its date is within the match window of the expected date (5 days; 15 for income).
  *
  * Pairs are chosen globally and greedily: all candidate pairs sorted by date distance, then
  * amount distance, then transaction id, then occurrence key; a pair is taken when neither side
@@ -160,9 +160,10 @@ export function pairOccurrences<O extends OpenOccurrence>(
   for (const o of open) {
     const { item } = o;
     const expectedDay = dayNumber(o.expectedDate);
-    for (let i = firstFrom(expectedDay - MATCH_WINDOW_DAYS); i < byDay.length; i++) {
+    const window = matchWindowDays(item.type);
+    for (let i = firstFrom(expectedDay - window); i < byDay.length; i++) {
       const { t, day } = byDay[i];
-      if (day > expectedDay + MATCH_WINDOW_DAYS) break;
+      if (day > expectedDay + window) break;
       if (Boolean(o.savings) !== Boolean(t.savingsMove)) continue;
       if (item.type === "expense" ? t.amount >= 0 : t.amount <= 0) continue;
       const dateDiff = Math.abs(day - expectedDay);
@@ -233,8 +234,8 @@ export async function matchOccurrences(db: Db): Promise<MatchResult> {
   const dates = open.map((o) => o.expectedDate).sort();
   const txs = await unmatchedCandidates(
     db,
-    addDays(dates[0], -MATCH_WINDOW_DAYS),
-    addDays(dates[dates.length - 1], MATCH_WINDOW_DAYS),
+    addDays(dates[0], -INCOME_MATCH_WINDOW_DAYS),
+    addDays(dates[dates.length - 1], INCOME_MATCH_WINDOW_DAYS),
   );
 
   let matched = 0;
