@@ -13,7 +13,9 @@ import { getMissedOccurrences, getOccurrences } from "@/lib/recurring/occurrence
 import { listLinkableTransactions } from "@/lib/recurring/linkable";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
 import type { Locale } from "@/i18n/config";
-import { getOpeningBalance } from "@/lib/forecast/balance";
+import { getAccountBalances, getOpeningBalance } from "@/lib/forecast/balance";
+import { getBtwSummary } from "@/lib/btw/summary";
+import { getSavingsSettings } from "@/lib/savings/settings";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { buildOverzicht } from "./overzicht";
 import { buildPrognose } from "./prognose";
@@ -160,5 +162,35 @@ export async function loadUpload(db: Db) {
     total,
     sorted: Math.max(total - left, 0),
     share: total === 0 ? 0 : Math.max(total - left, 0) / total,
+  };
+}
+
+/** What net worth is made of: the balance of each account, the savings and how they add up. */
+export async function loadNetWorth(db: Db, today: string) {
+  const [accounts, savings, settings, btw] = await Promise.all([
+    getAccountBalances(db),
+    getSavingsSummary(db, { today }),
+    getSavingsSettings(db),
+    getBtwSummary(db, { today }),
+  ]);
+  const accountsTotal = accounts.reduce((s, a) => s + a.balance, 0);
+  const base = settings.anchor ?? settings.start;
+  return {
+    accounts,
+    accountsTotal,
+    savings: {
+      saved: savings.saved,
+      /** The balance a statement reported (or what was typed as already saved) and the day it is for. */
+      base,
+      baseDate: settings.anchorDate,
+      fromStatement: settings.anchor !== null,
+      /** Moves into and out of savings since then, net: a deposit adds, a withdrawal subtracts. */
+      since: savings.saved - base,
+      moves: savings.lines,
+    },
+    /** Money in the BTW pocket: owed to the tax office, so it is not part of the total. */
+    btwPocket: btw.pocket > 0 ? btw.pocket : 0,
+    total: accountsTotal + savings.saved,
+    hasAny: accounts.length > 0 || savings.anchored || savings.lines > 0 || savings.saved > 0,
   };
 }

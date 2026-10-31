@@ -69,6 +69,13 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         sentence={p.sentence}
         detail={p.detail}
       />
+      {p.netWorth && (
+        <div className="flex justify-center pb-3">
+          <Link href="/net-worth" className="text-accent min-h-11 text-[15px] font-semibold">
+            {t.ui.forecast.howBuilt}
+          </Link>
+        </div>
+      )}
       {p.incomeMissing && (
         <div className="flex justify-center pb-2">
           <Link

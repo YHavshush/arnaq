@@ -48,6 +48,31 @@ export const ui: typeof en = {
   netWorth: {
     title: "Vermogen",
     aside: (accounts: string, savings: string) => `${accounts} op rekeningen + ${savings} gespaard`,
+    pageTitle: "vermogen",
+    sub: "Wat je bezit",
+    back: "Terug naar vooruit",
+    intro:
+      "Wat er op je rekeningen staat plus wat je hebt gespaard, voor zover je geüploade afschriften laten zien. Geld dat je aan de Belastingdienst verschuldigd bent telt niet mee.",
+    accounts: "Op je rekeningen",
+    noAccounts: "Nog geen saldo. Upload een afschrift waarop saldo's staan.",
+    asOf: (day: string) => `per ${day}`,
+    savings: "Gespaard",
+    savingsStatement: "Spaarsaldo op je afschrift",
+    savingsTyped: "Al gespaard vóór je eerste upload",
+    savingsSince: "Verplaatst sindsdien",
+    savingsMoves: (n: number) =>
+      n === 0
+        ? "geen overboekingen sindsdien"
+        : `${n} ${n === 1 ? "overboeking" : "overboekingen"} van of naar sparen`,
+    savingsNow: "Nu gespaard",
+    savingsNote:
+      "Een afschrift geeft één spaarsaldo per spaarrekening. Zit daar BTW-geld bij, dan kan arnaq dat niet zien.",
+    notCounted: "Telt niet mee",
+    btwPocket: "In de BTW-pot",
+    btwNote: "Verschuldigd aan de Belastingdienst, dus geen deel van je vermogen.",
+    total: "Vermogen",
+    emptyTitle: "Nog geen vermogen",
+    emptyBody: "Upload een afschrift en arnaq telt hier je rekeningen en spaargeld op.",
   },
   category: {
     back: "Vandaag",
@@ -166,6 +191,7 @@ export const ui: typeof en = {
       "Upload minstens een maand en voeg je vaste posten toe. Daarna zie je hier hoe je geld zich ontwikkelt.",
     ring: (a: number, b: number) => `${a} van ${b} maanden eindigen in de plus`,
     caption: (label: string) => `groei tot en met ${label}`,
+    howBuilt: "Hoe is het vermogen opgebouwd?",
     captionWorth: (label: string) => `vermogen in ${label}`,
     progressWorth: "Vermogen over tijd",
     needIncomeTitle: "Voeg je inkomen toe om te zien waar je naartoe gaat",

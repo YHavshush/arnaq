@@ -47,3 +47,52 @@ export async function getOpeningBalance(db: Db, month: string): Promise<number |
   }
   return any ? total : null;
 }
+
+export interface AccountBalance {
+  accountId: number;
+  name: string;
+  bank: string;
+  /** Cents, the balance the bank states after the newest transaction. */
+  balance: number;
+  /** The date of that transaction (YYYY-MM-DD): the balance is as of this day. */
+  asOf: string;
+}
+
+/**
+ * What each account held after its newest transaction, with the day that is for: the parts that add up to the
+ * accounts side of net worth. Accounts without a stated balance, and other-currency rows, are left out
+ * (the same rules as getOpeningBalance).
+ */
+export async function getAccountBalances(db: Db): Promise<AccountBalance[]> {
+  const rows = await db
+    .select({
+      accountId: schema.transactions.accountId,
+      name: schema.accounts.name,
+      bank: schema.accounts.bank,
+      date: schema.transactions.date,
+      balanceAfter: schema.transactions.balanceAfter,
+    })
+    .from(schema.transactions)
+    .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
+    .where(
+      and(
+        isNotNull(schema.transactions.balanceAfter),
+        eq(schema.transactions.currency, schema.accounts.currency),
+      ),
+    )
+    .orderBy(
+      asc(schema.transactions.accountId),
+      asc(schema.transactions.date),
+      asc(schema.transactions.id),
+    );
+  const last = new Map<number, AccountBalance>();
+  for (const r of rows)
+    last.set(r.accountId, {
+      accountId: r.accountId,
+      name: r.name,
+      bank: r.bank,
+      balance: r.balanceAfter!,
+      asOf: r.date,
+    });
+  return [...last.values()];
+}

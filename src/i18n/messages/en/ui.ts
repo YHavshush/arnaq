@@ -48,6 +48,29 @@ export const ui = {
   netWorth: {
     title: "Net worth",
     aside: (accounts: string, savings: string) => `${accounts} in accounts + ${savings} saved`,
+    pageTitle: "net worth",
+    sub: "What you own",
+    back: "Back to ahead",
+    intro:
+      "What is in your accounts plus what you have saved, as far as your uploaded statements show. Money owed to the tax office is not counted.",
+    accounts: "In your accounts",
+    noAccounts: "No account balance yet. Upload a statement that shows balances.",
+    asOf: (day: string) => `as of ${day}`,
+    savings: "Saved",
+    savingsStatement: "Savings balance on your statement",
+    savingsTyped: "Already saved before your first upload",
+    savingsSince: "Moved since then",
+    savingsMoves: (n: number) =>
+      n === 0 ? "no moves since" : `${n} ${n === 1 ? "move" : "moves"} into or out of savings`,
+    savingsNow: "Saved now",
+    savingsNote:
+      "A statement gives one savings balance per savings account. If part of that is BTW money, arnaq cannot see it.",
+    notCounted: "Not counted",
+    btwPocket: "In the BTW pocket",
+    btwNote: "Owed to the tax office, so not part of your net worth.",
+    total: "Net worth",
+    emptyTitle: "No net worth yet",
+    emptyBody: "Upload a statement and arnaq adds up your accounts and savings here.",
   },
   category: {
     back: "Today",
@@ -166,6 +189,7 @@ export const ui = {
     ring: (a: number, b: number) => `${a} of ${b} months end in the plus`,
     caption: (label: string) => `growth through ${label}`,
     captionWorth: (label: string) => `net worth by ${label}`,
+    howBuilt: "How is net worth built up?",
     progressWorth: "Net worth over time",
     needIncomeTitle: "Add your income to see where you're heading",
     needIncomeBody:
