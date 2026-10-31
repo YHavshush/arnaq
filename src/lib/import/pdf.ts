@@ -2,11 +2,11 @@ import { getDocumentProxy } from "unpdf";
 import { StatementError } from "./parsers/rabobank-pdf";
 import type { PdfItem } from "./parsers/rabobank-pdf";
 
-/** A statement is a handful of pages with a few hundred text items; anything beyond these limits
- * is not a bank statement (or is built to be slow), so it is refused before it is processed. */
-export const MAX_PDF_PAGES = 60;
+/** A statement is some pages with a few hundred text items each (a whole year is about 80 pages and 25,000 items);
+ * anything beyond these limits is not a bank statement (or is built to be slow), so it is refused before it is processed. */
+export const MAX_PDF_PAGES = 200;
 export const MAX_ITEMS_PER_PAGE = 5_000;
-export const MAX_ITEMS_TOTAL = 20_000;
+export const MAX_ITEMS_TOTAL = 100_000;
 const MAX_READ_MS = 10_000;
 
 export const isPdf = (bytes: Uint8Array) =>

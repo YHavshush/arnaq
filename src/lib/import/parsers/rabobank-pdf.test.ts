@@ -212,6 +212,16 @@ describe("layouts a real statement can have", () => {
 });
 
 describe("readPdfPages limits", () => {
+  it("reads a whole year of statements: about 80 pages and 25,000 text items", async () => {
+    const page = Array.from({ length: 320 }, (_, i) => ({
+      str: "x",
+      x: 10,
+      right: 15,
+      y: 800 - i,
+    }));
+    const pages = await readPdfPages(toPdfBytes(Array.from({ length: 80 }, () => page)));
+    expect(pages).toHaveLength(80);
+  });
   it("refuses a PDF with an absurd number of text items", async () => {
     const items = Array.from({ length: 6000 }, (_, i) => ({
       str: "x",
