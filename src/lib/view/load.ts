@@ -19,6 +19,7 @@ import { getSavingsSettings } from "@/lib/savings/settings";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { buildOverzicht } from "./overzicht";
 import { buildPrognose } from "./prognose";
+import { buildFixedTracker, trackerMonths } from "./fixed-tracker";
 import { buildVasteLasten } from "./vaste-lasten";
 
 /** A valid YYYY-MM from user input, or the fallback. */
@@ -73,16 +74,20 @@ export async function loadPrognose(db: Db, today: string, months: number, locale
 }
 
 export async function loadVasteLasten(db: Db, month: string, today: string, locale: Locale) {
-  const [occurrences, items, missed, suggestions, categories, linkable] = await Promise.all([
-    getOccurrences(db, { from: month, to: month }),
+  // One query for the tracker's whole range; the month's own rows are cut out of it.
+  const months = trackerMonths(month);
+  const [ranged, items, missed, suggestions, categories, linkable] = await Promise.all([
+    getOccurrences(db, { from: months[0], to: months[months.length - 1] }),
     listRecurringItems(db),
     getMissedOccurrences(db),
     detectSuggestions(db, { today }),
     db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
     listLinkableTransactions(db, { today }),
   ]);
+  const occurrences = ranged.filter((o) => o.month === month);
   return {
     ...buildVasteLasten(occurrences, locale),
+    tracker: buildFixedTracker({ items, occurrences: ranged, months, today }),
     items,
     missed,
     suggestionsCosts: suggestions.filter((s) => s.type === "expense"),
