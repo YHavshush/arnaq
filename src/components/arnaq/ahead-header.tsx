@@ -29,7 +29,7 @@ export function AheadHeader({
       {pill && (
         <div>
           <span
-            className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${pill.good ? "text-good" : "text-bad"}`}
+            className={`inline-flex items-center rounded-full px-3 py-1 text-sm leading-none font-semibold ${pill.good ? "text-good" : "text-bad"}`}
             style={{ background: "color-mix(in oklab, currentColor 14%, transparent)" }}
           >
             {pill.text}

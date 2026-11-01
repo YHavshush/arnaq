@@ -23,13 +23,10 @@ export function MonthDetail({ point }: { point: PrognosePoint }) {
       aria-expanded={open === which}
       aria-controls={panel}
       onClick={() => setOpen(open === which ? null : which)}
-      className={`bg-soft focus-visible:ring-accent min-h-11 cursor-pointer rounded-2xl px-2 py-3 outline-none focus-visible:ring-2 ${open === which ? "ring-accent/60 ring-2" : ""}`}
+      className={`bg-soft focus-visible:ring-accent grid min-h-14 cursor-pointer content-center justify-items-center gap-0.5 rounded-2xl px-2 py-2 outline-none focus-visible:ring-2 ${open === which ? "ring-accent/60 ring-2" : ""}`}
     >
-      <span className="text-ink-muted block text-[13px]">{label}</span>
-      <span className="block text-lg font-semibold tracking-tight">{value}</span>
-      {open !== which && (
-        <span className="text-accent block text-xs font-semibold">{t.ui.chart.parts.tap}</span>
-      )}
+      <span className="text-ink-muted text-xs">{label}</span>
+      <span className="text-base font-semibold tracking-tight">{value}</span>
     </button>
   );
   const growthColour = point.net > 0 ? "text-good" : point.net < 0 ? "text-bad" : "";
@@ -51,9 +48,9 @@ export function MonthDetail({ point }: { point: PrognosePoint }) {
             : t.ui.chart.expenses,
           euro(point.expenses),
         )}
-        <div className="bg-soft rounded-2xl px-2 py-3">
-          <span className="text-ink-muted block text-[13px]">{t.ui.chart.growth}</span>
-          <span className={`block text-lg font-semibold tracking-tight ${growthColour}`}>
+        <div className="bg-soft grid min-h-14 content-center justify-items-center gap-0.5 rounded-2xl px-2 py-2">
+          <span className="text-ink-muted text-xs">{t.ui.chart.growth}</span>
+          <span className={`text-base font-semibold tracking-tight ${growthColour}`}>
             {euroSigned(point.net)}
           </span>
         </div>

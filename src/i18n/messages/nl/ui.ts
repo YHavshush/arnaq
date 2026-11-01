@@ -227,7 +227,6 @@ export const ui: typeof en = {
     growth: "Groei",
     table: { caption: "Prognose per maand", month: "Maand", total: "Totaal", growth: "Groei" },
     parts: {
-      tap: "Tik voor de onderdelen",
       total: "Totaal",
       incomeCount: (n: number) => `${n} ${n === 1 ? "bron" : "bronnen"}`,
       expenseCount: (n: number) => `${n} ${n === 1 ? "onderdeel" : "onderdelen"}`,
