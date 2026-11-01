@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq ring and fixed page ideas</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1200px; margin:0 auto; display:grid; gap:34px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 21px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:84ch; }
+.sec { display:grid; gap:14px; padding-top:18px; border-top:1px solid var(--line); }
+.row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+.scene { width:360px; max-width:100%; border-radius:30px; padding:16px 14px 20px; display:grid; gap:12px; align-content:start; overflow:hidden; }
+.light { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.66); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --warn:#a8691b; --track:rgba(23,32,46,.09); --ringA:#6cc5ff; --ringB:#8a8cf8; --goodRing:#59b085; --chip:rgba(36,59,115,.12);
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 55%,#f6e8d8); }
+.dark { --ink:#eef1f5; --muted:#a8b1bf; --soft:rgba(143,208,255,.10); --card:rgba(255,255,255,.07); --hair:rgba(255,255,255,.12); --accent:#8fd0ff; --good:#7fd3a8; --bad:#ff8f84; --warn:#f0b868; --track:rgba(255,255,255,.12); --ringA:#8fd0ff; --ringB:#7d8bff; --goodRing:#7fd3a8; --chip:rgba(143,208,255,.16);
+  color:#eef1f5; background:linear-gradient(165deg,color-mix(in oklab,#2ac9ff 26%,#141b28),color-mix(in oklab,#7d8bff 22%,#141b28) 55%,#141b28); }
+.hdr small { display:block; color:var(--muted); font-size:13px; } .hdr b { font:500 30px/1.1 Georgia,serif; }
+.hdr { display:flex; justify-content:space-between; align-items:end; } .step { display:flex; gap:6px; } .step i { width:32px; height:32px; border-radius:50%; background:var(--card); display:grid; place-items:center; font-style:normal; font-size:14px; }
+.hero { display:grid; gap:10px; justify-items:center; text-align:center; }
+.ring { width:170px; height:170px; position:relative; } .ring svg { width:100%; height:100%; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:11; stroke-linecap:round; }
+.ring .t { stroke:var(--track); } .ring .c { position:absolute; inset:0; display:grid; place-content:center; text-align:center; } .ring .c b { font-size:34px; font-weight:500; font-variant-numeric:tabular-nums; } .ring .c small { color:var(--muted); font-size:12px; }
+.sentence { font:500 22px/1.2 Georgia,serif; } .sentence i { font-style:italic; }
+.line { color:var(--muted); font-size:14px; }
+.legend { display:flex; gap:14px; justify-content:center; font-size:12.5px; color:var(--muted); } .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+.card { border-radius:24px; background:var(--card); border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); overflow:hidden; }
+.pad { padding:13px 15px; display:grid; gap:9px; }
+.sech { display:flex; justify-content:space-between; align-items:baseline; margin-top:4px; padding:0 4px; } .sech b { font:500 19px/1.2 Georgia,serif; } .sech span { font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; }
+.li { display:grid; grid-template-columns:2.3rem minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 15px; border-top:1px solid var(--hair); } .li:first-child { border-top:0; }
+.ic { width:2.3rem; height:2.3rem; border-radius:12px; background:var(--soft); } .li b { font-weight:600; } .li small { color:var(--muted); display:block; font-size:12.5px; }
+.amt { font-weight:600; font-variant-numeric:tabular-nums; text-align:right; }
+.chip { display:inline-block; font-size:12px; font-weight:600; border-radius:99px; padding:2px 9px; background:var(--chip); } .chip.paid { background:color-mix(in oklab,var(--good) 18%,transparent); color:var(--good); }
+.eq { display:grid; grid-template-columns:1fr auto 1fr auto 1fr; gap:6px; align-items:center; text-align:center; } .eq div { background:var(--soft); border-radius:16px; padding:9px 4px; } .eq b { display:block; font-size:17px; font-variant-numeric:tabular-nums; } .eq small { color:var(--muted); font-size:11.5px; } .eq span { color:var(--muted); font-size:16px; }
+.seg { display:grid; grid-template-columns:repeat(3,1fr); background:var(--soft); border-radius:99px; padding:4px; gap:4px; font-size:13px; font-weight:600; text-align:center; } .seg span { padding:8px 4px; border-radius:99px; } .seg .on { background:var(--card); box-shadow:0 1px 4px rgba(0,0,0,.12); }
+.dots { display:flex; gap:6px; align-items:center; padding:2px 0 4px; } .dots span { display:grid; gap:2px; justify-items:center; font-size:11px; color:var(--muted); } .dots i { width:22px; height:22px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-size:12px; font-weight:700; background:var(--soft); }
+.dots .ok i { background:color-mix(in oklab,var(--good) 20%,transparent); color:var(--good); } .dots .late i { background:color-mix(in oklab,var(--warn) 22%,transparent); color:var(--warn); } .dots .bad i { background:color-mix(in oklab,var(--bad) 20%,transparent); color:var(--bad); } .dots .now i { outline:2px solid var(--accent); }
+.acts { display:flex; gap:8px; } .btn { border-radius:99px; background:var(--soft); padding:7px 14px; font-size:13px; font-weight:600; } .btn.main { background:var(--accent); color:#fff; } .dark .btn.main { color:#06121c; }
+.add { text-align:center; padding:12px; font-weight:600; color:var(--accent); }
+table { border-collapse:collapse; width:100%; font-size:12.5px; font-variant-numeric:tabular-nums; } th { color:var(--muted); font-weight:600; text-align:right; padding:6px 6px; } td { padding:8px 6px; text-align:right; border-top:1px solid var(--hair); } th:first-child, td:first-child { text-align:left; font-weight:600; } tr.sum td { font-weight:700; border-top:1.5px solid var(--ink); }
+.ok2 { color:var(--good); } .late2 { color:var(--warn); } .bad2 { color:var(--bad); font-weight:700; } .exp { color:var(--muted); } .nowc { background:var(--soft); }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>The two-tone ring, and ideas for the Fixed page</h1>
+  <p class="note">Mockups only, demo numbers, phone width. Nothing in the app has been changed.</p>
+</header>
+
+<!-- ============ RING ============ -->
+<section class="sec">
+  <h2>A · Today: the ring shows spent and still-to-pay</h2>
+  <p class="note">The solid arc is what you have actually spent. The lighter arc is what is already spoken for: fixed costs still to pay. The big number is what is left over (budget − spent − still to pay), the same as now. The sentence says the same thing in words, so the ring and the text no longer seem to disagree. First of the month on the left (nothing paid yet), mid-month on the right.</p>
+  <div class="row">
+    <div><div class="cap">1 November · light</div>
+      <div class="scene light">
+        <div class="hdr"><div><small>November 2026</small><b>today</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div class="hero">
+          <div class="ring"><svg viewBox="0 0 100 100">
+            <circle class="t" cx="50" cy="50" r="44"/>
+            <circle cx="50" cy="50" r="44" stroke="var(--goodRing)" stroke-opacity=".38" stroke-dasharray="96.7 276.5" stroke-dashoffset="0"/>
+          </svg><div class="c"><b>€1,259</b><small>still free</small></div></div>
+          <div class="legend"><span><i class="dot" style="background:var(--goodRing)"></i>spent €0</span><span><i class="dot" style="background:var(--goodRing);opacity:.4"></i>to pay €675</span></div>
+          <div class="sentence">All calm: <i>29 days</i> left</div>
+          <div class="line">€0 spent + €675 fixed still to pay, of your €1,934 budget</div>
+        </div>
+      </div></div>
+    <div><div class="cap">15 November · dark</div>
+      <div class="scene dark">
+        <div class="hdr"><div><small>November 2026</small><b>today</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div class="hero">
+          <div class="ring"><svg viewBox="0 0 100 100">
+            <circle class="t" cx="50" cy="50" r="44"/>
+            <circle cx="50" cy="50" r="44" stroke="var(--goodRing)" stroke-opacity=".38" stroke-dasharray="96.7 276.5" stroke-dashoffset="-86"/>
+            <circle cx="50" cy="50" r="44" stroke="var(--goodRing)" stroke-dasharray="86 276.5" stroke-dashoffset="0"/>
+          </svg><div class="c"><b>€655</b><small>still free</small></div></div>
+          <div class="legend"><span><i class="dot" style="background:var(--goodRing)"></i>spent €604</span><span><i class="dot" style="background:var(--goodRing);opacity:.4"></i>to pay €675</span></div>
+          <div class="sentence">Halfway: <i>15 days</i> left</div>
+          <div class="line">€604 spent + €675 fixed still to pay, of your €1,934 budget</div>
+        </div>
+      </div></div>
+    <div style="max-width:380px;display:grid;gap:10px"><div class="cap">The rules</div>
+      <p class="note">• Fixed costs count as <b>spent</b> once they are paid (the arc turns from light to solid), and as <b>to pay</b> until then.<br>• Over budget: the arc turns red, as it does now, and the big number says how far over.<br>• The legend under the ring only shows two parts, so it stays one line on a phone.</p></div>
+  </div>
+</section>
+
+<!-- ============ FIXED ============ -->
+<section class="sec">
+  <h2>B · The Fixed page: what is off about it now</h2>
+  <p class="note">Today the page repeats the same items three times, one under the other: the month's list, then "Manage" (pause, delete), then the month-by-month table. The totals sit as extra rows glued to the bottom of each list, "Left after fixed costs" is a separate card stuck to them, and suggestions and "missed" sit in between. So you scroll a long page and meet every fixed item again and again, in different shapes, with different corners. The elements are fine; the order and the repetition are the problem.</p>
+  <p class="note"><b>Idea 1: one item, one row.</b> Every fixed item is a single row. It shows this month's state. Tap it and it opens to show its history (the months as dots) and its actions (pause, remove). That replaces the manage list and the table in one go. Totals move into the section headers, and one equation strip at the top says income − fixed = left.</p>
+  <div class="row">
+    <div><div class="cap">Idea 1 · light</div>
+      <div class="scene light">
+        <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div class="eq"><div><b>€1,468</b><small>comes in</small></div><span>−</span><div><b>€675</b><small>fixed</small></div><span>=</span><div><b style="color:var(--good)">€793</b><small>left</small></div></div>
+        <div class="card pad" style="grid-template-columns:1fr auto;align-items:center"><div><b>2 suggestions</b><div class="line" style="font-size:13px">Netflix price went up · new: Spotify</div></div><span class="btn main">Review</span></div>
+        <div class="sech"><b>Expenses</b><span>€675 · 0 of 4 paid</span></div>
+        <div class="card">
+          <div class="li"><div class="ic"></div><div><b>Stichting DUWO</b><small>due 1 Nov</small></div><div class="amt">€481.45</div></div>
+          <div style="padding:0 15px 12px;display:grid;gap:8px;border-top:0">
+            <div class="dots"><span class="ok"><i>✓</i>Jun</span><span class="ok"><i>✓</i>Jul</span><span class="ok"><i>✓</i>Aug</span><span class="ok"><i>✓</i>Sep</span><span class="ok"><i>✓</i>Oct</span><span class="now"><i>·</i>Nov</span></div>
+            <div class="acts"><span class="btn">Pause</span><span class="btn">Remove</span><span class="btn">Edit</span></div>
+          </div>
+          <div class="li"><div class="ic"></div><div><b>FBTO health</b><small>due 1 Nov</small></div><div class="amt">€151.00</div></div>
+          <div class="li"><div class="ic"></div><div><b>Claude</b><small>due 20 Nov</small></div><div class="amt">€21.78</div></div>
+          <div class="li"><div class="ic"></div><div><b>Netflix</b><small>due 21 Nov</small></div><div class="amt">€20.99</div></div>
+        </div>
+        <div class="sech"><b>Income</b><span>€1,468 · 0 of 2 in</span></div>
+        <div class="card">
+          <div class="li"><div class="ic"></div><div><b>featurn B.V.</b><small>due around the 14th <span class="chip">+10d last time</span></small></div><div class="amt">€968.00</div></div>
+          <div class="li"><div class="ic"></div><div><b>Oren Havshush</b><small>due 5 Nov</small></div><div class="amt">€500.00</div></div>
+        </div>
+        <div class="add">+ Add a fixed item</div>
+      </div></div>
+
+    <div style="max-width:360px;display:grid;gap:12px;align-content:start">
+      <div class="cap">What changes, and why</div>
+      <p class="note">• <b>The totals move up</b> into the section header ("Expenses · €675 · 0 of 4 paid"). No glued extra rows, no separate "left" card: the equation strip carries it.<br>
+      • <b>The history is inside the row.</b> The dots are the tracker, one item at a time. On a phone that is far easier to read than a table you scroll sideways.<br>
+      • <b>Suggestions get one small card at the top</b> instead of two long sections; "Review" opens them.<br>
+      • <b>Missed items</b> show as a red chip on the row itself, not a separate section.<br>
+      • <b>Every card has the same corners</b> (24px) and the rows sit inside, so nothing is glued to anything.</p>
+      <p class="note"><b>What you lose:</b> the all-items-by-all-months table. It can stay as a secondary view for the laptop ("By month" under the list), but I would drop it from the phone.</p>
+    </div>
+  </div>
+
+  <p class="note" style="margin-top:6px"><b>Idea 2: three tabs.</b> Keep each view as it is, but show one at a time: This month, By month, Manage. Less change, no repetition on screen, but you have to tap to see the history, and "Manage" stays a separate list of the same items.</p>
+  <div class="row">
+    <div><div class="cap">Idea 2 · dark, "By month" tab open</div>
+      <div class="scene dark">
+        <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div class="seg"><span>This month</span><span class="on">By month</span><span>Manage</span></div>
+        <div class="sech"><b>Income</b><span>Aug – Dec</span></div>
+        <div class="card pad"><table><thead><tr><th></th><th>Aug</th><th>Sep</th><th>Oct</th><th class="nowc">Nov</th></tr></thead><tbody>
+          <tr><td>Featurn</td><td class="ok2">✓ 439</td><td class="ok2">✓ 439</td><td class="late2">✓ 968</td><td class="exp nowc">968</td></tr>
+          <tr><td>Oren</td><td class="ok2">✓ 500</td><td class="ok2">✓ 500</td><td class="ok2">✓ 500</td><td class="exp nowc">500</td></tr>
+          <tr class="sum"><td>Total</td><td>939</td><td>939</td><td>1,468</td><td class="nowc">1,468</td></tr></tbody></table></div>
+        <div class="sech"><b>Expenses</b><span>Aug – Dec</span></div>
+        <div class="card pad"><table><thead><tr><th></th><th>Aug</th><th>Sep</th><th>Oct</th><th class="nowc">Nov</th></tr></thead><tbody>
+          <tr><td>DUWO</td><td class="ok2">✓ 481</td><td class="ok2">✓ 481</td><td class="ok2">✓ 481</td><td class="exp nowc">481</td></tr>
+          <tr><td>FBTO</td><td class="ok2">✓ 151</td><td class="bad2">✗</td><td class="ok2">✓ 151</td><td class="exp nowc">151</td></tr>
+          <tr class="sum"><td>Total</td><td>632</td><td>481</td><td>632</td><td class="nowc">632</td></tr></tbody></table></div>
+      </div></div>
+    <div style="max-width:360px;display:grid;gap:12px;align-content:start">
+      <div class="cap">Which I would pick</div>
+      <p class="note"><b>Idea 1.</b> It removes the repetition instead of hiding it, it keeps the page one scroll long, and it is the only one where "pause" and "remove" sit next to the item they act on. Idea 2 is the safer, smaller change if you want to keep the three views exactly as they are.</p>
+      <p class="note">Either way I would also replace the glued "Total" rows with the header totals and give every box the same corners.</p>
+    </div>
+  </div>
+</section>
+</main>
+</body>
+</html>
