@@ -64,6 +64,13 @@
       "when": 1793358525158,
       "tag": "0008_btw_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1793571309488,
+      "tag": "0009_own_spending",
+      "breakpoints": true
     }
   ]
 }

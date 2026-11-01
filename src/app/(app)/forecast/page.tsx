@@ -4,7 +4,9 @@ import { pageDb } from "@/lib/auth/request";
 import { BtwCard } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
 import { AheadTop } from "@/components/arnaq/ahead-top";
+import { OwnSpendingForm } from "@/components/arnaq/own-spending";
 import { WorthBar } from "@/components/arnaq/worth-bar";
+import { getOwnSpending } from "@/lib/forecast/own";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
@@ -33,11 +35,15 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
   const query = await searchParams;
   const months = parseHorizon(query.months);
   const basis = parseBasis(query.basis);
-  const { p, btw, worth } = await pageDb(async (db) => ({
-    p: await loadPrognose(db, today, months, locale, basis),
-    btw: await getBtwSummary(db, { today }),
-    worth: await loadNetWorth(db, today),
-  }));
+  const { p, btw, worth, own } = await pageDb(async (db) => {
+    const own = await getOwnSpending(db);
+    return {
+      own,
+      p: await loadPrognose(db, today, months, locale, basis, own),
+      btw: await getBtwSummary(db, { today }),
+      worth: await loadNetWorth(db, today),
+    };
+  });
   const parts = netWorthParts(worth, t.ui.netWorth.savingsName);
 
   if (!p.hasForecast)
@@ -106,7 +112,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         aside={
           <span className="flex flex-wrap items-center justify-end gap-2">
             <nav aria-label={t.ui.forecast.basisLabel} className="liquid seg">
-              {(["averages", "budget"] as const).map((b) => (
+              {(["averages", "budget", "own"] as const).map((b) => (
                 <StepLink
                   key={b}
                   href={`/forecast?months=${months}&basis=${b}`}
@@ -140,6 +146,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         ) : (
           <div className="glass p-3">
             <p className="text-ink-muted px-2 pb-2 text-[13px]">{t.ui.forecast.basisNote[basis]}</p>
+            {basis === "own" && <OwnSpendingForm amount={own} />}
             <PrognoseChart
               points={p.points}
               currentMonth={today.slice(0, 7)}

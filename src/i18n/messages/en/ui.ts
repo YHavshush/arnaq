@@ -171,12 +171,20 @@ export const ui = {
     ring: (a: number, b: number) => `${a} of ${b} months end in the plus`,
     caption: (label: string) => `growth through ${label}`,
     captionWorth: (label: string) => `net worth by ${label}`,
+    own: {
+      label: "Everyday spending per month (€)",
+      placeholder: "1500",
+      save: "Save",
+      saved: "Saved",
+      errAmount: "Enter an amount, for example 1500 or 1500.50.",
+    },
     basisLabel: "What the coming months are based on",
-    basis: { averages: "Averages", budget: "Budget" },
+    basis: { averages: "Averages", budget: "Budget", own: "My own" },
     basisNote: {
       averages: "The coming months use what you spent on average over the last months.",
       budget:
         "The coming months use your budgets where you set one, and your averages for the rest.",
+      own: "The coming months use the amount you type for everyday spending, plus your fixed items.",
     },
     growthPill: (amount: string, months: number) => `${amount} over ${months} months`,
     progressWorth: "Net worth over time",

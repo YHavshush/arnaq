@@ -5,6 +5,8 @@ import { ensureSavingsCategory, ensureTaxesCategory, seedDefaults } from "@/lib/
 import { DEFAULT_CATEGORIES } from "@/lib/categories/defaults";
 import { EXPORT_VERSION } from "@/lib/export";
 import { BtwError, setBtwSettings } from "@/lib/btw/settings";
+import { ForecastError } from "@/lib/forecast/errors";
+import { setOwnSpending } from "@/lib/forecast/own";
 import { SavingsError, setSavingsAnchor, setSavingsSettings } from "@/lib/savings/settings";
 
 export class RestoreError extends Error {}
@@ -280,10 +282,21 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
         if (!(e instanceof SavingsError)) throw e;
       }
     }
+    // What they expect to spend each month (a damaged value is skipped, not fatal).
+    if (typeof settings.forecastOwnSpending === "number") {
+      try {
+        await setOwnSpending(db, settings.forecastOwnSpending);
+      } catch (e) {
+        if (!(e instanceof ForecastError)) throw e;
+      }
+    }
     // Who the BTW is for and the pocket word (null or damaged: the defaults stay).
     const text = (v: unknown) => (typeof v === "string" ? v : undefined);
     try {
-      await setBtwSettings(db, { client: text(settings.btwClient), pocket: text(settings.btwPocket) });
+      await setBtwSettings(db, {
+        client: text(settings.btwClient),
+        pocket: text(settings.btwPocket),
+      });
     } catch (e) {
       if (!(e instanceof BtwError)) throw e;
     }

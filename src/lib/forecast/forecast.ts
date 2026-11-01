@@ -10,6 +10,7 @@ import { getBtwSettings } from "@/lib/btw/settings";
 import { mentions } from "@/lib/btw/summary";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
+import { scaleAverages } from "./own";
 import { countedAs, projectRecurring, type ForecastOccurrence } from "./recurring";
 import { getVariableAverages, type VariableAverages } from "./variable";
 
@@ -35,7 +36,9 @@ export interface ForecastOptions {
    * What the coming months' everyday spending is based on: "averages" (what was spent in the last months, the
    * default) or "budget" (the budget of each category that has one, less its fixed items; the average for the rest).
    */
-  basis?: "averages" | "budget";
+  basis?: "averages" | "budget" | "own";
+  /** The monthly everyday spending the person typed (cents); used with basis "own", ignored without it. */
+  ownSpending?: number | null;
 }
 
 /**
@@ -177,10 +180,12 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   const current = monthOf(opts.today);
   const first = addMonths(current, -settings.pastMonths);
   const last = addMonths(current, settings.months);
-  const averages = await getVariableAverages(db, {
+  const measured = await getVariableAverages(db, {
     beforeMonth: current,
     history: settings.history,
   });
+  const own = opts.basis === "own" ? (opts.ownSpending ?? null) : null;
+  const averages = own === null ? measured : scaleAverages(measured, own);
   const { byMonth, inMemoryMatched } = await projectRecurring(db, { first, current, last });
   const { pocket } = await getBtwSettings(db);
   const ctx: Context = {
@@ -198,7 +203,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     inMemoryMatched,
     savings: await savingsCategoryIds(db),
     pocket,
-    basis: opts.basis ?? "averages",
+    basis: opts.basis === "budget" ? "budget" : "averages",
     movedToSavings: await getMovedToSavings(db, first, last, pocket),
   };
 

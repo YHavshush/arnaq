@@ -1,0 +1,2 @@
+ALTER TABLE "user_settings" ADD COLUMN "forecast_own_spending" bigint;--> statement-breakpoint
+ALTER TABLE "user_settings" ADD CONSTRAINT "user_settings_own_spending_check" CHECK (forecast_own_spending is null or forecast_own_spending >= 0);

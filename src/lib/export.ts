@@ -2,7 +2,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 
 /** Bump when the shape of the export changes, so a future restore knows what it is reading. */
-export const EXPORT_VERSION = 6; // 2: category slugs and sources, merchantLabels, userSettings; 3: transactions.balanceAfter; 4: userSettings.savingsGoal and savingsStart, category type "savings"; 5: userSettings.savingsAnchor and savingsAnchorDate; 6: userSettings.btwClient and btwPocket
+export const EXPORT_VERSION = 7; // 2: category slugs and sources, merchantLabels, userSettings; 3: transactions.balanceAfter; 4: userSettings.savingsGoal and savingsStart, category type "savings"; 5: userSettings.savingsAnchor and savingsAnchorDate; 6: userSettings.btwClient and btwPocket; 7: userSettings.forecastOwnSpending
 
 const TABLES = {
   accounts: schema.accounts,
