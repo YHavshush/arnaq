@@ -10,6 +10,8 @@ export type OccurrenceStatus = (typeof OCCURRENCE_STATUSES)[number];
 
 /** A payment counts for an occurrence up to this many days before or after its expected date. */
 export const MATCH_WINDOW_DAYS = 5;
+/** A statement that ends this many days (or fewer) before the end of a month still counts as covering it. */
+export const COVERAGE_GRACE_DAYS = 3;
 /** Income arrives when the client gets round to it (a different day each month), so it has a wider window. */
 export const INCOME_MATCH_WINDOW_DAYS = 15;
 export const matchWindowDays = (type: RecurringType) =>
@@ -114,6 +116,8 @@ export async function generateOccurrences(db: Db, opts: { throughMonth: string }
  *   that lies fully inside it. Periods of one account that touch or overlap are joined first, so
  *   two consecutive statements together cover the month they share. A partly covered month is not
  *   covered: we would otherwise show a half-empty month as real.
+ *   A statement is exported a day or two before it is downloaded, so one that stops within COVERAGE_GRACE_DAYS of
+ *   the month's end still covers that month.
  * - An upload without a declared period (a plain CSV) covers its `month`.
  * Any account counts; two uploads of one month count once.
  */
@@ -145,7 +149,8 @@ export async function coveredMonths(db: Db): Promise<Set<string>> {
     }
     for (const { from, to } of merged) {
       for (let m = monthOf(from); m <= monthOf(to); m = addMonths(m, 1)) {
-        if (`${m}-01` >= from && clampDay(m, 31) <= to) covered.add(m);
+        if (`${m}-01` >= from && addDays(clampDay(m, 31), -COVERAGE_GRACE_DAYS) <= to)
+          covered.add(m);
       }
     }
   }

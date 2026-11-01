@@ -37,8 +37,20 @@ export function MonthDetail({ point }: { point: PrognosePoint }) {
   return (
     <div className="grid gap-3">
       <div className="num grid grid-cols-3 gap-2 text-center">
-        {tile("income", t.ui.chart.income, euro(point.income))}
-        {tile("expenses", t.ui.chart.expenses, euro(point.expenses))}
+        {tile(
+          "income",
+          point.kind === "mixed" || point.kind === "forecast"
+            ? t.ui.chart.expectedIncome
+            : t.ui.chart.income,
+          euro(point.income),
+        )}
+        {tile(
+          "expenses",
+          point.kind === "mixed" || point.kind === "forecast"
+            ? t.ui.chart.expectedExpenses
+            : t.ui.chart.expenses,
+          euro(point.expenses),
+        )}
         <div className="bg-soft rounded-2xl px-2 py-3">
           <span className="text-ink-muted block text-[13px]">{t.ui.chart.growth}</span>
           <span className={`block text-lg font-semibold tracking-tight ${growthColour}`}>

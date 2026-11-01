@@ -216,6 +216,8 @@ export const ui = {
       "Above each point is your total, below it the growth of that month. Tap a month for details.",
     income: "Income",
     expenses: "Expenses",
+    expectedIncome: "Expected income",
+    expectedExpenses: "Expected expenses",
     growth: "Growth",
     table: { caption: "Forecast per month", month: "Month", total: "Total", growth: "Growth" },
     /** The parts under a month's Income and Expenses tiles. */

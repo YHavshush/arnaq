@@ -222,6 +222,8 @@ export const ui: typeof en = {
       "Boven elk punt staat je totaal, eronder de groei van die maand. Tik op een maand voor details.",
     income: "Inkomen",
     expenses: "Uitgaven",
+    expectedIncome: "Verwacht inkomen",
+    expectedExpenses: "Verwachte uitgaven",
     growth: "Groei",
     table: { caption: "Prognose per maand", month: "Maand", total: "Totaal", growth: "Groei" },
     parts: {
