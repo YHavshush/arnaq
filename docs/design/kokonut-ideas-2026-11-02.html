@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq ideas from KokonutUI</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1180px; margin:0 auto; display:grid; gap:30px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:84ch; }
+.row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+.item { display:grid; gap:8px; width:340px; max-width:100%; }
+.cap { font-size:12px; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; }
+.scene { border-radius:28px; padding:16px 14px; display:grid; gap:12px; align-content:start; overflow:hidden; }
+.light { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.66); --hair:rgba(23,32,46,.14); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --track:rgba(23,32,46,.10); --a:#33c6ff; --b:#7f8cff; --g:#23a371; --w:#e98859;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 55%,#f6e8d8); }
+.dark { --ink:#eef1f5; --muted:#a8b1bf; --soft:rgba(143,208,255,.10); --card:rgba(255,255,255,.07); --hair:rgba(255,255,255,.14); --accent:#8fd0ff; --good:#7fd3a8; --bad:#ff8f84; --track:rgba(255,255,255,.14); --a:#2ac9ff; --b:#7d8bff; --g:#9af2c4; --w:#ffd36b;
+  color:#eef1f5; background:linear-gradient(165deg,color-mix(in oklab,#2ac9ff 26%,#141b28),color-mix(in oklab,#7d8bff 22%,#141b28) 55%,#141b28); }
+.card { border-radius:24px; background:var(--card); border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); padding:14px 16px; display:grid; gap:10px; }
+.big { font:500 40px/1 Georgia,serif; font-variant-numeric:tabular-nums; letter-spacing:-.02em; } .muted { color:var(--muted); font-size:13px; }
+/* 1 count up */
+.count { display:flex; align-items:baseline; gap:10px; } .tick { display:inline-flex; overflow:hidden; height:1em; } .tick span { display:grid; animation:roll 2.4s cubic-bezier(.2,.8,.2,1) infinite; } @keyframes roll { 0%,10% { transform:translateY(0); } 70%,100% { transform:translateY(-90%); } }
+.fakeb { font:600 12px system-ui; color:var(--good); background:color-mix(in oklab,var(--good) 16%,transparent); border-radius:99px; padding:3px 10px; }
+/* 2 slide to confirm */
+.slide { position:relative; height:52px; border-radius:99px; background:var(--soft); border:1px solid var(--hair); overflow:hidden; display:grid; place-items:center; font-weight:600; color:var(--muted); }
+.slide i { position:absolute; left:4px; top:4px; width:44px; height:44px; border-radius:50%; background:var(--bad); display:grid; place-items:center; color:#fff; font-style:normal; animation:slide 3s ease-in-out infinite; }
+.slide b { position:absolute; inset:0; background:linear-gradient(90deg,color-mix(in oklab,var(--bad) 26%,transparent),transparent); width:0; animation:fill 3s ease-in-out infinite; }
+@keyframes slide { 0%,12% { transform:translateX(0); } 55%,70% { transform:translateX(230px); } 100% { transform:translateX(0); } } @keyframes fill { 0%,12% { width:0; } 55%,70% { width:80%; } 100% { width:0; } }
+/* 3 liquid goal */
+.tank { position:relative; width:150px; height:150px; border-radius:50%; border:2px solid var(--hair); overflow:hidden; background:var(--soft); margin:0 auto; }
+.tank .fill { position:absolute; left:-10%; right:-10%; bottom:0; height:62%; background:linear-gradient(180deg,color-mix(in oklab,var(--g) 70%,transparent),var(--g)); border-radius:44% 44% 0 0 / 14% 14% 0 0; animation:wave 4s ease-in-out infinite; }
+@keyframes wave { 0%,100% { transform:translateX(-4%) } 50% { transform:translateX(4%) } }
+.tank .t { position:absolute; inset:0; display:grid; place-content:center; text-align:center; } .tank .t b { font-size:26px; font-weight:600; } .tank .t small { font-size:11px; color:var(--ink); }
+/* 4 bento */
+.bento { display:grid; grid-template-columns:2fr 1fr; grid-template-rows:auto auto; gap:8px; }
+.tile { border-radius:22px; background:var(--card); border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); padding:12px 14px; display:grid; gap:4px; align-content:start; } .tile.span { grid-row:span 2; }
+.tile b { font:500 26px/1 Georgia,serif; font-variant-numeric:tabular-nums; } .tile .l { color:var(--muted); font-size:12px; }
+/* 5 concentric */
+.conc { width:170px; height:170px; margin:0 auto; position:relative; } .conc svg { width:100%; height:100%; transform:rotate(-90deg); } .conc circle { fill:none; stroke-linecap:round; stroke-width:10; }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>What I might take from KokonutUI</h1>
+  <p class="note">None of this is built, and I would not install KokonutUI itself (it brings its own look and an animation library). These are the ideas in it that fit arnaq, drawn in arnaq's own look with the app's colours. Say yes or no to each one. Some of them animate here so you can see the movement; in the app they would play once and respect "reduce motion".</p>
+</header>
+
+<div class="row">
+  <div class="item"><div class="cap">1 · Numbers that count up</div>
+    <div class="scene light"><div class="card"><div class="muted">Net worth by April</div><div class="count"><span class="big">€<span class="tick"><span><i style="font-style:normal">0</i><i style="font-style:normal">3</i></span></span>,480</span><span class="fakeb">+€1,170</span></div></div></div>
+    <p class="note">The big numbers (ring centre, net worth, "left over") roll up to their value when the page opens, once. It makes a screen feel alive and it draws the eye to the one number that matters. Where: Today ring, Ahead ring, Fixed ring.</p></div>
+
+  <div class="item"><div class="cap">2 · Slide to confirm, instead of "tap twice"</div>
+    <div class="scene dark"><div class="card"><div class="muted">Remove “Netflix”?</div><div class="slide"><b></b><i>→</i><span>Slide to remove</span></div></div></div>
+    <p class="note">Removing a fixed item or erasing data today asks you to tap Remove and then Confirm. A slider is harder to hit by accident and feels deliberate. Where: Remove on a Fixed row, Erase data in Settings, restoring a backup.</p></div>
+
+  <div class="item"><div class="cap">3 · A tank for the savings goal</div>
+    <div class="scene light"><div class="card"><div class="tank"><div class="fill"></div><div class="t"><b>62%</b><small>of €5,000 goal</small></div></div><div class="muted" style="text-align:center">€3,100 saved</div></div></div>
+    <p class="note">The savings goal as a slowly moving tank instead of a bar. Pretty, but only worth it if you set a goal. Where: the Savings row on Today (small) and the Budget page's savings card.</p></div>
+</div>
+
+<div class="row">
+  <div class="item"><div class="cap">4 · A bento layout for the top of Ahead (laptop)</div>
+    <div class="scene dark"><div class="bento">
+      <div class="tile span"><span class="l">Net worth by April</span><b>€3,480</b><span class="l">+€1,170 over 6 months</span></div>
+      <div class="tile"><span class="l">Income</span><b>€1,468</b></div>
+      <div class="tile"><span class="l">Expenses</span><b>€1,273</b></div></div></div>
+    <p class="note">Unequal tiles instead of one row of equal boxes, which would answer "it looks like one block under another". Probably only for the laptop. Where: the Ahead top, possibly Today.</p></div>
+
+  <div class="item"><div class="cap">5 · Three rings in one (activity card)</div>
+    <div class="scene light"><div class="card"><div class="conc"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" stroke="var(--track)"/><circle cx="50" cy="50" r="44" stroke="var(--a)" stroke-dasharray="150 276"/><circle cx="50" cy="50" r="32" stroke="var(--track)"/><circle cx="50" cy="50" r="32" stroke="var(--g)" stroke-dasharray="120 201"/><circle cx="50" cy="50" r="20" stroke="var(--track)"/><circle cx="50" cy="50" r="20" stroke="var(--w)" stroke-dasharray="40 126"/></svg></div><div class="muted" style="text-align:center">Spent 54% · Saved 60% · Fixed still to pay 32%</div></div></div>
+    <p class="note">One compact graphic that shows three things at once. It replaces nothing today; it would be a small extra on Today under the ring (spent, saved, fixed still to pay). Risk: three rings are harder to read than one.</p></div>
+
+  <div class="item"><div class="cap">What I would pick</div>
+    <p class="note"><b>1 (count-up)</b> and <b>2 (slide to confirm)</b>: low risk, add polish and safety, and both use Motion's small <code>animate()</code> and a pointer drag, no new look. <b>4 (bento)</b> for the laptop top of Ahead, if you still find it too stacked after the new layout. <b>3 and 5</b> only if you want them; they are pretty but add things to read.</p>
+    <p class="note">If you say yes to some, I will build them with Motion (already installed) in arnaq's tokens, test them on a phone size, and keep them off when the device asks for less motion.</p></div>
+</div>
+</main>
+</body>
+</html>
