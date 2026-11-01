@@ -3,6 +3,7 @@ import type { Forecast, MonthKind } from "@/lib/forecast/forecast";
 import type { Locale } from "@/i18n/config";
 import { messages } from "@/i18n/messages";
 import { formatter } from "./format";
+import { expenseParts, incomeParts, type MonthParts } from "./month-parts";
 import { moodForTone } from "./status";
 import type { Sentence } from "@/i18n/types";
 
@@ -20,6 +21,9 @@ export interface PrognosePoint {
   savings: number;
   /** Money moved into savings this month (cents): not spending, but no longer in the current account. */
   setAside: number;
+  /** What is inside `income` and `expenses`: each adds up to its total exactly. */
+  incomeParts: MonthParts;
+  expenseParts: MonthParts;
   /** Month is not (fully) real money yet: drawn dashed. */
   projected: boolean;
 }
@@ -69,6 +73,8 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     accounts: hasBalance ? m.cumulativeNet - m.cumulativeSetAside + (f.openingBalance ?? 0) : 0,
     savings: hasBalance ? m.cumulativeSetAside - m.cumulativeReserve + (f.openingSavings ?? 0) : 0,
     setAside: m.setAside.total,
+    incomeParts: incomeParts(m, locale),
+    expenseParts: expenseParts(m, locale),
     projected: m.kind === "forecast" || m.kind === "mixed",
   }));
   // With no data at all every month nets to 0: that is "nothing to say", not "all in the plus".

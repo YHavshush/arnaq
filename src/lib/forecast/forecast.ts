@@ -59,6 +59,17 @@ export interface ForecastCategory {
   difference: number | null;
 }
 
+/** One recurring item as it counts in a month's totals: what the money is, and whether it has happened. */
+export interface ForecastPart {
+  name: string;
+  /** Positive cents: the real amount when already paid or received, otherwise the expected amount. */
+  amount: number;
+  /** The item's expense category (null: none or unknown); lets everyday spending be told apart from fixed costs. */
+  categoryId: number | null;
+  /** The money has really moved (matched to a payment in this month); false: still expected. */
+  settled: boolean;
+}
+
 export interface ForecastMonth {
   month: string;
   kind: MonthKind;
@@ -89,6 +100,11 @@ export interface ForecastMonth {
     missedCount: number;
     occurrences: ForecastOccurrence[];
   };
+  /**
+   * The recurring items inside `income` and `expenses`, one line each (savings deposits are not spending and
+   * are left out). The month's other money is whatever the totals have beyond these lines.
+   */
+  parts: { income: ForecastPart[]; fixed: ForecastPart[] };
   /** Projected variable spend counted in this month. */
   variable: number;
   categories: ForecastCategory[];
@@ -245,8 +261,7 @@ async function getMovedToSavings(db: Db, first: string, last: string, pocket: st
   for (const r of rows) {
     const entry = byMonth.get(r.date.slice(0, 7)) ?? { total: 0, reserve: 0 };
     entry.total -= r.amount;
-    if (mentions([r.counterparty, r.description], pocket))
-      entry.reserve -= r.amount;
+    if (mentions([r.counterparty, r.description], pocket)) entry.reserve -= r.amount;
     byMonth.set(r.date.slice(0, 7), entry);
   }
   return byMonth;
@@ -300,9 +315,16 @@ async function buildMonth(
   const setAsideActual = moved?.total ?? 0;
   const setAsidePlanned = sum(projectedDeposits);
   // A planned deposit named for the BTW is the reserve: owed money, not savings.
-  const plannedReserve = sum(
-    projectedDeposits.filter((o) => mentions([o.name], ctx.pocket)),
-  );
+  const plannedReserve = sum(projectedDeposits.filter((o) => mentions([o.name], ctx.pocket)));
+
+  const known = new Set(ctx.categories.map((c) => c.id));
+  const part = (o: ForecastOccurrence): ForecastPart => ({
+    name: o.name,
+    amount: o.amount,
+    categoryId: o.categoryId !== null && known.has(o.categoryId) ? o.categoryId : null,
+    settled: o.counted === "actual",
+  });
+  const counts = occurrences.filter((o) => o.counted !== "none");
 
   return {
     month,
@@ -323,6 +345,10 @@ async function buildMonth(
       expenses: sum(projectedExpenses),
       missedCount: occurrences.filter((o) => o.status === "missed" && o.month === month).length,
       occurrences,
+    },
+    parts: {
+      income: counts.filter((o) => o.type === "income").map(part),
+      fixed: counts.filter((o) => o.type === "expense" && !isDeposit(o)).map(part),
     },
     variable: categories.reduce((s, c) => s + c.variable, 0),
     categories,

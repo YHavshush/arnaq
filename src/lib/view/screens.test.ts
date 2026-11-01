@@ -13,6 +13,8 @@ const fm = (month: string, kind: ForecastMonth["kind"], net: number, cumulativeN
     setAside: { actual: 0, planned: 0, total: 0, reserve: 0 },
     cumulativeSetAside: 0,
     cumulativeReserve: 0,
+    parts: { income: [], fixed: [] },
+    categories: [],
     income: Math.max(net, 0),
     expenses: Math.max(-net, 0),
   }) as ForecastMonth;
