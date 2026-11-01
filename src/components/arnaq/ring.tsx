@@ -4,6 +4,8 @@ import type { Tone } from "@/design/tokens";
 interface RingProps {
   /** 0..1 (values above 1 draw a full ring). */
   value: number;
+  /** 0..1: a lighter arc that continues after `value` (what is already spoken for but not spent yet). */
+  ahead?: number;
   tone: Tone;
   /** Pixel size of the whole ring. */
   size?: number;
@@ -23,12 +25,13 @@ const RING_MASK = (w: number) =>
  * around it and a halo behind it (glow D).
  * Never a filter on an SVG element: iPhone Safari clips it. The dark glow is a filter on a div.
  */
-export function Ring({ value, tone, size = 224, label, children }: RingProps) {
+export function Ring({ value, ahead = 0, tone, size = 224, label, children }: RingProps) {
   const id = `ring${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const stroke = Math.max(6, Math.round(size * 0.0625));
   const r = 50 - (stroke / size) * 50; // outer edge exactly on the box; the svg overflows visibly so round caps are never clipped
   const v = Math.max(0, Math.min(value, 1));
   const cap = (stroke / size) * 100;
+  const soft = Math.max(0, Math.min(ahead, 1 - v));
 
   const dot: CSSProperties = {
     position: "absolute",
@@ -73,6 +76,22 @@ export function Ring({ value, tone, size = 224, label, children }: RingProps) {
           strokeWidth={cap}
           style={{ stroke: "var(--track)" }}
         />
+        {soft > 0 && (
+          <circle
+            cx="50"
+            cy="50"
+            r={r}
+            fill="none"
+            strokeWidth={cap}
+            strokeLinecap="round"
+            pathLength={100}
+            strokeDasharray={`${soft * 100} 100`}
+            strokeDashoffset={-v * 100}
+            transform="rotate(-90 50 50)"
+            stroke={`url(#${id})`}
+            opacity={0.38}
+          />
+        )}
         {v > 0 && (
           <circle
             cx="50"
@@ -104,6 +123,17 @@ export function Ring({ value, tone, size = 224, label, children }: RingProps) {
             mask: RING_MASK(stroke),
           }}
         />
+        {soft > 0 && (
+          <i
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `conic-gradient(from ${v * 360}deg, ${to} ${soft * 360}deg, transparent ${soft * 360}deg)`,
+              opacity: 0.38,
+              WebkitMask: RING_MASK(stroke),
+              mask: RING_MASK(stroke),
+            }}
+          />
+        )}
         {v > 0 && (
           <>
             <i

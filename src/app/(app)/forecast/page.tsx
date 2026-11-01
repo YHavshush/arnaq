@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
 import { BtwCard } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
-import { Hero } from "@/components/arnaq/hero";
+import { AheadHeader } from "@/components/arnaq/ahead-header";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
@@ -50,30 +50,35 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
     <div className="fade-in">
       <MoodSetter mood={p.mood} />
       <PageHeader title={t.ui.forecast.title} sub={t.ui.forecast.subRange(months)} />
-      <Hero
-        tone={p.tone}
-        value={p.share}
-        ringLabel={t.ui.forecast.ring(p.inThePlus, p.ahead)}
-        centre={p.netWorth && !p.incomeMissing ? f.euro(p.netWorth.end) : f.euroSigned(p.growth)}
-        caption={
+      <AheadHeader
+        label={
           p.incomeMissing
             ? t.ui.forecast.captionSpend(p.points.at(-1)?.label ?? "")
             : p.netWorth
               ? t.ui.forecast.captionWorth(p.points.at(-1)?.label ?? "")
               : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
         }
+        amount={p.netWorth && !p.incomeMissing ? f.euro(p.netWorth.end) : f.euroSigned(p.growth)}
+        pill={
+          p.netWorth && !p.incomeMissing
+            ? {
+                text: t.ui.forecast.growthPill(f.euroSigned(p.growth), months),
+                good: p.growth >= 0,
+              }
+            : undefined
+        }
         sentence={p.sentence}
         detail={p.detail}
       />
       {p.netWorth && (
-        <div className="flex justify-center pb-3">
+        <div className="pb-3">
           <Link href="/net-worth" className="text-accent min-h-11 text-[15px] font-semibold">
             {t.ui.forecast.howBuilt}
           </Link>
         </div>
       )}
       {p.incomeMissing && (
-        <div className="flex justify-center pb-2">
+        <div className="pb-2">
           <Link
             href="/fixed-costs"
             className="bg-action text-action-ink inline-flex min-h-11 items-center rounded-full px-5 text-sm font-semibold"

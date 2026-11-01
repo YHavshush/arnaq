@@ -111,6 +111,8 @@ export interface Overzicht {
   planned: number;
   /** Share of the budget that is spent or already planned; null without a budget. */
   used: number | null;
+  /** The part of `used` that is really spent (the rest is fixed costs still to pay); null without a budget. */
+  usedSpent: number | null;
   tone: Tone;
   mood: Mood;
   /** What is left after spending and the fixed costs that are still to come. Null without a budget. */
@@ -333,6 +335,7 @@ export function buildOverzicht({
     budget !== null && budget > 0 ? budget : incomeBasis ? totals.incomeActual : null;
   const basis: Overzicht["basis"] = budget !== null ? "budget" : incomeBasis ? "income" : "none";
   const used = reference !== null ? (budgetSpent + planned) / reference : null;
+  const usedSpent = reference !== null ? budgetSpent / reference : null;
   const tone: Tone = used === null ? "accent" : toneForUsage(used);
   const free =
     budget !== null
@@ -594,6 +597,7 @@ export function buildOverzicht({
     budgetSpent,
     planned,
     used,
+    usedSpent,
     tone,
     mood: moodForTone(tone),
     free,
@@ -602,11 +606,18 @@ export function buildOverzicht({
       : sentenceFor({ month, today, budget, spent: budgetSpent, fixedTotal, paidFixed, locale }),
     detail: compact
       ? budget !== null
-        ? messages[locale].view.overzicht.headerTotalsBudget(
-            euro(budgetSpent),
-            euro(budget),
-            euro(totals.incomeActual),
-          )
+        ? planned > 0
+          ? messages[locale].view.overzicht.headerTotalsPlanned(
+              euro(budgetSpent),
+              euro(planned),
+              euro(budget),
+              euro(totals.incomeActual),
+            )
+          : messages[locale].view.overzicht.headerTotalsBudget(
+              euro(budgetSpent),
+              euro(budget),
+              euro(totals.incomeActual),
+            )
         : messages[locale].view.overzicht.headerTotals(euro(spent), euro(totals.incomeActual))
       : detail,
     attention,

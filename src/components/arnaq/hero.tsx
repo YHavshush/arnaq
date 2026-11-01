@@ -7,6 +7,8 @@ import { SentenceText } from "./sentence";
 interface HeroProps {
   tone: Tone;
   value: number;
+  /** A lighter arc after `value`: what is already spoken for (see Ring). */
+  ahead?: number;
   ringLabel: string;
   /** The one big number. */
   centre: ReactNode;
@@ -39,6 +41,7 @@ export function numberSize(chars: number): number {
 export function Hero({
   tone,
   value,
+  ahead,
   ringLabel,
   centre,
   caption,
@@ -49,7 +52,7 @@ export function Hero({
 }: HeroProps) {
   return (
     <section className="flex flex-col items-center gap-5 pt-2 pb-2 text-center @min-[900px]/app:flex-row @min-[900px]/app:gap-12 @min-[900px]/app:text-left">
-      <Ring value={value} tone={tone} label={ringLabel}>
+      <Ring value={value} ahead={ahead} tone={tone} label={ringLabel}>
         <div
           className="num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
           style={{ fontSize: typeof centre === "string" ? numberSize(centre.length) : NUMBER_MAX }}

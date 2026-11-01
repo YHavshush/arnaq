@@ -40,6 +40,8 @@ export const view: typeof en = {
     headerNotStarted: [plain("Deze maand is nog niet begonnen")] as Sentence,
     headerTotals: (spent: string, income: string) =>
       `${spent} uitgegeven · ${income} binnengekomen`,
+    headerTotalsPlanned: (spent: string, planned: string, budget: string, income: string) =>
+      `${spent} uitgegeven + ${planned} vaste lasten nog te betalen, van je budget van ${budget} · ${income} binnengekomen`,
     headerTotalsBudget: (spent: string, budget: string, income: string) =>
       `${spent} van je budget van ${budget} uitgegeven · ${income} binnengekomen`,
     facts: {

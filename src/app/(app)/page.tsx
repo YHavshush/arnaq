@@ -130,7 +130,8 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       <PageHeader title={t.ui.overview.title} sub={f.monthName(month)} step={step} />
       <Hero
         tone={o.tone}
-        value={o.used ?? (o.spent > 0 ? 1 : 0)}
+        value={o.usedSpent ?? (o.spent > 0 ? 1 : 0)}
+        ahead={o.used !== null && o.usedSpent !== null ? o.used - o.usedSpent : 0}
         ringLabel={
           o.used === null
             ? t.ui.overview.ringNoBudget

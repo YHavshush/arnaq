@@ -180,6 +180,7 @@ export const ui: typeof en = {
     ring: (a: number, b: number) => `${a} van ${b} maanden eindigen in de plus`,
     caption: (label: string) => `groei tot en met ${label}`,
     howBuilt: "Hoe is het vermogen opgebouwd?",
+    growthPill: (amount: string, months: number) => `${amount} in ${months} maanden`,
     captionWorth: (label: string) => `vermogen in ${label}`,
     progressWorth: "Vermogen over tijd",
     needIncomeTitle: "Voeg je inkomen toe om te zien waar je naartoe gaat",

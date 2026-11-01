@@ -180,6 +180,7 @@ export const ui = {
     caption: (label: string) => `growth through ${label}`,
     captionWorth: (label: string) => `net worth by ${label}`,
     howBuilt: "How is net worth built up?",
+    growthPill: (amount: string, months: number) => `${amount} over ${months} months`,
     progressWorth: "Net worth over time",
     needIncomeTitle: "Add your income to see where you're heading",
     needIncomeBody:

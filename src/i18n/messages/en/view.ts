@@ -39,6 +39,8 @@ export const view = {
     headerDone: (month: string): Sentence => [em(cap(month)), plain(" is done")],
     headerNotStarted: [plain("This month hasn't started yet")] as Sentence,
     headerTotals: (spent: string, income: string) => `${spent} spent · ${income} came in`,
+    headerTotalsPlanned: (spent: string, planned: string, budget: string, income: string) =>
+      `${spent} spent + ${planned} fixed still to pay, of your ${budget} budget · ${income} came in`,
     headerTotalsBudget: (spent: string, budget: string, income: string) =>
       `${spent} of your ${budget} budget spent · ${income} came in`,
     facts: {
