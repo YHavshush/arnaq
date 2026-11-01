@@ -192,18 +192,66 @@ export function ChaseSpinner({ className = "size-5" }: { className?: string }) {
   );
 }
 
-/** Longer waits with no known length: the a and q trade places, then trade back, and stay upright. */
+/** Half the distance between the a and the q (the logo's units), and how far each dips below or rises above the middle. */
+const ORBIT_X = 32;
+const ORBIT_Y = 16;
+/** One loop: the a and q circle each other half a turn (they swap), rest, circle the other half (they swap back), rest. */
+const LOOP_MS = 3600;
+const easeInOut = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
+
+/** The angle of the pair at a moment in the loop: 0 to pi, rest, pi to 2 pi, rest. */
+export function swapAngle(ms: number): number {
+  const p = (ms % LOOP_MS) / LOOP_MS;
+  if (p < 0.08) return 0;
+  if (p < 0.46) return Math.PI * easeInOut((p - 0.08) / 0.38);
+  if (p < 0.58) return Math.PI;
+  if (p < 0.96) return Math.PI * (1 + easeInOut((p - 0.58) / 0.38));
+  return 2 * Math.PI;
+}
+
+/** Where the a and the q are (offset from home, logo units) at an angle, and which one is in front. */
+export function swapPose(theta: number) {
+  const dx = ORBIT_X - ORBIT_X * Math.cos(theta);
+  const dy = ORBIT_Y * Math.sin(theta);
+  return { a: { x: dx, y: dy }, q: { x: -dx, y: -dy }, aInFront: Math.sin(theta) > 0 };
+}
+
+/**
+ * Longer waits with no known length: the a and q circle each other, swap places, and circle back, for ever. Both stay
+ * upright. The one lower on the screen is in front, so each passes under the other once per loop. Centred on the pair,
+ * with room for the whole orbit (nothing is cut off).
+ */
 export function SwapLoader({ className = "w-[150px]" }: { className?: string }) {
-  // The box is centred on the pair and leaves room for the a to dip and the q to rise (14 units) mid-swap.
+  const svg = useRef<SVGSVGElement>(null);
+  const a = useRef<SVGGElement>(null);
+  const q = useRef<SVGGElement>(null);
+  useLayoutEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let frame = 0;
+    const start = performance.now();
+    const draw = (now: number) => {
+      const pose = swapPose(swapAngle(now - start));
+      a.current?.setAttribute("transform", `translate(${pose.a.x} ${pose.a.y})`);
+      q.current?.setAttribute("transform", `translate(${64 + pose.q.x} ${pose.q.y})`);
+      // Front last: later in the drawing order is on top.
+      const first = pose.aInFront ? q.current : a.current;
+      const last = pose.aInFront ? a.current : q.current;
+      if (svg.current && first && last && svg.current.lastElementChild !== last) {
+        svg.current.appendChild(first);
+        svg.current.appendChild(last);
+      }
+      frame = requestAnimationFrame(draw);
+    };
+    frame = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(frame);
+  }, []);
   return (
-    <svg viewBox="-6 -22 133 108" className={className} aria-hidden {...lines}>
-      <g className="arnaq-swap-a" style={BLUE}>
+    <svg ref={svg} viewBox="-6 -24 133 126" className={className} aria-hidden {...lines}>
+      <g ref={a} style={BLUE}>
         {LETTER_A}
       </g>
-      <g transform="translate(64 0)">
-        <g className="arnaq-swap-q" style={PURPLE}>
-          {LETTER_Q}
-        </g>
+      <g ref={q} transform="translate(64 0)" style={PURPLE}>
+        {LETTER_Q}
       </g>
     </svg>
   );
