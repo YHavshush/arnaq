@@ -79,6 +79,7 @@ History: until 2026-10-22 the dark themes also had a _status wash_, a glow at th
 ## Components and rules
 
 - **Cards:** radius 24px, hairline border, glass blur. Not every block is a card: the hero has none (it sits on the wash).
+- **Radius follows content:** a card holding rows or short text keeps 24px. A card whose content runs to the edges (a table, a chart) uses 16px with at least 12px padding, and its scroll box 8px, so text never sits against a curve. Pills and chips are fully round; inputs 14px; icon chips 12px.
 - **Ring:** 14px stroke at hero size, round caps, gradient from `ring-<tone>-from` to `-to`, track `track`. Never an SVG filter (see Glow).
 - **Rows:** icon chip (40px, 12px radius) + name + amount, with a thin status bar. Planned fixed costs show "komt 25 okt" instead of a spent amount.
 - **Status tiles:** label, one status word, short sub-line. Two across on phone, four on laptop.

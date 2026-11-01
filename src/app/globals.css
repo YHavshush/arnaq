@@ -330,24 +330,46 @@
     transform: rotate(360deg);
   }
 }
-@keyframes arnaq-swap-orbit {
+/* The a and the q trade places and trade back, for ever. The a dips down and passes under the q, the q rises and passes
+   over it, both stay upright; each end of the loop is a short rest. Distances are in the logo's own units (64 apart). */
+@keyframes arnaq-swap-a {
   0%,
-  12% {
-    transform: rotate(0);
+  10% {
+    transform: translate(0, 0);
   }
-  62%,
+  25% {
+    transform: translate(32px, 14px);
+  }
+  40%,
+  60% {
+    transform: translate(64px, 0);
+  }
+  75% {
+    transform: translate(32px, 14px);
+  }
+  90%,
   100% {
-    transform: rotate(180deg);
+    transform: translate(0, 0);
   }
 }
-@keyframes arnaq-swap-keep {
+@keyframes arnaq-swap-q {
   0%,
-  12% {
-    transform: rotate(0);
+  10% {
+    transform: translate(0, 0);
   }
-  62%,
+  25% {
+    transform: translate(-32px, -14px);
+  }
+  40%,
+  60% {
+    transform: translate(-64px, 0);
+  }
+  75% {
+    transform: translate(-32px, -14px);
+  }
+  90%,
   100% {
-    transform: rotate(-180deg);
+    transform: translate(0, 0);
   }
 }
 @keyframes arnaq-shimmer {
@@ -364,15 +386,11 @@
     transform-origin: center;
     animation: arnaq-chase 1.1s linear infinite;
   }
-  .arnaq-swap-orbit {
-    transform-box: view-box;
-    transform-origin: 66.5px 34.5px;
-    animation: arnaq-swap-orbit 2.2s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+  .arnaq-swap-a {
+    animation: arnaq-swap-a 3s ease-in-out infinite;
   }
-  .arnaq-swap-keep {
-    transform-box: fill-box;
-    transform-origin: 20.5px 20.5px;
-    animation: arnaq-swap-keep 2.2s cubic-bezier(0.6, 0, 0.3, 1) infinite;
+  .arnaq-swap-q {
+    animation: arnaq-swap-q 3s ease-in-out infinite;
   }
   .shimmer {
     background:

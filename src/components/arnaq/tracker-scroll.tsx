@@ -29,7 +29,7 @@ export function TrackerScroll({ label, children }: { label: string; children: Re
       role="region"
       aria-label={label}
       tabIndex={0}
-      className="relative overflow-x-auto overscroll-x-contain rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2"
+      className="relative overflow-x-auto overscroll-x-contain rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2"
     >
       {children}
     </div>

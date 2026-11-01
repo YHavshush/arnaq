@@ -192,20 +192,17 @@ export function ChaseSpinner({ className = "size-5" }: { className?: string }) {
   );
 }
 
-/** Longer waits with no known length: the a and q trade places and stay upright. */
+/** Longer waits with no known length: the a and q trade places, then trade back, and stay upright. */
 export function SwapLoader({ className = "w-[150px]" }: { className?: string }) {
+  // The box is centred on the pair and leaves room for the a to dip and the q to rise (14 units) mid-swap.
   return (
-    <svg viewBox="-6 -6 133 92" className={className} aria-hidden {...lines}>
-      <g className="arnaq-swap-orbit">
-        <g>
-          <g className="arnaq-swap-keep" style={BLUE}>
-            {LETTER_A}
-          </g>
-        </g>
-        <g transform="translate(64 0)">
-          <g className="arnaq-swap-keep" style={PURPLE}>
-            {LETTER_Q}
-          </g>
+    <svg viewBox="-6 -22 133 108" className={className} aria-hidden {...lines}>
+      <g className="arnaq-swap-a" style={BLUE}>
+        {LETTER_A}
+      </g>
+      <g transform="translate(64 0)">
+        <g className="arnaq-swap-q" style={PURPLE}>
+          {LETTER_Q}
         </g>
       </g>
     </svg>

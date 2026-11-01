@@ -38,22 +38,20 @@ function SavingsRow({
   t: Messages;
   locale: Locale;
 }) {
-  const { euro, euroExact } = formatter(locale);
+  const { euroExact, euroSigned } = formatter(locale);
   const s = t.ui.overview.savingsRow;
-  const sub =
+  // Like the other rows: what went in this month, and how far that has got you (the goal, else the total saved).
+  const base =
     row.goal !== null
-      ? s.ofGoal(euro(row.goal))
-      : row.thisMonth > 0
-        ? s.moved(euro(row.thisMonth))
-        : row.thisMonth < 0
-          ? s.taken(euro(-row.thisMonth))
-          : undefined;
+      ? s.goalOf(euroExact(row.saved), euroExact(row.goal))
+      : s.savedTotal(euroExact(row.saved));
+  const kind = row.thisMonth > 0 ? "put" : row.thisMonth < 0 ? "taken" : "none";
   return (
     <Row
       icon="Spaarrekening"
       name={s.name}
-      amount={euroExact(row.saved)}
-      amountSub={sub}
+      amount={row.thisMonth < 0 ? euroSigned(row.thisMonth) : euroExact(row.thisMonth)}
+      amountSub={s.sub(kind, base)}
       bar={
         row.goal !== null && row.goal > 0
           ? {

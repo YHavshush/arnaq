@@ -51,24 +51,11 @@ export const ui = {
     pageTitle: "net worth",
     sub: "What you own",
     back: "Back to ahead",
-    intro:
-      "What is in your accounts plus what you have saved, as far as your uploaded statements show. Money owed to the tax office is not counted.",
-    accounts: "In your accounts",
-    noAccounts: "No account balance yet. Upload a statement that shows balances.",
+    parts: "Where it is",
+    checking: (bank: string) => `${bank} checking`,
+    savingsName: "Savings",
+    savedSoFar: "saved so far",
     asOf: (day: string) => `as of ${day}`,
-    savings: "Saved",
-    savingsStatement: "Savings balance on your statement",
-    savingsTyped: "Already saved before your first upload",
-    savingsSince: "Moved since then",
-    savingsMoves: (n: number) =>
-      n === 0 ? "no moves since" : `${n} ${n === 1 ? "move" : "moves"} into or out of savings`,
-    savingsNow: "Saved now",
-    savingsNote:
-      "A statement gives one savings balance per savings account. If part of that is BTW money, arnaq cannot see it.",
-    notCounted: "Not counted",
-    btwPocket: "In the BTW pocket",
-    btwNote: "Owed to the tax office, so not part of your net worth.",
-    total: "Net worth",
     emptyTitle: "No net worth yet",
     emptyBody: "Upload a statement and arnaq adds up your accounts and savings here.",
   },
@@ -156,9 +143,14 @@ export const ui = {
     allCategories: (n: number) => `All ${n} categories`,
     savingsRow: {
       name: "Savings",
-      ofGoal: (goal: string) => `of ${goal} goal`,
-      moved: (amount: string) => `${amount} put in this month`,
-      taken: (amount: string) => `${amount} taken out this month`,
+      savedTotal: (saved: string) => `${saved} saved in total`,
+      goalOf: (saved: string, goal: string) => `${saved} of ${goal} goal`,
+      sub: (kind: "put" | "taken" | "none", base: string) =>
+        kind === "put"
+          ? `put in this month · ${base}`
+          : kind === "taken"
+            ? `taken out this month · ${base}`
+            : base,
     },
     paceTitle: "Pace of the month",
     paceAside: "everyday spending only",

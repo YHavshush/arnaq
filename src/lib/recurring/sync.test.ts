@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateOccurrences } from "./occurrences";
-import { syncRecurring } from "./sync";
+import { planThroughMonth, syncRecurring } from "./sync";
 import { setup } from "./test-utils";
 
 describe("syncRecurring catches up on its own", () => {
@@ -48,5 +48,23 @@ describe("syncRecurring catches up on its own", () => {
     await tx("2026-10-14", -2999, { counterparty: "Gym" });
     await syncRecurring(db, { throughMonth: "2026-10", today: "2026-10-31" });
     expect((await occ(item.id, "2026-10")).status).not.toBe("matched");
+  });
+
+  it("planThroughMonth plans a new month before it has a single transaction", async () => {
+    const { db, tx, addItem, occurrences } = await setup();
+    const item = await addItem({
+      name: "Rent",
+      matchCounterparty: "Rent",
+      expectedAmount: 48145,
+      dayOfMonth: 1,
+      startDate: "2026-09-01",
+    });
+    await tx("2026-10-01", -48145, { counterparty: "Rent" }); // the newest data is from October
+    expect(await planThroughMonth(db, "2026-11-01")).toBe("2026-11");
+    await syncRecurring(db, {
+      throughMonth: await planThroughMonth(db, "2026-11-01"),
+      today: "2026-11-01",
+    });
+    expect((await occurrences(item.id)).map((o) => o.month)).toContain("2026-11");
   });
 });

@@ -1,11 +1,12 @@
-import { Suspense } from "react";
 import Link from "next/link";
+import { Suspense } from "react";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
+import { Row } from "@/components/arnaq/row";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
 import { getI18n } from "@/i18n/server";
-import { pageDb } from "@/lib/auth/request";
 import { requestTime, todayIso } from "@/lib/api";
+import { pageDb } from "@/lib/auth/request";
 import { formatter } from "@/lib/view/format";
 import { loadNetWorth } from "@/lib/view/load";
 
@@ -17,27 +18,14 @@ export default function NetWorthPage() {
   );
 }
 
-function Line({
-  label,
-  sub,
-  value,
-  strong,
-}: {
-  label: string;
-  sub?: string;
-  value: string;
-  strong?: boolean;
-}) {
-  return (
-    <li className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4 px-4 py-3">
-      <div className="min-w-0">
-        <div className={`truncate text-base ${strong ? "font-semibold" : ""}`}>{label}</div>
-        {sub && <div className="text-ink-muted text-[13px]">{sub}</div>}
-      </div>
-      <div className={`num text-base ${strong ? "font-semibold" : ""}`}>{value}</div>
-    </li>
-  );
-}
+const BANK: Record<string, string> = { rabobank: "Rabobank", revolut: "Revolut" };
+/** One colour per part, from the ring tokens: no new colours. */
+const PART_COLOURS = [
+  "var(--ring-accent-from)",
+  "var(--ring-accent-to)",
+  "var(--ring-good-to)",
+  "var(--ring-warn-to)",
+];
 
 async function Content() {
   await requestTime();
@@ -60,6 +48,28 @@ async function Content() {
       </>
     );
 
+  // The parts: each checking account, then the savings. A part below zero has no width in the bar.
+  const parts = [
+    ...w.accounts.map((a) => ({
+      key: `a${a.accountId}`,
+      name: n.checking(BANK[a.bank] ?? a.name),
+      sub: n.asOf(f.dayLabel(a.asOf)),
+      amount: a.balance,
+    })),
+    ...(w.savings.saved !== 0 || w.savings.base > 0
+      ? [
+          {
+            key: "savings",
+            name: n.savingsName,
+            sub: w.savings.baseDate ? n.asOf(f.dayLabel(w.savings.baseDate)) : n.savedSoFar,
+            amount: w.savings.saved,
+          },
+        ]
+      : []),
+  ];
+  const positive = parts.reduce((s, p) => s + Math.max(p.amount, 0), 0);
+  const share = (amount: number) => (positive > 0 ? Math.max(amount, 0) / positive : 0);
+
   return (
     <div className="fade-in">
       <MoodSetter mood="neutral" />
@@ -71,64 +81,57 @@ async function Content() {
           </Link>
         }
       />
-      <div className="glass mb-4 p-4">
-        <div className="num font-display text-[40px] leading-none">{f.euroExact(w.total)}</div>
-        <p className="text-ink-muted mt-2 max-w-[56ch] text-[15px]">{n.intro}</p>
+      <div className="glass mb-4 grid gap-4 p-5">
+        <div>
+          <div className="text-ink-muted text-sm">{n.title}</div>
+          <div className="num font-display text-[44px] leading-none font-medium">
+            {f.euroExact(w.total)}
+          </div>
+        </div>
+        <div
+          role="img"
+          aria-label={parts.map((p) => `${p.name} ${f.euroExact(p.amount)}`).join(", ")}
+          className="flex h-4 gap-[3px] overflow-hidden rounded-full"
+        >
+          {parts.map((p, i) =>
+            share(p.amount) > 0 ? (
+              <i
+                key={p.key}
+                className="block h-full first:rounded-l-full last:rounded-r-full"
+                style={{
+                  width: `${share(p.amount) * 100}%`,
+                  background: PART_COLOURS[i % PART_COLOURS.length],
+                }}
+              />
+            ) : null,
+          )}
+        </div>
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+          {parts.map((p, i) => (
+            <li key={p.key} className="inline-flex items-center gap-1.5">
+              <i
+                aria-hidden
+                className="block size-2.5 rounded-full"
+                style={{ background: PART_COLOURS[i % PART_COLOURS.length] }}
+              />
+              {p.name}
+            </li>
+          ))}
+        </ul>
       </div>
 
-      <Section
-        title={n.accounts}
-        aside={<span className="num">{f.euroExact(w.accountsTotal)}</span>}
-      >
+      <Section title={n.parts}>
         <ul className="glass divide-hair divide-y overflow-hidden">
-          {w.accounts.length === 0 ? (
-            <li className="text-ink-muted px-4 py-3 text-[15px]">{n.noAccounts}</li>
-          ) : (
-            w.accounts.map((a) => (
-              <Line
-                key={a.accountId}
-                label={a.name}
-                sub={n.asOf(f.dayLabel(a.asOf))}
-                value={f.euroExact(a.balance)}
-              />
-            ))
-          )}
-        </ul>
-      </Section>
-
-      <Section
-        title={n.savings}
-        aside={<span className="num">{f.euroExact(w.savings.saved)}</span>}
-      >
-        <ul className="glass divide-hair divide-y overflow-hidden">
-          <Line
-            label={w.savings.fromStatement ? n.savingsStatement : n.savingsTyped}
-            sub={w.savings.baseDate ? n.asOf(f.dayLabel(w.savings.baseDate)) : undefined}
-            value={f.euroExact(w.savings.base)}
-          />
-          <Line
-            label={n.savingsSince}
-            sub={n.savingsMoves(w.savings.moves)}
-            value={f.euroExact(w.savings.since)}
-          />
-          <Line label={n.savingsNow} value={f.euroExact(w.savings.saved)} strong />
-        </ul>
-        <p className="text-ink-muted mt-2 max-w-[60ch] px-1 text-[13px]">{n.savingsNote}</p>
-      </Section>
-
-      {w.btwPocket > 0 && (
-        <Section title={n.notCounted}>
-          <ul className="glass divide-hair divide-y overflow-hidden">
-            <Line label={n.btwPocket} sub={n.btwNote} value={f.euroExact(w.btwPocket)} />
-          </ul>
-        </Section>
-      )}
-
-      <Section title={n.total}>
-        <ul className="glass divide-hair divide-y overflow-hidden">
-          <Line label={n.accounts} value={f.euroExact(w.accountsTotal)} />
-          <Line label={n.savings} value={f.euroExact(w.savings.saved)} />
-          <Line label={n.total} value={f.euroExact(w.total)} strong />
+          {parts.map((p) => (
+            <Row
+              key={p.key}
+              icon={p.key === "savings" ? "Spaarrekening" : null}
+              name={p.name}
+              meta={<span className="text-ink-muted text-[13px]">{p.sub}</span>}
+              amount={f.euroExact(p.amount)}
+              bar={{ filled: share(p.amount), state: "ok" }}
+            />
+          ))}
         </ul>
       </Section>
     </div>

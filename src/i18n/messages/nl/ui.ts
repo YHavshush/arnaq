@@ -51,26 +51,11 @@ export const ui: typeof en = {
     pageTitle: "vermogen",
     sub: "Wat je bezit",
     back: "Terug naar vooruit",
-    intro:
-      "Wat er op je rekeningen staat plus wat je hebt gespaard, voor zover je geüploade afschriften laten zien. Geld dat je aan de Belastingdienst verschuldigd bent telt niet mee.",
-    accounts: "Op je rekeningen",
-    noAccounts: "Nog geen saldo. Upload een afschrift waarop saldo's staan.",
+    parts: "Waar het staat",
+    checking: (bank: string) => `${bank} betaalrekening`,
+    savingsName: "Sparen",
+    savedSoFar: "tot nu toe gespaard",
     asOf: (day: string) => `per ${day}`,
-    savings: "Gespaard",
-    savingsStatement: "Spaarsaldo op je afschrift",
-    savingsTyped: "Al gespaard vóór je eerste upload",
-    savingsSince: "Verplaatst sindsdien",
-    savingsMoves: (n: number) =>
-      n === 0
-        ? "geen overboekingen sindsdien"
-        : `${n} ${n === 1 ? "overboeking" : "overboekingen"} van of naar sparen`,
-    savingsNow: "Nu gespaard",
-    savingsNote:
-      "Een afschrift geeft één spaarsaldo per spaarrekening. Zit daar BTW-geld bij, dan kan arnaq dat niet zien.",
-    notCounted: "Telt niet mee",
-    btwPocket: "In de BTW-pot",
-    btwNote: "Verschuldigd aan de Belastingdienst, dus geen deel van je vermogen.",
-    total: "Vermogen",
     emptyTitle: "Nog geen vermogen",
     emptyBody: "Upload een afschrift en arnaq telt hier je rekeningen en spaargeld op.",
   },
@@ -159,9 +144,14 @@ export const ui: typeof en = {
     allCategories: (n: number) => `Alle ${n} categorieën`,
     savingsRow: {
       name: "Sparen",
-      ofGoal: (goal: string) => `van doel ${goal}`,
-      moved: (amount: string) => `${amount} erbij deze maand`,
-      taken: (amount: string) => `${amount} eruit gehaald deze maand`,
+      savedTotal: (saved: string) => `${saved} in totaal gespaard`,
+      goalOf: (saved: string, goal: string) => `${saved} van doel ${goal}`,
+      sub: (kind: "put" | "taken" | "none", base: string) =>
+        kind === "put"
+          ? `deze maand erbij · ${base}`
+          : kind === "taken"
+            ? `deze maand eruit gehaald · ${base}`
+            : base,
     },
     paceTitle: "Tempo van de maand",
     paceAside: "alleen dagelijkse uitgaven",
