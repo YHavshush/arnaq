@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
+import { FixedFlowCard } from "@/components/arnaq/fixed-flow";
 import { FixedHero } from "@/components/arnaq/fixed-hero";
 import { FixedList, type ListSection } from "@/components/arnaq/fixed-list";
 import { MoodSetter } from "@/components/arnaq/mood";
@@ -90,6 +91,11 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
           )}
           <div className="mt-6 min-w-0 @min-[900px]/app:col-start-2 @min-[900px]/app:mt-0">
             {suggestions}
+            {v.flow && (
+              <div className="mb-6">
+                <FixedFlowCard flow={v.flow} month={month} today={today} text={f.flow} fmt={fmt} />
+              </div>
+            )}
             <FixedList sections={sections} month={month} />
             {add}
           </div>

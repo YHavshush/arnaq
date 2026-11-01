@@ -19,6 +19,7 @@ import { getSavingsSettings } from "@/lib/savings/settings";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { buildOverzicht } from "./overzicht";
 import { buildPrognose } from "./prognose";
+import { buildFixedFlow } from "./fixed-flow";
 import { buildFixedList } from "./fixed-list";
 import { splitRing } from "./fixed-ring";
 import { buildFixedTracker, historyMonths, trackerMonths } from "./fixed-tracker";
@@ -90,7 +91,7 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
   // One query for the whole range (the history under each item and the tracker); the month's own rows are cut out of it.
   const months = trackerMonths(month);
   const history = historyMonths(month);
-  const [ranged, items, missed, suggestions, categories, linkable] = await Promise.all([
+  const [ranged, items, missed, suggestions, categories, linkable, opening] = await Promise.all([
     getOccurrences(db, {
       from: history[0] < months[0] ? history[0] : months[0],
       to: months[months.length - 1],
@@ -100,6 +101,8 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
     detectSuggestions(db, { today }),
     db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
     listLinkableTransactions(db, { today }),
+    // The checking balance at the start of the month; savings are not in it (they are not an account with balances).
+    getOpeningBalance(db, month),
   ]);
   const occurrences = ranged.filter((o) => o.month === month);
   const base = buildVasteLasten(occurrences, locale);
@@ -120,10 +123,16 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
     })),
     list.income.total,
   );
+  // The day-by-day balance only makes sense for the months up to now: a later month has no balance to start from.
+  const flow =
+    month <= today.slice(0, 7)
+      ? buildFixedFlow({ month, opening, rows: [...base.expenses, ...base.income] })
+      : null;
   return {
     ...base,
     list,
     ring,
+    flow: flow && flow.events.length > 0 ? flow : null,
     tracker: buildFixedTracker({ items, occurrences: ranged, months, today }),
     items,
     missed,

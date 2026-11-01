@@ -323,6 +323,13 @@ export const ui: typeof en = {
       removed: "Verwijderd",
     },
     freq: { monthly: "per maand", quarterly: "per kwartaal", yearly: "per jaar" },
+    flow: {
+      title: "De maand, dag voor dag",
+      lowest: (amount: string, day: string) =>
+        `Laagste punt ${amount} op ${day}, alleen met je betaalrekeningen en de vaste posten.`,
+      fromZero: "Er is nog geen saldo bekend, dus het begint bij nul.",
+      aria: "Het saldo van je betaalrekeningen door de maand, terwijl de vaste posten binnenkomen en vertrekken",
+    },
     form: {
       open: "Vaste post toevoegen",
       kind: "Soort",
