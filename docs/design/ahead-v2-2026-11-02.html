@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq ahead page v2</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1260px; margin:0 auto; display:grid; gap:30px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 21px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:86ch; }
+.row { display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+.app { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.66); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --track:rgba(23,32,46,.10); --s1:#243b73; --s2:#5b7fd1; --s3:#59b085; --warn:#b8860b;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 55%,#f6e8d8); }
+.phone { width:360px; border-radius:34px; border:9px solid #1b2230; padding:16px 14px 20px; display:grid; gap:14px; align-content:start; overflow:hidden; }
+.laptop { width:min(100%,1040px); border-radius:14px; border:8px solid #1b2230; display:grid; grid-template-columns:140px 1fr; min-height:620px; overflow:hidden; }
+.side { background:rgba(255,255,255,.5); padding:16px 12px; display:grid; gap:8px; align-content:start; font-size:14px; } .side b { font:500 18px/1 Georgia,serif; margin-bottom:8px; } .side span { padding:7px 10px; border-radius:10px; } .side .on { background:var(--soft); font-weight:600; }
+.page { padding:18px 24px 24px; display:grid; gap:16px; align-content:start; }
+.hdr small { display:block; color:var(--muted); font-size:13px; } .hdr b { font:500 30px/1.1 Georgia,serif; }
+.hero { display:grid; gap:8px; justify-items:center; text-align:center; }
+.ring { width:168px; height:168px; position:relative; } .ring svg { width:100%; height:100%; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:11; stroke-linecap:round; }
+.ring .t { stroke:var(--track); } .ring .c { position:absolute; inset:0; display:grid; place-content:center; text-align:center; } .ring .c b { font-size:32px; font-weight:500; font-variant-numeric:tabular-nums; } .ring .c small { color:var(--muted); font-size:12px; }
+.sentence { font:500 21px/1.22 Georgia,serif; text-wrap:balance; } .sentence i { font-style:italic; }
+.line { color:var(--muted); font-size:14px; } .good { color:var(--good); } .bad { color:var(--bad); }
+.pill { display:inline-block; font-size:12.5px; font-weight:600; border-radius:99px; padding:3px 11px; background:color-mix(in oklab,var(--good) 16%,transparent); color:var(--good); }
+.parts { display:grid; gap:7px; }
+.stack { display:flex; gap:3px; height:12px; } .stack i { display:block; height:100%; } .stack i:first-child { border-radius:99px 0 0 99px; } .stack i:last-child { border-radius:0 99px 99px 0; }
+.legend { display:flex; flex-wrap:wrap; gap:3px 14px; font-size:12.5px; } .legend span { white-space:nowrap; } .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle; } .legend b { font-variant-numeric:tabular-nums; }
+.chip { display:flex; align-items:center; gap:9px; border-radius:99px; background:var(--card); border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); padding:8px 14px; font-size:13px; } .chip .dotb { width:9px; height:9px; border-radius:50%; background:var(--warn); flex:none; } .chip b { font-variant-numeric:tabular-nums; }
+.chart { width:100%; height:150px; display:block; } .chart text { fill:var(--muted); font-size:10px; }
+.seg { display:inline-grid; grid-auto-flow:column; background:var(--soft); border-radius:99px; padding:3px; gap:3px; font-size:13px; font-weight:600; } .seg span { padding:5px 11px; border-radius:99px; } .seg .on { background:var(--card); }
+.sech { display:flex; justify-content:space-between; align-items:center; } .sech b { font:500 19px/1.2 Georgia,serif; }
+.tiles { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; } .tile { background:var(--soft); border-radius:18px; padding:9px 6px; text-align:center; } .tile .l { font-size:12px; color:var(--muted); } .tile b { display:block; font-size:16px; font-variant-numeric:tabular-nums; }
+.cols { display:grid; grid-template-columns:300px 1fr; gap:28px; align-items:start; } .col { display:grid; gap:14px; align-content:start; }
+.sel { background:var(--soft); }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>Ahead, version 2</h1>
+  <p class="note">What I heard: the ring comes back and sits in the middle, like on Today and Fixed; the net worth build-up lives on the page instead of behind a link; the BTW card shrinks; and the page stops being one card under another. Demo numbers. Nothing in the app has changed.</p>
+</header>
+
+<div class="row">
+  <div><div class="cap">Phone</div>
+    <div class="app phone">
+      <div class="hdr"><small>Next 6 months</small><b>ahead</b></div>
+      <div class="hero">
+        <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="44" stroke="var(--s1)" stroke-dasharray="184 276.5"/></svg><div class="c"><b>€3,480</b><small>net worth by April</small></div></div>
+        <div class="sentence">You keep <i>growing</i>, about €195 a month</div>
+        <div><span class="pill">+€1,170 over 6 months</span> <span class="line" style="font-size:12.5px">· 4 of 6 months end in the plus</span></div>
+      </div>
+
+      <div class="parts">
+        <div class="stack"><i style="width:44%;background:var(--s1)"></i><i style="width:24%;background:var(--s2)"></i><i style="flex:1;background:var(--s3)"></i></div>
+        <div class="legend"><span><i class="dot" style="background:var(--s1)"></i>Rabobank <b>€1,520</b></span><span><i class="dot" style="background:var(--s2)"></i>Revolut <b>€790</b></span><span><i class="dot" style="background:var(--s3)"></i>Savings <b>€1,170</b></span></div>
+      </div>
+
+      <div class="sech"><b>Net worth over time</b><span class="seg"><span>3</span><span class="on">6</span><span>12</span></span></div>
+      <svg class="chart" viewBox="0 0 300 150" preserveAspectRatio="none"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--s1)" stop-opacity=".22"/><stop offset="1" stop-color="var(--s1)" stop-opacity="0"/></linearGradient></defs><rect x="148" y="6" width="38" height="130" rx="12" fill="var(--soft)"/><path d="M8 104 L58 100 L108 90 L158 80 L208 64 L258 52 L292 40 L292 150 L8 150Z" fill="url(#g)"/><path d="M8 104 L58 100" stroke="var(--s1)" stroke-width="3" fill="none"/><path d="M58 100 L108 90 L158 80 L208 64 L258 52 L292 40" stroke="var(--s1)" stroke-width="3" fill="none" stroke-dasharray="6 5"/><circle cx="167" cy="76" r="5" fill="#fff" stroke="var(--s1)" stroke-width="3"/><text x="136" y="64">2,830</text></svg>
+      <div class="tiles"><div class="tile"><div class="l">Income</div><b>€1,468</b></div><div class="tile"><div class="l">Expenses</div><b>€1,273</b></div><div class="tile"><div class="l">Growth</div><b class="good">+€195</b></div></div>
+
+      <div class="chip"><i class="dotb"></i><span><b>BTW Q4</b> · €168 to set aside, pay by 31 Jan</span></div>
+    </div>
+    <p class="note" style="margin-top:8px;width:360px">The chart sits straight on the page (no card around it), the month detail is a strip right under the touched month, and the BTW card is one line.</p>
+  </div>
+
+  <div style="flex:1;min-width:640px"><div class="cap">Laptop</div>
+    <div class="app laptop">
+      <div class="side"><b>arnaq</b><span>today</span><span class="on">ahead</span><span>fixed</span><span>add</span></div>
+      <div class="page">
+        <div class="hdr"><small>Next 6 months</small><b>ahead</b></div>
+        <div class="cols">
+          <div class="col">
+            <div class="hero" style="justify-items:start;text-align:left">
+              <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="44" stroke="var(--s1)" stroke-dasharray="184 276.5"/></svg><div class="c"><b>€3,480</b><small>net worth by April</small></div></div>
+              <div class="sentence">You keep <i>growing</i>, about €195 a month</div>
+              <div><span class="pill">+€1,170 over 6 months</span></div>
+            </div>
+            <div class="parts">
+              <div class="stack"><i style="width:44%;background:var(--s1)"></i><i style="width:24%;background:var(--s2)"></i><i style="flex:1;background:var(--s3)"></i></div>
+              <div class="legend" style="display:grid;gap:2px"><span><i class="dot" style="background:var(--s1)"></i>Rabobank checking <b>€1,520</b></span><span><i class="dot" style="background:var(--s2)"></i>Revolut checking <b>€790</b></span><span><i class="dot" style="background:var(--s3)"></i>Savings <b>€1,170</b></span></div>
+            </div>
+            <div class="chip"><i class="dotb"></i><span><b>BTW Q4</b> · €168 to set aside, pay by 31 Jan</span></div>
+          </div>
+          <div class="col">
+            <div class="sech"><b>Net worth over time</b><span class="seg"><span>3</span><span class="on">6</span><span>12</span><span>24</span></span></div>
+            <svg class="chart" viewBox="0 0 400 190" preserveAspectRatio="none" style="height:210px"><defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--s1)" stop-opacity=".22"/><stop offset="1" stop-color="var(--s1)" stop-opacity="0"/></linearGradient></defs><rect x="196" y="6" width="50" height="170" rx="14" fill="var(--soft)"/><path d="M10 130 L75 125 L140 113 L205 100 L270 82 L335 66 L390 50 L390 190 L10 190Z" fill="url(#g2)"/><path d="M10 130 L75 125" stroke="var(--s1)" stroke-width="3" fill="none"/><path d="M75 125 L140 113 L205 100 L270 82 L335 66 L390 50" stroke="var(--s1)" stroke-width="3" fill="none" stroke-dasharray="6 5"/><circle cx="221" cy="96" r="5" fill="#fff" stroke="var(--s1)" stroke-width="3"/><text x="198" y="84">2,830</text></svg>
+            <div class="sech"><b style="font-size:17px">February 2027</b><span class="line" style="font-size:12.5px">Forecast</span></div>
+            <div class="tiles"><div class="tile"><div class="l">Income</div><b>€1,468</b></div><div class="tile"><div class="l">Expenses</div><b>€1,273</b></div><div class="tile"><div class="l">Growth</div><b class="good">+€195</b></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:8px">On a laptop the ring and "where your money is" sit in a narrow left column and the chart gets the wide right side, so nothing is stacked into one long column.</p>
+  </div>
+</div>
+
+<section style="display:grid;gap:8px;padding-top:16px;border-top:1px solid var(--line)">
+  <h2>What changes, and what the ring means here</h2>
+  <p class="note">• <b>The ring is back, in the middle.</b> The arc is how many of the coming months end in the plus (4 of 6 here). I know you found that ring odd before; this time the number in it is the net worth, the words under the ring say the same thing the chart does, and the arc is explained in one line ("4 of 6 months end in the plus"). If you would rather the arc did something else (for example progress towards your savings goal when you have one), say so.<br>
+  • <b>The build-up lives on the page.</b> One bar split into Rabobank, Revolut and Savings with the amounts. No link, no separate page. Tapping the bar could still open the detail with dates, but nothing needs it.<br>
+  • <b>The BTW card is one line</b> with a dot: what to set aside and by when. When it is paid it says "BTW Q3 paid €300".<br>
+  • <b>Less boxes.</b> The chart sits directly on the page background; only the month detail and the BTW line have a surface.</p>
+</section>
+</main>
+</body>
+</html>
