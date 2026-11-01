@@ -19,7 +19,9 @@ import { getSavingsSettings } from "@/lib/savings/settings";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { buildOverzicht } from "./overzicht";
 import { buildPrognose } from "./prognose";
-import { buildFixedTracker, trackerMonths } from "./fixed-tracker";
+import { buildFixedList } from "./fixed-list";
+import { splitRing } from "./fixed-ring";
+import { buildFixedTracker, historyMonths, trackerMonths } from "./fixed-tracker";
 import { buildVasteLasten } from "./vaste-lasten";
 
 /** A valid YYYY-MM from user input, or the fallback. */
@@ -74,10 +76,14 @@ export async function loadPrognose(db: Db, today: string, months: number, locale
 }
 
 export async function loadVasteLasten(db: Db, month: string, today: string, locale: Locale) {
-  // One query for the tracker's whole range; the month's own rows are cut out of it.
+  // One query for the whole range (the history under each item and the tracker); the month's own rows are cut out of it.
   const months = trackerMonths(month);
+  const history = historyMonths(month);
   const [ranged, items, missed, suggestions, categories, linkable] = await Promise.all([
-    getOccurrences(db, { from: months[0], to: months[months.length - 1] }),
+    getOccurrences(db, {
+      from: history[0] < months[0] ? history[0] : months[0],
+      to: months[months.length - 1],
+    }),
     listRecurringItems(db),
     getMissedOccurrences(db),
     detectSuggestions(db, { today }),
@@ -85,8 +91,28 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
     listLinkableTransactions(db, { today }),
   ]);
   const occurrences = ranged.filter((o) => o.month === month);
+  const base = buildVasteLasten(occurrences, locale);
+  const list = buildFixedList({
+    rows: [...base.expenses, ...base.income],
+    items,
+    history: buildFixedTracker({ items, occurrences: ranged, months: history, today }),
+    missed,
+    month,
+  });
+  // The ring is the month's income, split by fixed expense (what was paid is the real amount).
+  const ring = splitRing(
+    base.expenses.map((r) => ({
+      id: r.itemId,
+      name: r.name,
+      amount: r.amount,
+      paid: r.status === "matched",
+    })),
+    list.income.total,
+  );
   return {
-    ...buildVasteLasten(occurrences, locale),
+    ...base,
+    list,
+    ring,
     tracker: buildFixedTracker({ items, occurrences: ranged, months, today }),
     items,
     missed,

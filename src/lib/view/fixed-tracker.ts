@@ -13,6 +13,15 @@ export function trackerMonths(anchor: string): string[] {
   return out;
 }
 
+/** The history under each fixed item on the Fixed page: this many months, ending with the one on screen. */
+export const HISTORY_MONTHS = 6;
+
+export function historyMonths(anchor: string): string[] {
+  return Array.from({ length: HISTORY_MONTHS }, (_, i) =>
+    addMonths(anchor, i + 1 - HISTORY_MONTHS),
+  );
+}
+
 /**
  * - paid: matched on or before its expected date
  * - late: matched after its expected date (`lateDays` says how many days)
