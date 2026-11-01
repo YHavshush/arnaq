@@ -115,11 +115,16 @@ describe("getForecast: month kinds and actuals", () => {
     expect(sep.categories.at(-1)).toMatchObject({ categoryId: null, actual: 450, total: 450 });
   });
 
-  it("keeps no-data months at zero even when stray transactions fall in them", async () => {
+  it("a month with a transaction in it has data, even when the statements stop before the month ends", async () => {
     const { db, tx, cat } = await setup();
-    await tx("2026-09-30", -5000, { categoryId: await cat("Overig") }); // from a CSV labelled October, say
+    await tx("2026-09-27", -5000, { categoryId: await cat("Overig") }); // the statement ended on the 27th
+    const f = await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
+    expect(f.months[0]).toMatchObject({ kind: "actual", expenses: 5000 });
+  });
+
+  it("a month without any transaction and without an upload is still no-data, at zero", async () => {
+    const { db } = await setup();
     const f = await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
     expect(f.months[0]).toMatchObject({ kind: "no-data", income: 0, expenses: 0, net: 0 });
-    expect(f.months[0].categories.every((c) => c.total === 0)).toBe(true);
   });
 });

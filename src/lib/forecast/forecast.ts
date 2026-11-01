@@ -1,5 +1,5 @@
 import { getOpeningBalance } from "./balance";
-import { and, asc, eq, gte, lte } from "drizzle-orm";
+import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getBudgetsByMonth, resolveTotalBudget, type MonthBudgets } from "@/lib/budget/budgets";
 import { getMonthOverview, sumTransactions, type MonthSums } from "@/lib/budget/overview";
@@ -145,6 +145,8 @@ function readOptions(opts: ForecastOptions): Forecast["settings"] {
 interface Context {
   current: string;
   uploaded: Set<string>;
+  /** Months that have at least one transaction: what is in is real, even when the statements stop before the month ends. */
+  withData: Set<string>;
   categories: { id: number; name: string }[];
   averages: VariableAverages;
   budgets: Map<string, MonthBudgets>;
@@ -178,6 +180,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   const ctx: Context = {
     current,
     uploaded: await coveredMonths(db),
+    withData: await monthsWithTransactions(db, first, last),
     categories: await db
       .select({ id: schema.categories.id, name: schema.categories.name })
       .from(schema.categories)
@@ -231,10 +234,26 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   };
 }
 
+/** The months from `first` to `last` that hold at least one transaction in the account's own currency. */
+async function monthsWithTransactions(db: Db, first: string, last: string): Promise<Set<string>> {
+  const rows = await db
+    .selectDistinct({ month: sql<string>`substr(${schema.transactions.date}, 1, 7)` })
+    .from(schema.transactions)
+    .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
+    .where(
+      and(
+        eq(schema.transactions.currency, schema.accounts.currency),
+        gte(schema.transactions.date, `${first}-01`),
+        lte(schema.transactions.date, `${last}-31`),
+      ),
+    );
+  return new Set(rows.map((r) => r.month));
+}
+
 function kindOf(ctx: Context, month: string): MonthKind {
   if (month === ctx.current) return "mixed";
   if (month > ctx.current) return "forecast";
-  return ctx.uploaded.has(month) ? "actual" : "no-data";
+  return ctx.uploaded.has(month) || ctx.withData.has(month) ? "actual" : "no-data";
 }
 
 /** Per month (YYYY-MM): deposits minus withdrawals on the savings category, in each account's own currency. */
