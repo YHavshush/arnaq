@@ -1,5 +1,6 @@
 "use client";
 
+import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { Check, ChevronDown, X } from "lucide-react";
 import { useId, useState } from "react";
@@ -141,6 +142,7 @@ function FixedRow({
   const f = t.ui.fixed;
   const { euroExact: euro, dayLabel } = formatter(locale);
   const panel = useId();
+  const reduced = useReducedMotion();
   const quiet = row.state === "paused" || row.state === "off";
   return (
     <li>
@@ -174,46 +176,57 @@ function FixedRow({
           className={`text-ink-muted size-4 transition-transform motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
         />
       </button>
-      <div id={panel} hidden={!open} className="fade-in grid gap-3 px-4 pb-4">
-        <p className="text-ink-muted text-[13px]">
-          {f.item.meta(row.dayOfMonth, f.freq[row.frequency])}
-        </p>
-        {row.state === "missed" && (
-          <p className="text-ink-muted text-[14px] leading-snug">{f.row.missedNote}</p>
-        )}
-        <HistoryDots row={row} month={month} />
-        <div className="flex flex-wrap gap-2">
-          <GhostButton
-            type="button"
-            disabled={actions.busy}
-            onClick={() => actions.setActive(row.itemId, !row.active)}
-          >
-            {row.active ? f.item.pause : f.item.resume}
-          </GhostButton>
-          {actions.confirming === row.itemId ? (
-            <>
-              <PrimaryButton
+      <LazyMotion features={domAnimation}>
+        <m.div
+          id={panel}
+          initial={false}
+          animate={{ height: open ? "auto" : 0, opacity: open ? 1 : 0 }}
+          transition={reduced ? { duration: 0 } : { duration: 0.24, ease: [0.2, 0.8, 0.2, 1] }}
+          style={{ overflow: "hidden" }}
+          inert={!open}
+        >
+          <div className="grid gap-3 px-4 pb-4">
+            <p className="text-ink-muted text-[13px]">
+              {f.item.meta(row.dayOfMonth, f.freq[row.frequency])}
+            </p>
+            {row.state === "missed" && (
+              <p className="text-ink-muted text-[14px] leading-snug">{f.row.missedNote}</p>
+            )}
+            <HistoryDots row={row} month={month} />
+            <div className="flex flex-wrap gap-2">
+              <GhostButton
                 type="button"
                 disabled={actions.busy}
-                onClick={() => actions.remove(row.itemId)}
+                onClick={() => actions.setActive(row.itemId, !row.active)}
               >
-                {f.item.confirmRemove}
-              </PrimaryButton>
-              <GhostButton type="button" onClick={actions.cancelRemove}>
-                {t.ui.common.cancel}
+                {row.active ? f.item.pause : f.item.resume}
               </GhostButton>
-            </>
-          ) : (
-            <GhostButton
-              type="button"
-              disabled={actions.busy}
-              onClick={() => actions.askRemove(row.itemId)}
-            >
-              {f.item.remove}
-            </GhostButton>
-          )}
-        </div>
-      </div>
+              {actions.confirming === row.itemId ? (
+                <>
+                  <PrimaryButton
+                    type="button"
+                    disabled={actions.busy}
+                    onClick={() => actions.remove(row.itemId)}
+                  >
+                    {f.item.confirmRemove}
+                  </PrimaryButton>
+                  <GhostButton type="button" onClick={actions.cancelRemove}>
+                    {t.ui.common.cancel}
+                  </GhostButton>
+                </>
+              ) : (
+                <GhostButton
+                  type="button"
+                  disabled={actions.busy}
+                  onClick={() => actions.askRemove(row.itemId)}
+                >
+                  {f.item.remove}
+                </GhostButton>
+              )}
+            </div>
+          </div>
+        </m.div>
+      </LazyMotion>
     </li>
   );
 }
