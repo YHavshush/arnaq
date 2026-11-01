@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq fixed page hero ideas</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1200px; margin:0 auto; display:grid; gap:30px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 21px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:84ch; }
+.row { display:flex; flex-wrap:wrap; gap:22px; align-items:flex-start; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+.scene { width:350px; max-width:100%; border-radius:30px; padding:16px 14px 20px; display:grid; gap:12px; align-content:start; overflow:hidden; }
+.light { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.66); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --warn:#a8691b; --track:rgba(23,32,46,.10); --s1:#243b73; --s2:#5b7fd1; --s3:#b8860b; --leftc:#59b085;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 55%,#f6e8d8); }
+.dark { --ink:#eef1f5; --muted:#a8b1bf; --soft:rgba(143,208,255,.10); --card:rgba(255,255,255,.07); --hair:rgba(255,255,255,.12); --accent:#8fd0ff; --good:#7fd3a8; --bad:#ff8f84; --warn:#f0b868; --track:rgba(255,255,255,.14); --s1:#8fd0ff; --s2:#7d8bff; --s3:#f0c36b; --leftc:#7fd3a8;
+  color:#eef1f5; background:linear-gradient(165deg,color-mix(in oklab,#2ac9ff 26%,#141b28),color-mix(in oklab,#7d8bff 22%,#141b28) 55%,#141b28); }
+.hdr small { display:block; color:var(--muted); font-size:13px; } .hdr b { font:500 30px/1.1 Georgia,serif; }
+.hdr { display:flex; justify-content:space-between; align-items:end; } .step { display:flex; gap:6px; } .step i { width:32px; height:32px; border-radius:50%; background:var(--card); display:grid; place-items:center; font-style:normal; font-size:14px; }
+.hero { display:grid; gap:10px; justify-items:center; text-align:center; padding:2px 0; }
+.ring { width:176px; height:176px; position:relative; } .ring svg { width:100%; height:100%; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:11; }
+.ring .t { stroke:var(--track); } .ring .c { position:absolute; inset:0; display:grid; place-content:center; text-align:center; } .ring .c b { font-size:34px; font-weight:500; font-variant-numeric:tabular-nums; } .ring .c small { color:var(--muted); font-size:12px; }
+.sentence { font:500 22px/1.22 Georgia,serif; text-wrap:balance; } .sentence i { font-style:italic; }
+.line { color:var(--muted); font-size:14px; } .good { color:var(--good); } .bad { color:var(--bad); }
+.legend { display:flex; flex-wrap:wrap; gap:4px 14px; justify-content:center; font-size:12.5px; color:var(--muted); } .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+.card { border-radius:24px; background:var(--card); border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); overflow:hidden; } .pad { padding:13px 15px; display:grid; gap:9px; }
+.sech { display:flex; justify-content:space-between; align-items:baseline; margin-top:4px; padding:0 4px; } .sech b { font:500 19px/1.2 Georgia,serif; } .sech span { font-size:13px; color:var(--muted); }
+.li { display:grid; grid-template-columns:2.2rem minmax(0,1fr) auto; gap:10px; align-items:center; padding:10px 15px; border-top:1px solid var(--hair); } .li:first-child { border-top:0; } .ic { width:2.2rem; height:2.2rem; border-radius:12px; background:var(--soft); } .li small { color:var(--muted); display:block; font-size:12.5px; } .amt { font-weight:600; font-variant-numeric:tabular-nums; }
+.big { font:500 44px/1 Georgia,serif; font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+.flow { width:100%; height:140px; display:block; } .flow text { fill:var(--muted); font-size:9.5px; }
+.prop { display:flex; height:10px; border-radius:99px; overflow:hidden; gap:2px; width:100%; } .prop i { display:block; height:100%; }
+.gauge { position:relative; height:14px; border-radius:99px; background:var(--track); width:100%; } .gauge i { position:absolute; top:-3px; bottom:-3px; width:2px; background:var(--ink); } .gauge b { position:absolute; left:0; top:0; bottom:0; border-radius:99px; background:var(--s1); }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>The Fixed page hero: four ideas that earn their place</h1>
+  <p class="note">The job of this top: say what your income and fixed costs leave over, at a glance, and be a bit more than three numbers. Each idea below adds something you cannot see in the list underneath. Demo numbers, phone width. Nothing in the app has changed.</p>
+</header>
+
+<section style="display:grid;gap:14px">
+  <div class="row">
+    <div><div class="cap">1 · The ring, on income · light</div>
+      <div class="scene light">
+        <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div class="hero">
+          <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="44" stroke="var(--s1)" stroke-linecap="round" stroke-dasharray="63.5 276.5"/><circle cx="50" cy="50" r="44" stroke="var(--s1)" stroke-opacity=".38" stroke-linecap="round" stroke-dasharray="63 276.5" stroke-dashoffset="-63.5"/></svg><div class="c"><b>€793</b><small>left over</small></div></div>
+          <div class="legend"><span><i class="dot" style="background:var(--s1)"></i>paid €300</span><span><i class="dot" style="background:var(--s1);opacity:.4"></i>to pay €375</span></div>
+          <div class="sentence">Fixed costs take <i>46%</i> of what comes in</div>
+          <div class="line">€1,468 comes in · €675 goes out</div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:8px">The same ring language as Today. The ring is your income: solid = fixed costs already paid, lighter = still to pay, the empty rest = what is left. One number in the middle.</p></div>
+
+    <div><div class="cap">2 · The ring, split by item · dark</div>
+      <div class="scene dark">
+        <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div class="hero">
+          <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/>
+            <circle cx="50" cy="50" r="44" stroke="var(--s1)" stroke-dasharray="88 276.5" stroke-dashoffset="0"/>
+            <circle cx="50" cy="50" r="44" stroke="var(--s2)" stroke-dasharray="26.4 276.5" stroke-dashoffset="-90"/>
+            <circle cx="50" cy="50" r="44" stroke="var(--s3)" stroke-opacity=".45" stroke-dasharray="6.4 276.5" stroke-dashoffset="-118"/></svg><div class="c"><b>€793</b><small>left over</small></div></div>
+          <div class="legend"><span><i class="dot" style="background:var(--s1)"></i>Rent €481</span><span><i class="dot" style="background:var(--s2)"></i>Health €151</span><span><i class="dot" style="background:var(--s3)"></i>Other €43</span></div>
+          <div class="sentence">€1,468 in, <i>€675</i> fixed, the rest is yours</div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:8px">The same ring, but each fixed item is its own colour, so you see what your fixed costs are made of. Paid items are solid, items still to come are lighter. Tap the legend to jump to the item.</p></div>
+  </div>
+  <div class="row">
+    <div><div class="cap">3 · The month's cash flow · light</div>
+      <div class="scene light">
+        <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div style="display:grid;gap:6px;padding:2px 2px 0">
+          <div class="line">Left after fixed costs</div>
+          <div class="big good">€793</div>
+        </div>
+        <div class="card pad">
+          <svg class="flow" viewBox="0 0 300 140" preserveAspectRatio="none">
+            <line x1="0" y1="86" x2="300" y2="86" stroke="var(--hair)" stroke-width="1"/>
+            <path d="M0 86 L0 128 L30 128 L30 86Z" fill="var(--bad)" fill-opacity=".30"/>
+            <path d="M0 128 L30 128 L30 128 L35 128 L35 70 L40 70 L40 40 L190 40 L190 42 L205 42 L205 44 L300 44" stroke="var(--s1)" stroke-width="2.6" fill="none"/>
+            <path d="M35 70 L35 86 L300 86 L300 44 L205 44 L205 42 L190 42 L190 40 L40 40 L40 70Z" fill="var(--leftc)" fill-opacity=".18"/>
+            <circle cx="3" cy="128" r="4" fill="var(--bad)"/><circle cx="296" cy="44" r="4" fill="var(--good)"/>
+            <text x="6" y="116">1 Nov −€632</text><text x="40" y="34">+€968 +€500</text><text x="220" y="62">after the last bill</text>
+          </svg>
+          <div class="line" style="font-size:13px">Lowest point: <b style="color:var(--bad)">−€632</b> on 1–3 Nov, before the money comes in on the 4th and 5th.</div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:8px">Adds the thing the list cannot show: when it comes in and goes out, day by day. It tells you whether the fixed items are covered at every moment of the month, not only at the end. With your real balance it shows your actual lowest point.</p></div>
+
+    <div><div class="cap">4 · Written out, with a measure · dark</div>
+      <div class="scene dark">
+        <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div style="display:grid;gap:12px;padding:4px 2px">
+          <div class="sentence" style="font-size:26px">Of <i>€1,468</i> that comes in, <i>€675</i> is already spoken for.<br><span class="good">€793</span> is yours.</div>
+          <div class="prop"><i style="width:46%;background:var(--s1)"></i><i style="flex:1;background:var(--leftc);opacity:.6"></i></div>
+          <div class="line">Fixed costs are 46% of your income</div>
+          <div class="gauge"><b style="width:46%"></b><i style="left:50%"></i></div>
+          <div class="line" style="font-size:12.5px">The mark is 50%, the usual advice for fixed costs. You are under it.</div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:8px">The most like the Today header: one sentence in the app's voice. The bar and the 50% mark give it a judgement (are my fixed costs high?) instead of just numbers.</p></div>
+  </div>
+</section>
+
+<section style="display:grid;gap:8px;padding-top:16px;border-top:1px solid var(--line)">
+  <h2>What I would do</h2>
+  <p class="note"><b>Idea 2 as the hero</b> (the ring split by item, with "€793 left over" in the middle): it is the ring you liked, it matches Today, and the colours tell you what your fixed costs are made of. <b>Idea 3 right under it</b> as a card called "The month, day by day", because "am I short before the income arrives?" is the one thing a fixed-cost page can answer that no other page does. Idea 4's 50% mark could go into the sentence of idea 2 as a small bonus line.</p>
+</section>
+</main>
+</body>
+</html>
