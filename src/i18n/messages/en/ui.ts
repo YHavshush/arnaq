@@ -1,6 +1,7 @@
 import type { Sentence } from "../../types";
 
 const plain = (text: string) => ({ text });
+const em = (text: string) => ({ text, em: true });
 
 /** Text on the screens and in the components. Amounts and dates arrive formatted. */
 export const ui = {
@@ -231,26 +232,78 @@ export const ui = {
   },
   fixed: {
     title: "fixed",
-    ring: (paid: number, total: number) => `${paid} of ${total} fixed costs paid`,
-    caption: "paid",
     emptyTitle: "No fixed items yet",
     emptyBody: "Add them below, or accept a suggestion once enough months are uploaded.",
     expenses: "Expenses",
-    totalExpenses: "Total fixed expenses",
-    totalIncome: "Total fixed income",
-    leftAfterFixed: "Left after fixed costs",
-    toGo: (amount: string) => `${amount} to go`,
     income: "Income",
-    missed: "Missed",
-    missedAside: (n: number) => `${n} to look at`,
-    missedLabel: "missed",
-    expectedOn: (date: string) => `expected ${date}`,
-    missedNote:
-      "No payment found. Paid with a different amount or under another name? Adjust the fixed item below.",
+    hero: {
+      ringLabel: (income: string, fixed: string, leftOver: string) =>
+        `Fixed costs ${fixed} of ${income} income, ${leftOver} left over`,
+      ringLabelShort: (income: string, fixed: string, short: string) =>
+        `Fixed costs ${fixed} are more than the ${income} income, ${short} short`,
+      ringLabelNoIncome: (fixed: string) => `Fixed costs ${fixed}, no income known for this month`,
+      leftOver: "left over",
+      short: "short",
+      fixedCaption: "fixed",
+      other: "Other",
+      sentence: {
+        normal: (income: string, fixed: string): Sentence => [
+          em(income),
+          plain(" in, "),
+          em(fixed),
+          plain(" fixed, the rest is yours"),
+        ],
+        short: (income: string, fixed: string, short: string): Sentence => [
+          em(income),
+          plain(" in, but "),
+          em(fixed),
+          plain(" is fixed: "),
+          em(short),
+          plain(" short"),
+        ],
+        noIncome: (fixed: string): Sentence => [
+          plain("No income known for this month. Your fixed costs add up to "),
+          em(fixed),
+          plain("."),
+        ],
+        noFixed: (income: string): Sentence => [em(income), plain(" in, and no fixed costs yet")],
+      },
+    },
+    row: {
+      progressExpenses: (total: string, done: number, count: number) =>
+        `${total} · ${done} of ${count} paid`,
+      progressIncome: (total: string, done: number, count: number) =>
+        `${total} · ${done} of ${count} in`,
+      chip: {
+        paid: (date: string) => `paid ${date}`,
+        received: (date: string) => `received ${date}`,
+        late: (days: number) => `late +${days}d`,
+        due: (date: string) => `due ${date}`,
+        missed: (date: string) => `missed, expected ${date}`,
+        off: "not this month",
+      },
+      missedEarlier: (date: string) => `missed ${date}`,
+      missedNote:
+        "No payment found. Paid with a different amount or under another name? Check your transactions, or pause or delete this item.",
+      history: {
+        label: (name: string) => `${name}: the last 6 months`,
+        status: {
+          paid: (amount: string) => `paid ${amount}`,
+          late: (amount: string, days: number) =>
+            `paid ${amount}, ${days} ${days === 1 ? "day" : "days"} late`,
+          missed: (amount: string) => `missed, ${amount} was expected`,
+          expected: (amount: string) => `expected ${amount}`,
+          none: "nothing planned",
+        },
+        cell: (item: string, month: string, status: string) => `${item}, ${month}: ${status}`,
+        open: (item: string, month: string, status: string) =>
+          `${item}, ${month}: ${status}. Open the transactions`,
+      },
+    },
     suggestionsCosts: "Suggested costs",
     suggestionsIncome: "Suggested income",
     suggestionsAside: (n: number) => `${n} ${n === 1 ? "suggestion" : "suggestions"}`,
-    manage: "Manage",
+    suggestionsCard: { review: "Review", hide: "Hide" },
     suggestion: {
       months: (n: number, day: number) => `${n} months in a row, around day ${day}`,
       add: "Add",
@@ -271,36 +324,6 @@ export const ui = {
       paused: "Paused",
       resumed: "Resumed",
       removed: "Deleted",
-    },
-    tracker: {
-      incomeTitle: "Fixed income, month by month",
-      expensesTitle: "Fixed expenses, month by month",
-      range: (from: string, to: string) => `${from} to ${to}`,
-      item: "Item",
-      totalIncome: "Total income",
-      totalExpenses: "Total expenses",
-      region: (title: string) => `${title}. Scroll sideways to see more months.`,
-      thisMonth: "this month",
-      paused: "paused",
-      legend: {
-        paid: "paid",
-        late: "paid late",
-        missed: "missed or bounced",
-        expected: "still expected",
-        none: "nothing that month",
-      },
-      status: {
-        paid: (amount: string) => `paid ${amount}`,
-        late: (amount: string, days: number) =>
-          `paid ${amount}, ${days} ${days === 1 ? "day" : "days"} late`,
-        missed: (amount: string) => `missed, ${amount} was expected`,
-        expected: (amount: string) => `expected ${amount}`,
-        none: "nothing planned",
-      },
-      cell: (item: string, month: string, status: string) => `${item}, ${month}: ${status}`,
-      open: (item: string, month: string, status: string) =>
-        `${item}, ${month}: ${status}. Open the transactions`,
-      lateShort: (days: number) => `+${days}d`,
     },
     freq: { monthly: "per month", quarterly: "per quarter", yearly: "per year" },
     form: {

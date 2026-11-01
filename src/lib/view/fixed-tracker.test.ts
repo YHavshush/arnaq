@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { RecurringItem } from "@/lib/recurring/items";
 import type { OccurrenceView } from "@/lib/recurring/occurrences";
-import { buildFixedTracker, trackerMonths } from "./fixed-tracker";
+import { buildFixedTracker, historyMonths, trackerMonths } from "./fixed-tracker";
 
 const MONTHS = ["2026-07", "2026-08", "2026-09", "2026-10", "2026-11", "2026-12"];
 const TODAY = "2026-10-15";
@@ -67,6 +67,19 @@ describe("trackerMonths", () => {
       "2026-02",
       "2026-03",
       "2026-04",
+    ]);
+  });
+});
+
+describe("historyMonths", () => {
+  it("is the 5 months before the one on screen and the month itself, across a year change", () => {
+    expect(historyMonths("2026-02")).toEqual([
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
     ]);
   });
 });

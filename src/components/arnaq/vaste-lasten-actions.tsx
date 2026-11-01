@@ -1,7 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useI18n } from "@/i18n/client";
 import { api, euroInputToCents } from "@/lib/client/api";
 import { categoryLabel } from "@/lib/view/categories";
@@ -18,7 +18,7 @@ interface Cat {
   type: "expense" | "income" | "transfer" | "savings";
 }
 
-interface SuggestionView {
+export interface SuggestionView {
   key: string;
   type: "expense" | "income";
   name: string;
@@ -77,21 +77,65 @@ export function SuggestionList({ suggestions }: { suggestions: SuggestionView[] 
   );
 }
 
-interface ItemView {
-  id: number;
-  name: string;
-  type: "expense" | "income";
-  expectedAmount: number;
-  dayOfMonth: number;
-  frequency: "monthly" | "quarterly" | "yearly";
-  active: boolean;
-  categoryName: string | null;
+/**
+ * One small card for all suggestions ("2 suggestions", Review). Review opens the lists below it,
+ * costs and income apart, with the accept and dismiss buttons.
+ */
+export function SuggestionsCard({
+  costs,
+  income,
+}: {
+  costs: SuggestionView[];
+  income: SuggestionView[];
+}) {
+  const { t } = useI18n();
+  const f = t.ui.fixed;
+  const [open, setOpen] = useState(false);
+  const panel = useId();
+  const all = [...costs, ...income];
+  if (all.length === 0) return null;
+  return (
+    <div className="mb-6 grid gap-3">
+      <div className="glass grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
+        <div className="min-w-0">
+          <div className="font-semibold">{f.suggestionsAside(all.length)}</div>
+          <div className="text-ink-muted truncate text-[13px]">
+            {all.map((s) => s.name).join(", ")}
+          </div>
+        </div>
+        <PrimaryButton
+          type="button"
+          aria-expanded={open}
+          aria-controls={panel}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {open ? f.suggestionsCard.hide : f.suggestionsCard.review}
+        </PrimaryButton>
+      </div>
+      <div id={panel} hidden={!open} className="fade-in grid gap-4">
+        {open &&
+          (
+            [
+              [f.suggestionsCosts, costs],
+              [f.suggestionsIncome, income],
+            ] as const
+          ).map(
+            ([title, list]) =>
+              list.length > 0 && (
+                <section key={title} className="grid gap-2">
+                  <h3 className="text-ink-muted px-1 text-sm font-semibold">{title}</h3>
+                  <SuggestionList suggestions={list} />
+                </section>
+              ),
+          )}
+      </div>
+    </div>
+  );
 }
 
-/** All fixed costs with pause/resume and delete. Delete asks twice (it cannot be undone). */
-export function ItemManager({ items }: { items: ItemView[] }) {
-  const { locale, t } = useI18n();
-  const { euroExact: euro } = formatter(locale);
+/** Pause, resume and delete for the fixed items. Delete asks twice (it cannot be undone). */
+export function useItemActions() {
+  const { t } = useI18n();
   const { run: act, pending: busy, error } = useAction();
   const [confirming, setConfirming] = useState<number | null>(null);
   const done = t.ui.fixed.done;
@@ -100,73 +144,20 @@ export function ItemManager({ items }: { items: ItemView[] }) {
     if (await act(call, { success })) setConfirming(null);
   }
 
-  if (items.length === 0) return null;
-  return (
-    <div className="glass overflow-hidden">
-      <ul className="divide-hair divide-y">
-        {items.map((it) => (
-          <li key={it.id} className="grid gap-2 px-4 py-3">
-            <div className="grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3">
-              <CategoryIcon name={it.categoryName} />
-              <div className="min-w-0">
-                <div className="truncate font-semibold">
-                  {it.name}
-                  {!it.active && (
-                    <span className="text-ink-muted ml-2 text-[13px] font-medium">
-                      {t.ui.fixed.item.paused}
-                    </span>
-                  )}
-                </div>
-                <div className="text-ink-muted text-[13px]">
-                  {t.ui.fixed.item.meta(it.dayOfMonth, t.ui.fixed.freq[it.frequency])}
-                </div>
-              </div>
-              <div className="num font-semibold">{euro(it.expectedAmount)}</div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <GhostButton
-                type="button"
-                disabled={busy}
-                onClick={() =>
-                  run(
-                    () => api("PATCH", `/api/recurring/${it.id}`, { active: !it.active }),
-                    it.active ? done.paused : done.resumed,
-                  )
-                }
-              >
-                {it.active ? t.ui.fixed.item.pause : t.ui.fixed.item.resume}
-              </GhostButton>
-              {confirming === it.id ? (
-                <>
-                  <PrimaryButton
-                    type="button"
-                    disabled={busy}
-                    onClick={() =>
-                      run(() => api("DELETE", `/api/recurring/${it.id}`), done.removed)
-                    }
-                  >
-                    {t.ui.fixed.item.confirmRemove}
-                  </PrimaryButton>
-                  <GhostButton type="button" onClick={() => setConfirming(null)}>
-                    {t.ui.common.cancel}
-                  </GhostButton>
-                </>
-              ) : (
-                <GhostButton type="button" disabled={busy} onClick={() => setConfirming(it.id)}>
-                  {t.ui.fixed.item.remove}
-                </GhostButton>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
-      {error && (
-        <div className="px-4 pb-3">
-          <ErrorLine message={error} />
-        </div>
-      )}
-    </div>
-  );
+  return {
+    busy,
+    error,
+    /** The item whose delete button was pressed once and now waits for a second press. */
+    confirming,
+    askRemove: (id: number) => setConfirming(id),
+    cancelRemove: () => setConfirming(null),
+    setActive: (id: number, active: boolean) =>
+      run(
+        () => api("PATCH", `/api/recurring/${id}`, { active }),
+        active ? done.resumed : done.paused,
+      ),
+    remove: (id: number) => run(() => api("DELETE", `/api/recurring/${id}`), done.removed),
+  };
 }
 
 /** Start from one of the person's own transactions: tapping one fills in the form, which can still be edited. */
