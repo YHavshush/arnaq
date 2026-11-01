@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
-import { BtwChip } from "@/components/arnaq/btw-card";
+import { BtwCard } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
 import { AheadTop } from "@/components/arnaq/ahead-top";
 import { WorthBar } from "@/components/arnaq/worth-bar";
@@ -82,16 +82,15 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         sentence={p.sentence}
         detail={p.detail}
       >
-        <div className="grid items-center gap-3 @min-[900px]/app:grid-cols-[minmax(0,1fr)_auto] @min-[900px]/app:gap-6">
-          {worth.hasAny && !p.incomeMissing && (
-            <WorthBar parts={parts} label={t.ui.netWorth.where} format={f.euro} />
-          )}
-          {btw.hasData && (
-            <div className="flex justify-center @min-[900px]/app:justify-end">
-              <BtwChip btw={btw} t={t} locale={locale} />
-            </div>
-          )}
-        </div>
+        {worth.hasAny && !p.incomeMissing && (
+          <WorthBar
+            parts={parts}
+            label={t.ui.netWorth.where}
+            total={f.euro(worth.total)}
+            totalLabel={t.ui.netWorth.now}
+            format={f.euro}
+          />
+        )}
       </AheadTop>
       {p.incomeMissing && (
         <div className="pb-2">
@@ -156,6 +155,11 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </p>
         )}
       </Section>
+      {btw.hasData && (
+        <Section title={t.ui.btw.title(btw.quarter.label.replace("-", " "))} aside={t.ui.btw.aside}>
+          <BtwCard btw={btw} t={t} locale={locale} />
+        </Section>
+      )}
       {!p.incomeMissing && (
         <Section title={t.ui.chart.allMonths}>
           <MonthList points={p.points} />

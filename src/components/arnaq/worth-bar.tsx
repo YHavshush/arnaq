@@ -12,17 +12,28 @@ const COLOURS = [
 export function WorthBar({
   parts,
   label,
+  total,
+  totalLabel,
   format,
 }: {
   parts: WorthPart[];
   /** The line above the bar. */
   label: string;
+  /** Net worth now, formatted, with its label ("now"). */
+  total: string;
+  totalLabel: string;
   format: (cents: number) => string;
 }) {
   const visible = parts.filter((p) => p.share > 0);
   return (
     <div className="grid gap-2 text-left">
-      <div className="text-ink-muted text-[13px]">{label}</div>
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="text-ink-muted text-[13px]">{label}</span>
+        <span className="num text-[15px]">
+          <b className="font-semibold">{total}</b>{" "}
+          <span className="text-ink-muted">{totalLabel}</span>
+        </span>
+      </div>
       <div
         role="img"
         aria-label={parts.map((p) => `${p.name} ${format(p.amount)}`).join(", ")}

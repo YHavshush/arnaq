@@ -1,26 +1,47 @@
-import type { Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
+import type { Locale } from "@/i18n/config";
 import type { BtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
 
-/** The BTW of the current quarter in one line: what is still to set aside and by when, or what was paid. */
-export function BtwChip({ btw, t, locale }: { btw: BtwSummary; t: Messages; locale: Locale }) {
+/** The BTW for one quarter: what to set aside, what is in the pocket, and what is still missing. */
+export function BtwCard({ btw, t, locale }: { btw: BtwSummary; t: Messages; locale: Locale }) {
   const b = t.ui.btw;
   const { euro, dayLabel } = formatter(locale);
-  const quarter = btw.quarter.label.replace("-", " ");
-  const text = btw.paid
-    ? b.chipPaid(quarter, euro(btw.paid.amount), dayLabel(btw.paid.date))
+  const surplus = btw.pocket - btw.owed;
+  const sentence = btw.paid
+    ? b.sentencePaid(dayLabel(btw.paid.date))
     : btw.toSetAside > 0
-      ? b.chipMissing(quarter, euro(btw.toSetAside), dayLabel(btw.quarter.due))
-      : b.chipCovered(quarter, dayLabel(btw.quarter.due));
-  const warn = !btw.paid && btw.toSetAside > 0;
+      ? b.sentenceMissing(euro(btw.toSetAside), dayLabel(btw.quarter.due))
+      : b.sentenceCovered(dayLabel(btw.quarter.due));
+  const fill = btw.paid ? 1 : btw.owed > 0 ? Math.min(Math.max(btw.pocket, 0) / btw.owed, 1) : 0;
+  const lines: [string, string][] = [];
+  if (btw.paid) lines.push([b.paid, euro(btw.paid.amount)]);
+  if (btw.paid && btw.fromOwnMoney > 0) lines.push([b.ownMoney, euro(btw.fromOwnMoney)]);
+  if (btw.paid && btw.pocket > 0) lines.push([b.surplus, euro(btw.pocket)]);
+  if (!btw.paid && surplus > 0) lines.push([b.surplus, euro(surplus)]);
   return (
-    <p className="bg-soft inline-flex items-center gap-2.5 rounded-full px-4 py-2 text-[13px] leading-snug">
-      <i
-        aria-hidden
-        className={`block size-2.5 shrink-0 rounded-full ${warn ? "bg-warn" : "bg-good"}`}
-      />
-      <span>{text}</span>
-    </p>
+    <div className="glass p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="text-[15px] font-semibold">{sentence}</p>
+        <p className="num text-[15px]">
+          {btw.paid
+            ? b.paidAmount(euro(btw.paid.amount))
+            : b.pocketOf(euro(btw.pocket), euro(btw.owed))}
+        </p>
+      </div>
+      <div aria-hidden className="bg-track mt-2 h-1.5 overflow-hidden rounded-full">
+        <i className="bg-accent block h-full rounded-full" style={{ width: `${fill * 100}%` }} />
+      </div>
+      {lines.length > 0 && (
+        <dl className="mt-2 grid gap-1 text-[14px]">
+          {lines.map(([label, value]) => (
+            <div key={label} className="flex items-baseline justify-between gap-4">
+              <dt className="text-ink-muted">{label}</dt>
+              <dd className="num">{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </div>
   );
 }

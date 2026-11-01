@@ -48,6 +48,7 @@ export const ui: typeof en = {
   step: { to: (month: string) => `Naar ${month}` },
   netWorth: {
     where: "Waar je geld staat",
+    now: "nu",
     savingsName: "Sparen",
   },
   category: {
@@ -74,12 +75,21 @@ export const ui: typeof en = {
     } as Record<string, string>,
   },
   btw: {
-    chipMissing: (quarter: string, amount: string, date: string) =>
-      `BTW ${quarter} · nog ${amount} opzij te zetten, betaal uiterlijk ${date}`,
-    chipCovered: (quarter: string, date: string) =>
-      `BTW ${quarter} · gedekt, betaal uiterlijk ${date}`,
-    chipPaid: (quarter: string, amount: string, date: string) =>
-      `BTW ${quarter} · ${amount} betaald op ${date}`,
+    title: (quarter: string) => `BTW ${quarter}`,
+    aside: "de BTW in wat binnenkomt",
+    pocketOf: (pocket: string, owed: string) => `${pocket} van ${owed}`,
+    owed: "BTW opzij te zetten",
+    pocket: "In de BTW-pot",
+    missing: "Nog opzij te zetten",
+    covered: "Gedekt",
+    surplus: "Over na betalen",
+    due: "Uiterlijk",
+    paid: "Betaald",
+    ownMoney: "Waarvan eigen geld",
+    sentenceMissing: (amount: string, date: string) => `Zet nog ${amount} opzij vóór ${date}.`,
+    sentenceCovered: (date: string) => `De pot dekt het. Betaal uiterlijk ${date}.`,
+    sentencePaid: (date: string) => `Betaald op ${date}.`,
+    paidAmount: (amount: string) => `${amount} betaald`,
     settings: {
       title: "BTW",
       intro:

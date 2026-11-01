@@ -48,6 +48,7 @@ export const ui = {
   step: { to: (month: string) => `Go to ${month}` },
   netWorth: {
     where: "Where your money is",
+    now: "now",
     savingsName: "Savings",
   },
   category: {
@@ -74,11 +75,21 @@ export const ui = {
     } as Record<string, string>,
   },
   btw: {
-    chipMissing: (quarter: string, amount: string, date: string) =>
-      `BTW ${quarter} · ${amount} to set aside, pay by ${date}`,
-    chipCovered: (quarter: string, date: string) => `BTW ${quarter} · covered, pay by ${date}`,
-    chipPaid: (quarter: string, amount: string, date: string) =>
-      `BTW ${quarter} · ${amount} paid on ${date}`,
+    title: (quarter: string) => `BTW ${quarter}`,
+    aside: "the BTW in what arrives",
+    pocketOf: (pocket: string, owed: string) => `${pocket} of ${owed}`,
+    owed: "BTW to set aside",
+    pocket: "In the BTW pocket",
+    missing: "Still to set aside",
+    covered: "Covered",
+    surplus: "Left over after paying",
+    due: "Due",
+    paid: "Paid",
+    ownMoney: "Of which your own money",
+    sentenceMissing: (amount: string, date: string) => `Set aside ${amount} more before ${date}.`,
+    sentenceCovered: (date: string) => `The pocket covers it. Pay by ${date}.`,
+    sentencePaid: (date: string) => `Paid on ${date}.`,
+    paidAmount: (amount: string) => `${amount} paid`,
     settings: {
       title: "BTW",
       intro:
