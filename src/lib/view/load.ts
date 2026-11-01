@@ -34,8 +34,9 @@ export function parseMonth(raw: string | string[] | undefined, fallback: string)
 export const HORIZONS = [3, 6, 12, 24] as const;
 
 /** What the coming months are based on, from the address; anything unknown is the averages. */
-export function parseBasis(raw: string | string[] | undefined): "averages" | "budget" {
-  return (Array.isArray(raw) ? raw[0] : raw) === "budget" ? "budget" : "averages";
+export function parseBasis(raw: string | string[] | undefined): "averages" | "budget" | "own" {
+  const v = Array.isArray(raw) ? raw[0] : raw;
+  return v === "budget" || v === "own" ? v : "averages";
 }
 
 export function parseHorizon(raw: string | string[] | undefined): number {
@@ -80,11 +81,15 @@ export async function loadPrognose(
   today: string,
   months: number,
   locale: Locale,
-  basis: "averages" | "budget" = "averages",
+  basis: "averages" | "budget" | "own" = "averages",
+  ownSpending: number | null = null,
 ) {
   // One past month for context keeps the chart to 8 points at the default horizon, so every value
   // can be printed on it (see PrognoseChart).
-  return buildPrognose(await getForecast(db, { today, months, pastMonths: 1, basis }), locale);
+  return buildPrognose(
+    await getForecast(db, { today, months, pastMonths: 1, basis, ownSpending }),
+    locale,
+  );
 }
 
 export async function loadVasteLasten(db: Db, month: string, today: string, locale: Locale) {

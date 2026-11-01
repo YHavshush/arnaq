@@ -378,6 +378,8 @@ export const userSettings = pgTable(
     /** Who pays the invoices the BTW is set aside for, and the word that marks the pocket's moves; null = the default. */
     btwClient: text("btw_client"),
     btwPocket: text("btw_pocket"),
+    /** What the person expects to spend each month on everyday things (cents); the "my own" basis of the forecast. */
+    forecastOwnSpending: cents("forecast_own_spending"),
   },
   () => [
     check("user_settings_provider_check", sql`smart_provider in ('off','claude','chatgpt')`),
@@ -388,6 +390,10 @@ export const userSettings = pgTable(
     check(
       "user_settings_savings_anchor_check",
       sql`(savings_anchor is null) = (savings_anchor_date is null) and (savings_anchor is null or savings_anchor >= 0)`,
+    ),
+    check(
+      "user_settings_own_spending_check",
+      sql`forecast_own_spending is null or forecast_own_spending >= 0`,
     ),
     check(
       "user_settings_btw_check",

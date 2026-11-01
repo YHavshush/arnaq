@@ -143,9 +143,16 @@ const NL: Rule[] = [
     /^The amount already saved cannot be negative\.$/,
     () => "Het al gespaarde bedrag kan niet negatief zijn.",
   ],
+  [
+    /^The expected spending must be an amount of zero or more\.$/,
+    () => "De verwachte uitgaven moeten een bedrag van nul of meer zijn.",
+  ],
   // BTW settings
   [/^Use letters or numbers in the name\.$/, () => "Gebruik letters of cijfers in de naam."],
-  [/^The name is too long \(max (\d+)\)\.$/, (m) => `De naam is te lang (maximaal ${m[1]} tekens).`],
+  [
+    /^The name is too long \(max (\d+)\)\.$/,
+    (m) => `De naam is te lang (maximaal ${m[1]} tekens).`,
+  ],
   // sample data
   [
     /^Sample data can only be added to an empty account\.$/,

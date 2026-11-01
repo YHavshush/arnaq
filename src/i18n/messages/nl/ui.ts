@@ -171,12 +171,20 @@ export const ui: typeof en = {
       "Upload minstens een maand en voeg je vaste posten toe. Daarna zie je hier hoe je geld zich ontwikkelt.",
     ring: (a: number, b: number) => `${a} van ${b} maanden eindigen in de plus`,
     caption: (label: string) => `groei tot en met ${label}`,
+    own: {
+      label: "Dagelijkse uitgaven per maand (€)",
+      placeholder: "1500",
+      save: "Opslaan",
+      saved: "Opgeslagen",
+      errAmount: "Vul een bedrag in, bijvoorbeeld 1500 of 1500,50.",
+    },
     basisLabel: "Waar de komende maanden op gebaseerd zijn",
-    basis: { averages: "Gemiddelden", budget: "Budget" },
+    basis: { averages: "Gemiddelden", budget: "Budget", own: "Eigen bedrag" },
     basisNote: {
       averages: "De komende maanden gebruiken wat je de afgelopen maanden gemiddeld uitgaf.",
       budget:
         "De komende maanden gebruiken je budgetten waar je er een hebt, en je gemiddelden voor de rest.",
+      own: "De komende maanden gebruiken het bedrag dat je invult voor dagelijkse uitgaven, plus je vaste posten.",
     },
     growthPill: (amount: string, months: number) => `${amount} in ${months} maanden`,
     captionWorth: (label: string) => `vermogen in ${label}`,

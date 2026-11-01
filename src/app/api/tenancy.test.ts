@@ -36,6 +36,7 @@ const ROUTES: Record<string, string[]> = {
   "smart/settings": ["GET", "PUT"],
   "savings/settings": ["GET", "PUT"],
   "btw/settings": ["GET", "PUT"],
+  "forecast/own": ["GET", "PUT"],
   sample: ["GET", "POST", "DELETE"],
   "categorise/smart": ["POST"],
   "categorise/auto": ["POST"],
@@ -486,6 +487,26 @@ describe("BTW settings are per person", () => {
     ).toBe(422);
     setTestUser(TEST_USER_A);
     expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot" });
+  });
+});
+
+describe("expected spending is per person", () => {
+  it("B does not see A's amount, and A's stays", async () => {
+    const get = async () =>
+      await (await call("forecast/own", "GET", new Request(url("/api/forecast/own")))).json();
+    setTestUser(TEST_USER_A);
+    expect(
+      (await call("forecast/own", "PUT", json("PUT", "/api/forecast/own", { amount: 150000 })))
+        .status,
+    ).toBe(200);
+    expect(await get()).toEqual({ amount: 150000 });
+    setTestUser(TEST_USER_B);
+    expect(await get()).toEqual({ amount: null });
+    expect(
+      (await call("forecast/own", "PUT", json("PUT", "/api/forecast/own", { amount: -5 }))).status,
+    ).toBe(422);
+    setTestUser(TEST_USER_A);
+    expect(await get()).toEqual({ amount: 150000 });
   });
 });
 
