@@ -80,7 +80,6 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         }
         ringNote={t.ui.forecast.ring(p.inThePlus, p.ahead)}
         sentence={p.sentence}
-        detail={p.detail}
       >
         {worth.hasAny && !p.incomeMissing && (
           <WorthBar

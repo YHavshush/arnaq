@@ -25,6 +25,9 @@ export function WorthBar({
   format: (cents: number) => string;
 }) {
   const visible = parts.filter((p) => p.share > 0);
+  // A segment wide enough carries its own name and amount; the others are named under the bar.
+  const inside = (p: WorthPart) => p.share >= 0.2;
+  const outside = parts.filter((p) => !inside(p));
   return (
     <div className="grid gap-2 text-left">
       <div className="flex items-baseline justify-between gap-3">
@@ -37,31 +40,40 @@ export function WorthBar({
       <div
         role="img"
         aria-label={parts.map((p) => `${p.name} ${format(p.amount)}`).join(", ")}
-        className="flex h-3 gap-[3px] overflow-hidden rounded-full"
+        className="flex h-14 gap-[3px] overflow-hidden rounded-2xl"
       >
         {visible.map((p) => (
           <i
             key={p.key}
-            className="block h-full first:rounded-l-full last:rounded-r-full"
+            className="grid min-w-0 content-center justify-items-start px-3 leading-tight text-[#0b1626] not-italic"
             style={{
               width: `${p.share * 100}%`,
               background: COLOURS[parts.indexOf(p) % COLOURS.length],
             }}
-          />
+          >
+            {inside(p) && (
+              <>
+                <span className="w-full truncate text-xs opacity-90">{p.name}</span>
+                <b className="num w-full truncate text-[15px] font-semibold">{format(p.amount)}</b>
+              </>
+            )}
+          </i>
         ))}
       </div>
-      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-        {parts.map((p, i) => (
-          <li key={p.key} className="inline-flex items-center gap-1.5">
-            <i
-              aria-hidden
-              className="block size-2.5 rounded-full"
-              style={{ background: COLOURS[i % COLOURS.length] }}
-            />
-            {p.name} <b className="num font-semibold">{format(p.amount)}</b>
-          </li>
-        ))}
-      </ul>
+      {outside.length > 0 && (
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+          {outside.map((p) => (
+            <li key={p.key} className="inline-flex items-center gap-1.5">
+              <i
+                aria-hidden
+                className="block size-2.5 rounded-full"
+                style={{ background: COLOURS[parts.indexOf(p) % COLOURS.length] }}
+              />
+              {p.name} <b className="num font-semibold">{format(p.amount)}</b>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
