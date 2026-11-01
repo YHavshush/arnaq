@@ -17,7 +17,7 @@ const fm = (month: string, kind: ForecastMonth["kind"], net: number, cumulativeN
     categories: [],
     income: Math.max(net, 0),
     expenses: Math.max(-net, 0),
-  }) as ForecastMonth;
+  }) as unknown as ForecastMonth;
 
 const forecast = (months: ForecastMonth[], lowConfidence = false): Forecast =>
   ({
