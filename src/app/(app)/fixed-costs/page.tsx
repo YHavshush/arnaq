@@ -1,18 +1,19 @@
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
-import { Hero } from "@/components/arnaq/hero";
+import { FixedHero } from "@/components/arnaq/fixed-hero";
+import { FixedList, type ListSection } from "@/components/arnaq/fixed-list";
 import { MoodSetter } from "@/components/arnaq/mood";
-import { PageHeader, Section } from "@/components/arnaq/page-header";
-import { StatusChip } from "@/components/arnaq/status-chip";
-import { FixedTrackerTable, TrackerLegend } from "@/components/arnaq/fixed-tracker";
-import { Row } from "@/components/arnaq/row";
+import { PageHeader } from "@/components/arnaq/page-header";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
-import { AddItemForm, ItemManager, SuggestionList } from "@/components/arnaq/vaste-lasten-actions";
+import {
+  AddItemForm,
+  SuggestionsCard,
+  type SuggestionView,
+} from "@/components/arnaq/vaste-lasten-actions";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { formatter } from "@/lib/view/format";
 import { loadVasteLasten, parseMonth } from "@/lib/view/load";
-import type { VasteLastRow } from "@/lib/view/vaste-lasten";
 
 export default function FixedCostsPage({ searchParams }: PageProps<"/fixed-costs">) {
   return (
@@ -27,7 +28,7 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
   const { locale, t } = await getI18n();
   // Fixed costs are shown to the cent: 21.78 is not 22.
   const fmt = formatter(locale);
-  const { euroExact: euro, dayLabel, monthName } = fmt;
+  const { monthName } = fmt;
   const today = todayIso();
   const month = parseMonth((await searchParams).month, today.slice(0, 7));
   const v = await pageDb((db) => loadVasteLasten(db, month, today, locale));
@@ -36,25 +37,27 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
   const nameOf = (id: number | null) => (id === null ? null : (catName.get(id) ?? null));
   const f = t.ui.fixed;
 
-  const sum = (rows: VasteLastRow[]) => rows.reduce((s, r) => s + r.amount, 0);
-  const expenseTotal = sum(v.expenses);
-  const incomeTotal = sum(v.income);
-  const totalRow = (label: string, amount: number, strong = false) => (
-    <li className="bg-soft/50 grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-4 px-4 py-3">
-      <span className={strong ? "font-semibold" : "text-ink-muted"}>{label}</span>
-      <span className="num font-semibold">{euro(amount)}</span>
-    </li>
+  const sections: ListSection[] = [v.list.expenses, v.list.income].map((s) => ({
+    ...s,
+    rows: s.rows.map((r) => ({ ...r, categoryName: nameOf(r.categoryId) })),
+  }));
+  const suggest = (list: typeof v.suggestionsCosts): SuggestionView[] =>
+    list.map((s) => ({
+      key: s.key,
+      type: s.type,
+      name: s.name,
+      expectedAmount: s.expectedAmount,
+      dayOfMonth: s.dayOfMonth,
+      categoryName: nameOf(s.categoryId),
+      months: s.evidence.months.length,
+    }));
+  const suggestions = (
+    <SuggestionsCard costs={suggest(v.suggestionsCosts)} income={suggest(v.suggestionsIncome)} />
   );
-
-  const toRow = (r: VasteLastRow) => (
-    <Row
-      key={r.occurrenceId}
-      icon={nameOf(r.categoryId)}
-      name={r.name}
-      meta={<StatusChip status={r.status} label={r.label} />}
-      amount={euro(r.amount)}
-      amountSub={r.status === "missed" ? f.missedLabel : undefined}
-    />
+  const add = (
+    <div className="mt-8">
+      <AddItemForm categories={v.categories} today={today} linkable={v.linkable} />
+    </div>
   );
 
   return (
@@ -70,147 +73,28 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
           nextLabel: t.ui.step.to(monthName(v.next)),
         }}
       />
-      <Hero
-        tone="accent"
-        value={v.share}
-        ringLabel={f.ring(v.paid, v.total)}
-        centre={`${v.paid}/${v.total}`}
-        caption={f.caption}
-        sentence={v.sentence}
-      />
 
-      {v.total === 0 && v.income.length === 0 ? (
-        <EmptyState title={f.emptyTitle}>{f.emptyBody}</EmptyState>
+      {v.items.length === 0 ? (
+        <>
+          <EmptyState title={f.emptyTitle}>{f.emptyBody}</EmptyState>
+          <div className="mt-6">{suggestions}</div>
+          {add}
+        </>
       ) : (
-        <>
-          {v.expenses.length > 0 && (
-            <Section title={f.expenses} aside={f.toGo(euro(v.toCome))}>
-              <div className="glass overflow-hidden">
-                <ul className="divide-hair divide-y">
-                  {v.expenses.map(toRow)}
-                  {totalRow(f.totalExpenses, expenseTotal, true)}
-                </ul>
-              </div>
-            </Section>
+        // Laptop (app width 900px or more): the ring on the left, the list on the right.
+        <div className="@min-[900px]/app:grid @min-[900px]/app:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] @min-[900px]/app:items-start @min-[900px]/app:gap-12">
+          {v.ring.mode !== "empty" && (
+            <div className="@min-[900px]/app:sticky @min-[900px]/app:top-6">
+              <FixedHero ring={v.ring} t={f.hero} fmt={fmt} />
+            </div>
           )}
-          {v.income.length > 0 && (
-            <Section title={f.income}>
-              <div className="glass overflow-hidden">
-                <ul className="divide-hair divide-y">
-                  {v.income.map(toRow)}
-                  {totalRow(f.totalIncome, incomeTotal, true)}
-                </ul>
-              </div>
-            </Section>
-          )}
-        </>
-      )}
-
-      {v.expenses.length > 0 && v.income.length > 0 && (
-        <div className="glass mb-6 overflow-hidden">
-          <ul className="divide-hair divide-y">
-            {totalRow(f.leftAfterFixed, incomeTotal - expenseTotal, true)}
-          </ul>
-        </div>
-      )}
-
-      {(v.tracker.income.rows.length > 0 || v.tracker.expenses.rows.length > 0) && (
-        <>
-          {(
-            [
-              [f.tracker.incomeTitle, f.tracker.totalIncome, v.tracker.income],
-              [f.tracker.expensesTitle, f.tracker.totalExpenses, v.tracker.expenses],
-            ] as const
-          ).map(
-            ([title, totalLabel, table]) =>
-              table.rows.length > 0 && (
-                <Section
-                  key={title}
-                  title={title}
-                  aside={f.tracker.range(
-                    fmt.monthShort(v.tracker.months[0]),
-                    fmt.monthShort(v.tracker.months[v.tracker.months.length - 1]),
-                  )}
-                >
-                  <FixedTrackerTable
-                    title={title}
-                    totalLabel={totalLabel}
-                    table={table}
-                    months={v.tracker.months}
-                    nowMonth={v.tracker.nowMonth}
-                    focusMonth={month}
-                    t={f.tracker}
-                    f={fmt}
-                  />
-                </Section>
-              ),
-          )}
-          <TrackerLegend t={f.tracker} />
-        </>
-      )}
-
-      {v.missed.length > 0 && (
-        <Section title={f.missed} aside={f.missedAside(v.missed.length)}>
-          <div className="glass overflow-hidden">
-            <ul className="divide-hair divide-y">
-              {v.missed.slice(0, 6).map((o) => (
-                <Row
-                  key={o.id}
-                  icon={nameOf(o.categoryId)}
-                  name={o.itemName}
-                  meta={f.expectedOn(dayLabel(o.expectedDate))}
-                  amount={euro(o.expectedAmount)}
-                />
-              ))}
-            </ul>
-          </div>
-          <p className="text-ink-muted mt-2 px-2 text-sm">{f.missedNote}</p>
-        </Section>
-      )}
-
-      {(
-        [
-          [f.suggestionsCosts, v.suggestionsCosts],
-          [f.suggestionsIncome, v.suggestionsIncome],
-        ] as const
-      ).map(
-        ([title, list]) =>
-          list.length > 0 && (
-            <Section key={title} title={title} aside={f.suggestionsAside(list.length)}>
-              <SuggestionList
-                suggestions={list.map((s) => ({
-                  key: s.key,
-                  type: s.type,
-                  name: s.name,
-                  expectedAmount: s.expectedAmount,
-                  dayOfMonth: s.dayOfMonth,
-                  categoryName: nameOf(s.categoryId),
-                  months: s.evidence.months.length,
-                }))}
-              />
-            </Section>
-          ),
-      )}
-
-      <Section title={f.manage}>
-        <div className="grid gap-3">
-          <ItemManager
-            items={v.items.map((it) => ({
-              id: it.id,
-              name: it.name,
-              type: it.type,
-              expectedAmount: it.expectedAmount,
-              dayOfMonth: it.dayOfMonth,
-              frequency: it.frequency,
-              active: it.active,
-              categoryName: nameOf(it.categoryId),
-            }))}
-          />
-          <div>
-            <AddItemForm categories={v.categories} today={today} linkable={v.linkable} />
+          <div className="mt-6 min-w-0 @min-[900px]/app:col-start-2 @min-[900px]/app:mt-0">
+            {suggestions}
+            <FixedList sections={sections} month={month} />
+            {add}
           </div>
         </div>
-      </Section>
+      )}
     </div>
   );
 }

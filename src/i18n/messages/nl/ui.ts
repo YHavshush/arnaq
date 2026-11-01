@@ -2,6 +2,7 @@ import type { Sentence } from "../../types";
 import type { ui as en } from "../en/ui";
 
 const plain = (text: string) => ({ text });
+const em = (text: string) => ({ text, em: true });
 
 export const ui: typeof en = {
   brand: "arnaq",
@@ -237,27 +238,83 @@ export const ui: typeof en = {
   },
   fixed: {
     title: "vast",
-    ring: (paid: number, total: number) => `${paid} van ${total} vaste lasten betaald`,
-    caption: "betaald",
     emptyTitle: "Nog geen vaste posten",
     emptyBody:
       "Voeg ze hieronder toe, of accepteer een suggestie zodra er genoeg maanden zijn geüpload.",
     expenses: "Uitgaven",
-    totalExpenses: "Totaal vaste uitgaven",
-    totalIncome: "Totaal vast inkomen",
-    leftAfterFixed: "Over na vaste lasten",
-    toGo: (amount: string) => `${amount} te gaan`,
     income: "Inkomen",
-    missed: "Gemist",
-    missedAside: (n: number) => `${n} om na te kijken`,
-    missedLabel: "gemist",
-    expectedOn: (date: string) => `verwacht ${date}`,
-    missedNote:
-      "Geen betaling gevonden. Betaald met een ander bedrag of onder een andere naam? Pas de vaste post hieronder aan.",
+    hero: {
+      ringLabel: (income: string, fixed: string, leftOver: string) =>
+        `Vaste lasten ${fixed} van ${income} inkomen, ${leftOver} over`,
+      ringLabelShort: (income: string, fixed: string, short: string) =>
+        `Vaste lasten ${fixed} zijn meer dan het inkomen van ${income}, ${short} tekort`,
+      ringLabelNoIncome: (fixed: string) =>
+        `Vaste lasten ${fixed}, geen inkomen bekend voor deze maand`,
+      leftOver: "over",
+      short: "tekort",
+      fixedCaption: "vast",
+      other: "Overig",
+      sentence: {
+        normal: (income: string, fixed: string): Sentence => [
+          em(income),
+          plain(" binnen, "),
+          em(fixed),
+          plain(" vast, de rest is van jou"),
+        ],
+        short: (income: string, fixed: string, short: string): Sentence => [
+          em(income),
+          plain(" binnen, maar "),
+          em(fixed),
+          plain(" staat vast: "),
+          em(short),
+          plain(" tekort"),
+        ],
+        noIncome: (fixed: string): Sentence => [
+          plain("Geen inkomen bekend voor deze maand. Je vaste lasten zijn samen "),
+          em(fixed),
+          plain("."),
+        ],
+        noFixed: (income: string): Sentence => [
+          em(income),
+          plain(" binnen, en nog geen vaste lasten"),
+        ],
+      },
+    },
+    row: {
+      progressExpenses: (total: string, done: number, count: number) =>
+        `${total} · ${done} van ${count} betaald`,
+      progressIncome: (total: string, done: number, count: number) =>
+        `${total} · ${done} van ${count} binnen`,
+      chip: {
+        paid: (date: string) => `betaald ${date}`,
+        received: (date: string) => `ontvangen ${date}`,
+        late: (days: number) => `te laat +${days}d`,
+        due: (date: string) => `komt ${date}`,
+        missed: (date: string) => `gemist, verwacht ${date}`,
+        off: "niet deze maand",
+      },
+      missedEarlier: (date: string) => `gemist ${date}`,
+      missedNote:
+        "Geen betaling gevonden. Betaald met een ander bedrag of onder een andere naam? Kijk bij je transacties, of pauzeer of verwijder deze post.",
+      history: {
+        label: (name: string) => `${name}: de laatste 6 maanden`,
+        status: {
+          paid: (amount: string) => `betaald ${amount}`,
+          late: (amount: string, days: number) =>
+            `betaald ${amount}, ${days} ${days === 1 ? "dag" : "dagen"} te laat`,
+          missed: (amount: string) => `gemist, ${amount} werd verwacht`,
+          expected: (amount: string) => `verwacht ${amount}`,
+          none: "niets gepland",
+        },
+        cell: (item: string, month: string, status: string) => `${item}, ${month}: ${status}`,
+        open: (item: string, month: string, status: string) =>
+          `${item}, ${month}: ${status}. Open de transacties`,
+      },
+    },
     suggestionsCosts: "Voorgestelde kosten",
     suggestionsIncome: "Voorgesteld inkomen",
     suggestionsAside: (n: number) => `${n} ${n === 1 ? "suggestie" : "suggesties"}`,
-    manage: "Beheren",
+    suggestionsCard: { review: "Bekijken", hide: "Verbergen" },
     suggestion: {
       months: (n: number, day: number) => `${n} maanden achter elkaar, rond de ${day}e`,
       add: "Toevoegen",
@@ -278,36 +335,6 @@ export const ui: typeof en = {
       paused: "Gepauzeerd",
       resumed: "Hervat",
       removed: "Verwijderd",
-    },
-    tracker: {
-      incomeTitle: "Vast inkomen, maand voor maand",
-      expensesTitle: "Vaste uitgaven, maand voor maand",
-      range: (from: string, to: string) => `${from} tot ${to}`,
-      item: "Post",
-      totalIncome: "Totaal inkomen",
-      totalExpenses: "Totaal uitgaven",
-      region: (title: string) => `${title}. Scroll opzij om meer maanden te zien.`,
-      thisMonth: "deze maand",
-      paused: "gepauzeerd",
-      legend: {
-        paid: "betaald",
-        late: "te laat betaald",
-        missed: "gemist of teruggeboekt",
-        expected: "nog te verwachten",
-        none: "niets die maand",
-      },
-      status: {
-        paid: (amount: string) => `betaald ${amount}`,
-        late: (amount: string, days: number) =>
-          `betaald ${amount}, ${days} ${days === 1 ? "dag" : "dagen"} te laat`,
-        missed: (amount: string) => `gemist, ${amount} werd verwacht`,
-        expected: (amount: string) => `verwacht ${amount}`,
-        none: "niets gepland",
-      },
-      cell: (item: string, month: string, status: string) => `${item}, ${month}: ${status}`,
-      open: (item: string, month: string, status: string) =>
-        `${item}, ${month}: ${status}. Open de transacties`,
-      lateShort: (days: number) => `+${days}d`,
     },
     freq: { monthly: "per maand", quarterly: "per kwartaal", yearly: "per jaar" },
     form: {
