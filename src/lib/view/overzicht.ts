@@ -472,8 +472,8 @@ export function buildOverzicht({
       hasVariableBudget && progress > 0 ? variableSpent / variableBudget / progress : null;
     pace = {
       spent: variableSpent,
-      total: spent,
-      fixed: Math.min(paidFixed, spent),
+      total: budgetSpent,
+      fixed: Math.min(paidFixed, budgetSpent),
       budget: hasVariableBudget ? variableBudget : null,
       schedule,
       ahead: schedule === null ? null : schedule - variableSpent,

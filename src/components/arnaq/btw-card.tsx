@@ -4,17 +4,7 @@ import type { BtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
 
 /** The BTW for one quarter: what to set aside, what is in the pocket, and what is still missing. */
-export function BtwCard({
-  btw,
-  client,
-  t,
-  locale,
-}: {
-  btw: BtwSummary;
-  client: string;
-  t: Messages;
-  locale: Locale;
-}) {
+export function BtwCard({ btw, t, locale }: { btw: BtwSummary; t: Messages; locale: Locale }) {
   const b = t.ui.btw;
   const { euro, dayLabel } = formatter(locale);
   const surplus = btw.pocket - btw.owed;
@@ -42,11 +32,6 @@ export function BtwCard({
       <div aria-hidden className="bg-track mt-2 h-1.5 overflow-hidden rounded-full">
         <i className="bg-accent block h-full rounded-full" style={{ width: `${fill * 100}%` }} />
       </div>
-      <p className="text-ink-muted mt-2 text-[13px]">
-        {btw.paid
-          ? b.paidEstimate(euro(btw.owed), euro(btw.received), client)
-          : `${b.basis(euro(btw.received), client)} ${b.note}`}
-      </p>
       {lines.length > 0 && (
         <dl className="mt-2 grid gap-1 text-[14px]">
           {lines.map(([label, value]) => (

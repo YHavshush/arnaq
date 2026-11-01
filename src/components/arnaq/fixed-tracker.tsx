@@ -75,7 +75,7 @@ export function FixedTrackerTable({
   const nowBg = (m: string) => (m === nowMonth ? "bg-soft" : "");
 
   return (
-    <div className="bg-surface border-hair rounded-2xl border p-3">
+    <div className="bg-surface border-hair rounded-3xl border p-4">
       <TrackerScroll label={t.region(title)}>
         <table className="num w-full min-w-[620px] table-fixed border-separate border-spacing-0 text-[13px]">
           <caption className="sr-only">{title}</caption>

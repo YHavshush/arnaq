@@ -86,9 +86,6 @@ export const ui: typeof en = {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "de BTW in wat binnenkomt",
     pocketOf: (pocket: string, owed: string) => `${pocket} van ${owed}`,
-    basis: (received: string, client: string) =>
-      `De BTW in de ${received} ontvangen van ${client} (21 van elke 121).`,
-    received: (client: string) => `Ontvangen van ${client}`,
     owed: "BTW opzij te zetten",
     pocket: "In de BTW-pot",
     missing: "Nog opzij te zetten",
@@ -101,9 +98,6 @@ export const ui: typeof en = {
     sentenceCovered: (date: string) => `De pot dekt het. Betaal uiterlijk ${date}.`,
     sentencePaid: (date: string) => `Betaald op ${date}.`,
     paidAmount: (amount: string) => `${amount} betaald`,
-    paidEstimate: (estimate: string, received: string, client: string) =>
-      `Wat je betaalde telt. arnaq schatte ${estimate} uit de ${received} ontvangen van ${client}; de echte rekening hangt af van factuurdata en aftrekposten.`,
-    note: "Je betalingen bevatten BTW, dus dit is 21 van elke 121 euro; aftrekposten kunnen de echte rekening lager maken.",
     settings: {
       title: "BTW",
       intro:

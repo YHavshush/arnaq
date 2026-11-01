@@ -17,9 +17,7 @@ const base: BtwSummary = {
   hasData: true,
 };
 const html = (btw: BtwSummary, locale: "en" | "nl" = "en") =>
-  renderToStaticMarkup(
-    createElement(BtwCard, { btw, client: "Featurn", t: messages[locale], locale }),
-  );
+  renderToStaticMarkup(createElement(BtwCard, { btw, t: messages[locale], locale }));
 
 describe("BtwCard", () => {
   it("says what is still missing and by when", () => {
@@ -27,7 +25,6 @@ describe("BtwCard", () => {
     expect(out).toContain("Set aside");
     expect(out).toContain("31 Oct");
     expect(out).toContain("€3,000 of €4,200".replace("€3,000", "€300").replace("€4,200", "€420"));
-    expect(out).toContain("received from Featurn");
   });
   it("says the pocket covers it, and shows no 'missing' line", () => {
     const out = html({ ...base, pocket: 50000, toSetAside: 0 });
@@ -57,8 +54,7 @@ describe("BtwCard", () => {
       fromOwnMoney: 30000,
     });
     expect(out).toContain("€300 paid");
-    expect(out).toContain("What you paid is what counts");
-    expect(out).toContain("estimated €238");
+    expect(out).not.toContain("estimated");
     expect(out).not.toContain("€0 of €238");
   });
   it("speaks Dutch too", () => {

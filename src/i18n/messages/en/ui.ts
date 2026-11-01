@@ -86,9 +86,6 @@ export const ui = {
     title: (quarter: string) => `BTW ${quarter}`,
     aside: "the BTW in what arrives",
     pocketOf: (pocket: string, owed: string) => `${pocket} of ${owed}`,
-    basis: (received: string, client: string) =>
-      `The BTW in the ${received} received from ${client} (21 of every 121).`,
-    received: (client: string) => `Received from ${client}`,
     owed: "BTW to set aside",
     pocket: "In the BTW pocket",
     missing: "Still to set aside",
@@ -101,9 +98,6 @@ export const ui = {
     sentenceCovered: (date: string) => `The pocket covers it. Pay by ${date}.`,
     sentencePaid: (date: string) => `Paid on ${date}.`,
     paidAmount: (amount: string) => `${amount} paid`,
-    paidEstimate: (estimate: string, received: string, client: string) =>
-      `What you paid is what counts. arnaq estimated ${estimate} from the ${received} received from ${client}; the real bill depends on invoice dates and deductions.`,
-    note: "Your payments include BTW, so this is 21 of every 121 euro; deductions can make the real bill lower.",
     settings: {
       title: "BTW",
       intro:

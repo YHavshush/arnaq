@@ -11,7 +11,6 @@ import { PrognoseChart } from "@/components/arnaq/prognose-chart";
 import { EmptyState, HeroSkeleton } from "@/components/arnaq/states";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
-import { getBtwSettings } from "@/lib/btw/settings";
 import { getBtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
 import { HORIZONS, loadPrognose, parseHorizon } from "@/lib/view/load";
@@ -31,10 +30,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
   const today = todayIso();
   const months = parseHorizon((await searchParams).months);
   const p = await pageDb((db) => loadPrognose(db, today, months, locale));
-  const { btw, btwSettings } = await pageDb(async (db) => ({
-    btw: await getBtwSummary(db, { today }),
-    btwSettings: await getBtwSettings(db),
-  }));
+  const btw = await pageDb((db) => getBtwSummary(db, { today }));
 
   if (!p.hasForecast)
     return (
@@ -126,7 +122,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
       </Section>
       {btw.hasData && (
         <Section title={t.ui.btw.title(btw.quarter.label.replace("-", " "))} aside={t.ui.btw.aside}>
-          <BtwCard btw={btw} client={btwSettings.client} t={t} locale={locale} />
+          <BtwCard btw={btw} t={t} locale={locale} />
         </Section>
       )}
       {!p.incomeMissing && (
