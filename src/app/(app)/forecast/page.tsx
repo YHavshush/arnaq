@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
-import { BtwCard } from "@/components/arnaq/btw-card";
+import { BtwChip } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
-import { AheadHeader } from "@/components/arnaq/ahead-header";
+import { AheadTop } from "@/components/arnaq/ahead-top";
+import { WorthBar } from "@/components/arnaq/worth-bar";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
@@ -13,7 +14,8 @@ import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { getBtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
-import { HORIZONS, loadPrognose, parseHorizon } from "@/lib/view/load";
+import { HORIZONS, loadNetWorth, loadPrognose, parseBasis, parseHorizon } from "@/lib/view/load";
+import { netWorthParts } from "@/lib/view/net-worth-parts";
 
 export default function ForecastPage({ searchParams }: PageProps<"/forecast">) {
   return (
@@ -28,9 +30,15 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
   const { locale, t } = await getI18n();
   const f = formatter(locale);
   const today = todayIso();
-  const months = parseHorizon((await searchParams).months);
-  const p = await pageDb((db) => loadPrognose(db, today, months, locale));
-  const btw = await pageDb((db) => getBtwSummary(db, { today }));
+  const query = await searchParams;
+  const months = parseHorizon(query.months);
+  const basis = parseBasis(query.basis);
+  const { p, btw, worth } = await pageDb(async (db) => ({
+    p: await loadPrognose(db, today, months, locale, basis),
+    btw: await getBtwSummary(db, { today }),
+    worth: await loadNetWorth(db, today),
+  }));
+  const parts = netWorthParts(worth, t.ui.netWorth.savingsName);
 
   if (!p.hasForecast)
     return (
@@ -50,15 +58,18 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
     <div className="fade-in">
       <MoodSetter mood={p.mood} />
       <PageHeader title={t.ui.forecast.title} sub={t.ui.forecast.subRange(months)} />
-      <AheadHeader
-        label={
+      <AheadTop
+        tone={p.tone}
+        value={p.share}
+        ringLabel={t.ui.forecast.ring(p.inThePlus, p.ahead)}
+        amount={p.netWorth && !p.incomeMissing ? f.euro(p.netWorth.end) : f.euroSigned(p.growth)}
+        caption={
           p.incomeMissing
             ? t.ui.forecast.captionSpend(p.points.at(-1)?.label ?? "")
             : p.netWorth
               ? t.ui.forecast.captionWorth(p.points.at(-1)?.label ?? "")
               : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
         }
-        amount={p.netWorth && !p.incomeMissing ? f.euro(p.netWorth.end) : f.euroSigned(p.growth)}
         pill={
           p.netWorth && !p.incomeMissing
             ? {
@@ -67,16 +78,21 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
               }
             : undefined
         }
+        ringNote={t.ui.forecast.ring(p.inThePlus, p.ahead)}
         sentence={p.sentence}
         detail={p.detail}
-      />
-      {p.netWorth && (
-        <div className="pb-3">
-          <Link href="/net-worth" className="text-accent min-h-11 text-[15px] font-semibold">
-            {t.ui.forecast.howBuilt}
-          </Link>
+      >
+        <div className="grid items-center gap-3 @min-[900px]/app:grid-cols-[minmax(0,1fr)_auto] @min-[900px]/app:gap-6">
+          {worth.hasAny && !p.incomeMissing && (
+            <WorthBar parts={parts} label={t.ui.netWorth.where} format={f.euro} />
+          )}
+          {btw.hasData && (
+            <div className="flex justify-center @min-[900px]/app:justify-end">
+              <BtwChip btw={btw} t={t} locale={locale} />
+            </div>
+          )}
         </div>
-      )}
+      </AheadTop>
       {p.incomeMissing && (
         <div className="pb-2">
           <Link
@@ -90,18 +106,32 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
       <Section
         title={p.hasBalance ? t.ui.forecast.progressWorth : t.ui.forecast.progress}
         aside={
-          <nav aria-label={t.ui.forecast.horizon} className="liquid seg">
-            {HORIZONS.map((h) => (
-              <StepLink
-                key={h}
-                href={`/forecast?months=${h}`}
-                current={h === months}
-                className="seg-item inline-flex min-h-9 min-w-9 items-center justify-center px-2.5 text-sm font-semibold"
-              >
-                {h}
-              </StepLink>
-            ))}
-          </nav>
+          <span className="flex flex-wrap items-center justify-end gap-2">
+            <nav aria-label={t.ui.forecast.basisLabel} className="liquid seg">
+              {(["averages", "budget"] as const).map((b) => (
+                <StepLink
+                  key={b}
+                  href={`/forecast?months=${months}&basis=${b}`}
+                  current={b === basis}
+                  className="seg-item inline-flex min-h-9 items-center justify-center px-3 text-sm font-semibold"
+                >
+                  {t.ui.forecast.basis[b]}
+                </StepLink>
+              ))}
+            </nav>
+            <nav aria-label={t.ui.forecast.horizon} className="liquid seg">
+              {HORIZONS.map((h) => (
+                <StepLink
+                  key={h}
+                  href={`/forecast?months=${h}&basis=${basis}`}
+                  current={h === months}
+                  className="seg-item inline-flex min-h-9 min-w-9 items-center justify-center px-2.5 text-sm font-semibold"
+                >
+                  {h}
+                </StepLink>
+              ))}
+            </nav>
+          </span>
         }
       >
         {p.incomeMissing ? (
@@ -111,6 +141,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </div>
         ) : (
           <div className="glass p-3">
+            <p className="text-ink-muted px-2 pb-2 text-[13px]">{t.ui.forecast.basisNote[basis]}</p>
             <PrognoseChart
               points={p.points}
               currentMonth={today.slice(0, 7)}
@@ -125,11 +156,6 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </p>
         )}
       </Section>
-      {btw.hasData && (
-        <Section title={t.ui.btw.title(btw.quarter.label.replace("-", " "))} aside={t.ui.btw.aside}>
-          <BtwCard btw={btw} t={t} locale={locale} />
-        </Section>
-      )}
       {!p.incomeMissing && (
         <Section title={t.ui.chart.allMonths}>
           <MonthList points={p.points} />

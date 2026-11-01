@@ -47,18 +47,8 @@ export const ui = {
   },
   step: { to: (month: string) => `Go to ${month}` },
   netWorth: {
-    title: "Net worth",
-    aside: (accounts: string, savings: string) => `${accounts} in accounts + ${savings} saved`,
-    pageTitle: "net worth",
-    sub: "What you own",
-    back: "Back to ahead",
-    parts: "Where it is",
-    checking: (bank: string) => `${bank} checking`,
+    where: "Where your money is",
     savingsName: "Savings",
-    savedSoFar: "saved so far",
-    asOf: (day: string) => `as of ${day}`,
-    emptyTitle: "No net worth yet",
-    emptyBody: "Upload a statement and arnaq adds up your accounts and savings here.",
   },
   category: {
     back: "Today",
@@ -84,21 +74,11 @@ export const ui = {
     } as Record<string, string>,
   },
   btw: {
-    title: (quarter: string) => `BTW ${quarter}`,
-    aside: "the BTW in what arrives",
-    pocketOf: (pocket: string, owed: string) => `${pocket} of ${owed}`,
-    owed: "BTW to set aside",
-    pocket: "In the BTW pocket",
-    missing: "Still to set aside",
-    covered: "Covered",
-    surplus: "Left over after paying",
-    due: "Due",
-    paid: "Paid",
-    ownMoney: "Of which your own money",
-    sentenceMissing: (amount: string, date: string) => `Set aside ${amount} more before ${date}.`,
-    sentenceCovered: (date: string) => `The pocket covers it. Pay by ${date}.`,
-    sentencePaid: (date: string) => `Paid on ${date}.`,
-    paidAmount: (amount: string) => `${amount} paid`,
+    chipMissing: (quarter: string, amount: string, date: string) =>
+      `BTW ${quarter} · ${amount} to set aside, pay by ${date}`,
+    chipCovered: (quarter: string, date: string) => `BTW ${quarter} · covered, pay by ${date}`,
+    chipPaid: (quarter: string, amount: string, date: string) =>
+      `BTW ${quarter} · ${amount} paid on ${date}`,
     settings: {
       title: "BTW",
       intro:
@@ -180,7 +160,13 @@ export const ui = {
     ring: (a: number, b: number) => `${a} of ${b} months end in the plus`,
     caption: (label: string) => `growth through ${label}`,
     captionWorth: (label: string) => `net worth by ${label}`,
-    howBuilt: "How is net worth built up?",
+    basisLabel: "What the coming months are based on",
+    basis: { averages: "Averages", budget: "Budget" },
+    basisNote: {
+      averages: "The coming months use what you spent on average over the last months.",
+      budget:
+        "The coming months use your budgets where you set one, and your averages for the rest.",
+    },
     growthPill: (amount: string, months: number) => `${amount} over ${months} months`,
     progressWorth: "Net worth over time",
     needIncomeTitle: "Add your income to see where you're heading",

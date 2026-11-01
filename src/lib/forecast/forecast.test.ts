@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { setBudget } from "@/lib/budget/budgets";
 import { getMonthOverview } from "@/lib/budget/overview";
 import { setup } from "@/lib/recurring/test-utils";
 import { ForecastError } from "./errors";
@@ -126,5 +127,41 @@ describe("getForecast: month kinds and actuals", () => {
     const { db } = await setup();
     const f = await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
     expect(f.months[0]).toMatchObject({ kind: "no-data", income: 0, expenses: 0, net: 0 });
+  });
+});
+
+describe("getForecast: what the coming months are based on", () => {
+  const spend = async () => {
+    const s = await setup();
+    const groceries = await s.cat("Boodschappen");
+    const other = await s.cat("Overig");
+    await s.cover("2026-07", "2026-08", "2026-09");
+    for (const month of ["2026-07", "2026-08", "2026-09"]) {
+      await s.tx(`${month}-10`, -90000, { categoryId: groceries });
+      await s.tx(`${month}-12`, -20000, { categoryId: other });
+    }
+    await setBudget(s.db, groceries, "2026-11", 40000);
+    return { ...s, groceries, other };
+  };
+  const variableFor = (f: Awaited<ReturnType<typeof getForecast>>, id: number) =>
+    f.months.find((m) => m.month === "2026-11")!.categories.find((c) => c.categoryId === id)!
+      .variable;
+
+  it("uses the averages by default", async () => {
+    const { db, groceries } = await spend();
+    const f = await getForecast(db, { today: "2026-10-11", months: 1, pastMonths: 1 });
+    expect(variableFor(f, groceries)).toBe(90000);
+  });
+
+  it("with the budget basis, a category with a budget uses it and the rest keeps its average", async () => {
+    const { db, groceries, other } = await spend();
+    const f = await getForecast(db, {
+      today: "2026-10-11",
+      months: 1,
+      pastMonths: 1,
+      basis: "budget",
+    });
+    expect(variableFor(f, groceries)).toBe(40000);
+    expect(variableFor(f, other)).toBe(20000);
   });
 });

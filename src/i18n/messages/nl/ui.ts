@@ -47,18 +47,8 @@ export const ui: typeof en = {
   },
   step: { to: (month: string) => `Naar ${month}` },
   netWorth: {
-    title: "Vermogen",
-    aside: (accounts: string, savings: string) => `${accounts} op rekeningen + ${savings} gespaard`,
-    pageTitle: "vermogen",
-    sub: "Wat je bezit",
-    back: "Terug naar vooruit",
-    parts: "Waar het staat",
-    checking: (bank: string) => `${bank} betaalrekening`,
+    where: "Waar je geld staat",
     savingsName: "Sparen",
-    savedSoFar: "tot nu toe gespaard",
-    asOf: (day: string) => `per ${day}`,
-    emptyTitle: "Nog geen vermogen",
-    emptyBody: "Upload een afschrift en arnaq telt hier je rekeningen en spaargeld op.",
   },
   category: {
     back: "Vandaag",
@@ -84,21 +74,12 @@ export const ui: typeof en = {
     } as Record<string, string>,
   },
   btw: {
-    title: (quarter: string) => `BTW ${quarter}`,
-    aside: "de BTW in wat binnenkomt",
-    pocketOf: (pocket: string, owed: string) => `${pocket} van ${owed}`,
-    owed: "BTW opzij te zetten",
-    pocket: "In de BTW-pot",
-    missing: "Nog opzij te zetten",
-    covered: "Gedekt",
-    surplus: "Over na betalen",
-    due: "Uiterlijk",
-    paid: "Betaald",
-    ownMoney: "Waarvan eigen geld",
-    sentenceMissing: (amount: string, date: string) => `Zet nog ${amount} opzij vóór ${date}.`,
-    sentenceCovered: (date: string) => `De pot dekt het. Betaal uiterlijk ${date}.`,
-    sentencePaid: (date: string) => `Betaald op ${date}.`,
-    paidAmount: (amount: string) => `${amount} betaald`,
+    chipMissing: (quarter: string, amount: string, date: string) =>
+      `BTW ${quarter} · nog ${amount} opzij te zetten, betaal uiterlijk ${date}`,
+    chipCovered: (quarter: string, date: string) =>
+      `BTW ${quarter} · gedekt, betaal uiterlijk ${date}`,
+    chipPaid: (quarter: string, amount: string, date: string) =>
+      `BTW ${quarter} · ${amount} betaald op ${date}`,
     settings: {
       title: "BTW",
       intro:
@@ -180,7 +161,13 @@ export const ui: typeof en = {
       "Upload minstens een maand en voeg je vaste posten toe. Daarna zie je hier hoe je geld zich ontwikkelt.",
     ring: (a: number, b: number) => `${a} van ${b} maanden eindigen in de plus`,
     caption: (label: string) => `groei tot en met ${label}`,
-    howBuilt: "Hoe is het vermogen opgebouwd?",
+    basisLabel: "Waar de komende maanden op gebaseerd zijn",
+    basis: { averages: "Gemiddelden", budget: "Budget" },
+    basisNote: {
+      averages: "De komende maanden gebruiken wat je de afgelopen maanden gemiddeld uitgaf.",
+      budget:
+        "De komende maanden gebruiken je budgetten waar je er een hebt, en je gemiddelden voor de rest.",
+    },
     growthPill: (amount: string, months: number) => `${amount} in ${months} maanden`,
     captionWorth: (label: string) => `vermogen in ${label}`,
     progressWorth: "Vermogen over tijd",

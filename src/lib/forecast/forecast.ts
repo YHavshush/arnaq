@@ -31,6 +31,11 @@ export interface ForecastOptions {
   history?: number;
   /** Months before the current month to include as context for a chart (0-12, default 3). */
   pastMonths?: number;
+  /**
+   * What the coming months' everyday spending is based on: "averages" (what was spent in the last months, the
+   * default) or "budget" (the budget of each category that has one, less its fixed items; the average for the rest).
+   */
+  basis?: "averages" | "budget";
 }
 
 /**
@@ -158,6 +163,7 @@ interface Context {
   movedToSavings: Map<string, { total: number; reserve: number }>;
   /** The word that marks a move or a planned deposit as BTW money. */
   pocket: string;
+  basis: "averages" | "budget";
 }
 
 /**
@@ -192,6 +198,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     inMemoryMatched,
     savings: await savingsCategoryIds(db),
     pocket,
+    basis: opts.basis ?? "averages",
     movedToSavings: await getMovedToSavings(db, first, last, pocket),
   };
 
@@ -408,11 +415,15 @@ function categoryLines(
 
   const line = (id: number | null, name: string): ForecastCategory => {
     const projecting = kind === "mixed" || kind === "forecast";
+    const budgeted =
+      ctx.basis === "budget" && projecting && id !== null ? (budgets?.get(id) ?? null) : null;
     const average = !projecting
       ? 0
-      : id === null
-        ? ctx.averages.uncategorised
-        : (ctx.averages.byCategory.get(id) ?? 0);
+      : budgeted !== null
+        ? Math.max(0, budgeted - (recurringBy.get(id) ?? 0))
+        : id === null
+          ? ctx.averages.uncategorised
+          : (ctx.averages.byCategory.get(id) ?? 0);
     // Remaining variable spend: what is left of the average after this month's variable spend
     // so far (net refunds never raise it above the average).
     const variable =

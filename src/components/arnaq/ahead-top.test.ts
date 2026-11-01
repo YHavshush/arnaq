@@ -1,32 +1,42 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { AheadHeader } from "./ahead-header";
+import { AheadTop } from "./ahead-top";
 import { Ring } from "./ring";
 
-describe("AheadHeader", () => {
+describe("AheadTop", () => {
   const html = (pill?: { text: string; good: boolean }) =>
     renderToStaticMarkup(
-      createElement(AheadHeader, {
-        label: "net worth by Apr",
-        amount: "€3,480",
-        pill,
-        sentence: [{ text: "You keep " }, { text: "growing", emphasis: true }] as never,
-        detail: "A line that explains it.",
-      }),
+      createElement(
+        AheadTop,
+        {
+          tone: "good",
+          value: 0.67,
+          ringLabel: "4 of 6 months end in the plus",
+          amount: "€3,480",
+          caption: "net worth by Apr",
+          pill,
+          ringNote: "4 of 6 months end in the plus",
+          sentence: [{ text: "You keep " }, { text: "growing", emphasis: true }] as never,
+          detail: "A line that explains it.",
+        },
+        createElement("p", null, "the children"),
+      ),
     );
-  it("shows what the number is, the number, the pill and the sentence, and no ring", () => {
+  it("puts the number in the ring, with the caption, the pill, the sentence and what the arc means", () => {
     const out = html({ text: "+€1,170 over 6 months", good: true });
-    expect(out).toContain("net worth by Apr");
     expect(out).toContain("€3,480");
+    expect(out).toContain("net worth by Apr");
     expect(out).toContain("+€1,170 over 6 months");
     expect(out).toContain("text-good");
     expect(out).toContain("A line that explains it.");
-    expect(out).not.toContain("<svg");
+    expect(out).toContain("4 of 6 months end in the plus");
+    expect(out).toContain("the children");
+    expect(out).toContain("<svg");
   });
   it("a falling number gets the bad tone, and no pill when there is nothing honest to say", () => {
     expect(html({ text: "−€1,759 over 6 months", good: false })).toContain("text-bad");
-    expect(html()).not.toContain("rounded-full");
+    expect(html()).not.toContain("leading-none font-semibold");
   });
 });
 

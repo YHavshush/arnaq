@@ -3,61 +3,41 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { messages } from "@/i18n/messages";
 import type { BtwSummary } from "@/lib/btw/summary";
-import { BtwCard } from "./btw-card";
+import { BtwChip } from "./btw-card";
 
-const quarter = { label: "2026-Q3", from: "2026-07-01", to: "2026-09-30", due: "2026-10-31" };
+const quarter = { label: "2026-Q4", from: "2026-10-01", to: "2026-12-31", due: "2027-01-31" };
 const base: BtwSummary = {
   quarter,
-  received: 200000,
-  owed: 42000,
-  pocket: 30000,
-  toSetAside: 12000,
+  received: 96800,
+  owed: 16800,
+  pocket: 0,
+  toSetAside: 16800,
   paid: null,
   fromOwnMoney: 0,
   hasData: true,
 };
 const html = (btw: BtwSummary, locale: "en" | "nl" = "en") =>
-  renderToStaticMarkup(createElement(BtwCard, { btw, t: messages[locale], locale }));
+  renderToStaticMarkup(createElement(BtwChip, { btw, t: messages[locale], locale }));
 
-describe("BtwCard", () => {
-  it("says what is still missing and by when", () => {
+describe("BtwChip", () => {
+  it("says in one line what is still to set aside and by when", () => {
     const out = html(base);
-    expect(out).toContain("Set aside");
-    expect(out).toContain("31 Oct");
-    expect(out).toContain("€3,000 of €4,200".replace("€3,000", "€300").replace("€4,200", "€420"));
+    expect(out).toContain("BTW 2026 Q4");
+    expect(out).toContain("€168 to set aside");
+    expect(out).toContain("31 Jan");
   });
-  it("says the pocket covers it, and shows no 'missing' line", () => {
-    const out = html({ ...base, pocket: 50000, toSetAside: 0 });
-    expect(out).toContain("The pocket covers it");
-    expect(out).not.toContain("Set aside €");
+  it("says it is covered when nothing is missing", () => {
+    expect(html({ ...base, pocket: 16800, toSetAside: 0 })).toContain("covered");
   });
-  it("shows the payment, own money and what is left once paid", () => {
+  it("shows what was paid and when once the quarter is paid", () => {
     const out = html({
       ...base,
-      pocket: 5000,
-      toSetAside: 0,
-      paid: { amount: 42000, date: "2026-10-06" },
-      fromOwnMoney: 17000,
-    });
-    expect(out).toContain("Paid on 6 Oct");
-    expect(out).toContain("Of which your own money");
-    expect(out).toContain("Left over after paying");
-  });
-  it("once paid, the amount paid counts and the estimate is only mentioned", () => {
-    const out = html({
-      ...base,
-      received: 137300,
-      owed: 23834,
-      pocket: 0,
       toSetAside: 0,
       paid: { amount: 30000, date: "2026-10-29" },
-      fromOwnMoney: 30000,
     });
-    expect(out).toContain("€300 paid");
-    expect(out).not.toContain("estimated");
-    expect(out).not.toContain("€0 of €238");
+    expect(out).toContain("€300 paid on 29 Oct");
   });
   it("speaks Dutch too", () => {
-    expect(html(base, "nl")).toContain("Zet nog");
+    expect(html(base, "nl")).toContain("opzij te zetten");
   });
 });
