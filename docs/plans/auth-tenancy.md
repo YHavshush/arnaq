@@ -81,13 +81,17 @@ Drafts of a privacy notice and terms are in `docs/legal/` (marked DRAFT; the own
 Done since: a Content-Security-Policy (no script nonce because of partial prerendering, so scripts allow
 `unsafe-inline`; everything else is closed). It is report-only in production until checked on the real deployment.
 
+Done since: CAPTCHA (Cloudflare Turnstile) on sign in, register, forgot password and change password
+(`src/components/arnaq/turnstile.tsx`, `src/lib/auth/captcha.ts`). It is off until `NEXT_PUBLIC_TURNSTILE_SITE_KEY` is set. To
+switch it on: create a Turnstile widget in Cloudflare (hostnames: the production domain), put the site key in
+`NEXT_PUBLIC_TURNSTILE_SITE_KEY` on Vercel, put the secret under Supabase > Authentication > Attack Protection (CAPTCHA,
+Turnstile), then redeploy. Do both together: with only the Supabase side on, nobody can sign in. The CSP allows
+challenges.cloudflare.com only while the site key is set.
+
 Not done yet, needed before registration is opened to strangers:
 
-- CAPTCHA (Turnstile) on the forms, and app-side rate limits per client IP and per email. All auth calls
-  come from the server's IP, so Supabase's per-IP limits are one shared bucket (lock-out and email-quota
-  exhaustion).
-- Changing a password outside the recovery flow should ask for the current password (Supabase "Secure
-  password change" covers part of this).
-- Build redirect URLs from a configured `APP_URL` instead of the `Host` header, and compare the CSRF
-  `Origin` with it when the app runs behind a proxy that rewrites `Host`.
+- The limits in `rate-limit.ts` live in the memory of one instance. On Vercel (many short-lived instances) they slow an
+  attacker down very little. CAPTCHA now carries most of the weight; a shared store (a Postgres table or Vercel's
+  firewall rate limit rule) would make the limits real.
+- The CSP is report-only in production until `CSP_MODE=enforce` has been checked on the real deployment.
 - Row ids are global serials, so a user can see how many rows other users create (no contents). Accepted.

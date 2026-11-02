@@ -279,7 +279,8 @@ allowed for categorising only, or only for chat-like products? What does a user 
 - Security review (Opus) done on auth and tenancy: no critical findings, one high finding fixed (refuse
   to run over a role that bypasses RLS). Still open before strangers register: CAPTCHA, per-IP and
   per-email rate limits, current password for password changes, `APP_URL` for redirects
-  (see `docs/plans/auth-tenancy.md`).
+  (see `docs/plans/auth-tenancy.md`). Update 2026-11-03: limits, current password and `APP_URL` are done; CAPTCHA is built and
+  waits for the Turnstile keys; what is left is in `docs/plans/auth-tenancy.md`.
 - Next: smart categorising (separate feature, before hosting), then milestone 9 (hosting).
 
 ## 2026-10-20: Names and onboarding decided (design only, not built)

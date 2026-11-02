@@ -15,6 +15,7 @@ import {
 import { useI18n } from "@/i18n/client";
 import { MIN_PASSWORD } from "@/lib/auth/validate";
 import { ErrorLine, Field, PrimaryButton, inputClass } from "./form";
+import { Turnstile } from "./turnstile";
 
 type Action = (prev: FormState, form: FormData) => Promise<FormState>;
 
@@ -81,6 +82,7 @@ export function LoginForm({ next, confirmed }: { next: string; confirmed?: boole
             className={inputClass}
           />
         </Field>
+        <Turnstile resetOn={state} />
         <ErrorLine message={error} />
         <div>
           <PrimaryButton type="submit" disabled={pending}>
@@ -149,6 +151,7 @@ export function RegisterForm() {
             className={inputClass}
           />
         </Field>
+        <Turnstile resetOn={state} />
         <ErrorLine message={error} />
         <div>
           <PrimaryButton type="submit" disabled={pending}>
@@ -193,6 +196,7 @@ export function ForgotForm() {
             className={inputClass}
           />
         </Field>
+        <Turnstile resetOn={state} />
         <ErrorLine message={error} />
         <div>
           <PrimaryButton type="submit" disabled={pending}>
@@ -327,6 +331,7 @@ export function ChangePasswordForm() {
           className={inputClass}
         />
       </Field>
+      <Turnstile resetOn={state} />
       <ErrorLine message={error} />
       <div aria-live="polite" className="text-ink-muted text-[14px]">
         {state?.done ? m.change.done : null}

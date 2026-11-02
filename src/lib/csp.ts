@@ -1,3 +1,5 @@
+import { captchaEnabled } from "./auth/captcha";
+
 /**
  * The Content-Security-Policy for the app: what the browser may load and where it may send things.
  *
@@ -9,6 +11,8 @@
  * `CSP_MODE`: "enforce", "report-only" (the browser logs violations to its console but blocks nothing;
  * the default in production until it has been checked on the real deployment), or "off" (development).
  */
+const CHALLENGES = "https://challenges.cloudflare.com";
+
 export type CspMode = "enforce" | "report-only" | "off";
 
 export function cspMode(env: NodeJS.ProcessEnv = process.env): CspMode {
@@ -22,13 +26,16 @@ export function cspHeader(
 ): { key: string; value: string } | null {
   const mode = cspMode(env);
   if (mode === "off") return null;
+  // Cloudflare Turnstile (CAPTCHA) loads a script and a frame from its own address, only when it is switched on.
+  const turnstile = captchaEnabled(env);
   const value = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'unsafe-inline'${turnstile ? ` ${CHALLENGES}` : ""}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    "connect-src 'self'",
+    `connect-src 'self'${turnstile ? ` ${CHALLENGES}` : ""}`,
+    ...(turnstile ? [`frame-src ${CHALLENGES}`] : []),
     "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",

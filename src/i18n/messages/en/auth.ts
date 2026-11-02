@@ -78,6 +78,7 @@ export const auth = {
     notConfirmed: "Confirm your email address first: check your inbox for the link.",
     rate: "Too many attempts. Wait a few minutes and try again.",
     generic: "Something went wrong. Try again in a moment.",
+    captcha: "Could not check that you are not a robot. Reload the page and try again.",
     link: "This link no longer works. Request a new one.",
   },
 };

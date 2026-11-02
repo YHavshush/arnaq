@@ -79,6 +79,8 @@ export const auth: typeof en = {
     notConfirmed: "Bevestig eerst je e-mailadres: kijk in je inbox voor de link.",
     rate: "Te veel pogingen. Wacht een paar minuten en probeer het opnieuw.",
     generic: "Er ging iets mis. Probeer het zo nog eens.",
+    captcha:
+      "Kon niet controleren of je geen robot bent. Laad de pagina opnieuw en probeer het nog eens.",
     link: "Deze link werkt niet meer. Vraag een nieuwe aan.",
   },
 };

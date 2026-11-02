@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { UnauthenticatedError, currentUser, sessionIsRecentRecovery } from "@/lib/auth/session";
 import { isEmail, isOtpType, passwordProblem, safeNext } from "@/lib/auth/validate";
+import { captchaTokenOf } from "@/lib/auth/captcha";
 import { checkRate, clientAddress, type Action } from "@/lib/auth/rate-limit";
 import { supabaseServer } from "@/lib/supabase/server";
 
@@ -18,6 +19,7 @@ export type ErrorKey =
   | "notConfirmed"
   | "rate"
   | "generic"
+  | "captcha"
   | "link";
 
 /** What a form shows after it was submitted: an error, or "done, check your email". */
@@ -42,6 +44,8 @@ function mapError(error: { code?: string; status?: number }): ErrorKey {
       return "notConfirmed";
     case "weak_password":
       return "weak";
+    case "captcha_failed":
+      return "captcha";
     case "over_request_rate_limit":
     case "over_email_send_rate_limit":
     case "over_sms_send_rate_limit":
@@ -68,7 +72,13 @@ export async function signIn(_prev: FormState, form: FormData): Promise<FormStat
   if (!isEmail(email)) return { error: "email", email };
   if (!password) return { error: "invalid", email };
   if (await overLimit("signIn", email)) return { error: "rate", email };
-  const { error } = await (await supabaseServer()).auth.signInWithPassword({ email, password });
+  const { error } = await (
+    await supabaseServer()
+  ).auth.signInWithPassword({
+    email,
+    password,
+    options: { captchaToken: captchaTokenOf(form) },
+  });
   if (error) return { error: mapError(error), email };
   redirect(safeNext(text(form, "next")));
 }
@@ -80,7 +90,13 @@ export async function signUp(_prev: FormState, form: FormData): Promise<FormStat
   const bad = passwordError(password, text(form, "repeat"));
   if (bad) return { error: bad, email };
   if (await overLimit("signUp", email)) return { error: "rate", email };
-  const { data, error } = await (await supabaseServer()).auth.signUp({ email, password });
+  const { data, error } = await (
+    await supabaseServer()
+  ).auth.signUp({
+    email,
+    password,
+    options: { captchaToken: captchaTokenOf(form) },
+  });
   // An address that already has an account answers the same as a new one: nobody can use this form
   // to find out who has an account.
   if (error && error.code !== "user_already_exists") return { error: mapError(error), email };
@@ -92,7 +108,11 @@ export async function forgotPassword(_prev: FormState, form: FormData): Promise<
   const email = text(form, "email").trim().toLowerCase();
   if (!isEmail(email)) return { error: "email", email };
   if (await overLimit("forgot", email)) return { error: "rate", email };
-  const { error } = await (await supabaseServer()).auth.resetPasswordForEmail(email);
+  const { error } = await (
+    await supabaseServer()
+  ).auth.resetPasswordForEmail(email, {
+    captchaToken: captchaTokenOf(form),
+  });
   if (error && mapError(error) === "rate") return { error: "rate", email };
   return { sent: { email } }; // the same answer whether or not the address has an account
 }
@@ -149,7 +169,11 @@ export async function changePassword(_prev: FormState, form: FormData): Promise<
   if (!user.email || !current) return { error: "currentWrong" };
   if (await overLimit("signIn", user.email)) return { error: "rate" };
   const supabase = await supabaseServer();
-  const check = await supabase.auth.signInWithPassword({ email: user.email, password: current });
+  const check = await supabase.auth.signInWithPassword({
+    email: user.email,
+    password: current,
+    options: { captchaToken: captchaTokenOf(form) },
+  });
   if (check.error)
     return {
       error: check.error.code === "invalid_credentials" ? "currentWrong" : mapError(check.error),

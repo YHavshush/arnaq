@@ -58,7 +58,9 @@ beforeEach(() => {
 describe("changePassword", () => {
   it("checks the current password, then sets the new one", async () => {
     expect(await changePassword(null, form(good))).toEqual({ done: true });
-    expect(calls.signIn).toEqual([{ email: "me@example.com", password: "old-password-1" }]);
+    expect(calls.signIn).toEqual([
+      { email: "me@example.com", password: "old-password-1", options: { captchaToken: undefined } },
+    ]);
     expect(calls.update).toEqual([{ password: "a-new-password-9" }]);
   });
 

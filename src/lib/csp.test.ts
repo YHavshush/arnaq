@@ -38,4 +38,15 @@ describe("cspHeader", () => {
       expect(value).toContain(d);
     expect(value).not.toMatch(/https?:|\*/); // nothing is allowed from another address
   });
+
+  it("allows Cloudflare Turnstile only when it is switched on", () => {
+    const off = cspHeader(env({ NODE_ENV: "production" }))!.value;
+    const on = cspHeader(
+      env({ NODE_ENV: "production", NEXT_PUBLIC_TURNSTILE_SITE_KEY: "k" }),
+    )!.value;
+    expect(off).not.toContain("cloudflare");
+    expect(on).toContain("script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com");
+    expect(on).toContain("frame-src https://challenges.cloudflare.com");
+    expect(on).toContain("connect-src 'self' https://challenges.cloudflare.com");
+  });
 });
