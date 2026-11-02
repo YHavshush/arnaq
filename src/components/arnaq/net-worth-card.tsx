@@ -1,4 +1,5 @@
 import type { WorthPart } from "@/lib/view/net-worth-parts";
+import { CountText } from "./count-text";
 
 /**
  * Net worth now, as a short list: the big number, each account and the savings, and (when there is BTW data) one line for
@@ -25,7 +26,7 @@ export function NetWorthCard({
       <div className="grid gap-0.5">
         <span className="text-ink-muted text-[13px]">{title}</span>
         <span className="num font-display text-[30px] leading-none font-medium tracking-[-0.02em]">
-          {format(total)}
+          <CountText text={format(total)} />
         </span>
       </div>
       <ul className="grid gap-1.5 text-[15px]">

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Tone } from "@/design/tokens";
 import type { Sentence } from "@/lib/view/overzicht";
+import { CountText } from "./count-text";
 import { Ring } from "./ring";
 import { SentenceText } from "./sentence";
 
@@ -40,7 +41,7 @@ export function AheadTop({
       <div className="flex justify-center @min-[900px]/app:justify-start">
         <Ring value={value} tone={tone} label={ringLabel}>
           <div className="num text-[34px] leading-none font-medium tracking-[-0.03em] whitespace-nowrap dark:font-normal">
-            {amount}
+            <CountText text={amount} />
           </div>
           <div className="text-ink-muted mt-2 max-w-[9rem] text-xs leading-tight">{caption}</div>
         </Ring>
