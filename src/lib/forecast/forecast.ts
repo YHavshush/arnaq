@@ -1,20 +1,22 @@
-import { getOpeningBalance } from "./balance";
+import { getDailyBalances, getOpeningBalance } from "./balance";
 import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getBudgetsByMonth, resolveTotalBudget, type MonthBudgets } from "@/lib/budget/budgets";
 import { getMonthOverview, sumTransactions, type MonthSums } from "@/lib/budget/overview";
-import { addMonths, isDate, monthOf } from "@/lib/recurring/dates";
+import { addMonths, daysInMonth, isDate, monthOf } from "@/lib/recurring/dates";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { getBtwSettings } from "@/lib/btw/settings";
 import { mentions } from "@/lib/btw/summary";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
+import { lowestDay, simulateDays, type MonthLow } from "./low";
 import { scaleAverages } from "./own";
 import { countedAs, projectRecurring, type ForecastOccurrence } from "./recurring";
 import { getVariableAverages, type VariableAverages } from "./variable";
 
 export type { ForecastOccurrence } from "./recurring";
+export type { MonthLow } from "./low";
 
 /** Accepted ranges and defaults for the options (also used by the API). */
 export const FORECAST_LIMITS = {
@@ -117,6 +119,12 @@ export interface ForecastMonth {
   variable: number;
   categories: ForecastCategory[];
   budget: { total: number | null; isExplicit: boolean; difference: number | null };
+  /**
+   * The lowest end-of-day balance of the checking accounts (all accounts together; savings are not an account) in
+   * this month, and the day. Real days come from the bank's stated balances; the days from today on are simulated
+   * (see monthDays). Null when no balance is known, or for a past month without data.
+   */
+  low: MonthLow | null;
 }
 
 export interface Forecast {
@@ -207,16 +215,22 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     movedToSavings: await getMovedToSavings(db, first, last, pocket),
   };
 
+  // The checking balance at the end of each real day, from the first month shown through today.
+  const real = await getDailyBalances(db, `${first}-01`, opts.today);
   let cumulativeNet = 0;
   let cumulativeSetAside = 0;
   let cumulativeReserve = 0;
+  let end: number | null = null;
   const months: ForecastMonth[] = [];
   for (let m = first; m <= last; m = addMonths(m, 1)) {
     const month = await buildMonth(db, ctx, m);
     cumulativeNet += month.net;
     cumulativeSetAside += month.setAside.total;
     cumulativeReserve += month.setAside.reserve;
-    months.push({ ...month, cumulativeNet, cumulativeSetAside, cumulativeReserve });
+    const days = monthDays(month, real, opts.today, end);
+    end = days?.at(-1) ?? null;
+    const low = days ? lowestDay(m, 1, days) : null;
+    months.push({ ...month, cumulativeNet, cumulativeSetAside, cumulativeReserve, low });
   }
 
   // Savings now, minus what moved in since the first month began, is what was saved when the chart starts.
@@ -244,6 +258,58 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     openingBalance: await getOpeningBalance(db, first),
     openingSavings: savingsKnown ? savingsNow.saved - movedSince : null,
   };
+}
+
+/**
+ * The month's end-of-day checking balances (index 0 is the 1st), or null when they cannot be known honestly.
+ *
+ * - actual: the real balances from the statements, day by day (a day after an account's last statement keeps
+ *   its last balance).
+ * - no-data: null; nothing is known about what happened in it.
+ * - mixed: the real balances up to yesterday; from today on, starting from today's real balance, the fixed items
+ *   still expected (on their day, or today when their day has passed) and the everyday spending still expected,
+ *   spread evenly over the days left, today included.
+ * - forecast: starts where the month before ended (`previousEnd`), the open fixed items on their day and the
+ *   month's everyday spending spread evenly over all its days.
+ *
+ * Fixed items include planned deposits into savings: that money leaves the checking accounts. So a simulated month
+ * ends on its start plus `net` less `setAside.total`, the same step as the chart's accounts line.
+ */
+function monthDays(
+  month: Pick<ForecastMonth, "month" | "kind" | "variable" | "recurring">,
+  real: Map<string, number> | null,
+  today: string,
+  previousEnd: number | null,
+): number[] | null {
+  if (real === null || month.kind === "no-data") return null;
+  const realDays = (count: number) => {
+    const out: number[] = [];
+    for (let day = 1; day <= count; day++) {
+      const balance = real.get(`${month.month}-${String(day).padStart(2, "0")}`);
+      if (balance === undefined) return null;
+      out.push(balance);
+    }
+    return out;
+  };
+  if (month.kind === "actual") return realDays(daysInMonth(month.month));
+
+  const moves = month.recurring.occurrences
+    .filter((o) => o.counted === "projected")
+    .map((o) => ({ type: o.type, amount: o.amount, date: o.expectedDate, name: o.name }));
+  if (month.kind === "forecast")
+    return previousEnd === null
+      ? null
+      : simulateDays({ month: month.month, start: previousEnd, moves, variable: month.variable });
+
+  // The current month: what really happened so far, then the rest from today's real balance.
+  const day = Number(today.slice(8, 10));
+  const before = realDays(day - 1);
+  const now = real.get(today);
+  if (before === null || now === undefined) return null;
+  return [
+    ...before,
+    ...simulateDays({ month: month.month, start: now, fromDay: day, moves, variable: month.variable }),
+  ];
 }
 
 /** The months from `first` to `last` that hold at least one transaction in the account's own currency. */
@@ -302,7 +368,9 @@ async function buildMonth(
   db: Db,
   ctx: Context,
   month: string,
-): Promise<Omit<ForecastMonth, "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve">> {
+): Promise<
+  Omit<ForecastMonth, "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve" | "low">
+> {
   const kind = kindOf(ctx, month);
   const occurrences: ForecastOccurrence[] = (ctx.occurrences.get(month) ?? []).map((o) => ({
     ...o,

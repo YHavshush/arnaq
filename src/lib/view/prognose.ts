@@ -26,6 +26,11 @@ export interface PrognosePoint {
   expenseParts: MonthParts;
   /** Month is not (fully) real money yet: drawn dashed. */
   projected: boolean;
+  /**
+   * The lowest end-of-day balance of the checking accounts in this month (cents) and the day (YYYY-MM-DD): real
+   * days from the statements, the rest simulated day by day. Null when no balance is known.
+   */
+  low: { amount: number; date: string } | null;
 }
 
 export interface Prognose {
@@ -35,6 +40,8 @@ export interface Prognose {
   /** `cumulative` is a real balance (the person's money), not just growth since the first month. */
   hasBalance: boolean;
   points: PrognosePoint[];
+  /** How many points have a low below zero: months in which the checking balance dips into the red. */
+  dipMonths: number;
   /** Months ahead (current month included) and how many of them end in the plus. */
   ahead: number;
   inThePlus: number;
@@ -80,7 +87,9 @@ export function buildPrognose(
     incomeParts: incomeParts(m, locale),
     expenseParts: expenseParts(m, locale, basis),
     projected: m.kind === "forecast" || m.kind === "mixed",
+    low: m.low ?? null,
   }));
+  const dipMonths = points.filter((p) => p.low !== null && p.low.amount < 0).length;
   // With no data at all every month nets to 0: that is "nothing to say", not "all in the plus".
   const hasData = points.some((p) => p.income !== 0 || p.expenses !== 0);
   const ahead = hasData ? points.filter((p) => p.projected) : [];
@@ -157,6 +166,7 @@ export function buildPrognose(
     netWorth,
     hasBalance,
     points,
+    dipMonths,
     ahead: ahead.length,
     inThePlus,
     share: incomeMissing ? 0 : share,
