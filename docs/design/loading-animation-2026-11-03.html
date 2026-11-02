@@ -1,0 +1,66 @@
+<title>arnaq loading animation</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the answer first, then three moving options side by side, each on the app's own background. */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding-block:28px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width:1040px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr); gap:28px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; text-wrap:balance; } h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:14px; max-width:72ch; } .note b { color:var(--ink); }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:18px; }
+.opt { display:grid; gap:10px; align-content:start; }
+.stage { border-radius:24px; height:230px; display:grid; place-items:center; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 60%,#f6e8d8); border:1px solid rgba(23,32,46,.1); }
+.opt b { font:500 18px/1.2 Georgia,serif; }
+.pick { color:#2f7d5b; font-weight:700; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pick { color:#5fcf9a; } }
+:root[data-theme="dark"] .pick { color:#5fcf9a; }
+
+svg.mono { width:150px; height:auto; overflow:visible; fill:none; stroke-width:16; stroke-linecap:round; stroke-linejoin:round; }
+.mono .a { stroke:#33c6ff; } .mono .q { stroke:#7f8cff; }
+.mono g { transform-box:fill-box; transform-origin:center; }
+
+/* 1. Breathe: the a, then the q, swell a little and come back. */
+@keyframes breathe { 0%,100% { transform:scale(1); opacity:.55; } 40% { transform:scale(1.09); opacity:1; } 70% { transform:scale(1); opacity:.8; } }
+.o1 .a g { animation:breathe 1.8s ease-in-out infinite; } .o1 .q g { animation:breathe 1.8s ease-in-out .35s infinite; }
+
+/* 2. Draw: each letter is traced, the a first and then the q, then both rest and fade. */
+@keyframes trace { 0% { stroke-dashoffset:1; opacity:1; } 38% { stroke-dashoffset:0; opacity:1; } 80% { stroke-dashoffset:0; opacity:1; } 100% { stroke-dashoffset:0; opacity:0; } }
+.o2 .a g * , .o2 .q g * { stroke-dasharray:1; stroke-dashoffset:1; }
+.o2 .a g * { animation:trace 2.4s ease-in-out infinite; } .o2 .q g * { animation:trace 2.4s ease-in-out .45s infinite; }
+
+/* 3. Hop: the a lifts a little and settles, then the q, like a slow wave. */
+@keyframes hop { 0%,100% { transform:translateY(0); } 30% { transform:translateY(-9px); } 60% { transform:translateY(0); } }
+.o3 .a g { animation:hop 1.5s cubic-bezier(.4,0,.3,1) infinite; } .o3 .q g { animation:hop 1.5s cubic-bezier(.4,0,.3,1) .22s infinite; }
+
+@media (prefers-reduced-motion: reduce) { .o1 g, .o2 g *, .o3 g { animation:none !important; } .o2 g * { stroke-dashoffset:0; } .o1 g { opacity:1; } }
+</style>
+
+<main>
+<header style="display:grid;gap:8px">
+  <h1>A calmer loading animation</h1>
+  <p class="note">The a and q circling each other goes away. These three keep the a and the q, stay in one place and only move a little. All three use only movement and fading, so they are safe on an iPhone, and all three stand still when the phone asks for less motion.</p>
+</header>
+
+<section class="grid">
+  <div class="opt o1">
+    <div class="stage"><svg class="mono" viewBox="-6 -6 133 90" aria-hidden="true"><g class="a"><g><circle cx="28.5" cy="28.5" r="20.5" pathLength="1"/><line x1="49" y1="26.5" x2="49" y2="49" pathLength="1"/></g></g><g class="q" transform="translate(64 0)"><g><circle cx="28.5" cy="28.5" r="20.5" pathLength="1"/><line x1="49" y1="8" x2="49" y2="70" pathLength="1"/></g></g></svg></div>
+    <b><span class="pick">1 · Breathe</span> (my pick)</b>
+    <p class="note">The a swells and settles, then the q follows a moment later. Nothing travels, so it never looks busy, and it still looks right when it plays for only a fraction of a second.</p>
+  </div>
+  <div class="opt o2">
+    <div class="stage"><svg class="mono" viewBox="-6 -6 133 90" aria-hidden="true"><g class="a"><g><circle cx="28.5" cy="28.5" r="20.5" pathLength="1"/><line x1="49" y1="26.5" x2="49" y2="49" pathLength="1"/></g></g><g class="q" transform="translate(64 0)"><g><circle cx="28.5" cy="28.5" r="20.5" pathLength="1"/><line x1="49" y1="8" x2="49" y2="70" pathLength="1"/></g></g></svg></div>
+    <b>2 · Draw</b>
+    <p class="note">Each letter is drawn with one line, the a first and then the q. It is the closest to how the logo is built, but a short wait shows only half a drawing.</p>
+  </div>
+  <div class="opt o3">
+    <div class="stage"><svg class="mono" viewBox="-6 -12 133 96" aria-hidden="true"><g class="a"><g><circle cx="28.5" cy="28.5" r="20.5" pathLength="1"/><line x1="49" y1="26.5" x2="49" y2="49" pathLength="1"/></g></g><g class="q" transform="translate(64 0)"><g><circle cx="28.5" cy="28.5" r="20.5" pathLength="1"/><line x1="49" y1="8" x2="49" y2="70" pathLength="1"/></g></g></svg></div>
+    <b>3 · Hop</b>
+    <p class="note">The a lifts a little and settles, then the q, like a slow wave. It is the liveliest of the three and the most playful.</p>
+  </div>
+</section>
+
+<p class="note"><b>Where it appears:</b> only on the page-loading placeholder (the big letters above the grey bars) and anywhere else that waits with no known length. The small spinner in buttons, the finished tick and the first-open animation stay as they are.</p>
+</main>
