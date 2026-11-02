@@ -137,6 +137,10 @@ describe("expenseParts", () => {
     });
     // The fixed items are taken out of their categories; the rest is everyday spending.
     expect(everyday.sub).toBe("Uncategorised €1,868 · Groceries €412");
+    // The source of the everyday part follows what the forecast is based on.
+    expect(expenseParts(m, "en", "budget").lines[1].tag).toBe("your budgets");
+    expect(expenseParts(m, "en", "own").lines[1].tag).toBe("your own amount");
+    expect(expenseParts(m, "nl", "budget").lines[1].tag).toBe("je budgetten");
     expect(sum(parts.lines)).toBe(parts.total);
     expect(parts.total).toBe(m.expenses);
   });

@@ -98,7 +98,11 @@ function names(
  * averages for a month ahead, real spending for one that has happened), and a note about money set aside. The
  * lines add up to `m.expenses`, which does not include money set aside.
  */
-export function expenseParts(m: ForecastMonth, locale: Locale): MonthParts {
+export function expenseParts(
+  m: ForecastMonth,
+  locale: Locale,
+  basis: "averages" | "budget" | "own" = "averages",
+): MonthParts {
   const t = messages[locale].view.prognose.parts;
   const { euro } = formatter(locale);
   const total = m.expenses;
@@ -135,7 +139,11 @@ export function expenseParts(m: ForecastMonth, locale: Locale): MonthParts {
       amount: everyday,
       share: share(everyday, total),
       tag:
-        m.kind === "forecast" ? t.basisAverages : m.kind === "mixed" ? t.basisMixed : t.basisActual,
+        m.kind === "forecast"
+          ? t.basis[basis]
+          : m.kind === "mixed"
+            ? t.basisMixed[basis]
+            : t.basisActual,
       sub: names(byCategory, t, euro),
       tone: 2,
     });

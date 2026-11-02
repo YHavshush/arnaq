@@ -215,9 +215,13 @@ export const view = {
       everyday: "Everyday spending",
       items: (n: number) => `${n} ${n === 1 ? "item" : "items"}`,
       more: (n: number) => `${n} more`,
-      basisAverages: "your averages",
+      basis: { averages: "your averages", budget: "your budgets", own: "your own amount" },
       basisActual: "actual",
-      basisMixed: "so far plus averages",
+      basisMixed: {
+        averages: "so far plus averages",
+        budget: "so far plus your budgets",
+        own: "so far plus your own amount",
+      },
       setAsideNote: (amount: string) =>
         `Not counted above: ${amount} was set aside for savings and the BTW.`,
     },

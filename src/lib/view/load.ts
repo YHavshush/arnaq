@@ -86,9 +86,12 @@ export async function loadPrognose(
 ) {
   // One past month for context keeps the chart to 8 points at the default horizon, so every value
   // can be printed on it (see PrognoseChart).
+  // "My own" without an amount typed falls back to the averages, and the labels must say so.
+  const effective = basis === "own" && ownSpending === null ? "averages" : basis;
   return buildPrognose(
     await getForecast(db, { today, months, pastMonths: 1, basis, ownSpending }),
     locale,
+    effective,
   );
 }
 

@@ -211,9 +211,13 @@ export const view: typeof en = {
       everyday: "Gewone uitgaven",
       items: (n: number) => `${n} ${n === 1 ? "post" : "posten"}`,
       more: (n: number) => `${n} meer`,
-      basisAverages: "je gemiddelden",
+      basis: { averages: "je gemiddelden", budget: "je budgetten", own: "je eigen bedrag" },
       basisActual: "werkelijk",
-      basisMixed: "tot nu toe plus gemiddelden",
+      basisMixed: {
+        averages: "tot nu toe plus gemiddelden",
+        budget: "tot nu toe plus je budgetten",
+        own: "tot nu toe plus je eigen bedrag",
+      },
       setAsideNote: (amount: string) =>
         `Telt hierboven niet mee: ${amount} is opzij gezet voor sparen en de BTW.`,
     },

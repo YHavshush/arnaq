@@ -55,7 +55,11 @@ export interface Prognose {
 }
 
 /** Pure view model for the Prognose screen from a Forecast. */
-export function buildPrognose(f: Forecast, locale: Locale): Prognose {
+export function buildPrognose(
+  f: Forecast,
+  locale: Locale,
+  basis: "averages" | "budget" | "own" = "averages",
+): Prognose {
   const t = messages[locale].view.prognose;
   const { euro, euroSigned, dayLabel, monthName, monthShort } = formatter(locale);
   const hasBalance = f.openingBalance !== null || f.openingSavings !== null;
@@ -74,7 +78,7 @@ export function buildPrognose(f: Forecast, locale: Locale): Prognose {
     savings: hasBalance ? m.cumulativeSetAside - m.cumulativeReserve + (f.openingSavings ?? 0) : 0,
     setAside: m.setAside.total,
     incomeParts: incomeParts(m, locale),
-    expenseParts: expenseParts(m, locale),
+    expenseParts: expenseParts(m, locale, basis),
     projected: m.kind === "forecast" || m.kind === "mixed",
   }));
   // With no data at all every month nets to 0: that is "nothing to say", not "all in the plus".
