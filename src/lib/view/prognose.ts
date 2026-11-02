@@ -14,11 +14,22 @@ export interface PrognosePoint {
   income: number;
   expenses: number;
   net: number;
-  /** Net worth at the end of this month (accounts plus savings) when balances are known, else the growth since the first month (cents). */
+  /**
+   * Net worth at the end of this month (accounts plus savings plus the BTW part) when balances are known, else the
+   * growth since the first month plus the BTW part (cents). With balances: `accounts + savings + btw === cumulative`.
+   */
   cumulative: number;
   /** The part of `cumulative` in the accounts and the part saved (cents); both 0 when no balances are known. */
   accounts: number;
   savings: number;
+  /**
+   * The BTW part of `cumulative` (cents): what is in the BTW pocket minus what is owed to the tax office, as far as
+   * known. Real months all carry the BTW now (a known limitation: the pocket and what was owed back then are not
+   * rebuilt); each month ahead lowers it by `btwAccrued`.
+   */
+  btw: number;
+  /** The BTW that builds up on the client's income expected this month (cents); 0 for real months. */
+  btwAccrued: number;
   /** Money moved into savings this month (cents): not spending, but no longer in the current account. */
   setAside: number;
   /** What is inside `income` and `expenses`: each adds up to its total exactly. */
@@ -78,11 +89,19 @@ export function buildPrognose(
     expenses: m.expenses,
     net: m.net,
     // Money moved into savings leaves the accounts and arrives in savings, so net worth only follows income and
-    // spending. Money set aside for the BTW leaves the accounts and arrives nowhere: it is owed, so net worth falls.
+    // spending. The BTW pocket is not savings: real moves into it leave accounts plus savings, and the pocket comes
+    // back in whole through the BTW part (the BTW now: pocket minus owed, as on the net worth card). Ahead, a planned
+    // move into the pocket changes nothing and the BTW on the client's expected income is owed (see btwWorth).
     cumulative:
-      m.cumulativeNet - m.cumulativeReserve + (f.openingBalance ?? 0) + (f.openingSavings ?? 0),
+      m.cumulativeNet -
+      m.cumulativeReserve +
+      (f.openingBalance ?? 0) +
+      (f.openingSavings ?? 0) +
+      (m.btwWorth ?? 0),
     accounts: hasBalance ? m.cumulativeNet - m.cumulativeSetAside + (f.openingBalance ?? 0) : 0,
     savings: hasBalance ? m.cumulativeSetAside - m.cumulativeReserve + (f.openingSavings ?? 0) : 0,
+    btw: m.btwWorth ?? 0,
+    btwAccrued: m.btwAccrued ?? 0,
     setAside: m.setAside.total,
     incomeParts: incomeParts(m, locale),
     expenseParts: expenseParts(m, locale, basis),

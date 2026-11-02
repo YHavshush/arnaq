@@ -7,7 +7,8 @@ import { addMonths, daysInMonth, isDate, monthOf } from "@/lib/recurring/dates";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { getBtwSettings } from "@/lib/btw/settings";
-import { mentions } from "@/lib/btw/summary";
+import { clientItemIds } from "@/lib/btw/share";
+import { btwInside, btwNetWorth, getBtwSummary, mentions } from "@/lib/btw/summary";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
 import { lowestDay, simulateDays, type MonthLow } from "./low";
@@ -120,6 +121,33 @@ export interface ForecastMonth {
   categories: ForecastCategory[];
   budget: { total: number | null; isExplicit: boolean; difference: number | null };
   /**
+   * What the month's still expected expenses are made of, cents (all 0 and `fellBack` empty for actual and no-data
+   * months):
+   * - fixed: the fixed (recurring) expense items still expected (`recurring.expenses`; savings deposits are not in it);
+   * - budgets: everyday spending that comes from a budget (typed for the month, carried from an earlier month, or the
+   *   category's fixed items as its budget), less the fixed items in it; only with basis "budget";
+   * - averages: everyday spending that comes from the averages (with basis "own": the typed amount shared out like
+   *   them), uncategorised included;
+   * - fellBack: with basis "budget", the categories that use their average because no budget exists for them even
+   *   after carrying forward (only those whose average is above 0; uncategorised is never named).
+   * For a forecast month `fixed + budgets + averages === expenses`. For the current month what is already spent is
+   * real money and not a source: `actual.expenses + fixed + budgets + averages === expenses`, and budgets and averages
+   * are what is left of them after this month's everyday spending so far (never below 0).
+   */
+  expenseSources: { fixed: number; budgets: number; averages: number; fellBack: string[] };
+  /**
+   * The BTW that builds up on the client's income expected in this month (cents): round(21/121 x the client's fixed
+   * income items still expected in it). 0 for actual and no-data months: real income is in the BTW now. Not in
+   * `expenses` or `net` (those stay cash); it only lowers the net worth line.
+   */
+  btwAccrued: number;
+  /**
+   * The BTW part of net worth at the end of this month (cents): the BTW now (`Forecast.btwNow`), plus what fixed items
+   * still move into the BTW pocket up to this month (the person's own money moving between accounts), minus the BTW
+   * accrued up to this month. Real months carry the BTW now unchanged.
+   */
+  btwWorth: number;
+  /**
    * The lowest end-of-day balance of the checking accounts (all accounts together; savings are not an account) in
    * this month, and the day. Real days come from the bank's stated balances; the days from today on are simulated
    * (see monthDays). Null when no balance is known, or for a past month without data.
@@ -143,6 +171,11 @@ export interface Forecast {
   openingBalance: number | null;
   /** What was saved at the start of the first month shown (cents); null when no savings are known. */
   openingSavings: number | null;
+  /**
+   * The BTW in net worth now (cents): the pocket minus what is still owed for the card's quarter, as on the net worth
+   * card (btwNetWorth). 0 without BTW data.
+   */
+  btwNow: number;
   months: ForecastMonth[];
 }
 
@@ -175,6 +208,8 @@ interface Context {
   /** The word that marks a move or a planned deposit as BTW money. */
   pocket: string;
   basis: "averages" | "budget";
+  /** The client's fixed income items: what they bring in carries BTW. */
+  clientItems: Set<number>;
 }
 
 /**
@@ -195,7 +230,8 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   const own = opts.basis === "own" ? (opts.ownSpending ?? null) : null;
   const averages = own === null ? measured : scaleAverages(measured, own);
   const { byMonth, inMemoryMatched } = await projectRecurring(db, { first, current, last });
-  const { pocket } = await getBtwSettings(db);
+  const { pocket, client } = await getBtwSettings(db);
+  const basis = opts.basis === "budget" ? "budget" : "averages";
   const ctx: Context = {
     current,
     uploaded: await coveredMonths(db),
@@ -206,12 +242,20 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
       .where(eq(schema.categories.type, "expense"))
       .orderBy(asc(schema.categories.sortOrder), asc(schema.categories.id)),
     averages,
-    budgets: await getBudgetsByMonth(db, first, last),
+    // With the budget basis a typed budget holds until a new one is typed (from the current month on). Never with the
+    // BTW share: the forecast accrues the BTW on the net worth line instead, so it is not counted twice.
+    budgets: await getBudgetsByMonth(
+      db,
+      first,
+      last,
+      basis === "budget" ? { carryForwardFrom: current } : {},
+    ),
     occurrences: byMonth,
     inMemoryMatched,
     savings: await savingsCategoryIds(db),
     pocket,
-    basis: opts.basis === "budget" ? "budget" : "averages",
+    basis,
+    clientItems: await clientItemIds(db, client),
     movedToSavings: await getMovedToSavings(db, first, last, pocket),
   };
 
@@ -221,16 +265,27 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   let cumulativeSetAside = 0;
   let cumulativeReserve = 0;
   let end: number | null = null;
+  const btwNow = btwNetWorth(await getBtwSummary(db, { today: opts.today }));
+  let btwWorth = btwNow;
   const months: ForecastMonth[] = [];
   for (let m = first; m <= last; m = addMonths(m, 1)) {
-    const month = await buildMonth(db, ctx, m);
+    const { plannedReserve, ...month } = await buildMonth(db, ctx, m);
     cumulativeNet += month.net;
     cumulativeSetAside += month.setAside.total;
     cumulativeReserve += month.setAside.reserve;
+    // A planned move into the pocket leaves the accounts but stays the person's money; the BTW accrued is owed.
+    btwWorth += plannedReserve - month.btwAccrued;
     const days = monthDays(month, real, opts.today, end);
     end = days?.at(-1) ?? null;
     const low = days ? lowestDay(m, 1, days) : null;
-    months.push({ ...month, cumulativeNet, cumulativeSetAside, cumulativeReserve, low });
+    months.push({
+      ...month,
+      cumulativeNet,
+      cumulativeSetAside,
+      cumulativeReserve,
+      btwWorth,
+      low,
+    });
   }
 
   // Savings now, minus what moved in since the first month began, is what was saved when the chart starts.
@@ -257,6 +312,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     months,
     openingBalance: await getOpeningBalance(db, first),
     openingSavings: savingsKnown ? savingsNow.saved - movedSince : null,
+    btwNow,
   };
 }
 
@@ -308,7 +364,13 @@ function monthDays(
   if (before === null || now === undefined) return null;
   return [
     ...before,
-    ...simulateDays({ month: month.month, start: now, fromDay: day, moves, variable: month.variable }),
+    ...simulateDays({
+      month: month.month,
+      start: now,
+      fromDay: day,
+      moves,
+      variable: month.variable,
+    }),
   ];
 }
 
@@ -369,7 +431,10 @@ async function buildMonth(
   ctx: Context,
   month: string,
 ): Promise<
-  Omit<ForecastMonth, "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve" | "low">
+  Omit<
+    ForecastMonth,
+    "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve" | "btwWorth" | "low"
+  > & { plannedReserve: number }
 > {
   const kind = kindOf(ctx, month);
   const occurrences: ForecastOccurrence[] = (ctx.occurrences.get(month) ?? []).map((o) => ({
@@ -424,6 +489,8 @@ async function buildMonth(
     settled: o.counted === "actual",
   });
   const counts = occurrences.filter((o) => o.counted !== "none");
+  const projecting = kind === "mixed" || kind === "forecast";
+  const clientIncome = sum(projectedIncome.filter((o) => ctx.clientItems.has(o.recurringItemId)));
 
   return {
     month,
@@ -451,6 +518,11 @@ async function buildMonth(
     },
     variable: categories.reduce((s, c) => s + c.variable, 0),
     categories,
+    expenseSources: projecting
+      ? expenseSources(ctx, month, categories, sum(projectedExpenses))
+      : { fixed: 0, budgets: 0, averages: 0, fellBack: [] },
+    btwAccrued: projecting ? btwInside(clientIncome) : 0,
+    plannedReserve,
     budget: {
       total: totalBudget,
       isExplicit: (b?.total ?? null) !== null,
@@ -518,4 +590,32 @@ function categoryLines(
     };
   };
   return [...ctx.categories.map((c) => line(c.id, c.name)), line(null, "Uncategorised")];
+}
+
+/**
+ * Where a projected month's expected expenses come from (see ForecastMonth.expenseSources). A category's everyday
+ * spending comes from its budget exactly when categoryLines used one: basis "budget" and a budget for the month (typed,
+ * carried forward, or its fixed items).
+ */
+function expenseSources(
+  ctx: Context,
+  month: string,
+  categories: ForecastCategory[],
+  fixed: number,
+): ForecastMonth["expenseSources"] {
+  const budgets = ctx.budgets.get(month)?.byCategory;
+  const fromBudget = (c: ForecastCategory) =>
+    ctx.basis === "budget" && c.categoryId !== null && budgets?.has(c.categoryId) === true;
+  let fromBudgets = 0;
+  let fromAverages = 0;
+  const fellBack: string[] = [];
+  for (const c of categories) {
+    if (fromBudget(c)) fromBudgets += c.variable;
+    else {
+      fromAverages += c.variable;
+      if (ctx.basis === "budget" && c.categoryId !== null && c.variableAverage > 0)
+        fellBack.push(c.name);
+    }
+  }
+  return { fixed, budgets: fromBudgets, averages: fromAverages, fellBack };
 }

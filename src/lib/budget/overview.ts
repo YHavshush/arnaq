@@ -2,7 +2,7 @@ import { and, eq, gte, isNull, lt, type SQL } from "drizzle-orm";
 import { daysInMonth } from "@/lib/recurring/dates";
 import { schema, type Db } from "@/db";
 import { addMonths } from "@/lib/recurring/dates";
-import { assertMonth, getBudgetsByMonth, resolveTotalBudget } from "./budgets";
+import { assertMonth, getBudgetsByMonth, resolveTotalBudget, type BudgetOptions } from "./budgets";
 export interface CategoryLine {
   categoryId: number | null;
   name: string;
@@ -15,6 +15,11 @@ export interface CategoryLine {
   fixed: number;
   /** What the person typed as the budget; null when nothing (the fixed items are then the budget). */
   extra: number | null;
+  /**
+   * The BTW to set aside this month inside `budget` (taxes category only, and only with the `btw` option), cents: the
+   * taxes budget is then at least `fixed + btw`. 0 otherwise.
+   */
+  btw: number;
   actual: number; // cents, positive: money spent (expense) or received (income)
   remaining: number | null; // budget - actual for expenses, actual - budget for income
 }
@@ -119,13 +124,18 @@ export async function sumTransactions(db: Db, opts: SumOptions): Promise<Map<str
 }
 
 /**
- * Budget vs actual for one calendar month (by transaction date), on the sumTransactions basis.
+ * Budget vs actual for one calendar month (by transaction date), on the sumTransactions basis. With `btw` the taxes
+ * budget includes the month's BTW share (the Today screen); without it the budgets are exactly what was typed and fixed.
  */
-export async function getMonthOverview(db: Db, month: string): Promise<MonthOverview> {
+export async function getMonthOverview(
+  db: Db,
+  month: string,
+  opts: Pick<BudgetOptions, "btw"> = {},
+): Promise<MonthOverview> {
   assertMonth(month);
 
   const categories = await db.select().from(schema.categories).orderBy(schema.categories.sortOrder);
-  const budget = (await getBudgetsByMonth(db, month, month)).get(month);
+  const budget = (await getBudgetsByMonth(db, month, month, { btw: opts.btw })).get(month);
   const sums = (await sumTransactions(db, { fromMonth: month, toMonth: month })).get(month);
   const unc = sums?.uncategorised ?? { expense: 0, income: 0, count: 0 };
 
@@ -141,6 +151,7 @@ export async function getMonthOverview(db: Db, month: string): Promise<MonthOver
       budget: b,
       fixed: budget?.fixed.get(c.id) ?? 0,
       extra: budget?.explicit.get(c.id) ?? null,
+      btw: budget?.btw.get(c.id) ?? 0,
       actual,
       remaining: b === null ? null : type === "expense" ? b - actual : actual - b,
     };

@@ -14,7 +14,7 @@ import { listLinkableTransactions } from "@/lib/recurring/linkable";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
 import type { Locale } from "@/i18n/config";
 import { getAccountBalances, getOpeningBalance } from "@/lib/forecast/balance";
-import { getBtwSummary } from "@/lib/btw/summary";
+import { btwNetWorth, getBtwSummary } from "@/lib/btw/summary";
 import { getSavingsSettings } from "@/lib/savings/settings";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { buildOverzicht } from "./overzicht";
@@ -47,7 +47,8 @@ export function parseHorizon(raw: string | string[] | undefined): number {
 export async function loadOverzicht(db: Db, month: string, today: string, locale: Locale) {
   const [overview, allOccurrences, daily, otherIncome, savings, savingsIds, accountsBalance] =
     await Promise.all([
-      getMonthOverview(db, month),
+      // The taxes budget includes the BTW to set aside for this month (see btwShareForMonth).
+      getMonthOverview(db, month, { btw: { today } }),
       getOccurrences(db, { from: month, to: month }),
       getDailySpend(db, month),
       getOtherIncome(db, month),
@@ -233,7 +234,7 @@ export async function loadNetWorth(db: Db, today: string) {
     getBtwSummary(db, { today }),
   ]);
   const accountsTotal = accounts.reduce((s, a) => s + a.balance, 0);
-  const net = btw.pocket - (btw.paid ? 0 : btw.owed);
+  const net = btwNetWorth(btw);
   const base = settings.anchor ?? settings.start;
   return {
     accounts,
