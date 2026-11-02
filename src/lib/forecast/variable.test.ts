@@ -75,6 +75,35 @@ describe("getVariableAverages", () => {
     expect(v.byCategory.get(a)).toBe(500);
   });
 
+  it("leaves out the quarterly BTW payment to the tax office, but keeps monthly tax-office items and other taxes", async () => {
+    const { db, tx, cover, cat } = await setup();
+    await cover("2026-07", "2026-08", "2026-09");
+    const taxes = await cat("Belastingen");
+    // Something the tax office takes every month (the same €20 in three months): spending like any other.
+    for (const m of ["2026-07", "2026-08", "2026-09"])
+      await tx(`${m}-15`, -2000, { counterparty: "Belastingdienst", categoryId: taxes });
+    // The BTW for Q2, paid in July: already counted on the net worth line as it builds up, so not an average.
+    await tx("2026-07-28", -150000, {
+      counterparty: "Belastingdienst",
+      description: "Omzetbelasting 2e kwartaal",
+      categoryId: taxes,
+    });
+    // Other tax spending stays: the municipality's tax.
+    await tx("2026-08-20", -30000, { counterparty: "Gemeente Utrecht", categoryId: taxes });
+    const v = await getVariableAverages(db, { beforeMonth: "2026-10", history: 3 });
+    expect(v.byCategory.get(taxes)).toBe(12000); // (3 x 2000 + 30000) / 3, without the 150000
+  });
+
+  it("keeps a payment to the tax office outside the BTW payment months (not the quarterly BTW)", async () => {
+    const { db, tx, cover, cat } = await setup();
+    await cover("2026-06");
+    const taxes = await cat("Belastingen");
+    // June is not in a BTW payment window (Q1 is paid by the end of April, Q2 from July on).
+    await tx("2026-06-15", -60000, { counterparty: "Belastingdienst", categoryId: taxes });
+    const v = await getVariableAverages(db, { beforeMonth: "2026-07", history: 1 });
+    expect(v.byCategory.get(taxes)).toBe(60000);
+  });
+
   it("nets refunds per category and never goes below zero", async () => {
     const { db, tx, cover, cat } = await setup();
     await cover("2026-08", "2026-09");
