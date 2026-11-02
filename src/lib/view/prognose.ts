@@ -80,6 +80,30 @@ export interface Prognose {
   lowConfidence: string | null;
 }
 
+/** The BTW to set aside as the last line of a month's expenses; every share is worked out again on the new total. */
+function withBtwLine(parts: MonthParts, accrued: number, label: string): MonthParts {
+  if (accrued <= 0) return parts;
+  const total = parts.total + accrued;
+  const of = (amount: number) => (total > 0 ? Math.min(Math.max(amount / total, 0), 1) : 0);
+  return {
+    ...parts,
+    total,
+    lines: [
+      ...parts.lines.map((l) => ({ ...l, share: of(l.amount) })),
+      {
+        key: "btw",
+        label,
+        count: null,
+        amount: accrued,
+        share: of(accrued),
+        tag: null,
+        sub: null,
+        tone: ((parts.lines.length % 3) + 1) as 1 | 2 | 3,
+      },
+    ],
+  };
+}
+
 /** Pure view model for the Prognose screen from a Forecast. */
 export function buildPrognose(
   f: Forecast,
@@ -94,8 +118,10 @@ export function buildPrognose(
     label: monthShort(m.month),
     kind: m.kind,
     income: m.income,
-    expenses: m.expenses,
-    net: m.net,
+    // The BTW on the client's income is not yours: it is set aside, so it counts as an expense and takes off the
+    // month's growth. Then growth, expenses and the net worth line (which takes it off too) all say the same.
+    expenses: m.expenses + (m.btwAccrued ?? 0),
+    net: m.net - (m.btwAccrued ?? 0),
     // Money moved into savings leaves the accounts and arrives in savings, so net worth only follows income and
     // spending. The BTW pocket is not savings: real moves into it leave accounts plus savings, and the pocket comes
     // back in whole through the BTW part (the BTW now: pocket minus owed, as on the net worth card). Ahead, a planned
@@ -119,7 +145,7 @@ export function buildPrognose(
     },
     setAside: m.setAside.total,
     incomeParts: incomeParts(m, locale),
-    expenseParts: expenseParts(m, locale, basis),
+    expenseParts: withBtwLine(expenseParts(m, locale, basis), m.btwAccrued ?? 0, t.parts.btw),
     projected: m.kind === "forecast" || m.kind === "mixed",
     low: null,
   }));

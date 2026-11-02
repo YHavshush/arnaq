@@ -299,8 +299,9 @@ export async function loadPlan(
       return {
         month: m.month,
         income: m.income,
-        expenses: m.expenses,
-        growth: m.net,
+        // The Ahead chart's own numbers: the BTW to set aside counts as an expense there (and takes off growth).
+        expenses: point.expenses,
+        growth: point.net,
         netWorth: point.cumulative,
         low: point.low,
       };

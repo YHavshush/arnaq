@@ -28,12 +28,15 @@ import { PlanEditor, type EditTarget } from "./plan-editor";
 
 type Text = Messages["ui"]["plan"];
 
-/** How each kind of cell looks. Typed is blue, planned is lavender, both with a dot; a suggestion is italic. */
+/**
+ * How each kind of cell looks. Typed is bold in the blue ink and planned is bold in the lavender ink, both with a dot and a
+ * short underline (no boxes: a grid full of them is too loud); a suggestion is italic.
+ */
 const LOOK: Record<CellState, string> = {
   typed:
-    "bg-[var(--chip-sky)] text-[var(--chip-sky-ink)] font-bold shadow-[inset_0_0_0_1.5px_var(--ring-accent-from)]",
+    "text-[var(--chip-sky-ink)] font-bold underline decoration-[var(--ring-accent-from)] decoration-2 underline-offset-[5px]",
   planned:
-    "bg-[var(--chip-lavender)] text-[var(--chip-lavender-ink)] font-bold shadow-[inset_0_0_0_1.5px_var(--chip-lavender-ink)]",
+    "text-[var(--chip-lavender-ink)] font-bold underline decoration-[var(--chip-lavender-ink)] decoration-2 underline-offset-[5px]",
   suggestion: "italic",
   fixed: "",
   computed: "text-ink-muted",
@@ -54,7 +57,7 @@ interface Section {
   title: string;
   total: string;
   rows: PlanRow[];
-  /** The rows that add up to the footer (the BTW is shown with the fixed costs but is not an expense). */
+  /** The rows that add up to the footer (the BTW to set aside counts as an expense, with the fixed costs). */
   summed: PlanRow[];
   add: NewKind | null;
 }
@@ -77,7 +80,7 @@ function sectionsOf(plan: Plan, text: Text, showAll: boolean): Section[] {
       title: text.sections.fixed,
       total: text.totals.fixed,
       rows: [...plan.sections.fixed, ...btw],
-      summed: plan.sections.fixed,
+      summed: [...plan.sections.fixed, ...btw],
       add: "expense",
     },
     {
@@ -184,15 +187,11 @@ function Legend({ text, toggle }: { text: Text; toggle: ReactNode }) {
         <em>{text.legend.suggestion}</em>
       </span>
       <span>
-        <i
-          className={`${swatch} bg-[var(--chip-sky)] shadow-[inset_0_0_0_1.5px_var(--ring-accent-from)]`}
-        />
+        <i className={`${swatch} !size-2 bg-[var(--chip-sky-ink)]`} />
         {text.legend.typed}
       </span>
       <span>
-        <i
-          className={`${swatch} bg-[var(--chip-lavender)] shadow-[inset_0_0_0_1.5px_var(--chip-lavender-ink)]`}
-        />
+        <i className={`${swatch} !size-2 bg-[var(--chip-lavender-ink)]`} />
         {text.legend.planned}
       </span>
       <span>
@@ -286,14 +285,14 @@ function Table({ plan, sections, f, open, add, toggle }: ViewProps) {
                 <tr>
                   <th
                     scope="row"
-                    className={`${name} text-ink-muted border-hair border-b py-1.5 text-[13px] font-medium`}
+                    className={`${name} text-ink border-hair border-b py-1.5 text-[14px] font-semibold`}
                   >
                     {s.total}
                   </th>
                   {sectionTotals(s.summed, plan.months).map((v, i) => (
                     <td
                       key={plan.months[i]}
-                      className="text-ink-muted border-hair border-b px-3 py-1.5 text-right text-[13px] font-medium"
+                      className="text-ink border-hair border-b px-3 py-1.5 text-right text-[14px] font-semibold"
                     >
                       {f.euro(v)}
                     </td>
@@ -485,7 +484,7 @@ function Phone({ plan, sections, f, open, add, toggle }: ViewProps) {
               </div>
             )}
             {s.summed.length > 0 && (
-              <p className="text-ink-muted flex items-baseline justify-between gap-3 px-4 pb-2 text-[13px] font-medium">
+              <p className="text-ink flex items-baseline justify-between gap-3 px-4 pb-2 text-[14px] font-semibold">
                 <span>{s.total}</span>
                 <span className="tabular-nums">{f.euro(sectionTotals(s.summed, [month])[0])}</span>
               </p>
@@ -560,9 +559,9 @@ function PhoneRow({
   );
   const tint =
     state === "typed"
-      ? "bg-[var(--chip-sky)] text-[var(--chip-sky-ink)]"
+      ? "text-[var(--chip-sky-ink)]"
       : state === "planned"
-        ? "bg-[var(--chip-lavender)] text-[var(--chip-lavender-ink)]"
+        ? "text-[var(--chip-lavender-ink)]"
         : "";
   const dash = isNone(cell) && state === "suggestion";
   const amountLook = `${state === "typed" || state === "planned" ? "font-bold" : ""} ${

@@ -81,7 +81,7 @@ describe("getForecast: the BTW in net worth", () => {
 });
 
 describe("buildPrognose: the net worth line counts the BTW once", () => {
-  it("starts from the balances plus the BTW now, and every month ahead adds its growth less the BTW accrued", async () => {
+  it("starts from the balances plus the BTW now, and every month ahead adds its growth (which already counts the BTW accrued as an expense)", async () => {
     const w = await world();
     const f = await w.forecast();
     const p = buildPrognose(f, "en");
@@ -92,9 +92,9 @@ describe("buildPrognose: the net worth line counts the BTW once", () => {
     expect(aug.cumulative).toBe(300000 + (f.openingSavings ?? 0) + 200000 - 10000 + btwNow);
     // Real months are shifted by the same BTW now.
     expect(sep.cumulative).toBe(aug.cumulative);
-    expect(oct.cumulative).toBe(sep.cumulative + oct.net - 42000);
-    expect(nov.cumulative).toBe(oct.cumulative + nov.net - 42000);
-    expect(dec.cumulative).toBe(nov.cumulative + dec.net - 42000);
+    expect(oct.cumulative).toBe(sep.cumulative + oct.net);
+    expect(nov.cumulative).toBe(oct.cumulative + nov.net);
+    expect(dec.cumulative).toBe(nov.cumulative + dec.net);
     expect(p.points.map((pt) => pt.btwAccrued)).toEqual([0, 0, 42000, 42000, 42000]);
     // The parts still add up: accounts, savings and the BTW (the pocket less what is owed).
     for (const pt of p.points) expect(pt.accounts + pt.savings + pt.btw).toBe(pt.cumulative);
@@ -131,9 +131,9 @@ describe("buildPrognose: the net worth line counts the BTW once", () => {
     const f = await w.forecast("budget");
     const p = buildPrognose(f, "en", "budget");
     const [, sep, oct, nov] = p.points;
-    expect(oct.cumulative).toBe(sep.cumulative + oct.net - 42000);
-    expect(nov.cumulative).toBe(oct.cumulative + nov.net - 42000);
-    expect(nov.net).toBe(242000 - 30000);
+    expect(oct.cumulative).toBe(sep.cumulative + oct.net);
+    expect(nov.cumulative).toBe(oct.cumulative + nov.net);
+    expect(nov.net).toBe(242000 - 30000 - 42000); // the BTW to set aside (42000) is an expense
   });
 
   it("without BTW data the line is what it was", async () => {

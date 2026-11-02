@@ -214,6 +214,7 @@ export const view: typeof en = {
       partlyPaid: (paid: string, total: string) => `${paid} van ${total} betaald`,
       otherIncome: "Overig inkomen",
       fixedCosts: "Vaste lasten",
+      btw: "Btw om opzij te zetten",
       everyday: "Gewone uitgaven",
       items: (n: number) => `${n} ${n === 1 ? "post" : "posten"}`,
       more: (n: number) => `${n} meer`,

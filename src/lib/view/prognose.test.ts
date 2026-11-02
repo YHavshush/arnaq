@@ -119,3 +119,43 @@ describe("buildPrognose: the lowest point counts the savings too", () => {
     expect(p.dipMonths).toBe(1);
   });
 });
+
+describe("buildPrognose: the BTW to set aside is an expense, so growth agrees with net worth", () => {
+  const withBtw = (accrued: number) =>
+    ({
+      ...fm("2026-11", "forecast", undefined),
+      income: 96800,
+      expenses: 60000,
+      net: 36800,
+      cumulativeNet: 36800,
+      btwAccrued: accrued,
+      parts: { income: [], fixed: [] },
+      categories: [],
+    }) as unknown as ForecastMonth;
+
+  it("adds the BTW accrued to the month's expenses and takes it off its growth, and lists it as a line", () => {
+    const p = buildPrognose(forecast([withBtw(16800)]), "en");
+    const point = p.points[0];
+    expect(point.expenses).toBe(76800);
+    expect(point.net).toBe(20000);
+    expect(point.btwAccrued).toBe(16800);
+    expect(point.expenseParts.total).toBe(76800);
+    expect(point.expenseParts.lines.at(-1)).toMatchObject({ key: "btw", amount: 16800 });
+  });
+
+  it("leaves the net worth line as it was: the BTW was already taken off there", () => {
+    const without = buildPrognose(forecast([withBtw(0)]), "en").points[0];
+    const accrued = withBtw(16800);
+    // The forecast's own btwWorth already carries the accrual (cumulative uses it), so only expenses and net move.
+    const p = buildPrognose(forecast([{ ...accrued, btwWorth: -16800 } as ForecastMonth]), "en")
+      .points[0];
+    expect(p.cumulative - without.cumulative).toBe(-16800);
+  });
+
+  it("changes nothing for a month with no BTW to set aside", () => {
+    const point = buildPrognose(forecast([withBtw(0)]), "en").points[0];
+    expect(point.expenses).toBe(60000);
+    expect(point.net).toBe(36800);
+    expect(point.expenseParts.lines.some((l) => l.key === "btw")).toBe(false);
+  });
+});

@@ -218,6 +218,7 @@ export const view = {
       partlyPaid: (paid: string, total: string) => `${paid} of ${total} paid`,
       otherIncome: "Other income",
       fixedCosts: "Fixed costs",
+      btw: "BTW to set aside",
       everyday: "Everyday spending",
       items: (n: number) => `${n} ${n === 1 ? "item" : "items"}`,
       more: (n: number) => `${n} more`,

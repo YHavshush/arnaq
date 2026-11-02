@@ -103,7 +103,9 @@ async function expectMatchesAhead(
     });
     expect(total(p.sections.income, f.month), `income ${f.month}`).toBe(f.income);
     expect(
-      total(p.sections.fixed, f.month) + total(p.sections.variable, f.month),
+      total(p.sections.fixed, f.month) +
+        total(p.sections.btw, f.month) +
+        total(p.sections.variable, f.month),
       `expenses ${f.month}`,
     ).toBe(f.expenses);
     expect(total(p.allCategories, f.month)).toBe(total(p.sections.variable, f.month));
