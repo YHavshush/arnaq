@@ -342,9 +342,12 @@ export const ui: typeof en = {
     },
     freq: { monthly: "per maand", quarterly: "per kwartaal", yearly: "per jaar" },
     flow: {
+      today: "vandaag",
       title: "De maand, dag voor dag",
       lowest: (amount: string, day: string) =>
         `Laagste punt ${amount} op ${day}, alleen met je betaalrekeningen en de vaste posten.`,
+      neverBelow: (amount: string) =>
+        `Je betaalrekeningen komen deze maand niet onder ${amount}, alleen met de vaste posten.`,
       fromZero: "Er is nog geen saldo bekend, dus het begint bij nul.",
       aria: "Het saldo van je betaalrekeningen door de maand, terwijl de vaste posten binnenkomen en vertrekken",
     },

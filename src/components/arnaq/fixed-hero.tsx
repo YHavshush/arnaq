@@ -2,6 +2,7 @@ import type { Messages } from "@/i18n/messages";
 import type { SplitRingModel } from "@/lib/view/fixed-ring";
 import type { Formatter } from "@/lib/view/format";
 import type { Sentence } from "@/lib/view/overzicht";
+import { displayName } from "@/lib/view/names";
 import { numberSize } from "./hero";
 import { SentenceText } from "./sentence";
 import { SplitRing, TO_PAY_OPACITY, slotColour } from "./split-ring";
@@ -10,8 +11,7 @@ type T = Messages["ui"]["fixed"]["hero"];
 
 /**
  * The top of the Fixed page: the month's income as a ring split by fixed expense, what is left over
- * in the middle, a one-line legend and one sentence. Amounts are shown to the cent so the three
- * numbers always add up.
+ * in the middle, a legend and one sentence. Whole euros here: the exact cents are in the list below.
  */
 export function FixedHero({
   ring,
@@ -20,9 +20,9 @@ export function FixedHero({
 }: {
   ring: SplitRingModel;
   t: T;
-  fmt: Pick<Formatter, "euroExact">;
+  fmt: Pick<Formatter, "euro">;
 }) {
-  const { euroExact: euro } = fmt;
+  const { euro } = fmt;
   const { mode } = ring;
 
   const centre =
@@ -62,22 +62,24 @@ export function FixedHero({
         </div>
       </SplitRing>
       {ring.legend.length > 0 && (
-        <ul className="text-ink-muted flex max-w-[34ch] flex-wrap justify-center gap-x-4 gap-y-1 text-[13px] @min-[900px]/app:max-w-none">
+        <ul className="grid w-full max-w-[19rem] gap-1.5 text-left text-[14px]">
           {ring.legend.map((l) => (
-            <li key={l.key} className="inline-flex items-center gap-1.5">
+            <li
+              key={l.key}
+              className="grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-2.5"
+            >
               <i
                 aria-hidden
-                className="inline-block size-2.5 shrink-0 rounded-full"
+                className="block size-3 rounded-full"
                 style={{ background: slotColour(l.slot), opacity: l.paid ? 1 : TO_PAY_OPACITY }}
               />
-              <span>
-                {l.name ?? t.other} <span className="num">{euro(l.amount)}</span>
-              </span>
+              <span className="truncate">{l.name ? displayName(l.name) : t.other}</span>
+              <span className="num text-ink-muted">{euro(l.amount)}</span>
             </li>
           ))}
         </ul>
       )}
-      <p className="font-display max-w-[30ch] text-[26px] leading-[1.2] text-balance">
+      <p className="font-display max-w-[30ch] text-[22px] leading-[1.2] text-balance">
         <SentenceText parts={sentence} />
       </p>
     </section>

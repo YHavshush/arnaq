@@ -2,25 +2,28 @@ import type { Formatter } from "@/lib/view/format";
 import type { FixedFlow } from "@/lib/view/fixed-flow";
 
 const W = 400;
-const H = 190;
+const H = 176;
 const LEFT = 24;
 const RIGHT = 376;
-const TOP = 22;
-const BOTTOM = 150;
+const TOP = 34;
+const BOTTOM = 132;
 
 export interface FlowText {
   title: string;
+  today: string;
   /** "Lowest point −€632 on 1 Nov, ..." */
   lowest: (amount: string, day: string) => string;
+  /** When the balance never drops below where the month starts. */
+  neverBelow: (amount: string) => string;
   /** When no balance is known: the chart starts from zero. */
   fromZero: string;
   aria: string;
 }
 
 /**
- * The month's fixed items day by day as a running balance of the checking accounts, drawn like the Ahead chart: a line
- * with a dot and a number at each day something happens, a soft column on today, red below zero and green above, the
- * lowest point ringed.
+ * The month's fixed items day by day as a running balance of the checking accounts, drawn like the Ahead chart:
+ * a line with a dot on each day something happens, red below zero and green above, today dashed, the lowest point
+ * ringed and named, and the balance at the end. Few numbers on purpose: the caption says the rest.
  */
 export function FixedFlowCard({
   flow,
@@ -57,18 +60,15 @@ export function FixedFlowCard({
     .join(" ");
   const area = `${line} L${x(flow.days).toFixed(1)} ${zero.toFixed(1)} L${x(1).toFixed(1)} ${zero.toFixed(1)}Z`;
 
-  // A number at an event only when it does not sit on top of the last one.
-  const labelled = flow.events.reduce<FixedFlow["events"]>((shown, e) => {
-    const last = shown.at(-1);
-    return last && x(e.day) - x(last.day) < 44 ? shown : [...shown, e];
-  }, []);
   const todayDay = today.startsWith(month) ? Number(today.slice(8, 10)) : null;
-  const lowestPoint = { px: x(flow.lowest.day), py: y(flow.lowest.balance) };
+  const dips = flow.lowest.balance < flow.start;
+  const lowestX = x(flow.lowest.day);
+  const lowestY = y(flow.lowest.balance);
   const axis = [1, 8, 15, 22, flow.days];
 
   return (
     <div className="glass grid gap-2 p-4">
-      <h2 className="font-display text-xl font-medium">{text.title}</h2>
+      <h2 className="font-display text-lg font-medium">{text.title}</h2>
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={text.aria} className="h-auto w-full">
         <defs>
           <clipPath id="flow-up">
@@ -79,39 +79,53 @@ export function FixedFlowCard({
           </clipPath>
         </defs>
         {todayDay !== null && (
-          <rect
-            x={x(todayDay) - 11}
-            y={8}
-            width={22}
-            height={BOTTOM - 4}
-            rx={11}
-            style={{ fill: "var(--soft)" }}
-          />
+          <g>
+            <line
+              x1={x(todayDay)}
+              x2={x(todayDay)}
+              y1={TOP - 12}
+              y2={BOTTOM}
+              strokeWidth={1.2}
+              strokeDasharray="3 4"
+              opacity={0.7}
+              style={{ stroke: "var(--ink-muted)" }}
+            />
+            <text
+              x={x(todayDay)}
+              y={TOP - 16}
+              textAnchor="middle"
+              className="fill-ink-muted text-[10px]"
+            >
+              {text.today}
+            </text>
+          </g>
         )}
         <line
           x1={12}
           x2={W - 12}
           y1={zero}
           y2={zero}
-          style={{ stroke: "var(--hair)" }}
-          strokeWidth={1.5}
+          strokeWidth={1.2}
+          strokeDasharray="2 4"
+          opacity={0.5}
+          style={{ stroke: "var(--ink-muted)" }}
         />
         <path
           d={area}
           clipPath="url(#flow-down)"
+          fillOpacity={0.12}
           style={{ fill: "var(--ring-bad-to)" }}
-          fillOpacity={0.18}
         />
         <path
           d={area}
           clipPath="url(#flow-up)"
+          fillOpacity={0.12}
           style={{ fill: "var(--ring-good-to)" }}
-          fillOpacity={0.18}
         />
         <path
           d={line}
           fill="none"
-          strokeWidth={2.8}
+          strokeWidth={2.2}
           strokeLinejoin="round"
           style={{ stroke: "var(--ring-accent-to)" }}
         />
@@ -120,36 +134,42 @@ export function FixedFlowCard({
             key={e.day}
             cx={x(e.day)}
             cy={y(e.balance)}
-            r={4.4}
+            r={3.6}
             style={{ fill: "var(--ring-accent-to)" }}
           />
         ))}
-        {flow.lowest.balance < flow.start && (
-          <circle
-            cx={lowestPoint.px}
-            cy={lowestPoint.py}
-            r={7.5}
-            fill="none"
-            strokeWidth={2.4}
-            style={{ stroke: "var(--ring-bad-to)" }}
-          />
+        {dips && (
+          <>
+            <circle
+              cx={lowestX}
+              cy={lowestY}
+              r={7}
+              fill="none"
+              strokeWidth={2.2}
+              style={{ stroke: "var(--ring-bad-to)" }}
+            />
+            <text
+              x={lowestX + 12}
+              y={lowestY + 4}
+              className="fill-bad num text-[11px] font-semibold"
+            >
+              {fmt.euro(flow.lowest.balance)}
+            </text>
+          </>
         )}
-        {labelled.map((e) => (
-          <text
-            key={e.day}
-            x={x(e.day)}
-            y={y(e.balance) - 10}
-            textAnchor="middle"
-            className="fill-ink num text-[10.5px] font-semibold"
-          >
-            {fmt.euro(e.balance)}
-          </text>
-        ))}
+        <text
+          x={x(flow.days)}
+          y={y(flow.end) - 10}
+          textAnchor="end"
+          className="fill-ink num text-[11px] font-semibold"
+        >
+          {fmt.euro(flow.end)}
+        </text>
         {axis.map((d) => (
           <text
             key={d}
             x={x(d)}
-            y={H - 16}
+            y={H - 8}
             textAnchor="middle"
             className="fill-ink-muted text-[10.5px]"
           >
@@ -158,10 +178,12 @@ export function FixedFlowCard({
         ))}
       </svg>
       <p className="text-ink-muted text-[13px] leading-snug">
-        {text.lowest(
-          fmt.euroSigned(flow.lowest.balance),
-          fmt.dayLabel(`${month}-${String(flow.lowest.day).padStart(2, "0")}`),
-        )}
+        {dips
+          ? text.lowest(
+              fmt.euroSigned(flow.lowest.balance),
+              fmt.dayLabel(`${month}-${String(flow.lowest.day).padStart(2, "0")}`),
+            )
+          : text.neverBelow(fmt.euroSigned(flow.start))}
         {flow.startKnown ? "" : ` ${text.fromZero}`}
       </p>
     </div>

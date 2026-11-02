@@ -1,5 +1,6 @@
 "use client";
 
+import { displayName } from "@/lib/view/names";
 import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { Check, ChevronDown, X } from "lucide-react";
@@ -155,7 +156,9 @@ function FixedRow({
       >
         <CategoryIcon name={row.categoryName} />
         <span className="min-w-0">
-          <span className="block truncate text-base leading-tight font-semibold">{row.name}</span>
+          <span className="block truncate text-base leading-tight font-semibold">
+            {displayName(row.name)}
+          </span>
           <span className="mt-1 flex flex-wrap items-center gap-1.5">
             <Chip row={row} />
             {row.missedEarlier && row.state !== "missed" && (

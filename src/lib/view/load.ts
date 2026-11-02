@@ -137,7 +137,7 @@ export async function loadVasteLasten(db: Db, month: string, today: string, loca
     ...base,
     list,
     ring,
-    flow: flow && flow.events.length > 0 ? flow : null,
+    flow: flow && flow.events.some((e) => e.amount < 0) ? flow : null,
     tracker: buildFixedTracker({ items, occurrences: ranged, months, today }),
     items,
     missed,
