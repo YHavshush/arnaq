@@ -19,11 +19,14 @@ describe("arcFor: where a round-capped arc is drawn inside its share of the circ
     expect(a.start + a.length + CAP / 2).toBeLessThanOrEqual(0.75);
   });
 
-  it("makes a very small share a dot, centred on its share, never nothing and never negative", () => {
-    const tiny = arcFor({ start: 0.5, end: 0.51 }, CAP, GAP, false);
-    expect(tiny.length).toBeGreaterThan(0);
-    expect(tiny.length).toBeLessThan(0.001);
-    expect(tiny.start + tiny.length / 2).toBeCloseTo(0.505);
+  it("draws a share too small for two round caps flat, at its true size, so neighbours never overlap", () => {
+    const small = arcFor({ start: 0.5, end: 0.51 }, CAP, GAP, false);
+    expect(small.round).toBe(false);
+    expect(small.start).toBeGreaterThanOrEqual(0.5);
+    expect(small.start + small.length).toBeLessThanOrEqual(0.51);
+    expect(small.length).toBeGreaterThan(0);
+    // A large share keeps its round caps.
+    expect(arcFor({ start: 0, end: 0.5 }, CAP, GAP, false).round).toBe(true);
   });
 
   it("draws a single share that fills the circle as the whole circle, without a seam", () => {
@@ -31,9 +34,10 @@ describe("arcFor: where a round-capped arc is drawn inside its share of the circ
       start: 0,
       length: 1,
       full: true,
+      round: false,
     });
     // Two arcs, one of them whole, is not "only".
-    expect(arcFor({ start: 0, end: 1 }, CAP, GAP, false).full).toBe(false);
+    expect(arcFor({ start: 0, end: 1 }, CAP, GAP, false).full).not.toBe(true);
   });
 });
 

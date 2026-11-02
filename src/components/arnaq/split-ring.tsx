@@ -55,7 +55,11 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
     s,
     arc: arcFor({ start: s.start, end: s.end }, cap, GAP / 100, only),
   }));
-  const slots = [...new Set(segments.map((s) => s.slot))];
+  // The gradient of an arc runs from where it starts to where it ends, so every arc shows it.
+  const at = (fraction: number) => {
+    const angle = (fraction * 360 - 90) * (Math.PI / 180);
+    return { x: 50 + r * Math.cos(angle), y: 50 + r * Math.sin(angle) };
+  };
   const dot: CSSProperties = {
     position: "absolute",
     left: "50%",
@@ -84,12 +88,24 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
         className="absolute inset-0 dark:hidden"
       >
         <defs>
-          {slots.map((slot) => (
-            <linearGradient key={slot} id={`${id}-${slot}`} x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" style={{ stopColor: pale(slot) }} />
-              <stop offset="100%" style={{ stopColor: slotColour(slot) }} />
-            </linearGradient>
-          ))}
+          {arcs.map(({ s, arc }, i) => {
+            const from = at(arc.start);
+            const to = at(arc.start + arc.length);
+            return (
+              <linearGradient
+                key={i}
+                id={`${id}-${i}`}
+                gradientUnits="userSpaceOnUse"
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+              >
+                <stop offset="0%" style={{ stopColor: pale(s.slot) }} />
+                <stop offset="100%" style={{ stopColor: slotColour(s.slot) }} />
+              </linearGradient>
+            );
+          })}
         </defs>
         <circle
           cx="50"
@@ -99,7 +115,7 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
           strokeWidth={width}
           style={{ stroke: "var(--track)" }}
         />
-        {arcs.map(({ s, arc }) => (
+        {arcs.map(({ s, arc }, i) => (
           <circle
             key={`${s.key}-${s.paid ? "paid" : "open"}`}
             cx="50"
@@ -107,12 +123,12 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
             r={r}
             fill="none"
             strokeWidth={width}
-            strokeLinecap={arc.full ? "butt" : "round"}
+            strokeLinecap={arc.round ? "round" : "butt"}
             pathLength={100}
             strokeDasharray={`${arc.length * 100} ${100 - arc.length * 100}`}
             strokeDashoffset={-arc.start * 100}
             transform="rotate(-90 50 50)"
-            stroke={`url(#${id}-${s.slot})`}
+            stroke={`url(#${id}-${i})`}
             opacity={s.paid ? 1 : TO_PAY_OPACITY}
           />
         ))}
@@ -147,7 +163,7 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
                   mask: RING_MASK(stroke),
                 }}
               />
-              {!arc.full && (
+              {arc.round && (
                 <>
                   <i className="absolute inset-0" style={{ transform: `rotate(${from}deg)` }}>
                     <u style={{ ...dot, background: dim(s.slot) }} />
