@@ -1,3 +1,4 @@
+import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
@@ -172,6 +173,17 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </span>
         }
       >
+        {!p.incomeMissing && (
+          <div className="mb-2 px-1">
+            <Link
+              href={`/plan?months=${months}`}
+              className="text-accent -ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-sm font-semibold"
+            >
+              <Pencil className="size-3.5" aria-hidden />
+              {t.ui.forecast.editPlan}
+            </Link>
+          </div>
+        )}
         {p.incomeMissing ? (
           <div className="glass p-4">
             <p className="font-semibold">{t.ui.forecast.needIncomeTitle}</p>

@@ -44,6 +44,7 @@ export const ui: typeof en = {
       upload: "Upload wordt geladen",
       budget: "Budget wordt geladen",
       settings: "Instellingen worden geladen",
+      plan: "Plan wordt geladen",
     },
     errorTitle: "Dit lukt even niet",
     errorBody:
@@ -204,6 +205,80 @@ export const ui: typeof en = {
     progress: "Verloop",
     horizon: "Aantal maanden vooruit",
     note: "Let op:",
+    editPlan: "Plan bewerken",
+  },
+  plan: {
+    title: "plan bewerken",
+    sub: (n: number) => `Deze maand en de ${n} maanden erna`,
+    back: "Terug naar vooruit",
+    horizon: "Maanden vooruit",
+    tableCaption: "Het plan: verwachte bedragen per maand",
+    rowHeader: "Rij",
+    thisMonth: "deze maand",
+    monthGroup: "Maand",
+    sections: { income: "Inkomen", fixed: "Vaste lasten", variable: "Dagelijkse uitgaven" },
+    rows: {
+      btw: "BTW opzij",
+      other: "Alles overig",
+      uncategorised: "Zonder categorie",
+      incomeOther: "Overig inkomen",
+    },
+    footer: {
+      income: "Verwacht inkomen",
+      expenses: "Verwachte uitgaven",
+      growth: "Groei",
+      netWorth: "Vermogen daarna",
+    },
+    state: {
+      suggestion: "suggestie",
+      typed: "door jou ingevuld",
+      planned: "geplande wijziging",
+      fixed: "van de pagina Vast",
+      computed: "berekend",
+      locked: "al gebeurd",
+    },
+    cell: (name: string, month: string, amount: string, state: string) =>
+      `${name}, ${month}, ${amount}, ${state}`,
+    legend: {
+      suggestion: "suggestie",
+      typed: "door jou ingevuld",
+      computed: "volgt andere bedragen",
+      planned: "geplande wijziging van een vaste post of inkomen",
+    },
+    showAll: (n: number) => `Toon alle ${n} categorieën`,
+    showFewer: "Toon minder categorieën",
+    emptyTitle: "Nog niets te plannen",
+    emptyBody:
+      "Upload een maand en voeg je vaste posten toe. Dan verschijnt hier elke rij van je plan.",
+    editor: {
+      title: (name: string, month: string) => `${name} · ${month}`,
+      amountLabel: "Bedrag in euro's",
+      scopeLabel: "Hoe ver gaat het?",
+      scopeMonth: "Alleen deze maand",
+      scopeAfter: "Deze en de maanden erna",
+      save: "Opslaan",
+      saving: "Opslaan…",
+      resetSuggestion: (amount: string) => `Terug naar de suggestie ${amount}`,
+      resetFixed: (amount: string) => `Terug naar de pagina Vast, ${amount}`,
+      redundant:
+        "Hetzelfde als nu bij Vast. Zet het terug, dan volgt deze maand weer de pagina Vast.",
+      errAmount: "Vul een bedrag in, bijvoorbeeld 250 of 250,50.",
+      saved: "Opgeslagen",
+      savedAfter: "Opgeslagen, ook voor de maanden erna",
+      resetDone: "Terug naar de suggestie",
+    },
+    why: {
+      average: (amount: string, first: string, last: string) =>
+        first === last
+          ? `Suggestie ${amount}: je gemiddelde over ${first}.`
+          : `Suggestie ${amount}: je gemiddelde over ${first} tot ${last}.`,
+      own: (amount: string) =>
+        `Suggestie ${amount}: het bedrag dat je voor dagelijkse uitgaven koos.`,
+      budget: (amount: string, month: string) => `Suggestie ${amount}: je budget voor ${month}.`,
+      carried: (amount: string, month: string) =>
+        `Suggestie ${amount}: doorgetrokken uit je budget voor ${month}.`,
+      fixed: (amount: string) => `Suggestie ${amount}: van de pagina Vast.`,
+    },
   },
   chart: {
     aria: "Verloop van je geld per maand",

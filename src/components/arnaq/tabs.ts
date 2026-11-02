@@ -1,8 +1,13 @@
 /** The four main tabs, left to right: the order the bottom bar shows and the order swiping follows. */
 export const TAB_HREFS = ["/", "/forecast", "/fixed-costs", "/upload"] as const;
 
+/** The plan grid (/plan) is one tap from Ahead and belongs to its tab. */
 export const isTabActive = (path: string, href: string) =>
-  href === "/" ? path === "/" : path.startsWith(href);
+  href === "/"
+    ? path === "/"
+    : href === "/forecast"
+      ? path.startsWith(href) || path === "/plan" || path.startsWith("/plan/")
+      : path.startsWith(href);
 
 /** Which main tab a path belongs to (a sub-page counts for its tab), or -1 for any other page. */
 export const tabIndexOf = (path: string) => TAB_HREFS.findIndex((href) => isTabActive(path, href));
