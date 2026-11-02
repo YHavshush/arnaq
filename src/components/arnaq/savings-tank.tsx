@@ -13,7 +13,7 @@ export function SavingsTank({
 }: {
   level: number;
   reached: boolean;
-  size?: "xs" | "sm" | "lg";
+  size?: "sm" | "lg";
   className?: string;
 }) {
   const from = reached ? "var(--ring-good-from)" : "var(--ring-accent-from)";
@@ -21,9 +21,7 @@ export function SavingsTank({
   const box: CSSProperties =
     size === "lg"
       ? { width: 92, height: 132, borderRadius: "20px 20px 28px 28px" }
-      : size === "xs"
-        ? { width: 22, height: 38, borderRadius: "8px 8px 11px 11px" }
-        : { width: 42, height: 68, borderRadius: "14px 14px 18px 18px" };
+      : { width: 42, height: 68, borderRadius: "14px 14px 18px 18px" };
   return (
     <div
       aria-hidden

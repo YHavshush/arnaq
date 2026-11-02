@@ -1,4 +1,3 @@
-import { tankLevel } from "@/lib/view/savings-tank";
 import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
@@ -6,6 +5,7 @@ import { AttentionList } from "@/components/arnaq/attention-list";
 import { Hero } from "@/components/arnaq/hero";
 import { IncomeList } from "@/components/arnaq/income-list";
 import { MoodSetter } from "@/components/arnaq/mood";
+import { SavingsProgress } from "@/components/arnaq/savings-progress";
 import { PaceCard } from "@/components/arnaq/pace-card";
 import { LoadSampleButton } from "@/components/arnaq/sample";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
@@ -53,11 +53,6 @@ function SavingsRow({
       name={s.name}
       amount={row.thisMonth < 0 ? euroSigned(row.thisMonth) : euroExact(row.thisMonth)}
       amountSub={s.sub(kind, base)}
-      tank={
-        row.goal !== null && row.goal > 0
-          ? { level: tankLevel(row.saved, row.goal).level, reached: row.saved >= row.goal }
-          : undefined
-      }
     />
   );
 }
@@ -216,6 +211,25 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
         </div>
 
         <div className="min-w-0">
+          {o.savingsRow && o.savingsRow.goal !== null && o.savingsRow.goal > 0 && (
+            <Section title={t.ui.overview.savingsRow.name}>
+              <SavingsProgress
+                label={t.ui.settings.savings.title}
+                word={
+                  o.savingsRow.saved >= o.savingsRow.goal
+                    ? t.view.overzicht.tiles.sparen.wordReached
+                    : t.view.overzicht.tiles.sparen.wordUnderway
+                }
+                sub={t.view.overzicht.tiles.sparen.subOf(
+                  f.euro(o.savingsRow.saved),
+                  f.euro(o.savingsRow.goal),
+                )}
+                saved={o.savingsRow.saved}
+                target={o.savingsRow.goal}
+                tone={o.savingsRow.saved >= o.savingsRow.goal ? "good" : "accent"}
+              />
+            </Section>
+          )}
           {o.income.length > 0 && (
             <Section
               title={t.ui.overview.incomeTitle}
