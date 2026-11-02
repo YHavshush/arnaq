@@ -1,0 +1,118 @@
+<title>arnaq ring colours</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the answer first, then one row per palette: the Fixed ring and the Ahead ring, each in light and dark. */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); --pick:#2f7d5b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --pick:#5fcf9a; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --pick:#5fcf9a; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding-block:28px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width:1080px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr); gap:26px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; text-wrap:balance; } h2 { font:500 20px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:14px; max-width:76ch; } .note b { color:var(--ink); } .pick { color:var(--pick); }
+.opt { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; padding-top:18px; border-top:1px solid var(--line); }
+.swatch { display:flex; gap:6px; align-items:center; flex-wrap:wrap; } .swatch i { width:26px; height:26px; border-radius:50%; border:1px solid rgba(127,127,127,.3); }
+.stages { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; }
+.stage { border-radius:22px; padding:16px 14px; display:grid; gap:10px; justify-items:center; border:1px solid rgba(23,32,46,.1); }
+.stage.light { background:linear-gradient(180deg,#d9e5f5,#f1e6dd 60%,#f6e8d8); color:#17202e; --track:rgba(23,32,46,.10); --muted2:#4a5568; }
+.stage.dark { background:linear-gradient(165deg,#1b2d4a,#17213a 55%,#141b28); color:#eef1f5; --track:rgba(255,255,255,.10); --muted2:#a8b1bf; }
+.cap { font-size:11.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted2); }
+.ring { position:relative; isolation:isolate; width:150px; height:150px; flex:none; }
+.ring svg { position:absolute; inset:0; width:100%; height:100%; }
+.ring .dk { position:absolute; inset:0; }
+.ring .dk, .ring .dk div, .ring .dk i { position:absolute; inset:0; }
+.ring .mid { position:absolute; inset:0; display:grid; place-content:center; text-align:center; }
+.ring .mid b { font-size:25px; font-weight:500; letter-spacing:-.03em; font-variant-numeric:tabular-nums; } .ring .mid small { font-size:11px; color:var(--muted2); margin-top:3px; }
+.halo { position:absolute; inset:-32%; border-radius:50%; z-index:-1; pointer-events:none; }
+.legend { list-style:none; margin:0; padding:0; display:grid; gap:3px; font-size:12.5px; width:100%; max-width:200px; } .legend li { display:grid; grid-template-columns:10px 1fr auto; gap:7px; align-items:center; } .legend i { width:9px; height:9px; border-radius:50%; } .legend span:last-child { color:var(--muted2); font-variant-numeric:tabular-nums; }
+</style>
+
+<main>
+<header style="display:grid;gap:8px">
+  <h1>Ring colours</h1>
+  <p class="note">The rings with more than one arc (Fixed, and Ahead now that it shows where your money is) use five colours that do not belong to each other: cyan, periwinkle, green, orange and grey. Here are four ways to colour them from what the app already has. Every ring follows the ring rules: gradient arcs with round caps and no glow in light, a dim-to-lit arc with a lit end and a tight glow in dark, and flat slivers for very small shares. Demo numbers.</p>
+  <p class="note"><b>My pick is B, the chip colours.</b> The sky, lavender, mint and peach of the icon chips and tiles are already how the app says "this kind of thing". Rabobank, Revolut and savings would be the colours they had in the bar you liked, and the dark ring would use the chip colours the app already has for dark.</p>
+</header>
+<div id="opts"></div>
+</main>
+
+<script>
+(function () {
+  var PALETTES = [
+    { key: "now", title: "Now", text: "The ring colours as they are today: a cyan, a periwinkle, a green, an orange and a grey.",
+      light: [["#8fdcff","#33c6ff"],["#b5bdff","#7f8cff"],["#8fe0bd","#23a371"],["#f9d39e","#e98859"],["#aab0bb","#4a5568"]],
+      dark: [["#14607c","#2ac9ff"],["#454e8f","#7d8bff"],["#5fb594","#9af2c4"],["#b08c3d","#ffd36b"],["#6c7482","#a8b1bf"]] },
+    { key: "A", title: "A · The logo's own blue to violet", text: "Five steps along the logo's gradient. The most coherent with the brand, but neighbouring arcs look alike, so the legend does more of the work.",
+      light: [["#8fdcff","#33c6ff"],["#9cc2ff","#4f9bff"],["#b5bdff","#7f8cff"],["#c9b4f6","#a07df0"],["#d9d0ee","#b6a6dc"]],
+      dark: [["#14607c","#2ac9ff"],["#2d5fa8","#6aa8ff"],["#454e8f","#8f9bff"],["#5f4a99","#b08cff"],["#5a5575","#cbb8ff"]] },
+    { key: "B", title: "B · The chip colours", pick: true, text: "Sky, lavender, mint, peach and grey: the same families as the icon chips, the tiles and the old bar, tuned so an arc is strong enough to read on the glass.",
+      light: [["#a9cdf2","#5ea8e8"],["#c4baf0","#9585dd"],["#a4dcc0","#55c490"],["#f8cfa8","#f2a468"],["#c4c7d1","#9aa0ad"]],
+      dark: [["#355b86","#8ec3ff"],["#5a4f9c","#b9a9ff"],["#2f7d57","#7fdca6"],["#9a6a3f","#ffbe8a"],["#6a6a74","#b0b0ba"]] },
+    { key: "C", title: "C · Navy tints", text: "Tints of the app's navy, with the biggest arc the strongest. Quiet and editorial, with less colour to tell parts apart, and a bit flat in dark.",
+      light: [["#6a82c0","#243b73"],["#8a9cce","#4a6199"],["#a7b4d8","#7487b8"],["#c3cce4","#a0aed0"],["#dadfee","#c8d0e4"]],
+      dark: [["#3f7ea8","#8fd0ff"],["#35688d","#6fb0e8"],["#2c5373","#5690c9"],["#26435c","#4070a5"],["#22364a","#34557f"]] }
+  ];
+  var FIXED = { label: "Fixed", mid: "€1,273", sub: "left over", names: ["Rent", "Insurance", "Claude", "Netflix", "Other"], amounts: ["€481", "€151", "€22", "€21", "€20"], shares: [481, 151, 22, 21, 20], total: 1968, paid: [true, true, false, false, false] };
+  var AHEAD = { label: "Ahead", mid: "€595", sub: "net worth now", names: ["Rabobank", "Revolut", "Savings"], amounts: ["€357", "€205", "€201"], shares: [357, 205, 201], total: 763, paid: [true, true, true] };
+
+  var SIZE = 150, STROKE = 9, GAP = 0.006;
+  var cap = STROKE / (Math.PI * (SIZE - STROKE));
+  function arcFor(start, end, only) {
+    if (only && end - start >= 0.999) return { start: 0, length: 1, round: false, full: true };
+    var size = end - start;
+    if (size < 2 * cap) return { start: start + GAP / 2, length: Math.max(size - GAP, 0.0004), round: false };
+    var inset = (cap + GAP) / 2;
+    return { start: start + inset, length: size - 2 * inset, round: true };
+  }
+  var MASK = "radial-gradient(farthest-side, transparent calc(100% - " + STROKE + "px), #000 calc(100% - " + (STROKE - 0.6) + "px))";
+  var gid = 0;
+  function pt(r, f) { var a = (f * 360 - 90) * Math.PI / 180; return { x: 50 + r * Math.cos(a), y: 50 + r * Math.sin(a) }; }
+
+  function draw(host, data, pal, mode) {
+    var segs = [], at = 0;
+    data.shares.forEach(function (s, i) { var f = s / data.total; segs.push({ i: i, start: at, end: at + f, paid: data.paid[i] }); at += f; });
+    var arcs = segs.map(function (s) { return { s: s, a: arcFor(s.start, s.end, segs.length === 1) }; });
+    var width = STROKE / SIZE * 100, r = 50 - width / 2;
+    var html = '<div class="ring">';
+    if (mode === "dark") html += '<div class="halo" style="background:radial-gradient(closest-side, rgba(125,139,255,.20), transparent 72%)"></div>';
+    if (mode === "light") {
+      html += '<svg viewBox="0 0 100 100"><defs>';
+      arcs.forEach(function (x, k) {
+        var p0 = pt(r, x.a.start), p1 = pt(r, x.a.start + x.a.length), c = pal.light[x.s.i];
+        html += '<linearGradient id="g' + (gid + k) + '" gradientUnits="userSpaceOnUse" x1="' + p0.x + '" y1="' + p0.y + '" x2="' + p1.x + '" y2="' + p1.y + '"><stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></linearGradient>';
+      });
+      html += '</defs><circle cx="50" cy="50" r="' + r + '" fill="none" stroke-width="' + width + '" stroke="var(--track)"/>';
+      arcs.forEach(function (x, k) {
+        html += '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke-width="' + width + '" stroke-linecap="' + (x.a.round ? "round" : "butt") + '" pathLength="100" stroke-dasharray="' + (x.a.length * 100) + ' ' + (100 - x.a.length * 100) + '" stroke-dashoffset="' + (-x.a.start * 100) + '" transform="rotate(-90 50 50)" stroke="url(#g' + (gid + k) + ')" opacity="' + (x.s.paid ? 1 : 0.5) + '"/>';
+      });
+      html += '</svg>'; gid += arcs.length;
+    } else {
+      html += '<div class="dk"><i style="border-radius:50%;background:var(--track);-webkit-mask:' + MASK + ';mask:' + MASK + '"></i>';
+      arcs.forEach(function (x) {
+        var c = pal.dark[x.s.i], from = x.a.start * 360, len = x.a.length * 360;
+        var dot = 'position:absolute;left:50%;top:0;width:' + STROKE + 'px;height:' + STROKE + 'px;margin-left:' + (-STROKE / 2) + 'px;border-radius:50%;';
+        html += '<div style="filter:drop-shadow(0 0 ' + (STROKE * 1.2) + 'px ' + c[1] + '66);opacity:' + (x.s.paid ? 1 : 0.5) + '"><i style="border-radius:50%;background:conic-gradient(from ' + from + 'deg,' + c[0] + ' 0deg,' + c[1] + ' ' + len + 'deg,transparent ' + len + 'deg);-webkit-mask:' + MASK + ';mask:' + MASK + '"></i>';
+        if (x.a.round) html += '<i style="transform:rotate(' + from + 'deg)"><u style="' + dot + 'background:' + c[0] + '"></u></i><i style="transform:rotate(' + (from + len) + 'deg)"><u style="' + dot + 'background:' + c[1] + ';box-shadow:0 0 8px ' + c[1] + '"></u></i>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+    html += '<div class="mid"><b>' + data.mid + '</b><small>' + data.sub + '</small></div></div>';
+    html += '<ul class="legend">' + data.names.map(function (n, i) { return '<li><i style="background:' + (mode === "light" ? pal.light[i][1] : pal.dark[i][1]) + '"></i><span>' + n + '</span><span>' + data.amounts[i] + '</span></li>'; }).join("") + '</ul>';
+    host.innerHTML = html;
+  }
+
+  var root = document.getElementById("opts");
+  PALETTES.forEach(function (pal) {
+    var sec = document.createElement("section"); sec.className = "opt";
+    sec.innerHTML = '<h2>' + (pal.pick ? '<span class="pick">' + pal.title + ' (my pick)</span>' : pal.title) + '</h2><p class="note">' + pal.text + '</p><div class="stages"></div>';
+    var stages = sec.querySelector(".stages");
+    [["light", FIXED, "Fixed · light"], ["dark", FIXED, "Fixed · dark"], ["light", AHEAD, "Ahead · light"], ["dark", AHEAD, "Ahead · dark"]].forEach(function (c) {
+      var st = document.createElement("div"); st.className = "stage " + c[0]; st.innerHTML = '<div class="cap">' + c[2] + '</div><div class="host"></div>';
+      stages.appendChild(st); draw(st.querySelector(".host"), c[1], pal, c[0]);
+      st.querySelector(".host").style.display = "grid"; st.querySelector(".host").style.gap = "10px"; st.querySelector(".host").style.justifyItems = "center";
+    });
+    root.appendChild(sec);
+  });
+})();
+</script>
