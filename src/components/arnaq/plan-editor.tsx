@@ -23,6 +23,9 @@ import {
 import { ErrorLine, GhostButton, PrimaryButton } from "./form";
 import { useAction } from "./use-action";
 
+export const DIALOG_CLASS =
+  "sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl border p-0 shadow-xl @min-[900px]/app:[inset:auto] @min-[900px]/app:[top:var(--pop-top,auto)] @min-[900px]/app:[bottom:var(--pop-bottom,auto)] @min-[900px]/app:[left:var(--pop-left,1rem)] @min-[900px]/app:mt-0 @min-[900px]/app:w-[23rem] @min-[900px]/app:max-w-[calc(100vw-2rem)] @min-[900px]/app:rounded-3xl @min-[900px]/app:backdrop:bg-transparent";
+
 /** The cell being edited: the row's key and the month, and the element to give focus back to. */
 export interface EditTarget {
   rowKey: string;
@@ -53,6 +56,7 @@ export function PlanEditor({
     if (target && !dialog.open) {
       place(dialog, target.anchor);
       dialog.showModal();
+      fit(dialog, target.anchor);
       const input = dialog.querySelector<HTMLInputElement>("input[inputmode=decimal]");
       input?.focus();
       input?.select();
@@ -75,7 +79,7 @@ export function PlanEditor({
       onClick={(e) => {
         if (e.target === ref.current) ref.current?.close(); // a tap on the dimmed area
       }}
-      className="sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl border p-0 shadow-xl @min-[900px]/app:[inset:auto] @min-[900px]/app:[top:var(--pop-top,auto)] @min-[900px]/app:[bottom:var(--pop-bottom,auto)] @min-[900px]/app:[left:var(--pop-left,1rem)] @min-[900px]/app:mt-0 @min-[900px]/app:w-[23rem] @min-[900px]/app:max-w-[calc(100vw-2rem)] @min-[900px]/app:rounded-3xl @min-[900px]/app:backdrop:bg-transparent"
+      className={DIALOG_CLASS}
     >
       {open && found && (
         <EditorBody
@@ -91,7 +95,7 @@ export function PlanEditor({
 }
 
 /** Put the popover under (or, near the bottom of the screen, over) the cell. A phone's sheet ignores this. */
-function place(dialog: HTMLDialogElement, anchor: HTMLElement | null) {
+export function place(dialog: HTMLDialogElement, anchor: HTMLElement | null) {
   const style = dialog.style;
   style.removeProperty("--pop-top");
   style.removeProperty("--pop-bottom");
@@ -104,9 +108,19 @@ function place(dialog: HTMLDialogElement, anchor: HTMLElement | null) {
     Math.min(r.left + r.width / 2 - width / 2, window.innerWidth - width - 16),
   );
   style.setProperty("--pop-left", `${left}px`);
-  if (r.bottom + 360 > window.innerHeight)
-    style.setProperty("--pop-bottom", `${Math.max(16, window.innerHeight - r.top + 8)}px`);
-  else style.setProperty("--pop-top", `${r.bottom + 8}px`);
+  style.setProperty("--pop-top", `${r.bottom + 8}px`);
+}
+
+/** Once it is open and its height is known: under the cell if it fits, else over it, else as high as it must be. */
+export function fit(dialog: HTMLDialogElement, anchor: HTMLElement | null) {
+  if (!anchor) return;
+  const r = anchor.getBoundingClientRect();
+  const h = dialog.getBoundingClientRect().height;
+  const below = r.bottom + 8;
+  let top = below;
+  if (below + h > window.innerHeight - 16)
+    top = r.top - 8 - h >= 16 ? r.top - 8 - h : Math.max(16, window.innerHeight - h - 16);
+  dialog.style.setProperty("--pop-top", `${top}px`);
 }
 
 function EditorBody({
@@ -161,7 +175,7 @@ function EditorBody({
     <form onSubmit={submit} className="grid grid-cols-[minmax(0,1fr)] gap-4 p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="plan-editor-title" className="font-display text-xl font-medium">
-          {e.title(rowLabel(row, text.rows), monthWord(locale, month))}
+          {e.title(rowLabel(row, text.rows, locale), monthWord(locale, month))}
         </h2>
       </div>
 

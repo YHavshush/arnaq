@@ -162,6 +162,26 @@ describe("loadPlan", () => {
     ]);
   });
 
+  it("an item that starts later or ends sooner has a row with nothing (0, not editable) outside its months", async () => {
+    const w = await world();
+    const raise = await w.addItem({
+      name: "Extra client",
+      type: "income",
+      matchCounterparty: "Extra client",
+      expectedAmount: 50000,
+      dayOfMonth: 25,
+      startDate: "2027-01-01",
+      endDate: "2027-02-28",
+    });
+    const p = await w.plan("averages", 4);
+    const r = row(p.sections.income, `item-${raise.id}`);
+    expect(r.cells.map((c) => c.amount)).toEqual([0, 0, 50000, 50000, 0]);
+    expect(r.cells.map((c) => c.editable)).toEqual([false, false, true, true, false]);
+    expect(r.cells.every((c) => c.typed === null)).toBe(true);
+    // the grid still adds up to the Ahead chart
+    await expectMatchesAhead(w, p, "averages");
+  });
+
   it("the BTW row is computed from the client's income with btwShareForMonth and cannot be typed", async () => {
     const w = await world();
     await w.type("item", w.invoice.id, "2026-12", 121000);

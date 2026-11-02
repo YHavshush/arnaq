@@ -4,6 +4,12 @@ import { formatter } from "./format";
 import type { Plan, PlanCell, PlanRow } from "./plan";
 import {
   DEFAULT_SCOPE,
+  addDefaults,
+  isNone,
+  isQuiet,
+  newItemBody,
+  sectionTotals,
+  untilChoices,
   amountToInput,
   canEdit,
   canShowAll,
@@ -90,17 +96,17 @@ describe("words", () => {
   });
 
   it("labels the rows the app makes up", () => {
-    expect(rowLabel(row(), en.rows)).toBe("Groceries");
-    expect(rowLabel(row({ key: "btw", name: null, kind: "btw", id: null }), en.rows)).toBe(
+    expect(rowLabel(row(), en.rows, "en")).toBe("Groceries");
+    expect(rowLabel(row({ key: "btw", name: null, kind: "btw", id: null }), en.rows, "en")).toBe(
       "BTW set aside",
     );
-    expect(rowLabel(row({ key: "other", name: null, kind: "other", id: null }), nl.rows)).toBe(
-      "Alles overig",
-    );
-    expect(rowLabel(row({ key: "uncategorised", name: null, kind: "other" }), en.rows)).toBe(
+    expect(
+      rowLabel(row({ key: "other", name: null, kind: "other", id: null }), nl.rows, "nl"),
+    ).toBe("Alles overig");
+    expect(rowLabel(row({ key: "uncategorised", name: null, kind: "other" }), en.rows, "en")).toBe(
       "Uncategorised",
     );
-    expect(rowLabel(row({ key: "income-other", name: null, kind: "other" }), nl.rows)).toBe(
+    expect(rowLabel(row({ key: "income-other", name: null, kind: "other" }), nl.rows, "nl")).toBe(
       "Overig inkomen",
     );
   });
@@ -268,5 +274,113 @@ describe("the grid rows", () => {
     expect(showYear("2026-11", 0)).toBe(true);
     expect(showYear("2026-12", 1)).toBe(false);
     expect(showYear("2027-01", 2)).toBe(true);
+  });
+});
+
+describe("tidy names", () => {
+  it("writes a fixed item's name the way a person would, and a category in the reader's language", () => {
+    const item = (name: string) => row({ key: "item-1", name, kind: "item", id: 1 });
+    expect(rowLabel(item("FBTO ZORGVERZEKERINGEN NV"), en.rows, "en")).toBe(
+      "FBTO Zorgverzekeringen",
+    );
+    expect(rowLabel(item("NETFLIX INTERNATIONAL B.V."), en.rows, "nl")).toBe(
+      "Netflix International",
+    );
+    expect(rowLabel(item("featurn B.V."), en.rows, "en")).toBe("featurn");
+    expect(rowLabel(row({ name: "Boodschappen" }), en.rows, "en")).toBe("Groceries");
+    expect(rowLabel(row({ name: "Boodschappen" }), nl.rows, "nl")).toBe("Boodschappen");
+  });
+});
+
+describe("quiet repetition", () => {
+  const amounts = (...xs: (number | [number, number])[]) =>
+    row({
+      cells: xs.map((x, i) =>
+        Array.isArray(x)
+          ? cell({ month: `m${i}`, amount: x[0], typed: x[1], source: "typed" })
+          : cell({ month: `m${i}`, amount: x }),
+      ),
+    });
+
+  it("the first month and every change are in full ink, a repeat is quiet", () => {
+    const r = amounts(100, 100, 100, 150, 150, 100);
+    expect(r.cells.map((_, i) => isQuiet(r, i))).toEqual([false, true, true, false, true, false]);
+  });
+
+  it("a typed cell is never quiet, and neither is the cell right after it", () => {
+    const r = amounts(100, [100, 100], 100);
+    expect(r.cells.map((_, i) => isQuiet(r, i))).toEqual([false, false, false]);
+  });
+
+  it("knows a cell with nothing in it", () => {
+    expect(isNone(cell({ amount: 0 }))).toBe(true);
+    expect(isNone(cell({ amount: 0, typed: 0 }))).toBe(false);
+    expect(isNone(cell())).toBe(false);
+  });
+});
+
+describe("section totals", () => {
+  it("adds the rows month by month, counting a month a row has no cell for as nothing", () => {
+    const a = row({
+      cells: [cell({ month: "2026-11", amount: 100 }), cell({ month: "2026-12", amount: 5 })],
+    });
+    const b = row({ cells: [cell({ month: "2026-11", amount: 20 })] });
+    expect(sectionTotals([a, b], ["2026-11", "2026-12"])).toEqual([120, 5]);
+    expect(sectionTotals([], ["2026-11"])).toEqual([0]);
+  });
+});
+
+describe("adding a row", () => {
+  it("starts on the 25th for income and the 1st for a cost, from the month after this one", () => {
+    const p = plan();
+    expect(addDefaults(p, "income")).toEqual({ day: 25, from: "2026-12" });
+    expect(addDefaults(p, "expense")).toEqual({ day: 1, from: "2026-12" });
+    expect(addDefaults({ ...p, months: ["2026-11"] }, "expense").from).toBe("2026-11");
+  });
+
+  it("offers 'until' from the start month on", () => {
+    const p = { ...plan(), months: ["2026-11", "2026-12", "2027-01"] };
+    expect(untilChoices(p, "2026-12")).toEqual(["2026-12", "2027-01"]);
+  });
+
+  const base = {
+    kind: "income" as const,
+    name: " featurn ",
+    amount: "1.100",
+    day: "25",
+    from: "2027-03",
+    until: null,
+  };
+
+  it("builds the body of POST /api/recurring: first day of the month, last day of the until month", () => {
+    const r = newItemBody({ ...base, amount: "1100,50", until: "2027-04" });
+    expect(r).toEqual({
+      ok: true,
+      body: {
+        name: "featurn",
+        type: "income",
+        expectedAmount: 110050,
+        dayOfMonth: 25,
+        frequency: "monthly",
+        matchCounterparty: "featurn",
+        categoryId: null,
+        startDate: "2027-03-01",
+        endDate: "2027-04-30",
+        tolerance: 11005,
+      },
+    });
+    const open = newItemBody({ ...base, amount: "1100", kind: "expense" });
+    expect(open).toMatchObject({ ok: true, body: { type: "expense", endDate: null } });
+    expect(newItemBody({ ...base, amount: "1100", until: "2028-02" })).toMatchObject({
+      body: { endDate: "2028-02-29" },
+    });
+  });
+
+  it("refuses an empty name, an amount that is not above zero and a day outside 1 to 31", () => {
+    expect(newItemBody({ ...base, name: "  ", amount: "5" })).toEqual({ ok: false, error: "name" });
+    expect(newItemBody({ ...base, amount: "0" })).toEqual({ ok: false, error: "amount" });
+    expect(newItemBody({ ...base, amount: "abc" })).toEqual({ ok: false, error: "amount" });
+    expect(newItemBody({ ...base, amount: "5", day: "32" })).toEqual({ ok: false, error: "day" });
+    expect(newItemBody({ ...base, amount: "5", day: "1.5" })).toEqual({ ok: false, error: "day" });
   });
 });
