@@ -12,7 +12,7 @@ import {
   cellAriaLabel,
   cellState,
   hasDot,
-  isNone,
+  showsDash,
   isQuiet,
   monthWord,
   pickMonth,
@@ -146,7 +146,7 @@ interface ViewProps {
 
 /** The amount, with its dot (typed, planned), its "=" (follows other numbers) or a dash (nothing). */
 function Amount({ state, cell, f }: { state: CellState; cell: PlanCell; f: Formatter }) {
-  if (state === "none" || (isNone(cell) && state === "suggestion")) return <>–</>;
+  if (state === "none" || showsDash(cell, state)) return <>–</>;
   return (
     <>
       {hasDot(state) && (
@@ -387,7 +387,7 @@ function GridCell({
     f.euro(cell.amount),
     state,
   );
-  const look = `${LOOK[state]} ${isNone(cell) && state === "suggestion" ? "not-italic text-ink-muted" : ink(state, quiet)}`;
+  const look = `${LOOK[state]} ${showsDash(cell, state) ? "not-italic text-ink-muted" : ink(state, quiet)}`;
   return (
     <td className="p-0.5 text-right">
       {canEdit(row, cell) ? (
@@ -563,7 +563,7 @@ function PhoneRow({
       : state === "planned"
         ? "text-[var(--chip-lavender-ink)]"
         : "";
-  const dash = isNone(cell) && state === "suggestion";
+  const dash = showsDash(cell, state);
   const amountLook = `${state === "typed" || state === "planned" ? "font-bold" : ""} ${
     state === "suggestion" && !dash ? "italic" : ""
   } ${state === "computed" || state === "none" || dash ? "text-ink-muted" : ink(state, quiet)}`;

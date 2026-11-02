@@ -33,10 +33,21 @@ export const isTypable = (
 ): row is PlanRow & { kind: "category" | "item"; id: number } =>
   (row.kind === "category" || row.kind === "item") && row.id !== null;
 
+/**
+ * A typed amount that is the same as the suggestion changes nothing (for example a €0 typed for a category you do not
+ * spend on). It is kept, and can be reset, but it is not shown as typed: a wall of highlighted cells would hide the few
+ * that matter.
+ */
+export const typedChangesNothing = (cell: PlanCell) =>
+  cell.typed !== null && cell.typed === cell.suggestion;
+
 export function cellState(row: PlanRow, cell: PlanCell): CellState {
   if (cell.source === "computed" || !isTypable(row)) return "computed";
   if (!cell.editable) return cell.amount === 0 && cell.typed === null ? "none" : "locked";
-  if (cell.source === "typed") return row.kind === "item" ? "planned" : "typed";
+  if (cell.source === "typed") {
+    if (typedChangesNothing(cell)) return "suggestion";
+    return row.kind === "item" ? "planned" : "typed";
+  }
   return cell.source === "item" ? "fixed" : "suggestion";
 }
 
@@ -214,11 +225,16 @@ export function isQuiet(row: PlanRow, index: number): boolean {
   const cell = row.cells[index];
   const before = row.cells[index - 1];
   if (!cell || !before) return false;
-  return cell.typed === null && before.typed === null && cell.amount === before.amount;
+  const typed = (c: PlanCell) => c.typed !== null && !typedChangesNothing(c);
+  return !typed(cell) && !typed(before) && cell.amount === before.amount;
 }
 
 /** Nothing to show for the cell (it is shown as a dash). */
 export const isNone = (cell: PlanCell) => cell.amount === 0 && cell.typed === null;
+
+/** A quiet cell worth nothing is a dash, also when a zero was typed over a zero. */
+export const showsDash = (cell: PlanCell, state: CellState) =>
+  state === "suggestion" && cell.amount === 0;
 
 /** One total per month for the rows of a section (what the footer adds up). */
 export function sectionTotals(rows: PlanRow[], months: string[]): number[] {

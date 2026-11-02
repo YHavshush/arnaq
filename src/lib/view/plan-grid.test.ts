@@ -6,6 +6,8 @@ import {
   DEFAULT_SCOPE,
   addDefaults,
   isNone,
+  showsDash,
+  typedChangesNothing,
   isQuiet,
   newItemBody,
   sectionTotals,
@@ -382,5 +384,19 @@ describe("adding a row", () => {
     expect(newItemBody({ ...base, amount: "abc" })).toEqual({ ok: false, error: "amount" });
     expect(newItemBody({ ...base, amount: "5", day: "32" })).toEqual({ ok: false, error: "day" });
     expect(newItemBody({ ...base, amount: "5", day: "1.5" })).toEqual({ ok: false, error: "day" });
+  });
+});
+
+describe("a typed amount that changes nothing", () => {
+  it("is kept but looks like a suggestion, so a wall of typed zeros does not shout", () => {
+    const zero = cell({ source: "typed", typed: 0, suggestion: 0, amount: 0 });
+    expect(typedChangesNothing(zero)).toBe(true);
+    expect(cellState(row(), zero)).toBe("suggestion");
+    expect(showsDash(zero, "suggestion")).toBe(true);
+    // A typed amount that differs from the suggestion is still typed.
+    const real = cell({ source: "typed", typed: 0, suggestion: 40000, amount: 0 });
+    expect(typedChangesNothing(real)).toBe(false);
+    expect(cellState(row(), real)).toBe("typed");
+    expect(showsDash(real, "typed")).toBe(false);
   });
 });
