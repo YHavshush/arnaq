@@ -49,7 +49,10 @@ export const ui = {
   netWorth: {
     where: "Where your money is",
     now: "now",
+    title: "Net worth now",
     savingsName: "Savings",
+    btwOwed: "BTW still owed",
+    btwSpare: "BTW set aside, spare",
   },
   category: {
     back: "Today",
@@ -178,14 +181,9 @@ export const ui = {
       saved: "Saved",
       errAmount: "Enter an amount, for example 1500 or 1500.50.",
     },
+    basedOn: "Based on:",
     basisLabel: "What the coming months are based on",
     basis: { averages: "Averages", budget: "Budget", own: "My own" },
-    basisNote: {
-      averages: "The coming months use what you spent on average over the last months.",
-      budget:
-        "The coming months use your budgets where you set one, and your averages for the rest.",
-      own: "The coming months use the amount you type for everyday spending, plus your fixed items.",
-    },
     growthPill: (amount: string, months: number) => `${amount} over ${months} months`,
     progressWorth: "Net worth over time",
     needIncomeTitle: "Add your income to see where you're heading",
@@ -210,16 +208,12 @@ export const ui = {
     kindShort: { actual: "actual", "no-data": "no upload", mixed: "partial", forecast: "forecast" },
     viewTotal: "Total",
     viewBalance: "Net worth",
-    legendHelpBalance:
-      "Above each point is your net worth at the end of that month, below it the growth of that month. Tap a month for details.",
     viewMonthly: "Per month",
     viewLabel: "Chart view",
     allMonths: "All months",
     inOut: (income: string, expenses: string) => `in ${income} · out ${expenses}`,
     legendActual: "actual",
     legendForecast: "forecast",
-    legendHelp:
-      "Above each point is your total, below it the growth of that month. Tap a month for details.",
     income: "Income",
     expenses: "Expenses",
     expectedIncome: "Expected income",

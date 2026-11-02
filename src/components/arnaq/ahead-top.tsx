@@ -29,8 +29,8 @@ export function AheadTop({
   caption: string;
   /** How far it moves, with its tone; left out when there is nothing honest to say. */
   pill?: { text: string; good: boolean };
-  /** One line that says what the arc means. */
-  ringNote: string;
+  /** One line that says what the arc means; left out when the pill says it. */
+  ringNote?: string;
   sentence: Sentence;
   detail?: string | null;
   children?: ReactNode;
@@ -58,7 +58,7 @@ export function AheadTop({
               {pill.text}
             </span>
           )}
-          <span className="text-ink-muted text-[13px]">{ringNote}</span>
+          {ringNote ? <span className="text-ink-muted text-[13px]">{ringNote}</span> : null}
         </div>
         {detail ? <p className="text-ink-muted text-[15px] leading-snug">{detail}</p> : null}
         {children}

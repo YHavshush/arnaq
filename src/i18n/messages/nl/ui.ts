@@ -49,7 +49,10 @@ export const ui: typeof en = {
   netWorth: {
     where: "Waar je geld staat",
     now: "nu",
+    title: "Vermogen nu",
     savingsName: "Sparen",
+    btwOwed: "Btw die je nog moet betalen",
+    btwSpare: "Btw opzij gezet, over",
   },
   category: {
     back: "Vandaag",
@@ -178,14 +181,9 @@ export const ui: typeof en = {
       saved: "Opgeslagen",
       errAmount: "Vul een bedrag in, bijvoorbeeld 1500 of 1500,50.",
     },
+    basedOn: "Gebaseerd op:",
     basisLabel: "Waar de komende maanden op gebaseerd zijn",
     basis: { averages: "Gemiddelden", budget: "Budget", own: "Eigen bedrag" },
-    basisNote: {
-      averages: "De komende maanden gebruiken wat je de afgelopen maanden gemiddeld uitgaf.",
-      budget:
-        "De komende maanden gebruiken je budgetten waar je er een hebt, en je gemiddelden voor de rest.",
-      own: "De komende maanden gebruiken het bedrag dat je invult voor dagelijkse uitgaven, plus je vaste posten.",
-    },
     growthPill: (amount: string, months: number) => `${amount} in ${months} maanden`,
     captionWorth: (label: string) => `vermogen in ${label}`,
     progressWorth: "Vermogen over tijd",
@@ -216,16 +214,12 @@ export const ui: typeof en = {
     },
     viewTotal: "Totaal",
     viewBalance: "Vermogen",
-    legendHelpBalance:
-      "Boven elk punt staat je vermogen aan het eind van die maand, eronder de groei van die maand. Tik op een maand voor details.",
     viewMonthly: "Per maand",
     viewLabel: "Weergave van de grafiek",
     allMonths: "Alle maanden",
     inOut: (income: string, expenses: string) => `in ${income} · uit ${expenses}`,
     legendActual: "werkelijk",
     legendForecast: "voorspeld",
-    legendHelp:
-      "Boven elk punt staat je totaal, eronder de groei van die maand. Tik op een maand voor details.",
     income: "Inkomen",
     expenses: "Uitgaven",
     expectedIncome: "Verwacht inkomen",

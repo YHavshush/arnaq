@@ -194,7 +194,7 @@ export const view: typeof en = {
     detailDown: (amount: string, month: string, plus: number, total: number) =>
       `Je geld krimpt in totaal met ${amount} tot en met ${month}. ${plus} van ${total} maanden sluit je in de plus.`,
     noteBalance:
-      "Je vermogen telt de rekeningen die je hebt geüpload en je spaargeld op; geld dat je niet hebt geüpload zit er niet in. Geld dat voor de BTW opzij staat telt niet mee: dat ben je verschuldigd.",
+      "Je vermogen telt de rekeningen die je hebt geüpload en je spaargeld op; geld dat je niet hebt geüpload zit er niet in. Het geld dat je voor de BTW opzij zet telt mee, en de BTW die je nog moet betalen gaat eraf.",
     noteEstimate:
       "Voorspelde maanden zijn een schatting: vaste lasten en inkomen zoals je ze hebt ingesteld, plus je gemiddelde gewone uitgaven.",
     noteMissed: (name: string, date: string) =>

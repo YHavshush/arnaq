@@ -197,7 +197,7 @@ export const view = {
     detailDown: (amount: string, month: string, plus: number, total: number) =>
       `In total your money shrinks by ${amount} through ${month}. ${plus} of ${total} months end in the plus.`,
     noteBalance:
-      "Net worth adds up the accounts you uploaded and your savings; money you have not uploaded is not in it. Money set aside for the BTW is not counted: it is owed.",
+      "Net worth adds up the accounts you uploaded and your savings; money you have not uploaded is not in it. The money you set aside for the BTW counts, and the BTW you still owe is taken off.",
     noteEstimate:
       "Forecast months are an estimate: fixed costs and income as you set them up, plus your average everyday spending.",
     noteMissed: (name: string, date: string) =>

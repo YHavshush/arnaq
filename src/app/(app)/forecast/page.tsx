@@ -5,7 +5,7 @@ import { BtwCard } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
 import { AheadTop } from "@/components/arnaq/ahead-top";
 import { OwnSpendingForm } from "@/components/arnaq/own-spending";
-import { WorthBar } from "@/components/arnaq/worth-bar";
+import { NetWorthCard } from "@/components/arnaq/net-worth-card";
 import { getOwnSpending } from "@/lib/forecast/own";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
@@ -84,15 +84,17 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
               }
             : undefined
         }
-        ringNote={t.ui.forecast.ring(p.inThePlus, p.ahead)}
         sentence={p.sentence}
       >
         {worth.hasAny && !p.incomeMissing && (
-          <WorthBar
+          <NetWorthCard
+            title={t.ui.netWorth.title}
+            total={worth.total}
             parts={parts}
-            label={t.ui.netWorth.where}
-            total={f.euro(worth.total)}
-            totalLabel={t.ui.netWorth.now}
+            btw={{
+              label: worth.btw.net < 0 ? t.ui.netWorth.btwOwed : t.ui.netWorth.btwSpare,
+              amount: worth.btw.net,
+            }}
             format={f.euro}
           />
         )}
@@ -111,18 +113,6 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         title={p.hasBalance ? t.ui.forecast.progressWorth : t.ui.forecast.progress}
         aside={
           <span className="flex flex-wrap items-center justify-end gap-2">
-            <nav aria-label={t.ui.forecast.basisLabel} className="liquid seg">
-              {(["averages", "budget", "own"] as const).map((b) => (
-                <StepLink
-                  key={b}
-                  href={`/forecast?months=${months}&basis=${b}`}
-                  current={b === basis}
-                  className="seg-item inline-flex min-h-9 items-center justify-center px-3 text-sm font-semibold"
-                >
-                  {t.ui.forecast.basis[b]}
-                </StepLink>
-              ))}
-            </nav>
             <nav aria-label={t.ui.forecast.horizon} className="liquid seg">
               {HORIZONS.map((h) => (
                 <StepLink
@@ -145,12 +135,29 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </div>
         ) : (
           <div className="glass p-3">
-            <p className="text-ink-muted px-2 pb-2 text-[13px]">{t.ui.forecast.basisNote[basis]}</p>
             {basis === "own" && <OwnSpendingForm amount={own} />}
             <PrognoseChart
               points={p.points}
               currentMonth={today.slice(0, 7)}
               balance={p.hasBalance}
+              basisControl={
+                <nav
+                  aria-label={t.ui.forecast.basisLabel}
+                  className="flex flex-wrap items-center gap-x-1"
+                >
+                  <span>{t.ui.forecast.basedOn}</span>
+                  {(["averages", "budget", "own"] as const).map((b) => (
+                    <StepLink
+                      key={b}
+                      href={`/forecast?months=${months}&basis=${b}`}
+                      current={b === basis}
+                      className={`inline-flex min-h-9 items-center rounded-full px-2.5 font-semibold ${b === basis ? "text-ink bg-black/5 dark:bg-white/10" : ""}`}
+                    >
+                      {t.ui.forecast.basis[b]}
+                    </StepLink>
+                  ))}
+                </nav>
+              }
             />
           </div>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/i18n/client";
 import { formatter } from "@/lib/view/format";
 import type { PrognosePoint } from "@/lib/view/prognose";
@@ -69,9 +69,12 @@ export function PrognoseChart({
   points,
   currentMonth,
   balance = false,
+  basisControl,
 }: {
   points: PrognosePoint[];
   currentMonth: string;
+  /** What the forecast is based on, as a small choice at the bottom of the card (left of the legend). */
+  basisControl?: ReactNode;
   /** The values are the person's real balance (the bank's figures), not growth since the first month. */
   balance?: boolean;
 }) {
@@ -341,21 +344,23 @@ export function PrognoseChart({
         })}
       </svg>
 
-      <p className="text-ink-muted px-2 pb-2 text-[13px]">
-        <span
-          aria-hidden
-          className="mr-1 inline-block h-0.5 w-5 align-middle"
-          style={{ background: "var(--mark)" }}
-        />{" "}
-        {t.ui.chart.legendActual}
-        <span
-          aria-hidden
-          className="mr-1 ml-4 inline-block h-0.5 w-5 border-t-2 border-dashed align-middle"
-          style={{ borderColor: "var(--mark)" }}
-        />
-        {t.ui.chart.legendForecast}.{" "}
-        {balance ? t.ui.chart.legendHelpBalance : t.ui.chart.legendHelp}
-      </p>
+      <div className="text-ink-muted flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-2 pb-2 text-[13px]">
+        <span>
+          <span
+            aria-hidden
+            className="mr-1 inline-block h-0.5 w-5 align-middle"
+            style={{ background: "var(--mark)" }}
+          />{" "}
+          {t.ui.chart.legendActual}
+          <span
+            aria-hidden
+            className="mr-1 ml-4 inline-block h-0.5 w-5 border-t-2 border-dashed align-middle"
+            style={{ borderColor: "var(--mark)" }}
+          />
+          {t.ui.chart.legendForecast}
+        </span>
+        {basisControl}
+      </div>
 
       <div className="border-hair mx-2 mb-3 grid gap-1 border-t pt-4" aria-live="polite">
         <div className="flex items-baseline justify-between gap-3">
