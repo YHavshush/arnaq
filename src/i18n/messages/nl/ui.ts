@@ -184,6 +184,7 @@ export const ui: typeof en = {
     basedOn: "Gebaseerd op:",
     basisLabel: "Waar de komende maanden op gebaseerd zijn",
     basis: { averages: "Gemiddelden", budget: "Budget", own: "Eigen bedrag" },
+    dipPill: (n: number) => (n === 1 ? "1 maand onder €0" : `${n} maanden onder €0`),
     growthPill: (amount: string, months: number) => `${amount} in ${months} maanden`,
     captionWorth: (label: string) => `vermogen in ${label}`,
     progressWorth: "Vermogen over tijd",
@@ -225,6 +226,9 @@ export const ui: typeof en = {
     expectedIncome: "Verwacht inkomen",
     expectedExpenses: "Verwachte uitgaven",
     growth: "Groei",
+    lowest: (amount: string, day: string) =>
+      `Laagste punt ${amount} op ${day}. Rabobank en Revolut samen, spaargeld niet meegeteld.`,
+    lowShort: (amount: string) => `laag ${amount}`,
     table: { caption: "Prognose per maand", month: "Maand", total: "Totaal", growth: "Groei" },
     parts: {
       total: "Totaal",

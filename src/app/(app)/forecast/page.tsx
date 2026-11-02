@@ -77,12 +77,14 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
               : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
         }
         pill={
-          p.netWorth && !p.incomeMissing
-            ? {
-                text: t.ui.forecast.growthPill(f.euroSigned(p.growth), months),
-                good: p.growth >= 0,
-              }
-            : undefined
+          p.dipMonths > 0 && !p.incomeMissing
+            ? { text: t.ui.forecast.dipPill(p.dipMonths), good: false }
+            : p.netWorth && !p.incomeMissing
+              ? {
+                  text: t.ui.forecast.growthPill(f.euroSigned(p.growth), months),
+                  good: p.growth >= 0,
+                }
+              : undefined
         }
         sentence={p.sentence}
       >

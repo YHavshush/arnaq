@@ -14,7 +14,7 @@ type Open = "income" | "expenses" | null;
  */
 export function MonthDetail({ point }: { point: PrognosePoint }) {
   const { locale, t } = useI18n();
-  const { euro, euroSigned } = formatter(locale);
+  const { euro, euroSigned, dayLabel } = formatter(locale);
   const [open, setOpen] = useState<Open>(null);
   const panel = useId();
   const tile = (which: Exclude<Open, null>, label: string, value: string) => (
@@ -55,6 +55,17 @@ export function MonthDetail({ point }: { point: PrognosePoint }) {
           </span>
         </div>
       </div>
+      {point.low !== null && point.low.amount < 0 && (
+        <p
+          className="text-bad flex items-start gap-2 rounded-2xl px-3.5 py-2.5 text-[13px] leading-snug"
+          style={{ background: "color-mix(in oklab, currentColor 11%, transparent)" }}
+        >
+          <i aria-hidden className="mt-1.5 block size-2 flex-none rounded-full bg-current" />
+          <span className="text-ink">
+            {t.ui.chart.lowest(euro(point.low.amount), dayLabel(point.low.date))}
+          </span>
+        </p>
+      )}
       <div id={panel}>
         {open && (
           <PartsList

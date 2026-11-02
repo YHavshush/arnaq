@@ -7,10 +7,13 @@ import type { PrognosePoint } from "@/lib/view/prognose";
 import { MonthDetail } from "./month-detail";
 
 const H = 300;
+/** The extra room under the growth row for the lowest-point mark (only when a month dips below zero). */
+const LOW_ROW = 22;
 const PAD = { l: 24, r: 24, t: 46 };
 const PLOT_BOTTOM = H - 64;
 const MONTH_Y = H - 40;
 const DELTA_Y = H - 18;
+const LOW_Y = H + 4;
 
 type View = "total" | "monthly";
 
@@ -111,6 +114,8 @@ export function PrognoseChart({
   const firstProjected = points.findIndex((p) => p.projected);
   const solidTo = firstProjected === -1 ? n - 1 : Math.max(firstProjected - 1, 0);
 
+  const dips = view === "total" && points.some((p) => p.low !== null && p.low.amount < 0);
+  const height = H + (dips ? LOW_ROW : 0);
   const pts: Pt[] = points.map((p, i) => ({ x: x(i), y: y(p.cumulative) }));
   const slopes = tangents(pts);
   const tone = (v: number) => (v > 0 ? "var(--good)" : v < 0 ? "var(--bad)" : "var(--ink-muted)");
@@ -140,9 +145,9 @@ export function PrognoseChart({
       </div>
 
       <svg
-        viewBox={`0 0 ${W} ${H}`}
+        viewBox={`0 0 ${W} ${height}`}
         width={W}
-        height={H}
+        height={height}
         className="block h-auto w-full overflow-visible"
         role="group"
         aria-label={t.ui.chart.aria}
@@ -160,7 +165,7 @@ export function PrognoseChart({
             x={x(points.indexOf(selected)) - bandW / 2}
             y={6}
             width={bandW}
-            height={H - 10}
+            height={height - 10}
             rx={16}
             style={{ fill: "var(--track)" }}
           />
@@ -242,14 +247,14 @@ export function PrognoseChart({
                 x={x(i) - step / 2}
                 y={0}
                 width={Math.max(step, 28)}
-                height={H}
+                height={height}
                 fill="transparent"
               />
               <rect
                 x={x(i) - bandW / 2}
                 y={6}
                 width={bandW}
-                height={H - 10}
+                height={height - 10}
                 rx={16}
                 fill="none"
                 strokeWidth="2"
@@ -323,6 +328,24 @@ export function PrognoseChart({
                       className="num"
                     >
                       {delta(p.net)}
+                    </text>
+                  )}
+                </>
+              )}
+              {view === "total" && p.low !== null && p.low.amount < 0 && (
+                <>
+                  <circle cx={x(i)} cy={LOW_Y} r={3.5} style={{ fill: "var(--bad)" }} />
+                  {showValues && (isSel || step >= 76) && (
+                    <text
+                      x={i === n - 1 ? x(i) + 12 : i === 0 ? x(i) - 12 : x(i)}
+                      y={LOW_Y + 16}
+                      textAnchor={i === n - 1 ? "end" : i === 0 ? "start" : "middle"}
+                      fontSize="11"
+                      fontWeight={700}
+                      style={{ fill: "var(--bad)" }}
+                      className="num"
+                    >
+                      {t.ui.chart.lowShort(euro(p.low.amount))}
                     </text>
                   )}
                 </>

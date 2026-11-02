@@ -184,6 +184,7 @@ export const ui = {
     basedOn: "Based on:",
     basisLabel: "What the coming months are based on",
     basis: { averages: "Averages", budget: "Budget", own: "My own" },
+    dipPill: (n: number) => (n === 1 ? "1 month dips below €0" : `${n} months dip below €0`),
     growthPill: (amount: string, months: number) => `${amount} over ${months} months`,
     progressWorth: "Net worth over time",
     needIncomeTitle: "Add your income to see where you're heading",
@@ -219,6 +220,9 @@ export const ui = {
     expectedIncome: "Expected income",
     expectedExpenses: "Expected expenses",
     growth: "Growth",
+    lowest: (amount: string, day: string) =>
+      `Lowest point ${amount} on ${day}. Rabobank and Revolut together, savings left out.`,
+    lowShort: (amount: string) => `low ${amount}`,
     table: { caption: "Forecast per month", month: "Month", total: "Total", growth: "Growth" },
     /** The parts under a month's Income and Expenses tiles. */
     parts: {
