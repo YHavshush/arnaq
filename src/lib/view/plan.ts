@@ -80,7 +80,7 @@ export interface PlanFooter {
   growth: number;
   /** Net worth at the end of the month: the Ahead line. */
   netWorth: number;
-  /** The month's lowest end-of-day checking balance, as the forecast simulates it; null when unknown. */
+  /** The month's lowest end-of-day net worth (savings counted), as the Ahead chart marks it; null when unknown. */
   low: { amount: number; date: string } | null;
 }
 
@@ -302,7 +302,7 @@ export async function loadPlan(
         expenses: m.expenses,
         growth: m.net,
         netWorth: point.cumulative,
-        low: m.low,
+        low: point.low,
       };
     }),
   };
