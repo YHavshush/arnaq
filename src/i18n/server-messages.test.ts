@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { createDb } from "@/db";
 import { importStatement } from "@/lib/import/service";
+import { setPlanOverride } from "@/lib/plan/overrides";
 import { createRecurringItem } from "@/lib/recurring/items";
+import { loadPlan } from "@/lib/view/plan";
 import { localizeMessage } from "./server-messages";
 
 describe("localizeMessage", () => {
@@ -44,6 +46,12 @@ describe("localizeMessage", () => {
       "De begindatum moet tussen 1990-01-01 en 2100-12-31 liggen.",
     ],
     ["At most 500 recurring items are supported.", "Er kunnen maximaal 500 vaste posten zijn."],
+    [
+      "A month that has passed cannot be planned.",
+      "Een maand die voorbij is kun je niet meer plannen.",
+    ],
+    ["The plan goes up to 24 months ahead.", "Het plan gaat tot 24 maanden vooruit."],
+    ["Unknown fixed item.", "Deze vaste post bestaat niet."],
     ["File too large (max 4 MB).", "Dit bestand is te groot (maximaal 4 MB)."],
     [
       "The savings goal must be a positive amount.",
@@ -93,6 +101,19 @@ describe("localizeMessage", () => {
           { today: "2026-10-12" },
         ),
       ),
+      // the plan grid
+      await thrown(() => loadPlan(db, "2026-10-12", { months: 0, basis: "budget" })),
+      ...(await Promise.all(
+        [
+          { kind: "tax", id: 1, month: "2026-10", amount: 1, scope: "month" },
+          { kind: "category", id: 1, month: "2026-10", amount: 1, scope: "forever" },
+          { kind: "category", id: 1, month: "2026-10", amount: -5, scope: "month" },
+          { kind: "category", id: 1, month: "2026-09", amount: 1, scope: "month" },
+          { kind: "category", id: 1, month: "2030-09", amount: 1, scope: "month" },
+          { kind: "category", id: 99999, month: "2026-10", amount: 1, scope: "month" },
+          { kind: "item", id: 99999, month: "2026-10", amount: 1, scope: "month" },
+        ].map((input) => thrown(() => setPlanOverride(db, input, "2026-10-12"))),
+      )),
     ];
     for (const m of messages) expect(localizeMessage(m, "nl"), m).not.toBe(m);
   });

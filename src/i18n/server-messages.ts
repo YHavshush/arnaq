@@ -211,6 +211,37 @@ const NL: Rule[] = [
   ],
   [/^There is no such suggestion \(any more\)\.$/, () => "Deze suggestie bestaat niet (meer)."],
   [/^Suggestion key is required\.$/, () => "De suggestie is onvolledig."],
+  // the plan grid
+  [
+    /^Only a category or a fixed item can be typed in the plan\.$/,
+    () => "In het plan kun je alleen een categorie of een vaste post invullen.",
+  ],
+  [
+    /^The scope must be "month" or "after"\.$/,
+    () => "Kies alleen deze maand, of deze en de maanden erna.",
+  ],
+  [
+    /^The amount must be a whole number of cents, zero or more\.$/,
+    () => "Het bedrag moet nul of meer zijn.",
+  ],
+  [
+    /^A month that has passed cannot be planned\.$/,
+    () => "Een maand die voorbij is kun je niet meer plannen.",
+  ],
+  [
+    /^The plan goes up to (\d+) months ahead\.$/,
+    (m) => `Het plan gaat tot ${m[1]} maanden vooruit.`,
+  ],
+  [/^Unknown category\.$/, () => "Deze categorie bestaat niet."],
+  [/^Unknown fixed item\.$/, () => "Deze vaste post bestaat niet."],
+  [
+    /^months must be a whole number from 1 to (\d+)\.$/,
+    (m) => `Het aantal maanden moet een heel getal van 1 tot ${m[1]} zijn.`,
+  ],
+  [
+    /^The basis must be "averages", "budget" or "own"\.$/,
+    () => "Kies gemiddelden, budget of eigen bedrag als basis.",
+  ],
 ];
 
 /** The message in the reader's language; English (as thrown) when there is no translation. */
