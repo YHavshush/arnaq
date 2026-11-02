@@ -37,6 +37,7 @@ function month(over: Partial<ForecastMonth>): ForecastMonth {
     variable: 0,
     categories: [],
     budget: { total: null, isExplicit: false, difference: null },
+    low: null,
     ...over,
   };
 }
