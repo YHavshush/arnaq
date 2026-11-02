@@ -51,4 +51,56 @@ describe("loadNetWorth", () => {
     const w = await loadNetWorth(db, "2026-10-31");
     expect(w).toMatchObject({ accounts: [], total: 0, hasAny: false });
   });
+
+  describe("BTW in net worth", () => {
+    async function world() {
+      const w = await setup();
+      const savings = await w.cat("Spaarrekening");
+      const taxes = await w.cat("Belastingen");
+      // The account's balance after the newest row: 1,000.00.
+      await w.tx("2026-07-01", 100000, { balanceAfter: 100000 });
+      const pocket = (date: string, amount: number) =>
+        w.tx(date, amount, {
+          counterparty: "To EUR BTW",
+          categoryId: savings,
+          isInternalTransfer: true,
+        });
+      return { ...w, pocket, taxes };
+    }
+
+    it("takes off the BTW still owed and adds what is in the pocket: money not yet paid to the tax office is not yours", async () => {
+      const w = await world();
+      await w.tx("2026-08-01", 200000, { counterparty: "Featurn B.V." });
+      await w.pocket("2026-08-05", -10000);
+      const n = await loadNetWorth(w.db, "2026-10-20");
+      // Owed: 200000 x 21 / 121 = 34711. In the pocket: 10000.
+      expect(n.btw).toEqual({ owed: 34711, pocket: 10000, paid: false, net: 10000 - 34711 });
+      expect(n.total).toBe(n.accountsTotal + n.savings.saved + 10000 - 34711);
+    });
+
+    it("counts a spare pocket as money once nothing is owed", async () => {
+      const w = await world();
+      await w.pocket("2026-08-05", -50000);
+      const n = await loadNetWorth(w.db, "2026-10-20");
+      expect(n.btw).toMatchObject({ owed: 0, pocket: 50000, net: 50000 });
+      expect(n.total).toBe(n.accountsTotal + n.savings.saved + 50000);
+    });
+
+    it("owes nothing for a quarter that is paid, whatever the pocket says", async () => {
+      const w = await world();
+      await w.tx("2026-08-01", 200000, { counterparty: "Featurn B.V." });
+      await w.pocket("2026-08-05", -34711);
+      await w.tx("2026-10-25", -34711, { counterparty: "Belastingdienst", categoryId: w.taxes });
+      const n = await loadNetWorth(w.db, "2026-10-26");
+      expect(n.btw.paid).toBe(true);
+      expect(n.btw.net).toBe(n.btw.pocket);
+    });
+
+    it("changes nothing for someone without BTW data", async () => {
+      const w = await world();
+      const n = await loadNetWorth(w.db, "2026-10-20");
+      expect(n.btw).toEqual({ owed: 0, pocket: 0, paid: false, net: 0 });
+      expect(n.total).toBe(n.accountsTotal + n.savings.saved);
+    });
+  });
 });

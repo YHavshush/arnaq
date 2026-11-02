@@ -233,6 +233,7 @@ export async function loadNetWorth(db: Db, today: string) {
     getBtwSummary(db, { today }),
   ]);
   const accountsTotal = accounts.reduce((s, a) => s + a.balance, 0);
+  const net = btw.pocket - (btw.paid ? 0 : btw.owed);
   const base = settings.anchor ?? settings.start;
   return {
     accounts,
@@ -249,7 +250,13 @@ export async function loadNetWorth(db: Db, today: string) {
     },
     /** Money in the BTW pocket: owed to the tax office, so it is not part of the total. */
     btwPocket: btw.pocket > 0 ? btw.pocket : 0,
-    total: accountsTotal + savings.saved,
+    /**
+     * BTW in net worth. The pocket is real money (it left the accounts, and savings leave it out on purpose), and the
+     * BTW inside what the client paid is not yours until it is paid to the tax office. `net` is the pocket minus
+     * what is still owed (nothing is owed once the quarter is paid): negative while the pocket is short.
+     */
+    btw: { owed: btw.owed, pocket: btw.pocket, paid: btw.paid !== null, net },
+    total: accountsTotal + savings.saved + net,
     hasAny: accounts.length > 0 || savings.anchored || savings.lines > 0 || savings.saved > 0,
   };
 }
