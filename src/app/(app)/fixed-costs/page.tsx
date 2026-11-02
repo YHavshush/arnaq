@@ -92,7 +92,7 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
               </div>
             )}
             <div
-              className={`min-w-0 ${v.flow ? "@min-[900px]/app:-mt-8" : "@min-[900px]/app:col-span-2 @min-[900px]/app:mx-auto @min-[900px]/app:w-full @min-[900px]/app:max-w-[40rem]"}`}
+              className={`min-w-0 ${v.flow ? "" : "@min-[900px]/app:col-span-2 @min-[900px]/app:mx-auto @min-[900px]/app:w-full @min-[900px]/app:max-w-[40rem]"}`}
             >
               {suggestions}
               <FixedList sections={sections} month={month} />

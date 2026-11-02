@@ -4,9 +4,7 @@ import { pageDb } from "@/lib/auth/request";
 import { BtwCard } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
 import { AheadTop } from "@/components/arnaq/ahead-top";
-import { OwnSpendingForm } from "@/components/arnaq/own-spending";
 import { NetWorthCard } from "@/components/arnaq/net-worth-card";
-import { getOwnSpending } from "@/lib/forecast/own";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
@@ -16,7 +14,7 @@ import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { getBtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
-import { HORIZONS, loadNetWorth, loadPrognose, parseBasis, parseHorizon } from "@/lib/view/load";
+import { HORIZONS, loadNetWorth, loadPrognose, parseHorizon } from "@/lib/view/load";
 import { netWorthParts } from "@/lib/view/net-worth-parts";
 
 export default function ForecastPage({ searchParams }: PageProps<"/forecast">) {
@@ -34,12 +32,10 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
   const today = todayIso();
   const query = await searchParams;
   const months = parseHorizon(query.months);
-  const basis = parseBasis(query.basis);
-  const { p, btw, worth, own } = await pageDb(async (db) => {
-    const own = await getOwnSpending(db);
+  const { p, btw, worth } = await pageDb(async (db) => {
     return {
-      own,
-      p: await loadPrognose(db, today, months, locale, basis, own),
+      // One way of working it out: the budget where you set one (carried forward), your average for the rest.
+      p: await loadPrognose(db, today, months, locale, "budget"),
       btw: await getBtwSummary(db, { today }),
       worth: await loadNetWorth(db, today),
     };
@@ -123,7 +119,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
               {HORIZONS.map((h) => (
                 <StepLink
                   key={h}
-                  href={`/forecast?months=${h}&basis=${basis}`}
+                  href={`/forecast?months=${h}`}
                   current={h === months}
                   className="seg-item inline-flex min-h-9 min-w-9 items-center justify-center px-2.5 text-sm font-semibold"
                 >
@@ -141,29 +137,10 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </div>
         ) : (
           <div className="glass p-3">
-            {basis === "own" && <OwnSpendingForm amount={own} />}
             <PrognoseChart
               points={p.points}
               currentMonth={today.slice(0, 7)}
               balance={p.hasBalance}
-              basisControl={
-                <nav
-                  aria-label={t.ui.forecast.basisLabel}
-                  className="flex flex-wrap items-center gap-x-1"
-                >
-                  <span>{t.ui.forecast.basedOn}</span>
-                  {(["averages", "budget", "own"] as const).map((b) => (
-                    <StepLink
-                      key={b}
-                      href={`/forecast?months=${months}&basis=${b}`}
-                      current={b === basis}
-                      className={`inline-flex min-h-9 items-center rounded-full px-2.5 font-semibold ${b === basis ? "text-ink bg-black/5 dark:bg-white/10" : ""}`}
-                    >
-                      {t.ui.forecast.basis[b]}
-                    </StepLink>
-                  ))}
-                </nav>
-              }
             />
           </div>
         )}
