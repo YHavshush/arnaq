@@ -49,7 +49,6 @@ export const ui: typeof en = {
   netWorth: {
     where: "Waar je geld staat",
     now: "nu",
-    title: "Vermogen nu",
     savingsName: "Sparen",
     btwOwed: "Btw die je nog moet betalen",
     btwSpare: "Btw opzij gezet, over",

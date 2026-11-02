@@ -4,7 +4,7 @@ import { pageDb } from "@/lib/auth/request";
 import { BtwCard } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
 import { AheadTop } from "@/components/arnaq/ahead-top";
-import { NetWorthCard } from "@/components/arnaq/net-worth-card";
+import { WorthBar } from "@/components/arnaq/worth-bar";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
@@ -40,7 +40,21 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
       worth: await loadNetWorth(db, today),
     };
   });
-  const parts = netWorthParts(worth, t.ui.netWorth.savingsName);
+  // The bar shows the money there is. The BTW (what is set aside minus what is still owed) takes money off, so it
+  // has no width: it is listed under the bar, and the total next to the bar already includes it.
+  const parts = [
+    ...netWorthParts(worth, t.ui.netWorth.savingsName),
+    ...(worth.btw.net !== 0
+      ? [
+          {
+            key: "btw",
+            name: worth.btw.net < 0 ? t.ui.netWorth.btwOwed : t.ui.netWorth.btwSpare,
+            amount: worth.btw.net,
+            share: 0,
+          },
+        ]
+      : []),
+  ];
 
   if (!p.hasForecast)
     return (
@@ -89,14 +103,11 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         sentence={p.sentence}
       >
         {worth.hasAny && !p.incomeMissing && (
-          <NetWorthCard
-            title={t.ui.netWorth.title}
-            total={worth.total}
+          <WorthBar
             parts={parts}
-            btw={{
-              label: worth.btw.net < 0 ? t.ui.netWorth.btwOwed : t.ui.netWorth.btwSpare,
-              amount: worth.btw.net,
-            }}
+            label={t.ui.netWorth.where}
+            total={f.euro(worth.total)}
+            totalLabel={t.ui.netWorth.now}
             format={f.euro}
           />
         )}

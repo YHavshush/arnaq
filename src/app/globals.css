@@ -324,7 +324,7 @@
   }
 }
 
-/* Waiting animations (the "loading family"): chase, swap and shimmer. They stand still when motion is reduced. */
+/* Waiting animations (the "loading family"): chase, breathe and shimmer. They stand still when motion is reduced. */
 @keyframes arnaq-chase {
   to {
     transform: rotate(360deg);
@@ -338,7 +338,30 @@
     background-position: 200px 0;
   }
 }
+@keyframes arnaq-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  40% {
+    transform: scale(1.09);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+}
 @media (prefers-reduced-motion: no-preference) {
+  .arnaq-breathe {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: arnaq-breathe 1.8s ease-in-out infinite;
+  }
+  .arnaq-breathe-late {
+    animation-delay: 0.35s;
+  }
   .arnaq-chase {
     transform-box: fill-box;
     transform-origin: center;

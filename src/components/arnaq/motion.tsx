@@ -6,7 +6,7 @@ import { LETTER_A, LETTER_Q } from "./logo";
 /**
  * The arnaq animations, all drawn from the logo's ring and stem.
  * - WordmarkReveal: the signature, "the turn": the icon's a and q roll apart and r, n, a are drawn between them.
- * - ChaseSpinner: quick waits. SwapLoader: waits with no known length. DoneRing: finished.
+ * - ChaseSpinner: quick waits. BreatheLoader: waits with no known length. DoneRing: finished.
  * Everything stands still (or shows the finished state) when the device asks for reduced motion.
  */
 const BLUE = { stroke: "var(--ring-accent-from)" } as const;
@@ -192,66 +192,19 @@ export function ChaseSpinner({ className = "size-5" }: { className?: string }) {
   );
 }
 
-/** Half the distance between the a and the q (the logo's units), and how far each dips below or rises above the middle. */
-const ORBIT_X = 32;
-const ORBIT_Y = 16;
-/** One loop: the a and q circle each other half a turn (they swap), rest, circle the other half (they swap back), rest. */
-const LOOP_MS = 3600;
-const easeInOut = (p: number) => (p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2);
-
-/** The angle of the pair at a moment in the loop: 0 to pi, rest, pi to 2 pi, rest. */
-export function swapAngle(ms: number): number {
-  const p = (ms % LOOP_MS) / LOOP_MS;
-  if (p < 0.08) return 0;
-  if (p < 0.46) return Math.PI * easeInOut((p - 0.08) / 0.38);
-  if (p < 0.58) return Math.PI;
-  if (p < 0.96) return Math.PI * (1 + easeInOut((p - 0.58) / 0.38));
-  return 2 * Math.PI;
-}
-
-/** Where the a and the q are (offset from home, logo units) at an angle, and which one is in front. */
-export function swapPose(theta: number) {
-  const dx = ORBIT_X - ORBIT_X * Math.cos(theta);
-  const dy = ORBIT_Y * Math.sin(theta);
-  return { a: { x: dx, y: dy }, q: { x: -dx, y: -dy }, aInFront: Math.sin(theta) > 0 };
-}
-
 /**
- * Longer waits with no known length: the a and q circle each other, swap places, and circle back, for ever. Both stay
- * upright. The one lower on the screen is in front, so each passes under the other once per loop. Centred on the pair,
- * with room for the whole orbit (nothing is cut off).
+ * Longer waits with no known length: the a and the q stay where they are and breathe, the a first and the q a moment
+ * later (see `.arnaq-breathe` in globals.css). Only size and opacity change, so it stays calm even when it plays for a
+ * moment, and it stands still when the device asks for less motion.
  */
-export function SwapLoader({ className = "w-[150px]" }: { className?: string }) {
-  const svg = useRef<SVGSVGElement>(null);
-  const a = useRef<SVGGElement>(null);
-  const q = useRef<SVGGElement>(null);
-  useLayoutEffect(() => {
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    let frame = 0;
-    const start = performance.now();
-    const draw = (now: number) => {
-      const pose = swapPose(swapAngle(now - start));
-      a.current?.setAttribute("transform", `translate(${pose.a.x} ${pose.a.y})`);
-      q.current?.setAttribute("transform", `translate(${64 + pose.q.x} ${pose.q.y})`);
-      // Front last: later in the drawing order is on top.
-      const first = pose.aInFront ? q.current : a.current;
-      const last = pose.aInFront ? a.current : q.current;
-      if (svg.current && first && last && svg.current.lastElementChild !== last) {
-        svg.current.appendChild(first);
-        svg.current.appendChild(last);
-      }
-      frame = requestAnimationFrame(draw);
-    };
-    frame = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(frame);
-  }, []);
+export function BreatheLoader({ className = "w-[150px]" }: { className?: string }) {
   return (
-    <svg ref={svg} viewBox="-6 -24 133 126" className={className} aria-hidden {...lines}>
-      <g ref={a} style={BLUE}>
-        {LETTER_A}
+    <svg viewBox="-6 -6 133 90" className={className} aria-hidden {...lines}>
+      <g style={BLUE}>
+        <g className="arnaq-breathe">{LETTER_A}</g>
       </g>
-      <g ref={q} transform="translate(64 0)" style={PURPLE}>
-        {LETTER_Q}
+      <g transform="translate(64 0)" style={PURPLE}>
+        <g className="arnaq-breathe arnaq-breathe-late">{LETTER_Q}</g>
       </g>
     </svg>
   );

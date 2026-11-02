@@ -49,7 +49,6 @@ export const ui = {
   netWorth: {
     where: "Where your money is",
     now: "now",
-    title: "Net worth now",
     savingsName: "Savings",
     btwOwed: "BTW still owed",
     btwSpare: "BTW set aside, spare",
