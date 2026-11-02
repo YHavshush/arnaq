@@ -501,13 +501,13 @@ function Phone({ plan, sections, f, open, add, toggle }: ViewProps) {
           <div className="grid grid-cols-3 gap-2">
             <div className={pill}>
               <span className="text-ink-muted text-[11.5px] leading-tight text-balance">
-                {text.footer.income}
+                {text.footer.incomeShort}
               </span>
               <b className="text-[14.5px] tabular-nums">{f.euro(foot.income)}</b>
             </div>
             <div className={pill}>
               <span className="text-ink-muted text-[11.5px] leading-tight text-balance">
-                {text.footer.expenses}
+                {text.footer.expensesShort}
               </span>
               <b className="text-[14.5px] tabular-nums">{f.euro(foot.expenses)}</b>
             </div>

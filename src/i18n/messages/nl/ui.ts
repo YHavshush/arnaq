@@ -227,6 +227,8 @@ export const ui: typeof en = {
       income: "Verwacht inkomen",
       expenses: "Verwachte uitgaven",
       growth: "Groei",
+      incomeShort: "Inkomen",
+      expensesShort: "Uitgaven",
       netWorth: "Vermogen daarna",
     },
     state: {

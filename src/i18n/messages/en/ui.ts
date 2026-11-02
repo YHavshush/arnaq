@@ -222,6 +222,8 @@ export const ui = {
       income: "Expected income",
       expenses: "Expected expenses",
       growth: "Growth",
+      incomeShort: "Income",
+      expensesShort: "Expenses",
       netWorth: "Net worth after",
     },
     state: {
