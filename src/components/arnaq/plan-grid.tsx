@@ -1,5 +1,6 @@
 "use client";
 
+import { Plus } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useI18n } from "@/i18n/client";
 import type { Messages } from "@/i18n/messages";
@@ -11,56 +12,97 @@ import {
   cellAriaLabel,
   cellState,
   hasDot,
+  isNone,
+  isQuiet,
   monthWord,
   pickMonth,
   rowLabel,
+  sectionTotals,
   showYear,
   variableRows,
   type CellState,
+  type NewKind,
 } from "@/lib/view/plan-grid";
+import { PlanAddDialog, type AddTarget } from "./plan-add";
 import { PlanEditor, type EditTarget } from "./plan-editor";
 
 type Text = Messages["ui"]["plan"];
 
-/** How each kind of cell looks. Typed is blue, planned is lavender, both with a dot; a suggestion is italic grey. */
+/** How each kind of cell looks. Typed is blue, planned is lavender, both with a dot; a suggestion is italic. */
 const LOOK: Record<CellState, string> = {
   typed:
     "bg-[var(--chip-sky)] text-[var(--chip-sky-ink)] font-bold shadow-[inset_0_0_0_1.5px_var(--ring-accent-from)]",
   planned:
     "bg-[var(--chip-lavender)] text-[var(--chip-lavender-ink)] font-bold shadow-[inset_0_0_0_1.5px_var(--chip-lavender-ink)]",
-  suggestion: "text-ink-muted italic",
-  fixed: "text-ink",
+  suggestion: "italic",
+  fixed: "",
   computed: "text-ink-muted",
-  locked: "text-ink-muted",
+  locked: "",
+  none: "text-ink-muted",
 };
+
+/** Ink for a value: full where the eye should land (first month, a change), muted for a repeat. */
+const ink = (state: CellState, quiet: boolean) =>
+  state === "typed" || state === "planned" || state === "computed" || state === "none"
+    ? ""
+    : quiet
+      ? "text-ink-muted"
+      : "text-ink";
 
 interface Section {
   id: "income" | "fixed" | "variable";
   title: string;
+  total: string;
   rows: PlanRow[];
+  /** The rows that add up to the footer (the BTW is shown with the fixed costs but is not an expense). */
+  summed: PlanRow[];
+  add: NewKind | null;
 }
 
 function sectionsOf(plan: Plan, text: Text, showAll: boolean): Section[] {
   // The BTW follows the client's income, so it sits with the fixed costs, and only when there is any.
   const btw = plan.sections.btw.filter((r) => r.cells.some((c) => c.amount !== 0));
+  const variable = variableRows(plan, showAll);
   const out: Section[] = [
-    { id: "income", title: text.sections.income, rows: plan.sections.income },
-    { id: "fixed", title: text.sections.fixed, rows: [...plan.sections.fixed, ...btw] },
-    { id: "variable", title: text.sections.variable, rows: variableRows(plan, showAll) },
+    {
+      id: "income",
+      title: text.sections.income,
+      total: text.totals.income,
+      rows: plan.sections.income,
+      summed: plan.sections.income,
+      add: "income",
+    },
+    {
+      id: "fixed",
+      title: text.sections.fixed,
+      total: text.totals.fixed,
+      rows: [...plan.sections.fixed, ...btw],
+      summed: plan.sections.fixed,
+      add: "expense",
+    },
+    {
+      id: "variable",
+      title: text.sections.variable,
+      total: text.totals.variable,
+      rows: variable,
+      summed: variable,
+      add: null,
+    },
   ];
-  return out.filter((s) => s.rows.length > 0);
+  return out.filter((s) => s.rows.length > 0 || s.add !== null);
 }
 
-/** The plan: a table on a laptop, one month at a time on a phone. One editor serves both. */
+/** The plan: a table on a laptop, one month at a time on a phone. One editor and one add dialog serve both. */
 export function PlanScreen({ plan }: { plan: Plan }) {
   const { locale, t } = useI18n();
   const text = t.ui.plan;
   const f = formatter(locale);
   const [showAll, setShowAll] = useState(false);
   const [edit, setEdit] = useState<EditTarget | null>(null);
+  const [adding, setAdding] = useState<AddTarget | null>(null);
   const sections = sectionsOf(plan, text, showAll);
-  const open = (rowKey: string, month: string, anchor: HTMLElement) =>
-    setEdit({ rowKey, month, anchor });
+  const open: Opener = (rowKey, month, anchor) => setEdit({ rowKey, month, anchor });
+  const add = (kind: NewKind, anchor: HTMLElement) => setAdding({ kind, anchor });
 
   const toggle = canShowAll(plan) ? (
     <button
@@ -73,15 +115,17 @@ export function PlanScreen({ plan }: { plan: Plan }) {
     </button>
   ) : null;
 
+  const view = { plan, sections, f, open, add, toggle };
   return (
     <>
       <div className="hidden @min-[900px]/app:block">
-        <Table plan={plan} sections={sections} f={f} open={open} toggle={toggle} />
+        <Table {...view} />
       </div>
       <div className="@min-[900px]/app:hidden">
-        <Phone plan={plan} sections={sections} f={f} open={open} toggle={toggle} />
+        <Phone {...view} />
       </div>
       <PlanEditor plan={plan} target={edit} onClose={() => setEdit(null)} />
+      <PlanAddDialog plan={plan} target={adding} onClose={() => setAdding(null)} />
     </>
   );
 }
@@ -93,11 +137,13 @@ interface ViewProps {
   sections: Section[];
   f: Formatter;
   open: Opener;
+  add: (kind: NewKind, anchor: HTMLElement) => void;
   toggle: ReactNode;
 }
 
-/** The amount, with its dot (typed, planned) or its "=" (follows other numbers). */
-function Amount({ state, children }: { state: CellState; children: ReactNode }) {
+/** The amount, with its dot (typed, planned), its "=" (follows other numbers) or a dash (nothing). */
+function Amount({ state, cell, f }: { state: CellState; cell: PlanCell; f: Formatter }) {
+  if (state === "none" || (isNone(cell) && state === "suggestion")) return <>–</>;
   return (
     <>
       {hasDot(state) && (
@@ -111,8 +157,21 @@ function Amount({ state, children }: { state: CellState; children: ReactNode }) 
           =
         </i>
       )}
-      {children}
+      {f.euro(cell.amount)}
     </>
+  );
+}
+
+function AddButton({ kind, text, add }: { kind: NewKind; text: Text; add: ViewProps["add"] }) {
+  return (
+    <button
+      type="button"
+      onClick={(e) => add(kind, e.currentTarget)}
+      className="text-ink-muted hover:text-ink focus-visible:outline-accent inline-flex min-h-10 items-center gap-1.5 rounded-full px-2 text-[13.5px] font-semibold focus-visible:outline-2"
+    >
+      <Plus className="size-3.5" aria-hidden />
+      {kind === "income" ? text.add.income : text.add.cost}
+    </button>
   );
 }
 
@@ -149,28 +208,30 @@ function Legend({ text, toggle }: { text: Text; toggle: ReactNode }) {
 
 /* ---------------------------------------------------------------- laptop */
 
-function Table({ plan, sections, f, open, toggle }: ViewProps) {
-  const { t } = useI18n();
+function Table({ plan, sections, f, open, add, toggle }: ViewProps) {
+  const { locale, t } = useI18n();
   const text = t.ui.plan;
   const cols = plan.months.length;
-  const stick = "bg-surface sticky left-0 z-[1]";
-  const th = "text-ink-muted px-2 pt-3 pb-2 text-right text-[13px] font-semibold align-bottom";
+  const name = "bg-surface sticky left-0 z-[1] w-56 min-w-56 max-w-56 px-4 text-left";
+  const corner = "bg-surface sticky top-0 left-0 z-[3] w-56 min-w-56 max-w-56 px-4 pt-3 pb-2";
+  const head = "bg-surface sticky top-0 z-[2] px-2 pt-3 pb-2 text-right align-bottom";
 
   return (
     <div className="glass bg-surface overflow-hidden">
-      <div className="overflow-x-auto overscroll-x-contain">
+      {/* Scrolls inside the card, so the month header stays in view and a long plan scrolls sideways. */}
+      <div className="max-h-[calc(100dvh-8rem)] overflow-auto overscroll-x-contain">
         <table className="w-full border-separate border-spacing-0 text-[14px] tabular-nums">
           <caption className="sr-only">{text.tableCaption}</caption>
           <thead>
             <tr>
-              <th scope="col" className={`${stick} w-44 min-w-44 px-4 pt-3 pb-2 text-left`}>
+              <th scope="col" className={corner}>
                 <span className="sr-only">{text.rowHeader}</span>
               </th>
               {plan.months.map((m, i) => (
                 <th
                   key={m}
                   scope="col"
-                  className={`${th} min-w-[5.75rem] ${m === plan.currentMonth ? "!text-ink" : ""}`}
+                  className={`${head} text-ink-muted min-w-[5.75rem] text-[13px] font-semibold ${m === plan.currentMonth ? "!text-ink" : ""}`}
                 >
                   {f.monthShort(m)}
                   <small className="block min-h-3.5 text-[11px] leading-tight font-normal">
@@ -185,7 +246,7 @@ function Table({ plan, sections, f, open, toggle }: ViewProps) {
               <tr>
                 <th
                   scope="rowgroup"
-                  className={`${stick} font-display px-4 pt-5 pb-1 text-left text-[17px] font-medium`}
+                  className={`${name} font-display text-ink-muted pt-4 pb-0.5 text-[15px] font-medium`}
                 >
                   {s.title}
                 </th>
@@ -193,17 +254,52 @@ function Table({ plan, sections, f, open, toggle }: ViewProps) {
               </tr>
               {s.rows.map((row) => (
                 <tr key={row.key}>
-                  <th
-                    scope="row"
-                    className={`${stick} border-hair border-t px-4 py-1 text-left text-[14px] font-semibold`}
-                  >
-                    {rowLabel(row, text.rows)}
+                  <th scope="row" className={`${name} py-0.5 text-[14px] font-semibold`}>
+                    <span
+                      className="line-clamp-2 break-words"
+                      title={rowLabel(row, text.rows, locale)}
+                    >
+                      {rowLabel(row, text.rows, locale)}
+                    </span>
                   </th>
-                  {row.cells.map((cell) => (
-                    <GridCell key={cell.month} row={row} cell={cell} f={f} open={open} />
+                  {row.cells.map((cell, i) => (
+                    <GridCell
+                      key={cell.month}
+                      row={row}
+                      cell={cell}
+                      quiet={isQuiet(row, i)}
+                      f={f}
+                      open={open}
+                    />
                   ))}
                 </tr>
               ))}
+              {s.add && (
+                <tr>
+                  <th scope="row" className={`${name} py-0`}>
+                    <AddButton kind={s.add} text={text} add={add} />
+                  </th>
+                  <td colSpan={cols} />
+                </tr>
+              )}
+              {s.summed.length > 0 && (
+                <tr>
+                  <th
+                    scope="row"
+                    className={`${name} text-ink-muted border-hair border-b py-1.5 text-[13px] font-medium`}
+                  >
+                    {s.total}
+                  </th>
+                  {sectionTotals(s.summed, plan.months).map((v, i) => (
+                    <td
+                      key={plan.months[i]}
+                      className="text-ink-muted border-hair border-b px-3 py-1.5 text-right text-[13px] font-medium"
+                    >
+                      {f.euro(v)}
+                    </td>
+                  ))}
+                </tr>
+              )}
             </tbody>
           ))}
           <tfoot>
@@ -248,19 +344,19 @@ function FootRow({
   strong?: boolean;
   first?: boolean;
 }) {
-  const edge = strong || first ? "border-t-2 border-ink/25" : "border-t border-hair";
+  const edge = strong || first ? "border-t-2 border-ink/25" : "";
   return (
     <tr>
       <th
         scope="row"
-        className={`bg-surface sticky left-0 z-[1] ${edge} px-4 py-2 text-left font-semibold ${strong ? "text-[15px]" : ""}`}
+        className={`bg-surface sticky left-0 z-[1] ${edge} px-4 py-1.5 text-left font-semibold ${strong ? "text-[15px]" : ""}`}
       >
         {label}
       </th>
       {values.map((v, i) => (
         <td
           key={i}
-          className={`${edge} px-4 py-2 text-right font-semibold ${strong ? "text-[15px]" : ""} ${tones?.[i] ?? ""}`}
+          className={`${edge} px-4 py-1.5 text-right font-semibold ${strong ? "text-[15px]" : ""} ${tones?.[i] ?? ""}`}
         >
           {v}
         </td>
@@ -272,41 +368,43 @@ function FootRow({
 function GridCell({
   row,
   cell,
+  quiet,
   f,
   open,
 }: {
   row: PlanRow;
   cell: PlanCell;
+  quiet: boolean;
   f: Formatter;
   open: Opener;
 }) {
   const { locale, t } = useI18n();
   const text = t.ui.plan;
   const state = cellState(row, cell);
-  const amount = f.euro(cell.amount);
   const label = cellAriaLabel(
     text,
-    rowLabel(row, text.rows),
+    rowLabel(row, text.rows, locale),
     monthWord(locale, cell.month),
-    amount,
+    f.euro(cell.amount),
     state,
   );
+  const look = `${LOOK[state]} ${isNone(cell) && state === "suggestion" ? "not-italic text-ink-muted" : ink(state, quiet)}`;
   return (
-    <td className="border-hair border-t p-0.5 text-right">
+    <td className="p-0.5 text-right">
       {canEdit(row, cell) ? (
         <button
           type="button"
           aria-label={label}
           onClick={(e) => open(row.key, cell.month, e.currentTarget)}
-          className={`hover:bg-soft focus-visible:outline-accent block min-h-10 w-full rounded-xl px-3 py-1.5 text-right whitespace-nowrap focus-visible:outline-2 ${LOOK[state]}`}
+          className={`hover:bg-soft focus-visible:outline-accent block min-h-9 w-full rounded-xl px-3 py-1 text-right whitespace-nowrap focus-visible:outline-2 ${look}`}
         >
-          <Amount state={state}>{amount}</Amount>
+          <Amount state={state} cell={cell} f={f} />
         </button>
       ) : (
-        <span className={`block px-3 py-2 whitespace-nowrap ${LOOK[state]}`}>
+        <span className={`block px-3 py-1.5 whitespace-nowrap ${look}`}>
           <span className="sr-only">{label}</span>
           <span aria-hidden>
-            <Amount state={state}>{amount}</Amount>
+            <Amount state={state} cell={cell} f={f} />
           </span>
         </span>
       )}
@@ -316,7 +414,7 @@ function GridCell({
 
 /* ----------------------------------------------------------------- phone */
 
-function Phone({ plan, sections, f, open, toggle }: ViewProps) {
+function Phone({ plan, sections, f, open, add, toggle }: ViewProps) {
   const { t } = useI18n();
   const text = t.ui.plan;
   const [wanted, setWanted] = useState<string | null>(null);
@@ -364,14 +462,34 @@ function Phone({ plan, sections, f, open, toggle }: ViewProps) {
 
       <div className="glass overflow-hidden">
         {sections.map((s) => (
-          <section key={s.id} aria-label={s.title}>
-            <h3 className="font-display px-4 pt-4 pb-1 text-[17px] font-medium">{s.title}</h3>
+          <section key={s.id} aria-label={s.title} className="border-hair border-b last:border-b-0">
+            <h3 className="font-display text-ink-muted px-4 pt-3 pb-0.5 text-[15px] font-medium">
+              {s.title}
+            </h3>
             {s.rows.map((row) => {
-              const cell = row.cells.find((c) => c.month === month);
+              const cell = row.cells[index];
               return cell ? (
-                <PhoneRow key={row.key} row={row} cell={cell} f={f} open={open} />
+                <PhoneRow
+                  key={row.key}
+                  row={row}
+                  cell={cell}
+                  quiet={isQuiet(row, index)}
+                  f={f}
+                  open={open}
+                />
               ) : null;
             })}
+            {s.add && (
+              <div className="px-2">
+                <AddButton kind={s.add} text={text} add={add} />
+              </div>
+            )}
+            {s.summed.length > 0 && (
+              <p className="text-ink-muted flex items-baseline justify-between gap-3 px-4 pb-2 text-[13px] font-medium">
+                <span>{s.total}</span>
+                <span className="tabular-nums">{f.euro(sectionTotals(s.summed, [month])[0])}</span>
+              </p>
+            )}
           </section>
         ))}
         <div className="border-hair border-t px-3 py-1">{toggle}</div>
@@ -419,43 +537,46 @@ function Phone({ plan, sections, f, open, toggle }: ViewProps) {
 function PhoneRow({
   row,
   cell,
+  quiet,
   f,
   open,
 }: {
   row: PlanRow;
   cell: PlanCell;
+  quiet: boolean;
   f: Formatter;
   open: Opener;
 }) {
   const { locale, t } = useI18n();
   const text = t.ui.plan;
   const state = cellState(row, cell);
-  const name = rowLabel(row, text.rows);
-  const amount = f.euro(cell.amount);
-  const label = cellAriaLabel(text, name, monthWord(locale, cell.month), amount, state);
+  const name = rowLabel(row, text.rows, locale);
+  const label = cellAriaLabel(
+    text,
+    name,
+    monthWord(locale, cell.month),
+    f.euro(cell.amount),
+    state,
+  );
   const tint =
     state === "typed"
       ? "bg-[var(--chip-sky)] text-[var(--chip-sky-ink)]"
       : state === "planned"
         ? "bg-[var(--chip-lavender)] text-[var(--chip-lavender-ink)]"
         : "";
+  const dash = isNone(cell) && state === "suggestion";
+  const amountLook = `${state === "typed" || state === "planned" ? "font-bold" : ""} ${
+    state === "suggestion" && !dash ? "italic" : ""
+  } ${state === "computed" || state === "none" || dash ? "text-ink-muted" : ink(state, quiet)}`;
   const body = (
     <>
-      <span className="min-w-0 font-medium">{name}</span>
-      <span
-        className={`shrink-0 tabular-nums ${state === "typed" || state === "planned" ? "font-bold" : ""} ${
-          state === "suggestion"
-            ? "text-ink-muted italic"
-            : state === "computed" || state === "locked"
-              ? "text-ink-muted"
-              : ""
-        }`}
-      >
-        <Amount state={state}>{amount}</Amount>
+      <span className="line-clamp-2 min-w-0 text-[14.5px] font-medium break-words">{name}</span>
+      <span className={`shrink-0 tabular-nums ${amountLook}`}>
+        <Amount state={state} cell={cell} f={f} />
       </span>
     </>
   );
-  const base = `border-hair flex min-h-12 w-full items-center justify-between gap-3 border-t px-4 py-2.5 text-left text-[15px] ${tint}`;
+  const base = `flex min-h-11 w-full items-center justify-between gap-3 px-4 py-1.5 text-left text-[15px] ${tint}`;
   return canEdit(row, cell) ? (
     <button
       type="button"

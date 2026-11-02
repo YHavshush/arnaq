@@ -3,6 +3,9 @@
 import { INTL_LOCALE, type Locale } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
 import { euroInputToCents } from "@/lib/client/api";
+import { daysInMonth } from "@/lib/recurring/dates";
+import { categoryLabel } from "./categories";
+import { displayName } from "./names";
 import type { Plan, PlanCell, PlanRow, PlanWhy } from "./plan";
 
 type PlanText = Messages["ui"]["plan"];
@@ -14,9 +17,11 @@ type PlanText = Messages["ui"]["plan"];
  * - suggestion: what the basis suggests (italic grey);
  * - fixed: a fixed item as the Fixed page has it (plain, can still be typed over);
  * - computed: follows other numbers and is never typed (the BTW, "everything else");
- * - locked: a fixed item that already happened this month, nothing to plan any more.
+ * - locked: a fixed item that already happened this month, nothing to plan any more;
+ * - none: a fixed item that is not scheduled in this month (before it starts, after it ends): nothing.
  */
-export type CellState = "typed" | "planned" | "suggestion" | "fixed" | "computed" | "locked";
+export type CellState =
+  "typed" | "planned" | "suggestion" | "fixed" | "computed" | "locked" | "none";
 
 /** The scope "Only this month" is the default; "after" is the second choice. */
 export type Scope = "month" | "after";
@@ -30,7 +35,7 @@ export const isTypable = (
 
 export function cellState(row: PlanRow, cell: PlanCell): CellState {
   if (cell.source === "computed" || !isTypable(row)) return "computed";
-  if (!cell.editable) return "locked";
+  if (!cell.editable) return cell.amount === 0 && cell.typed === null ? "none" : "locked";
   if (cell.source === "typed") return row.kind === "item" ? "planned" : "typed";
   return cell.source === "item" ? "fixed" : "suggestion";
 }
@@ -38,12 +43,16 @@ export function cellState(row: PlanRow, cell: PlanCell): CellState {
 /** Whether tapping the cell opens the editor. */
 export const canEdit = (row: PlanRow, cell: PlanCell) => {
   const s = cellState(row, cell);
-  return s !== "computed" && s !== "locked";
+  return s !== "computed" && s !== "locked" && s !== "none";
 };
 
-/** The row's name: the person's own name, or the words for the rows the app makes up. */
-export function rowLabel(row: PlanRow, rows: PlanText["rows"]): string {
-  if (row.name !== null) return row.name;
+/**
+ * The row's name as a person would write it: a fixed item's name without the bank's capitals and legal form, a
+ * category in the reader's language, or the words for the rows the app makes up.
+ */
+export function rowLabel(row: PlanRow, rows: PlanText["rows"], locale: Locale): string {
+  if (row.name !== null)
+    return row.kind === "category" ? categoryLabel(row.name, locale) : displayName(row.name);
   switch (row.key) {
     case "btw":
       return rows.btw;
@@ -195,3 +204,78 @@ export function findCell(
 
 /** Month chips on a phone: the year is shown with the first chip and with every January. */
 export const showYear = (month: string, index: number) => index === 0 || month.endsWith("-01");
+
+/**
+ * A value that is the same as the month before and was not typed is quiet (muted), so the eye lands on the first month
+ * and on every place where something changes. Typed and planned cells are never quiet.
+ */
+export function isQuiet(row: PlanRow, index: number): boolean {
+  if (index === 0) return false;
+  const cell = row.cells[index];
+  const before = row.cells[index - 1];
+  if (!cell || !before) return false;
+  return cell.typed === null && before.typed === null && cell.amount === before.amount;
+}
+
+/** Nothing to show for the cell (it is shown as a dash). */
+export const isNone = (cell: PlanCell) => cell.amount === 0 && cell.typed === null;
+
+/** One total per month for the rows of a section (what the footer adds up). */
+export function sectionTotals(rows: PlanRow[], months: string[]): number[] {
+  return months.map((m) =>
+    rows.reduce((sum, r) => sum + (r.cells.find((c) => c.month === m)?.amount ?? 0), 0),
+  );
+}
+
+export type NewKind = "income" | "expense";
+
+/** What the "add" dialog starts with: the 25th for income, the 1st for a cost, from the month after this one. */
+export function addDefaults(plan: Plan, kind: NewKind): { day: number; from: string } {
+  const from =
+    plan.months.find((m) => m > plan.currentMonth) ?? plan.months[0] ?? plan.currentMonth;
+  return { day: kind === "income" ? 25 : 1, from };
+}
+
+/** The months an "until" can be: the chosen start and the months after it, in the grid. */
+export const untilChoices = (plan: Plan, from: string) => plan.months.filter((m) => m >= from);
+
+export type NewItemResult =
+  { ok: true; body: Record<string, unknown> } | { ok: false; error: "name" | "amount" | "day" };
+
+/**
+ * The body for POST /api/recurring (the Fixed page's own endpoint) from the "add" dialog. A new row starts on the first
+ * day of its first month and, when asked, ends on the last day of its last month. The name is also what a payment is
+ * matched on, as the Fixed page does when no other name is given.
+ */
+export function newItemBody(input: {
+  kind: NewKind;
+  name: string;
+  amount: string;
+  day: string;
+  from: string;
+  until: string | null;
+}): NewItemResult {
+  const name = input.name.trim();
+  if (!name) return { ok: false, error: "name" };
+  const parsed = parseAmountInput(input.amount);
+  if (!parsed.ok || parsed.cents === 0) return { ok: false, error: "amount" };
+  const day = Number(input.day);
+  if (!Number.isInteger(day) || day < 1 || day > 31) return { ok: false, error: "day" };
+  return {
+    ok: true,
+    body: {
+      name,
+      type: input.kind,
+      expectedAmount: parsed.cents,
+      dayOfMonth: day,
+      frequency: "monthly",
+      matchCounterparty: name,
+      categoryId: null,
+      startDate: `${input.from}-01`,
+      endDate: input.until
+        ? `${input.until}-${String(daysInMonth(input.until)).padStart(2, "0")}`
+        : null,
+      tolerance: Math.round(parsed.cents * 0.1),
+    },
+  };
+}
