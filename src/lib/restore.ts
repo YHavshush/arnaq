@@ -96,6 +96,7 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
     "budgets",
     "monthlyTotalBudget",
     "merchantLabels",
+    "planOverrides",
   ];
   const data = Object.fromEntries(names.map((n) => [n, rowsOf(t, n)])) as Record<string, Row[]>;
   const total = names.reduce((s, n) => s + data[n].length, 0);
@@ -245,6 +246,23 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
   const totals = data.monthlyTotalBudget.map((r) => pick(r, ["month", "amount"]));
   for (let i = 0; i < totals.length; i += CHUNK)
     await db.insert(schema.monthlyTotalBudget).values(totals.slice(i, i + CHUNK) as never[]);
+  // What was typed in the plan grid, pointing at the restored category or fixed item (one without either is dropped).
+  const plan = data.planOverrides
+    .map((r) => ({
+      ...pick(r, ["month", "amount"]),
+      categoryId: mapped(category, r.categoryId),
+      itemId: mapped(items, r.itemId),
+    }))
+    .filter(
+      (r) =>
+        (r.categoryId === undefined) !== (r.itemId === undefined) &&
+        Number.isSafeInteger(r.amount) &&
+        (r.amount as number) >= 0 &&
+        typeof r.month === "string" &&
+        /^\d{4}-(0[1-9]|1[0-2])$/.test(r.month),
+    );
+  for (let i = 0; i < plan.length; i += CHUNK)
+    await db.insert(schema.planOverrides).values(plan.slice(i, i + CHUNK) as never[]);
   // Learned shops are the person's own; what a model said is not restored (it can be asked again).
   await insertMapped(
     db,

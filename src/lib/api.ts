@@ -8,6 +8,7 @@ import { BudgetError } from "@/lib/budget/budgets";
 import { CategoriseError } from "@/lib/categories/categorise";
 import { ForecastError } from "@/lib/forecast/errors";
 import { ImportError } from "@/lib/import/service";
+import { PlanError } from "@/lib/plan/overrides";
 import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { RecurringError } from "@/lib/recurring/errors";
 import { SampleError } from "@/lib/sample/sample";
@@ -19,6 +20,7 @@ const DOMAIN_ERRORS = [
   CategoriseError,
   ForecastError,
   ImportError,
+  PlanError,
   RecurringError,
   SampleError,
   SavingsError,
