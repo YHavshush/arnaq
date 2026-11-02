@@ -9,6 +9,10 @@ import { normaliseCounterparty } from "@/lib/recurring/normalise";
 export const BTW_RATE_PERCENT = 21;
 /** The client pays the price plus BTW, so the BTW is 21 parts of every 121 received. */
 const BTW_SHARE_OF_PAYMENT = { numerator: BTW_RATE_PERCENT, denominator: 100 + BTW_RATE_PERCENT };
+/** The BTW inside an amount the client paid (which includes BTW): 21 parts of every 121, in whole cents. */
+export function btwInside(paid: number): number {
+  return Math.round((paid * BTW_SHARE_OF_PAYMENT.numerator) / BTW_SHARE_OF_PAYMENT.denominator);
+}
 /** Who pays the person, and what marks a move into the BTW pocket: the defaults, until the person changes them. */
 export { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH };
 /** Where the person pays the quarterly BTW. */
@@ -143,9 +147,7 @@ export async function getBtwSummary(
   const received = incoming
     .filter((r) => mentions(text(r), incomeMatch))
     .reduce((s, r) => s + r.amount, 0);
-  const owed = Math.round(
-    (received * BTW_SHARE_OF_PAYMENT.numerator) / BTW_SHARE_OF_PAYMENT.denominator,
-  );
+  const owed = btwInside(received);
   const mine = pocketMoves.filter((r) => mentions(text(r), pocketMatch));
   const pocket = mine.reduce((s, r) => s - r.amount, 0);
 
@@ -180,4 +182,13 @@ export async function getBtwSummary(
     fromOwnMoney: paid ? Math.max(paid.amount - pulledOut, 0) : 0,
     hasData: received > 0 || mine.length > 0,
   };
+}
+
+/**
+ * What the BTW adds to net worth now: the pocket (real money, left out of savings on purpose) minus the BTW still owed
+ * for the card's quarter (nothing once that quarter is paid). Negative while the pocket is short. The net worth card
+ * and the forecast's net worth line both use this, so they agree.
+ */
+export function btwNetWorth(s: Pick<BtwSummary, "owed" | "pocket" | "paid">): number {
+  return s.pocket - (s.paid ? 0 : s.owed);
 }

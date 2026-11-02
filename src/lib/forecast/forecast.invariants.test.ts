@@ -173,6 +173,14 @@ async function checkInvariants(db: Db, f: Forecast) {
       expect(m.income).toBe(m.actual.income + m.recurring.income);
       if (m.kind === "forecast") expect(m.actual).toEqual({ income: 0, expenses: 0 });
     }
+    // What the expected expenses are made of adds up to them; real months have no sources.
+    const s = m.expenseSources;
+    if (m.kind === "mixed" || m.kind === "forecast") {
+      expect(m.actual.expenses + s.fixed + s.budgets + s.averages).toBe(m.expenses);
+      expect(s.fixed).toBe(m.recurring.expenses);
+    } else expect(s).toEqual({ fixed: 0, budgets: 0, averages: 0, fellBack: [] });
+    for (const v of [s.fixed, s.budgets, s.averages, m.btwAccrued, m.btwWorth])
+      expect(Number.isSafeInteger(v)).toBe(true);
   }
   for (const [key, n] of countedOnce) expect(n, key).toBe(1);
 }
@@ -191,6 +199,8 @@ describe("getForecast invariants over random histories", () => {
           months: w.months,
           history: w.history,
           pastMonths: w.pastMonths,
+          // Every other world on the budget basis (carried-forward budgets), at no extra cost.
+          basis: seed % 2 === 1 ? ("budget" as const) : ("averages" as const),
         };
         const f = await getForecast(w.db, opts);
         expect(await fullSnapshot(w.db), `seed ${seed}: read-only`).toEqual(before);

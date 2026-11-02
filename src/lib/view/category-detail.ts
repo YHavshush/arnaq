@@ -34,12 +34,14 @@ export interface CategoryDetail {
 /**
  * Every transaction behind one category and month, newest first: what a bank app shows when you tap a category, so
  * a number can be checked and a wrong sort fixed where it is found. Rows in another currency than their account
- * are left out, as they are in every total.
+ * are left out, as they are in every total. With `today` the taxes budget includes the month's BTW share, as on the
+ * Today screen (see btwShareForMonth).
  */
 export async function loadCategoryDetail(
   db: Db,
   categoryId: number,
   month: string,
+  opts: { today?: string } = {},
 ): Promise<CategoryDetail | null> {
   const categories = await db.select().from(schema.categories).orderBy(schema.categories.sortOrder);
   const category = categories.find((c) => c.id === categoryId);
@@ -70,7 +72,11 @@ export async function loadCategoryDetail(
   // Spent for an expense category, received for income, saved (moved out of the account) for savings and transfers.
   const sign = category.type === "income" ? 1 : -1;
   const total = rows.reduce((s, r) => s + sign * r.amount, 0);
-  const overview = await getMonthOverview(db, month);
+  const overview = await getMonthOverview(
+    db,
+    month,
+    opts.today === undefined ? {} : { btw: { today: opts.today } },
+  );
   const line = [...overview.expenses, ...overview.income].find((l) => l.categoryId === categoryId);
   const budget = line?.budget ?? null;
   return {

@@ -174,11 +174,16 @@ describe("net worth over time with money set aside", () => {
     expect(october.accounts + october.savings).toBe(october.cumulative);
   });
 
-  it("money set aside for the BTW is owed, not saved: it lowers net worth and adds nothing to savings", async () => {
+  it("money set aside for the BTW is not savings, but it is still the person's money: net worth stays", async () => {
+    // Was: each planned move into the BTW pocket lowered net worth by 500. Now the pocket counts in the BTW part of
+    // net worth (pocket minus owed) and what is owed comes from the client's income (btwAccrued), so moving money
+    // between one's own accounts changes nothing.
     const p = buildPrognose(await world("BTW reserve", "EUR BTW"), "en");
     const [september, october, november] = p.points;
-    expect(october.cumulative).toBe(september.cumulative + october.net - 50000);
-    expect(november.cumulative).toBe(october.cumulative + november.net - 50000);
+    expect(october.cumulative).toBe(september.cumulative + october.net);
+    expect(november.cumulative).toBe(october.cumulative + november.net);
+    expect(october.btw).toBe(september.btw + 50000);
+    expect(october.accounts + october.savings + october.btw).toBe(october.cumulative);
     expect(october.savings).toBe(september.savings);
     expect(october.accounts).toBe(september.accounts + october.net - 50000);
     expect(november.setAside).toBe(50000);

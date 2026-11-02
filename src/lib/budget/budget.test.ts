@@ -202,12 +202,16 @@ describe("getBudgetsByMonth", () => {
       byCategory: new Map([[await cat("Huur"), 65000]]),
       explicit: new Map([[await cat("Huur"), 65000]]),
       fixed: new Map(),
+      carriedFrom: new Map(),
+      btw: new Map(),
       total: null,
     });
     expect(b.get("2026-10")).toEqual({
       byCategory: new Map(),
       explicit: new Map(),
       fixed: new Map(),
+      carriedFrom: new Map(),
+      btw: new Map(),
       total: 90000,
     });
     expect(b.get("2026-11")!.byCategory.get(await cat("Huur"))).toBe(66000);
