@@ -40,6 +40,9 @@ describe("deleteAllMyData", () => {
           matchedOccurrenceId: occ.id,
         });
         await tx.insert(schema.merchantLabels).values({ merchantKey: "x", source: "model" });
+        await tx
+          .insert(schema.planOverrides)
+          .values({ itemId: item.id, month: "2026-12", amount: 5 });
       });
     await seed("11111111-1111-1111-1111-111111111111", "mine");
     await seed(TEST_USER_B, "theirs");
@@ -51,14 +54,16 @@ describe("deleteAllMyData", () => {
       transactions: (await tx.select().from(schema.transactions)).length,
       labels: (await tx.select().from(schema.merchantLabels)).length,
       categories: (await tx.select().from(schema.categories)).length,
+      plan: (await tx.select().from(schema.planOverrides)).length,
     }));
-    expect(mine).toMatchObject({ accounts: 0, transactions: 0, labels: 0 });
+    expect(mine).toMatchObject({ accounts: 0, transactions: 0, labels: 0, plan: 0 });
     expect(mine.categories).toBeGreaterThan(10); // fresh defaults
 
     const theirs = await withUser(db, TEST_USER_B, async (tx) => ({
       accounts: (await tx.select().from(schema.accounts)).map((a) => a.name),
       transactions: (await tx.select().from(schema.transactions)).length,
+      plan: (await tx.select().from(schema.planOverrides)).length,
     }));
-    expect(theirs).toEqual({ accounts: ["theirs"], transactions: 1 });
+    expect(theirs).toEqual({ accounts: ["theirs"], transactions: 1, plan: 1 });
   });
 });

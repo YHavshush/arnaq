@@ -49,6 +49,75 @@ export function btwQuarter(today: string): BtwQuarter {
   return previous.due >= today ? previous : current;
 }
 
+interface Outflow {
+  amount: number;
+  date: string;
+  counterparty: string | null;
+  description: string | null;
+}
+
+/**
+ * Tells the quarterly BTW payment to the tax office apart from what the tax office takes every month, from all the
+ * person's outflows (own currency, not internal transfers): an amount paid to the tax office (TAX_OFFICE_MATCH, whole
+ * words) in three or more different months is something monthly (an allowance paid back, an instalment); anything else
+ * paid to the tax office is the quarterly BTW. getBtwSummary and the forecast's averages share this one rule.
+ */
+export function taxOfficeClassifier(outflows: Outflow[]) {
+  const isTaxOffice = (r: Outflow) => mentions([r.counterparty, r.description], TAX_OFFICE_MATCH);
+  const monthsByAmount = new Map<number, Set<string>>();
+  for (const r of outflows.filter(isTaxOffice)) {
+    const months = monthsByAmount.get(r.amount) ?? new Set<string>();
+    months.add(r.date.slice(0, 7));
+    monthsByAmount.set(r.amount, months);
+  }
+  const monthly = (amount: number) => (monthsByAmount.get(amount)?.size ?? 0) >= 3;
+  return {
+    monthly,
+    isQuarterlyBtw: (r: Outflow) => r.amount < 0 && isTaxOffice(r) && !monthly(r.amount),
+  };
+}
+
+/**
+ * Whether a day falls where a quarter's BTW is paid: after the quarter ends, up to its due date plus the grace days
+ * (the window getBtwSummary looks in). Only the quarter before the day's own quarter can reach it.
+ */
+export function inBtwPaymentWindow(date: string): boolean {
+  const year = Number(date.slice(0, 4));
+  const q = Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1;
+  const previous = q === 1 ? quarterOf(year - 1, 4) : quarterOf(year, q - 1);
+  return date > previous.to && date <= addDays(previous.due, PAYMENT_GRACE_DAYS);
+}
+
+/**
+ * The ids of the quarterly BTW payments to the tax office (taxOfficeClassifier) dated in a BTW payment window
+ * (inBtwPaymentWindow). The forecast's net worth line already takes the BTW off as it builds up on the client's
+ * income, so the averages leave these payments out; otherwise the BTW would count twice ahead.
+ */
+export async function quarterlyBtwPaymentIds(db: Db): Promise<Set<number>> {
+  const t = schema.transactions;
+  const outflows = await db
+    .select({
+      id: t.id,
+      date: t.date,
+      amount: t.amount,
+      counterparty: t.counterparty,
+      description: t.description,
+    })
+    .from(t)
+    .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
+    .where(
+      and(
+        eq(t.currency, schema.accounts.currency),
+        eq(t.isInternalTransfer, false),
+        lt(t.amount, 0),
+      ),
+    );
+  const { isQuarterlyBtw } = taxOfficeClassifier(outflows);
+  return new Set(
+    outflows.filter((r) => isQuarterlyBtw(r) && inBtwPaymentWindow(r.date)).map((r) => r.id),
+  );
+}
+
 export interface BtwSummary {
   quarter: BtwQuarter;
   /** Cents the client paid in the quarter. */
@@ -151,18 +220,8 @@ export async function getBtwSummary(
   const mine = pocketMoves.filter((r) => mentions(text(r), pocketMatch));
   const pocket = mine.reduce((s, r) => s - r.amount, 0);
 
-  // The same amount to the tax office in three or more months is something monthly (an allowance, an instalment),
-  // not the quarterly BTW.
-  const monthsByAmount = new Map<number, Set<string>>();
-  for (const r of allOutflows.filter((r) => mentions(text(r), TAX_OFFICE_MATCH))) {
-    const months = monthsByAmount.get(r.amount) ?? new Set<string>();
-    months.add(r.date.slice(0, 7));
-    monthsByAmount.set(r.amount, months);
-  }
-  const monthly = (amount: number) => (monthsByAmount.get(amount)?.size ?? 0) >= 3;
-  const paidRows = payments.filter(
-    (r) => mentions(text(r), TAX_OFFICE_MATCH) && !monthly(r.amount),
-  );
+  const { isQuarterlyBtw } = taxOfficeClassifier(allOutflows);
+  const paidRows = payments.filter(isQuarterlyBtw);
   const paidAmount = paidRows.reduce((s, r) => s - r.amount, 0);
   const paid =
     paidRows.length > 0

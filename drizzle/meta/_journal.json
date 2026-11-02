@@ -71,6 +71,13 @@
       "when": 1793571309488,
       "tag": "0009_own_spending",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793620585953,
+      "tag": "0010_plan_overrides",
+      "breakpoints": true
     }
   ]
 }

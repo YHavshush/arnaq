@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { sumTransactions } from "@/lib/budget/overview";
+import { quarterlyBtwPaymentIds } from "@/lib/btw/summary";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 
 /**
@@ -42,6 +43,10 @@ export interface VariableAverages {
  * actually have an upload, so a month without data never drags the average down. Months with an
  * upload but no spending in a category do count (they are real zeros).
  *
+ * The quarterly BTW payment to the tax office is left out (quarterlyBtwPaymentIds): the forecast takes the BTW off the
+ * net worth line as it builds up on the client's income, so averaging the payment too would count it twice. What the
+ * tax office takes every month, and other tax spending, stays in.
+ *
  * Income is deliberately not averaged: projected income comes from recurring items only.
  * Uncategorised outgoing money gets its own average; uncategorised incoming money is ignored.
  */
@@ -65,6 +70,7 @@ export async function getVariableAverages(
       fromMonth: months[0],
       toMonth: months[months.length - 1],
       excludeMatched: true,
+      excludeIds: await quarterlyBtwPaymentIds(db),
     });
     for (const month of months) {
       const s = sums.get(month);

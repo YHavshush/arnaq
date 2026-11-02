@@ -27,6 +27,7 @@ describe("buildExport", () => {
         "imports",
         "merchantLabels",
         "monthlyTotalBudget",
+        "planOverrides",
         "recurringItems",
         "recurringOccurrences",
         "recurringSuggestionRejections",

@@ -402,6 +402,48 @@ export const userSettings = pgTable(
   ],
 ).enableRLS();
 
+/**
+ * An amount the person typed into the plan grid for one month (cents), over the suggestion: either a category's
+ * everyday spending (`categoryId`) or a fixed item's amount (`itemId`, income or expense), never both. The forecast uses
+ * it for months still to come only; past months and real money are never overridden. Deleting the category or the item
+ * deletes what was typed for it.
+ */
+export const planOverrides = pgTable(
+  "plan_overrides",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: owner(),
+    categoryId: integer("category_id"),
+    itemId: integer("item_id"),
+    month: text("month").notNull(), // YYYY-MM
+    amount: cents("amount").notNull(), // cents, >= 0
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // Nulls are distinct, so each constraint only binds the rows of its own kind.
+    unique("plan_overrides_user_category_month_unique").on(t.userId, t.categoryId, t.month),
+    unique("plan_overrides_user_item_month_unique").on(t.userId, t.itemId, t.month),
+    check("plan_overrides_target_check", sql`(category_id is null) <> (item_id is null)`),
+    check("plan_overrides_amount_check", sql`amount >= 0`),
+    check("plan_overrides_month_check", sql`month ~ '^[0-9]{4}-(0[1-9]|1[0-2])$'`),
+    foreignKey({
+      name: "plan_overrides_category_fk",
+      columns: [t.userId, t.categoryId],
+      foreignColumns: [categories.userId, categories.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "plan_overrides_item_fk",
+      columns: [t.userId, t.itemId],
+      foreignColumns: [recurringItems.userId, recurringItems.id],
+    }).onDelete("cascade"),
+  ],
+).enableRLS();
+
 /** What the language model has been asked for, per user per day (caps and cost). */
 export const aiUsage = pgTable(
   "ai_usage",

@@ -1,5 +1,5 @@
 import type { Mood, Tone } from "@/design/tokens";
-import type { Forecast, MonthKind } from "@/lib/forecast/forecast";
+import type { Forecast, ForecastMonth, MonthKind } from "@/lib/forecast/forecast";
 import type { Locale } from "@/i18n/config";
 import { messages } from "@/i18n/messages";
 import { formatter } from "./format";
@@ -31,7 +31,7 @@ export interface PrognosePoint {
   /** The BTW that builds up on the client's income expected this month (cents); 0 for real months. */
   btwAccrued: number;
   /** What the month's still expected expenses are made of (see ForecastMonth.expenseSources); zeros for real months. */
-  expenseSources: { fixed: number; budgets: number; averages: number; fellBack: string[] };
+  expenseSources: ForecastMonth["expenseSources"];
   /** Money moved into savings this month (cents): not spending, but no longer in the current account. */
   setAside: number;
   /** What is inside `income` and `expenses`: each adds up to its total exactly. */
@@ -104,7 +104,13 @@ export function buildPrognose(
     savings: hasBalance ? m.cumulativeSetAside - m.cumulativeReserve + (f.openingSavings ?? 0) : 0,
     btw: m.btwWorth ?? 0,
     btwAccrued: m.btwAccrued ?? 0,
-    expenseSources: m.expenseSources ?? { fixed: 0, budgets: 0, averages: 0, fellBack: [] },
+    expenseSources: m.expenseSources ?? {
+      fixed: 0,
+      budgets: 0,
+      averages: 0,
+      typed: 0,
+      fellBack: [],
+    },
     setAside: m.setAside.total,
     incomeParts: incomeParts(m, locale),
     expenseParts: expenseParts(m, locale, basis),

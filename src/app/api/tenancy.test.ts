@@ -6,7 +6,10 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { TEST_USER_A, TEST_USER_B, schema } from "@/db";
+import { todayIso } from "@/lib/api";
 import { buildExport } from "@/lib/export";
+import { addMonths, monthOf } from "@/lib/recurring/dates";
+import type { Plan } from "@/lib/view/plan";
 import { loadOverzicht, loadPrognose, loadUpload, loadVasteLasten } from "@/lib/view/load";
 import { asTestUser, setTestUser } from "../../../tests/helpers/test-user";
 
@@ -37,6 +40,7 @@ const ROUTES: Record<string, string[]> = {
   "savings/settings": ["GET", "PUT"],
   "btw/settings": ["GET", "PUT"],
   "forecast/own": ["GET", "PUT"],
+  plan: ["GET", "PUT"],
   sample: ["GET", "POST", "DELETE"],
   "categorise/smart": ["POST"],
   "categorise/auto": ["POST"],
@@ -507,6 +511,55 @@ describe("expected spending is per person", () => {
     ).toBe(422);
     setTestUser(TEST_USER_A);
     expect(await get()).toEqual({ amount: 150000 });
+  });
+});
+
+describe("the plan is per person", () => {
+  it("B can neither read nor write A's typed cells, and A's stay", async () => {
+    const month = addMonths(monthOf(todayIso()), 1);
+    const put = async (body: unknown) =>
+      (await call("plan", "PUT", json("PUT", "/api/plan", body))).status;
+    const plan = async () =>
+      (await (await call("plan", "GET", new Request(url("/api/plan?months=2")))).json()) as Plan;
+    const typedCells = (p: Plan) =>
+      [...p.sections.income, ...p.sections.fixed, ...p.allCategories].flatMap((r) =>
+        r.cells.filter((c) => c.typed !== null).map((c) => [r.key, c.month, c.typed]),
+      );
+
+    setTestUser(TEST_USER_A);
+    expect(await put({ kind: "item", id: a.itemId, month, amount: 5151, scope: "month" })).toBe(
+      200,
+    );
+    expect(
+      await put({ kind: "category", id: a.categoryId, month, amount: 6262, scope: "after" }),
+    ).toBe(200);
+    const mine = typedCells(await plan());
+    expect(mine).toContainEqual([`item-${a.itemId}`, month, 5151]);
+    expect(mine).toContainEqual([`category-${a.categoryId}`, month, 6262]);
+
+    setTestUser(TEST_USER_B);
+    const theirs = await plan();
+    expect(typedCells(theirs)).toEqual([]);
+    expect(JSON.stringify(theirs)).not.toContain(`item-${a.itemId}"`);
+    // Writing to A's category or item, or clearing them, is refused as unknown.
+    for (const body of [
+      { kind: "item", id: a.itemId, month, amount: 1, scope: "month" },
+      { kind: "item", id: a.itemId, month, amount: null, scope: "after" },
+      { kind: "category", id: a.categoryId, month, amount: 1, scope: "after" },
+      { kind: "category", id: a.categoryId, month, amount: null, scope: "after" },
+    ])
+      expect(await put(body)).toBe(422);
+    expect(await asTestUser((db) => db.select().from(schema.planOverrides))).toEqual([]);
+
+    setTestUser(TEST_USER_A);
+    expect(typedCells(await plan())).toEqual(mine);
+    // Leave A's data as the other tests expect it.
+    expect(await put({ kind: "item", id: a.itemId, month, amount: null, scope: "month" })).toBe(
+      200,
+    );
+    expect(
+      await put({ kind: "category", id: a.categoryId, month, amount: null, scope: "after" }),
+    ).toBe(200);
   });
 });
 

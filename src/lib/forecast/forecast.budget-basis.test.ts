@@ -167,6 +167,7 @@ describe("getForecast: what a month's expected expenses are made of (expenseSour
         budgets: 40000,
         // Other (200) and uncategorised (30) have no budget: they use their average.
         averages: 23000,
+        typed: 0,
         fellBack: ["Overig"],
       });
       expect(m.expenseSources.fixed + m.expenseSources.budgets + m.expenseSources.averages).toBe(
@@ -179,7 +180,13 @@ describe("getForecast: what a month's expected expenses are made of (expenseSour
     const w = await world();
     await setBudget(w.db, w.groceries, "2026-11", 40000);
     const m = at(await w.forecast("averages"), "2026-12");
-    expect(m.expenseSources).toEqual({ fixed: 80000, budgets: 0, averages: 113000, fellBack: [] });
+    expect(m.expenseSources).toEqual({
+      fixed: 80000,
+      budgets: 0,
+      averages: 113000,
+      typed: 0,
+      fellBack: [],
+    });
     expect(m.expenseSources.fixed + m.expenseSources.averages).toBe(m.expenses);
   });
 
@@ -209,6 +216,7 @@ describe("getForecast: what a month's expected expenses are made of (expenseSour
       // What is left of the 400 budget after 150, and of the 200 average after 50, plus the uncategorised 30.
       budgets: 25000,
       averages: 15000 + 3000,
+      typed: 0,
       fellBack: ["Overig"],
     });
     expect(oct.actual.expenses).toBe(20000);
@@ -238,6 +246,12 @@ describe("getForecast: what a month's expected expenses are made of (expenseSour
     const w = await world();
     const sep = at(await w.forecast(), "2026-09");
     expect(sep.kind).toBe("actual");
-    expect(sep.expenseSources).toEqual({ fixed: 0, budgets: 0, averages: 0, fellBack: [] });
+    expect(sep.expenseSources).toEqual({
+      fixed: 0,
+      budgets: 0,
+      averages: 0,
+      typed: 0,
+      fellBack: [],
+    });
   });
 });
