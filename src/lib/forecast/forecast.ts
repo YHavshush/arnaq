@@ -43,6 +43,11 @@ export interface ForecastOptions {
   basis?: "averages" | "budget" | "own";
   /** The monthly everyday spending the person typed (cents); used with basis "own", ignored without it. */
   ownSpending?: number | null;
+  /**
+   * Leave out what was typed in the plan (plan_overrides): the forecast as the suggestions alone make it. Only the plan
+   * grid uses this, to show the suggestion behind a typed cell; every screen shows the plan as typed.
+   */
+  ignorePlan?: boolean;
 }
 
 /**
@@ -240,7 +245,12 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   });
   const own = opts.basis === "own" ? (opts.ownSpending ?? null) : null;
   const averages = own === null ? measured : scaleAverages(measured, own);
-  const { byMonth, inMemoryMatched } = await projectRecurring(db, { first, current, last });
+  const { byMonth, inMemoryMatched } = await projectRecurring(db, {
+    first,
+    current,
+    last,
+    ignorePlan: opts.ignorePlan,
+  });
   const { pocket, client } = await getBtwSettings(db);
   const basis = opts.basis === "budget" ? "budget" : "averages";
   const ctx: Context = {
@@ -268,8 +278,9 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     basis,
     clientItems: await clientItemIds(db, client),
     movedToSavings: await getMovedToSavings(db, first, last, pocket),
-    typedCategories: indexOverrides(await getPlanOverrides(db, { from: current, to: last }))
-      .categories,
+    typedCategories: opts.ignorePlan
+      ? new Map()
+      : indexOverrides(await getPlanOverrides(db, { from: current, to: last })).categories,
   };
 
   // The checking balance at the end of each real day, from the first month shown through today.

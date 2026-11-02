@@ -193,4 +193,18 @@ describe("getForecast: a typed category amount", () => {
     const f = await w.forecast();
     for (const m of f.months) expect(m.expenseSources.typed).toBe(0);
   });
+
+  it("ignorePlan gives the forecast of the suggestions alone", async () => {
+    const w = await world();
+    const before = await w.forecast();
+    await w.type("category", w.groceries, "2026-12", 50000, "after");
+    await w.type("item", w.rent.id, "2026-11", 1, "after");
+    const ignored = await getForecast(w.db, {
+      today: TODAY,
+      months: 6,
+      pastMonths: 1,
+      ignorePlan: true,
+    });
+    expect(ignored).toEqual(before);
+  });
 });

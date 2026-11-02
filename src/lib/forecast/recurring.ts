@@ -89,7 +89,7 @@ const fromStored = (o: OccurrenceView): Line => ({
  */
 export async function projectRecurring(
   db: Db,
-  w: { first: string; current: string; last: string },
+  w: { first: string; current: string; last: string; ignorePlan?: boolean },
 ): Promise<RecurringProjection> {
   const items = await db.select().from(schema.recurringItems);
   const active = new Set(items.filter((i) => i.active).map((i) => i.id));
@@ -124,7 +124,9 @@ export async function projectRecurring(
   // What the person typed in the plan for an item and month replaces the amount still expected. Only money still to
   // come: a matched (paid or received) line keeps its real amount, and a line of an earlier month (carried over, or a
   // past month) is never changed.
-  const typed = await getItemOverrides(db, { from: w.current, to: w.last });
+  const typed = w.ignorePlan
+    ? new Map<string, number>()
+    : await getItemOverrides(db, { from: w.current, to: w.last });
   if (typed.size > 0)
     for (const list of byMonth.values())
       for (const [i, line] of list.entries()) {
