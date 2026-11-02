@@ -37,7 +37,7 @@ function month(over: Partial<ForecastMonth>): ForecastMonth {
     variable: 0,
     categories: [],
     budget: { total: null, isExplicit: false, difference: null },
-    expenseSources: { fixed: 0, budgets: 0, averages: 0, fellBack: [] },
+    expenseSources: { fixed: 0, budgets: 0, averages: 0, typed: 0, fellBack: [] },
     btwAccrued: 0,
     btwWorth: 0,
     low: null,

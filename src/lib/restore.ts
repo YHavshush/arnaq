@@ -249,7 +249,8 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
   // What was typed in the plan grid, pointing at the restored category or fixed item (one without either is dropped).
   const plan = data.planOverrides
     .map((r) => ({
-      ...pick(r, ["month", "amount"]),
+      month: r.month,
+      amount: r.amount,
       categoryId: mapped(category, r.categoryId),
       itemId: mapped(items, r.itemId),
     }))

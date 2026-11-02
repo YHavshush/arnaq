@@ -32,6 +32,7 @@ async function fullSnapshot(db: Db) {
     ...(await snapshot(db)),
     budgets: await db.select().from(schema.budgets),
     totals: await db.select().from(schema.monthlyTotalBudget),
+    plan: await db.select().from(schema.planOverrides).orderBy(asc(schema.planOverrides.id)),
     imports: await db.select().from(schema.imports).orderBy(asc(schema.imports.id)),
     categories: await db.select().from(schema.categories).orderBy(asc(schema.categories.id)),
   };
@@ -106,6 +107,16 @@ async function randomWorld(seed: number) {
   await matchOccurrences(db);
   if (r.next() < 0.7) await markMissed(db, { today });
   if (r.next() < 0.5) await setBudget(db, expenseCats[0], "2026-11", r.int(0, 100000));
+  // Amounts typed in the plan grid, for items and categories, some in months that have passed (those must change nothing).
+  for (let i = 0, n = r.next() < 0.5 ? r.int(1, 8) : 0; i < n; i++) {
+    const month = addMonths("2026-08", r.int(0, 10));
+    const amount = r.int(0, 150000);
+    const row =
+      r.next() < 0.5
+        ? { itemId: r.pick(items).id, month, amount }
+        : { categoryId: r.pick(expenseCats), month, amount };
+    await db.insert(schema.planOverrides).values(row).onConflictDoNothing();
+  }
 
   return {
     db,
@@ -176,10 +187,10 @@ async function checkInvariants(db: Db, f: Forecast) {
     // What the expected expenses are made of adds up to them; real months have no sources.
     const s = m.expenseSources;
     if (m.kind === "mixed" || m.kind === "forecast") {
-      expect(m.actual.expenses + s.fixed + s.budgets + s.averages).toBe(m.expenses);
+      expect(m.actual.expenses + s.fixed + s.budgets + s.averages + s.typed).toBe(m.expenses);
       expect(s.fixed).toBe(m.recurring.expenses);
-    } else expect(s).toEqual({ fixed: 0, budgets: 0, averages: 0, fellBack: [] });
-    for (const v of [s.fixed, s.budgets, s.averages, m.btwAccrued, m.btwWorth])
+    } else expect(s).toEqual({ fixed: 0, budgets: 0, averages: 0, typed: 0, fellBack: [] });
+    for (const v of [s.fixed, s.budgets, s.averages, s.typed, m.btwAccrued, m.btwWorth])
       expect(Number.isSafeInteger(v)).toBe(true);
   }
   for (const [key, n] of countedOnce) expect(n, key).toBe(1);
