@@ -16,6 +16,7 @@ export async function deleteAllMyData(db: Db): Promise<void> {
 export async function wipeMyData(db: Db): Promise<void> {
   // The matched payment and its occurrence point at each other: cut one side first.
   await db.update(schema.transactions).set({ matchedOccurrenceId: null });
+  await db.delete(schema.planOverrides);
   await db.delete(schema.recurringOccurrences);
   await db.delete(schema.transactions);
   await db.delete(schema.recurringItems);

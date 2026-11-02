@@ -1,4 +1,5 @@
 import { schema, type Db } from "@/db";
+import { getItemOverrides, overrideKey } from "@/lib/plan/overrides";
 import { addDays, addMonths, monthOf } from "@/lib/recurring/dates";
 import { pairOccurrences, savingsCategoryIds, unmatchedCandidates } from "@/lib/recurring/matching";
 import {
@@ -82,10 +83,13 @@ const fromStored = (o: OccurrenceView): Line => ({
  *   28th) is matched in memory with the same rules as matchOccurrences, so it is not projected.
  * - An `expected` occurrence of an earlier month whose match window reaches into the current
  *   month is also listed (carriedOver) in the current month: it may still be paid there.
+ * - An amount typed in the plan (plan_overrides) for an item and a month from the current month on replaces
+ *   `amount` of that month's still expected line (`expectedAmount` stays the item's own plan). Matching
+ *   still uses the item's own amount, so a typed amount never decides what counts as paid.
  */
 export async function projectRecurring(
   db: Db,
-  w: { first: string; current: string; last: string },
+  w: { first: string; current: string; last: string; ignorePlan?: boolean },
 ): Promise<RecurringProjection> {
   const items = await db.select().from(schema.recurringItems);
   const active = new Set(items.filter((i) => i.active).map((i) => i.id));
@@ -116,6 +120,25 @@ export async function projectRecurring(
   const savings = await savingsCategoryIds(db);
   const { lines, inMemoryMatched } = await plannedLines(db, items, storedKeys, savings, w);
   for (const line of lines) add(line.month, line);
+
+  // What the person typed in the plan for an item and month replaces the amount still expected. Only money still to
+  // come: a matched (paid or received) line keeps its real amount, and a line of an earlier month (carried over, or a
+  // past month) is never changed.
+  const typed = w.ignorePlan
+    ? new Map<string, number>()
+    : await getItemOverrides(db, { from: w.current, to: w.last });
+  if (typed.size > 0)
+    for (const list of byMonth.values())
+      for (const [i, line] of list.entries()) {
+        const amount = typed.get(overrideKey(line.recurringItemId, line.month));
+        if (
+          amount !== undefined &&
+          line.status === "expected" &&
+          !line.carriedOver &&
+          line.month >= w.current
+        )
+          list[i] = { ...line, amount };
+      }
 
   for (const list of byMonth.values())
     list.sort(

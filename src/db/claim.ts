@@ -18,6 +18,7 @@ const TABLES = [
   "merchant_labels",
   "user_settings",
   "ai_usage",
+  "plan_overrides",
 ] as const;
 
 // A user's first request creates default categories, rules and settings for them. If that happened

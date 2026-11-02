@@ -9,6 +9,7 @@ import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { getBtwSettings } from "@/lib/btw/settings";
 import { clientItemIds } from "@/lib/btw/share";
 import { btwInside, btwNetWorth, getBtwSummary, mentions } from "@/lib/btw/summary";
+import { getPlanOverrides, indexOverrides, overrideKey } from "@/lib/plan/overrides";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
 import { lowestDay, simulateDays, type MonthLow } from "./low";
@@ -42,6 +43,11 @@ export interface ForecastOptions {
   basis?: "averages" | "budget" | "own";
   /** The monthly everyday spending the person typed (cents); used with basis "own", ignored without it. */
   ownSpending?: number | null;
+  /**
+   * Leave out what was typed in the plan (plan_overrides): the forecast as the suggestions alone make it. Only the plan
+   * grid uses this, to show the suggestion behind a typed cell; every screen shows the plan as typed.
+   */
+  ignorePlan?: boolean;
 }
 
 /**
@@ -128,13 +134,21 @@ export interface ForecastMonth {
    *   category's fixed items as its budget), less the fixed items in it; only with basis "budget";
    * - averages: everyday spending that comes from the averages (with basis "own": the typed amount shared out like
    *   them), uncategorised included;
+   * - typed: everyday spending of the categories the person typed an amount for in the plan (plan_overrides), whatever
+   *   the basis; those categories are in neither budgets nor averages;
    * - fellBack: with basis "budget", the categories that use their average because no budget exists for them even
-   *   after carrying forward (only those whose average is above 0; uncategorised is never named).
-   * For a forecast month `fixed + budgets + averages === expenses`. For the current month what is already spent is
-   * real money and not a source: `actual.expenses + fixed + budgets + averages === expenses`, and budgets and averages
-   * are what is left of them after this month's everyday spending so far (never below 0).
+   *   after carrying forward (only those whose average is above 0, never a typed one; uncategorised is never named).
+   * For a forecast month `fixed + budgets + averages + typed === expenses`. For the current month what is already spent
+   * is real money and not a source: `actual.expenses + fixed + budgets + averages + typed === expenses`, and budgets,
+   * averages and typed are what is left of them after this month's everyday spending so far (never below 0).
    */
-  expenseSources: { fixed: number; budgets: number; averages: number; fellBack: string[] };
+  expenseSources: {
+    fixed: number;
+    budgets: number;
+    averages: number;
+    typed: number;
+    fellBack: string[];
+  };
   /**
    * The BTW that builds up on the client's income expected in this month (cents): round(21/121 x the client's fixed
    * income items still expected in it). 0 for actual and no-data months: real income is in the BTW now. Not in
@@ -210,6 +224,8 @@ interface Context {
   basis: "averages" | "budget";
   /** The client's fixed income items: what they bring in carries BTW. */
   clientItems: Set<number>;
+  /** Everyday spending typed in the plan per category and month (overrideKey -> cents), from the current month on. */
+  typedCategories: Map<string, number>;
 }
 
 /**
@@ -229,7 +245,12 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   });
   const own = opts.basis === "own" ? (opts.ownSpending ?? null) : null;
   const averages = own === null ? measured : scaleAverages(measured, own);
-  const { byMonth, inMemoryMatched } = await projectRecurring(db, { first, current, last });
+  const { byMonth, inMemoryMatched } = await projectRecurring(db, {
+    first,
+    current,
+    last,
+    ignorePlan: opts.ignorePlan,
+  });
   const { pocket, client } = await getBtwSettings(db);
   const basis = opts.basis === "budget" ? "budget" : "averages";
   const ctx: Context = {
@@ -257,6 +278,9 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     basis,
     clientItems: await clientItemIds(db, client),
     movedToSavings: await getMovedToSavings(db, first, last, pocket),
+    typedCategories: opts.ignorePlan
+      ? new Map()
+      : indexOverrides(await getPlanOverrides(db, { from: current, to: last })).categories,
   };
 
   // The checking balance at the end of each real day, from the first month shown through today.
@@ -520,7 +544,7 @@ async function buildMonth(
     categories,
     expenseSources: projecting
       ? expenseSources(ctx, month, categories, sum(projectedExpenses))
-      : { fixed: 0, budgets: 0, averages: 0, fellBack: [] },
+      : { fixed: 0, budgets: 0, averages: 0, typed: 0, fellBack: [] },
     btwAccrued: projecting ? btwInside(clientIncome) : 0,
     plannedReserve,
     budget: {
@@ -562,13 +586,16 @@ function categoryLines(
     const projecting = kind === "mixed" || kind === "forecast";
     const budgeted =
       ctx.basis === "budget" && projecting && id !== null ? (budgets?.get(id) ?? null) : null;
+    const typed = projecting && id !== null ? typedFor(ctx, id, month) : null;
     const average = !projecting
       ? 0
-      : budgeted !== null
-        ? Math.max(0, budgeted - (recurringBy.get(id) ?? 0))
-        : id === null
-          ? ctx.averages.uncategorised
-          : (ctx.averages.byCategory.get(id) ?? 0);
+      : typed !== null
+        ? typed
+        : budgeted !== null
+          ? Math.max(0, budgeted - (recurringBy.get(id) ?? 0))
+          : id === null
+            ? ctx.averages.uncategorised
+            : (ctx.averages.byCategory.get(id) ?? 0);
     // Remaining variable spend: what is left of the average after this month's variable spend
     // so far (net refunds never raise it above the average).
     const variable =
@@ -608,14 +635,23 @@ function expenseSources(
     ctx.basis === "budget" && c.categoryId !== null && budgets?.has(c.categoryId) === true;
   let fromBudgets = 0;
   let fromAverages = 0;
+  let fromTyped = 0;
   const fellBack: string[] = [];
   for (const c of categories) {
-    if (fromBudget(c)) fromBudgets += c.variable;
+    if (c.categoryId !== null && typedFor(ctx, c.categoryId, month) !== null)
+      fromTyped += c.variable;
+    else if (fromBudget(c)) fromBudgets += c.variable;
     else {
       fromAverages += c.variable;
       if (ctx.basis === "budget" && c.categoryId !== null && c.variableAverage > 0)
         fellBack.push(c.name);
     }
   }
-  return { fixed, budgets: fromBudgets, averages: fromAverages, fellBack };
+  return { fixed, budgets: fromBudgets, averages: fromAverages, typed: fromTyped, fellBack };
+}
+
+/** What the person typed in the plan as a category's everyday spending for a month still to come, or null. */
+function typedFor(ctx: Context, categoryId: number, month: string): number | null {
+  if (month < ctx.current) return null;
+  return ctx.typedCategories.get(overrideKey(categoryId, month)) ?? null;
 }

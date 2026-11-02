@@ -76,6 +76,10 @@ async function seeded() {
       .insert(schema.budgets)
       .values({ categoryId: food.id, month: "2026-09", amount: 12345 });
     await tx.insert(schema.monthlyTotalBudget).values({ month: "2026-09", amount: 99999 });
+    await tx.insert(schema.planOverrides).values([
+      { categoryId: food.id, month: "2026-12", amount: 25000 },
+      { itemId: item.id, month: "2027-03", amount: 70000 },
+    ]);
     await tx
       .insert(schema.merchantLabels)
       .values({ merchantKey: "spar", categoryId: food.id, source: "user" });
@@ -105,6 +109,7 @@ describe("restoreFromBackup", () => {
       rules: await tx.select().from(schema.categorisationRules),
       items: await tx.select().from(schema.recurringItems),
       accounts: await tx.select().from(schema.accounts),
+      plan: await tx.select().from(schema.planOverrides),
     }));
     expect(got.tx.map((t) => t.amount).sort((a, b) => a - b)).toEqual([-65000, -450]);
     const rent = got.tx.find((t) => t.amount === -65000)!;
@@ -128,6 +133,15 @@ describe("restoreFromBackup", () => {
     expect(got.totals).toMatchObject([{ month: "2026-09", amount: 99999 }]);
     expect(got.labels.map((l) => l.merchantKey)).toEqual(["spar"]); // a model's guess is not restored
     expect(got.accounts).toHaveLength(1);
+    // What was typed in the plan grid comes back, pointing at B's own category and fixed item.
+    expect(
+      got.plan
+        .map(({ categoryId, itemId, month, amount }) => ({ categoryId, itemId, month, amount }))
+        .sort((a, b) => a.month.localeCompare(b.month)),
+    ).toEqual([
+      { categoryId: food.id, itemId: null, month: "2026-12", amount: 25000 },
+      { categoryId: null, itemId: got.items[0].id, month: "2027-03", amount: 70000 },
+    ]);
     expect(got.cats).toHaveLength(backup.tables.categories.length); // exactly the backup's categories, no extra defaults
     expect(got.cats.find((c) => c.name === "Huur")?.slug).toBe("rent");
     // The original owner is untouched.
