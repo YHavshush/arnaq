@@ -157,7 +157,7 @@ function AddBody({ plan, kind, close }: { plan: Plan; kind: NewKind; close: () =
           />
         </label>
       </div>
-      <div className="grid grid-cols-2 items-end gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <label className="grid min-w-0 gap-1.5 text-sm font-medium">
           {a.from}
           <select
