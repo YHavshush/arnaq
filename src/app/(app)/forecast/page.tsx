@@ -95,6 +95,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
               ? f.euro(p.netWorth.end)
               : f.euroSigned(p.growth)
         }
+        amountBad={nowRing ? worth.total < 0 : p.netWorth !== null && p.netWorth.end < 0}
         caption={
           nowRing
             ? t.ui.netWorth.nowCaption

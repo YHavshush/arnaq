@@ -1,4 +1,5 @@
 import type { Mood, Tone } from "@/design/tokens";
+import { lowestDay } from "@/lib/forecast/low";
 import type { Forecast, MonthKind } from "@/lib/forecast/forecast";
 import type { Locale } from "@/i18n/config";
 import { messages } from "@/i18n/messages";
@@ -40,7 +41,8 @@ export interface PrognosePoint {
   /** Month is not (fully) real money yet: drawn dashed. */
   projected: boolean;
   /**
-   * The lowest end-of-day balance of the checking accounts in this month (cents) and the day (YYYY-MM-DD): real
+   * The lowest end-of-day net worth in this month (accounts plus savings, with the BTW, like the line; cents) and the
+   * day (YYYY-MM-DD): real
    * days from the statements, the rest simulated day by day. Null when no balance is known.
    */
   low: { amount: number; date: string } | null;
@@ -113,8 +115,24 @@ export function buildPrognose(
     incomeParts: incomeParts(m, locale),
     expenseParts: expenseParts(m, locale, basis),
     projected: m.kind === "forecast" || m.kind === "mixed",
-    low: m.low ?? null,
+    low: null,
   }));
+  // The lowest day of net worth: the checking days with the rest of net worth (savings, BTW) moved along, as the line.
+  points.forEach((point, i) => {
+    const days = f.months[i].days;
+    if (!days || days.length === 0) return;
+    const after = point.cumulative - days[days.length - 1];
+    const previous = i > 0 ? f.months[i - 1].days : null;
+    const before =
+      previous && previous.length > 0
+        ? points[i - 1].cumulative - previous[previous.length - 1]
+        : after;
+    point.low = lowestDay(
+      point.month,
+      1,
+      days.map((v, d) => Math.round(v + before + ((after - before) * (d + 1)) / days.length)),
+    );
+  });
   const runsOutIn = hasBalance
     ? (points.find((p) => p.projected && p.cumulative < 0)?.month ?? null)
     : null;

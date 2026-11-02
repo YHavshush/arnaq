@@ -299,7 +299,14 @@ export function PrognoseChart({
                       textAnchor="middle"
                       fontSize="13"
                       fontWeight={isSel ? 700 : 600}
-                      style={{ fill: isSel ? "var(--ink)" : "var(--ink-muted)" }}
+                      style={{
+                        fill:
+                          p.cumulative < 0
+                            ? "var(--bad)"
+                            : isSel
+                              ? "var(--ink)"
+                              : "var(--ink-muted)",
+                      }}
                       className="num"
                     >
                       {plain(p.cumulative)}

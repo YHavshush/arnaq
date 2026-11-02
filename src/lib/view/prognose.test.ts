@@ -31,29 +31,7 @@ const forecast = (months: ForecastMonth[]): Forecast =>
   }) as unknown as Forecast;
 
 describe("buildPrognose: the lowest point in each month", () => {
-  it("puts each month's low on its point and counts the months that dip below zero", () => {
-    const p = buildPrognose(
-      forecast([
-        fm("2026-09", "actual", { amount: 20000, date: "2026-09-05" }),
-        fm("2026-10", "mixed", { amount: -1, date: "2026-10-03" }),
-        fm("2026-11", "forecast", { amount: 0, date: "2026-11-03" }),
-        fm("2026-12", "forecast", { amount: -42600, date: "2026-12-03" }),
-        fm("2027-01", "forecast", null),
-      ]),
-      "en",
-    );
-    expect(p.points.map((pt) => pt.low)).toEqual([
-      { amount: 20000, date: "2026-09-05" },
-      { amount: -1, date: "2026-10-03" },
-      { amount: 0, date: "2026-11-03" },
-      { amount: -42600, date: "2026-12-03" },
-      null,
-    ]);
-    // Zero is not below zero; an unknown low is not a dip.
-    expect(p.dipMonths).toBe(2);
-  });
-
-  it("no dips when nothing goes below zero or nothing is known", () => {
+  it("has no lowest point and no dips for months whose days are not known", () => {
     const p = buildPrognose(
       forecast([fm("2026-10", "mixed", null), fm("2026-11", "forecast", undefined)]),
       "en",
@@ -100,5 +78,44 @@ describe("buildPrognose: when the money runs out", () => {
       "en",
     );
     expect(out.runsOutIn).toBeNull();
+  });
+});
+
+describe("buildPrognose: the lowest point counts the savings too", () => {
+  const withDays = (
+    m: string,
+    kind: ForecastMonth["kind"],
+    cumulativeNet: number,
+    days: number[],
+  ) => ({ ...fm(m, kind, null), cumulativeNet, net: 0, days }) as unknown as ForecastMonth;
+  const withSavings = (months: ForecastMonth[], savings: number): Forecast =>
+    ({ ...forecast(months), openingSavings: savings }) as unknown as Forecast;
+
+  it("is the lowest day of net worth (accounts plus savings), not of the checking accounts alone", () => {
+    // Opening 200.00 in the accounts and 500.00 in savings. October ends at 150.00 in the accounts.
+    const p = buildPrognose(
+      withSavings(
+        [
+          withDays("2026-10", "mixed", -5000, [20000, 10000, 15000]),
+          withDays("2026-11", "forecast", -12000, [14000, -2000, 8000]),
+        ],
+        50000,
+      ),
+      "en",
+    );
+    // October: net worth by day 700, 600, 650. The accounts alone dip to 100, but with savings the low is 600.00.
+    expect(p.points[0].low).toEqual({ amount: 60000, date: "2026-10-02" });
+    // November: the accounts dip below zero on the 2nd (-20.00), net worth does not (480.00).
+    expect(p.points[1].low).toEqual({ amount: 48000, date: "2026-11-02" });
+    expect(p.dipMonths).toBe(0);
+  });
+
+  it("is a dip when net worth itself goes below zero", () => {
+    const p = buildPrognose(
+      withSavings([withDays("2026-10", "mixed", -30000, [20000, -5000, -10000])], 0),
+      "en",
+    );
+    expect(p.points[0].low).toEqual({ amount: -10000, date: "2026-10-03" });
+    expect(p.dipMonths).toBe(1);
   });
 });

@@ -18,6 +18,7 @@ export function AheadTop({
   ringLabel,
   amount,
   caption,
+  amountBad = false,
   split,
   pill,
   ringNote,
@@ -32,6 +33,8 @@ export function AheadTop({
   amount: string;
   /** What the number is ("net worth by Apr"). */
   caption: string;
+  /** The number is below zero: shown in red. */
+  amountBad?: boolean;
   /**
    * Draw the ring as arcs (one per account) instead of one arc for `value`: net worth now, split by where it is. `sub` is
    * a small line under the caption, inside the ring.
@@ -51,7 +54,7 @@ export function AheadTop({
         {split ? (
           <SplitRing segments={split.segments} label={ringLabel}>
             <div
-              className="num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
+              className={`num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal ${amountBad ? "text-bad" : ""}`}
               style={{ fontSize: numberSize(amount.length) }}
             >
               <CountText text={amount} />
@@ -63,7 +66,9 @@ export function AheadTop({
           </SplitRing>
         ) : (
           <Ring value={value} tone={tone} label={ringLabel}>
-            <div className="num text-[34px] leading-none font-medium tracking-[-0.03em] whitespace-nowrap dark:font-normal">
+            <div
+              className={`num text-[34px] leading-none font-medium tracking-[-0.03em] whitespace-nowrap dark:font-normal ${amountBad ? "text-bad" : ""}`}
+            >
               <CountText text={amount} />
             </div>
             <div className="text-ink-muted mt-2 max-w-[9rem] text-xs leading-tight">{caption}</div>
