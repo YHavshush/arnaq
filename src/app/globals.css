@@ -324,6 +324,57 @@
   }
 }
 
+/* The savings tank: a glass vessel whose liquid rises once when the screen opens, then drifts. Only transform moves. */
+.arnaq-tank {
+  position: relative;
+  overflow: hidden;
+  flex: none;
+  border: 1.5px solid var(--hair);
+  background: var(--track);
+}
+.arnaq-tank-level {
+  position: absolute;
+  inset: 0;
+  transform: translateY(calc((1 - var(--p)) * 100%));
+}
+.arnaq-tank-level::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--tank-a), var(--tank-b));
+}
+.arnaq-tank-wave {
+  position: absolute;
+  top: -7px;
+  left: 0;
+  width: 200%;
+  height: 8px;
+}
+.arnaq-tank-wave path {
+  fill: var(--tank-a);
+}
+:root[data-mode="dark"] .arnaq-tank {
+  box-shadow: 0 0 14px color-mix(in srgb, var(--tank-b) 30%, transparent);
+}
+@keyframes arnaq-tank-rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes arnaq-tank-drift {
+  to {
+    transform: translateX(-50%);
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .arnaq-tank-level {
+    animation: arnaq-tank-rise 1.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .arnaq-tank-wave {
+    animation: arnaq-tank-drift 3.4s linear infinite;
+  }
+}
+
 /* Waiting animations (the "loading family"): chase, breathe and shimmer. They stand still when motion is reduced. */
 @keyframes arnaq-chase {
   to {

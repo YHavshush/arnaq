@@ -106,6 +106,8 @@ async function Content() {
       <Section title={s.savings.title}>
         {goal !== null && (
           <SavingsProgress
+            variant="card"
+            toGo={s.savings.toGo(euro(Math.max(goal - savingsNow.saved, 0)))}
             className="mb-3"
             label={s.savings.title}
             word={reached ? tiles.wordReached : tiles.wordUnderway}

@@ -625,6 +625,7 @@ export const ui = {
     appearance: "Language and theme",
     savings: {
       title: "Savings goal",
+      toGo: (amount: string) => `${amount} to go`,
       intro:
         "Money you put into savings counts towards your goal, and money you take out of savings counts against it. Mark those lines as Savings when you sort them.",
       goalLabel: "Savings goal (€)",

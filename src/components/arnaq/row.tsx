@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { CategoryIcon } from "./category-icon";
+import { SavingsTank } from "./savings-tank";
 
 const BAR: Record<string, string> = {
   none: "var(--ring-accent-to)",
@@ -22,19 +23,28 @@ interface RowProps {
   amountSub?: ReactNode;
   /** Optional status bar: filled share and the share that is planned but not yet spent. */
   bar?: { filled: number; planned?: number; state: keyof typeof BAR };
+  /** A small savings tank in place of the icon (the savings row with a goal), instead of the bar. */
+  tank?: { level: number; reached: boolean };
   /** Makes the whole row a link (a stretched link, so the amount and the bar stay selectable text). */
   href?: string;
 }
 
 /** Icon chip + name + amount, with an optional thin status bar. */
-export function Row({ icon, name, tag, meta, amount, amountSub, bar, href }: RowProps) {
+export function Row({ icon, name, tag, meta, amount, amountSub, bar, tank, href }: RowProps) {
   const pct = (n: number) => `${Math.max(0, Math.min(n, 1)) * 100}%`;
   return (
     <li className="relative grid grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3">
       {href && (
         <Link href={href} aria-label={name} className="absolute inset-0 z-10 active:bg-black/5" />
       )}
-      <CategoryIcon name={icon} />
+      {tank ? (
+        // The tank takes the place of the icon: it says "savings" and how far along, in the same 2.5rem.
+        <span className="grid size-10 place-items-center">
+          <SavingsTank level={tank.level} reached={tank.reached} size="xs" />
+        </span>
+      ) : (
+        <CategoryIcon name={icon} />
+      )}
       <div className="min-w-0">
         <div className="truncate text-base leading-tight font-semibold">
           {name}
@@ -56,7 +66,7 @@ export function Row({ icon, name, tag, meta, amount, amountSub, bar, href }: Row
           </div>
         )}
       </div>
-      <div className="num text-right text-base font-semibold tracking-tight">
+      <div className="num max-w-[11rem] text-right text-base font-semibold tracking-tight sm:max-w-none">
         {amount}
         {amountSub && <div className="text-ink-muted text-[13px] font-medium">{amountSub}</div>}
       </div>

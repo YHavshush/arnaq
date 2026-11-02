@@ -648,6 +648,7 @@ export const ui: typeof en = {
     appearance: "Taal en thema",
     savings: {
       title: "Spaardoel",
+      toGo: (amount: string) => `nog ${amount}`,
       intro:
         "Geld dat je op sparen zet telt mee voor je doel, en geld dat je van je spaargeld haalt gaat eraf. Zet die regels op Sparen als je ze sorteert.",
       goalLabel: "Spaardoel (€)",

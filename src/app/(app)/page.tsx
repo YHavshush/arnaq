@@ -1,3 +1,4 @@
+import { tankLevel } from "@/lib/view/savings-tank";
 import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
@@ -52,13 +53,9 @@ function SavingsRow({
       name={s.name}
       amount={row.thisMonth < 0 ? euroSigned(row.thisMonth) : euroExact(row.thisMonth)}
       amountSub={s.sub(kind, base)}
-      bar={
+      tank={
         row.goal !== null && row.goal > 0
-          ? {
-              filled: row.saved / row.goal,
-              planned: 0,
-              state: row.saved >= row.goal ? "done" : "none",
-            }
+          ? { level: tankLevel(row.saved, row.goal).level, reached: row.saved >= row.goal }
           : undefined
       }
     />
