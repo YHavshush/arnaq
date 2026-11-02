@@ -297,7 +297,7 @@ export const ui = {
     expectedExpenses: "Expected expenses",
     growth: "Growth",
     lowest: (amount: string, day: string) =>
-      `Lowest point ${amount} on ${day}. Rabobank and Revolut together, savings left out.`,
+      `Lowest point ${amount} on ${day}, your savings counted.`,
     lowShort: (amount: string) => `low ${amount}`,
     table: { caption: "Forecast per month", month: "Month", total: "Total", growth: "Growth" },
     /** The parts under a month's Income and Expenses tiles. */

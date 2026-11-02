@@ -167,6 +167,11 @@ export interface ForecastMonth {
    * (see monthDays). Null when no balance is known, or for a past month without data.
    */
   low: MonthLow | null;
+  /**
+   * The checking accounts' balance at the end of each day of the month (cents; index 0 is the 1st), the same days
+   * `low` is taken from. Null when no balance is known. The Ahead page adds the savings to find net worth's low.
+   */
+  days?: number[] | null;
 }
 
 export interface Forecast {
@@ -309,6 +314,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
       cumulativeReserve,
       btwWorth,
       low,
+      days,
     });
   }
 
@@ -457,7 +463,7 @@ async function buildMonth(
 ): Promise<
   Omit<
     ForecastMonth,
-    "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve" | "btwWorth" | "low"
+    "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve" | "btwWorth" | "low" | "days"
   > & { plannedReserve: number }
 > {
   const kind = kindOf(ctx, month);

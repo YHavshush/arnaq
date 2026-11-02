@@ -310,7 +310,7 @@ export const ui: typeof en = {
     expectedExpenses: "Verwachte uitgaven",
     growth: "Groei",
     lowest: (amount: string, day: string) =>
-      `Laagste punt ${amount} op ${day}. Rabobank en Revolut samen, spaargeld niet meegeteld.`,
+      `Laagste punt ${amount} op ${day}, je spaargeld meegeteld.`,
     lowShort: (amount: string) => `laag ${amount}`,
     table: { caption: "Prognose per maand", month: "Maand", total: "Totaal", growth: "Groei" },
     parts: {

@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { useId, type CSSProperties, type ReactNode } from "react";
 import type { RingSegment } from "@/lib/view/fixed-ring";
+import { arcFor, capFraction } from "@/lib/view/ring-arcs";
 
 /** The colour of each slot: four ring tokens for the largest items, a muted ink for the grouped rest. */
 const SLOT_COLOURS = [
@@ -28,18 +29,50 @@ interface SplitRingProps {
   children?: ReactNode;
 }
 
+const RING_MASK = (w: number) =>
+  `radial-gradient(farthest-side, transparent calc(100% - ${w}px), #000 calc(100% - ${w}px + .6px))`;
+
+/** Light: where an arc's gradient starts (a paler version of its colour) and ends (the colour itself). */
+const pale = (slot: number) => `color-mix(in oklab, ${slotColour(slot)} 68%, white)`;
+/** Dark: where an arc starts (dimmer) on its way to the lit end. */
+const dim = (slot: number) => `color-mix(in oklab, ${slotColour(slot)} 58%, var(--canvas))`;
+
 /**
- * The Fixed page ring: the month's income as a circle, every fixed expense an arc of it.
- * Paid arcs are solid, arcs still to pay are lighter, and the empty rest is what is left over.
- * Plain stroked circles (`pathLength` 100, so a length is a percentage); never an SVG filter, which
- * iPhone Safari clips. The dark halo is a gradient on a div, as in the Ring.
+ * A ring made of several arcs (the Fixed page: the month's income split by fixed expense; Ahead: net worth split by
+ * account). It follows the same rules as the single-colour Ring: the 14px stroke at hero size with round caps;
+ * light: each arc a gradient with no glow; dark: each arc a conic gradient that runs from dim to lit, with its own
+ * round start, a lit head and a tight glow in its own colour, and a halo behind the ring. Arcs still to pay are lighter.
+ * Never an SVG filter, which iPhone Safari clips: the dark glow is a filter on a div.
  */
 export function SplitRing({ segments, label, size = 224, children }: SplitRingProps) {
+  const id = `split${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const stroke = Math.max(6, Math.round(size * 0.0625));
   const width = (stroke / size) * 100;
   const r = 50 - width / 2; // outer edge exactly on the box
+  const cap = capFraction(stroke, size);
+  const only = segments.length === 1;
+  const arcs = segments.map((s) => ({
+    s,
+    arc: arcFor({ start: s.start, end: s.end }, cap, GAP / 100, only),
+  }));
+  // The gradient of an arc runs from where it starts to where it ends, so every arc shows it.
+  const at = (fraction: number) => {
+    const angle = (fraction * 360 - 90) * (Math.PI / 180);
+    return { x: 50 + r * Math.cos(angle), y: 50 + r * Math.sin(angle) };
+  };
+  const dot: CSSProperties = {
+    position: "absolute",
+    left: "50%",
+    top: 0,
+    width: stroke,
+    height: stroke,
+    marginLeft: -stroke / 2,
+    borderRadius: "50%",
+  };
+
   return (
     <div className="relative isolate shrink-0" style={{ width: size, height: size }}>
+      {/* Dark: a halo behind the ring. */}
       <div
         aria-hidden
         className="pointer-events-none absolute -z-10 hidden rounded-full dark:block"
@@ -48,7 +81,32 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
           background: "radial-gradient(closest-side, var(--glow-accent), transparent 72%)",
         }}
       />
-      <svg viewBox="0 0 100 100" role="img" aria-label={label} className="absolute inset-0">
+      <svg
+        viewBox="0 0 100 100"
+        role="img"
+        aria-label={label}
+        className="absolute inset-0 dark:hidden"
+      >
+        <defs>
+          {arcs.map(({ s, arc }, i) => {
+            const from = at(arc.start);
+            const to = at(arc.start + arc.length);
+            return (
+              <linearGradient
+                key={i}
+                id={`${id}-${i}`}
+                gradientUnits="userSpaceOnUse"
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
+              >
+                <stop offset="0%" style={{ stopColor: pale(s.slot) }} />
+                <stop offset="100%" style={{ stopColor: slotColour(s.slot) }} />
+              </linearGradient>
+            );
+          })}
+        </defs>
         <circle
           cx="50"
           cy="50"
@@ -57,28 +115,71 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
           strokeWidth={width}
           style={{ stroke: "var(--track)" }}
         />
-        {segments.map((s, i) => {
-          const next = segments[i + 1];
-          const gap = (next && next.key !== s.key) || (!next && s.end >= 1 && i > 0) ? GAP : 0;
-          const length = Math.max(0.4, s.length * 100 - gap);
+        {arcs.map(({ s, arc }, i) => (
+          <circle
+            key={`${s.key}-${s.paid ? "paid" : "open"}`}
+            cx="50"
+            cy="50"
+            r={r}
+            fill="none"
+            strokeWidth={width}
+            strokeLinecap={arc.round ? "round" : "butt"}
+            pathLength={100}
+            strokeDasharray={`${arc.length * 100} ${100 - arc.length * 100}`}
+            strokeDashoffset={-arc.start * 100}
+            transform="rotate(-90 50 50)"
+            stroke={`url(#${id}-${i})`}
+            opacity={s.paid ? 1 : TO_PAY_OPACITY}
+          />
+        ))}
+      </svg>
+      <div role="img" aria-label={label} className="absolute inset-0 hidden dark:block">
+        <i
+          className="absolute inset-0 rounded-full"
+          style={{
+            background: "var(--track)",
+            WebkitMask: RING_MASK(stroke),
+            mask: RING_MASK(stroke),
+          }}
+        />
+        {arcs.map(({ s, arc }) => {
+          const from = arc.start * 360;
+          const length = arc.length * 360;
+          const lit = slotColour(s.slot);
           return (
-            <circle
+            <div
               key={`${s.key}-${s.paid ? "paid" : "open"}`}
-              cx="50"
-              cy="50"
-              r={r}
-              fill="none"
-              strokeWidth={width}
-              pathLength={100}
-              strokeDasharray={`${length} ${100 - length}`}
-              strokeDashoffset={-s.start * 100}
-              transform="rotate(-90 50 50)"
-              style={{ stroke: slotColour(s.slot) }}
-              opacity={s.paid ? 1 : TO_PAY_OPACITY}
-            />
+              className="absolute inset-0"
+              style={{
+                filter: `drop-shadow(0 0 ${stroke * 1.2}px color-mix(in srgb, ${lit} 40%, transparent))`,
+                opacity: s.paid ? 1 : TO_PAY_OPACITY,
+              }}
+            >
+              <i
+                className="absolute inset-0 rounded-full"
+                style={{
+                  background: `conic-gradient(from ${from}deg, ${dim(s.slot)} 0deg, ${lit} ${length}deg, transparent ${length}deg)`,
+                  WebkitMask: RING_MASK(stroke),
+                  mask: RING_MASK(stroke),
+                }}
+              />
+              {arc.round && (
+                <>
+                  <i className="absolute inset-0" style={{ transform: `rotate(${from}deg)` }}>
+                    <u style={{ ...dot, background: dim(s.slot) }} />
+                  </i>
+                  <i
+                    className="absolute inset-0"
+                    style={{ transform: `rotate(${from + length}deg)` }}
+                  >
+                    <u style={{ ...dot, background: lit, boxShadow: `0 0 10px ${lit}` }} />
+                  </i>
+                </>
+              )}
+            </div>
           );
         })}
-      </svg>
+      </div>
       <div className="absolute inset-0 grid place-content-center text-center">{children}</div>
     </div>
   );
