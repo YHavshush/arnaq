@@ -16,3 +16,6 @@ data/
 next-env.d.ts
 /coverage
 npm-debug.log*
+
+# Local agent worktrees
+.claude/worktrees/
