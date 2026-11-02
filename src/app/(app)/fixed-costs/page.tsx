@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
-import { FixedFlowCard } from "@/components/arnaq/fixed-flow";
+import { FixedTimeline } from "@/components/arnaq/fixed-timeline";
 import { FixedHero } from "@/components/arnaq/fixed-hero";
 import { FixedList, type ListSection } from "@/components/arnaq/fixed-list";
 import { MoodSetter } from "@/components/arnaq/mood";
@@ -82,24 +82,24 @@ async function Content({ searchParams }: Pick<PageProps<"/fixed-costs">, "search
           {add}
         </>
       ) : (
-        // Laptop (app width 900px or more): the ring on the left, the list on the right.
-        <div className="@min-[900px]/app:grid @min-[900px]/app:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] @min-[900px]/app:items-start @min-[900px]/app:gap-12">
-          {v.ring.mode !== "empty" && (
-            <div className="@min-[900px]/app:sticky @min-[900px]/app:top-6">
-              <FixedHero ring={v.ring} t={f.hero} fmt={fmt} />
-            </div>
-          )}
-          <div className="mt-6 min-w-0 @min-[900px]/app:col-start-2 @min-[900px]/app:mt-0">
-            {suggestions}
+        <>
+          {v.ring.mode !== "empty" && <FixedHero ring={v.ring} t={f.hero} fmt={fmt} />}
+          {/* Laptop (app width 900px or more): the month in order on the left, expenses and income on the right. */}
+          <div className="mt-6 grid gap-6 @min-[900px]/app:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] @min-[900px]/app:items-start @min-[900px]/app:gap-10">
             {v.flow && (
-              <div className="mb-6">
-                <FixedFlowCard flow={v.flow} month={month} today={today} text={f.flow} fmt={fmt} />
+              <div className="min-w-0 @min-[900px]/app:sticky @min-[900px]/app:top-6">
+                <FixedTimeline flow={v.flow} month={month} text={f.flow} fmt={fmt} />
               </div>
             )}
-            <FixedList sections={sections} month={month} />
-            {add}
+            <div
+              className={`min-w-0 ${v.flow ? "" : "@min-[900px]/app:col-span-2 @min-[900px]/app:mx-auto @min-[900px]/app:w-full @min-[900px]/app:max-w-[40rem]"}`}
+            >
+              {suggestions}
+              <FixedList sections={sections} month={month} />
+              {add}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

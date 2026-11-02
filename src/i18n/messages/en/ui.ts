@@ -332,14 +332,13 @@ export const ui = {
     },
     freq: { monthly: "per month", quarterly: "per quarter", yearly: "per year" },
     flow: {
-      today: "today",
-      title: "The month, day by day",
+      title: "The month in order",
       lowest: (amount: string, day: string) =>
         `Lowest point ${amount} on ${day}, counting your checking accounts and the fixed items only.`,
       neverBelow: (amount: string) =>
         `Your checking accounts never go below ${amount} this month, counting the fixed items only.`,
       fromZero: "No balance is known yet, so it starts from zero.",
-      aria: "The balance of your checking accounts through the month, as the fixed items come in and go out",
+      after: "balance after",
     },
     form: {
       open: "Add a fixed item",

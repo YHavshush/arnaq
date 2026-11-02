@@ -3,6 +3,8 @@ import type { VasteLastRow } from "./vaste-lasten";
 
 export interface FlowEvent {
   day: number;
+  /** The fixed items that moved on that day, as stored. */
+  names: string[];
   /** Signed cents: money out is negative. */
   amount: number;
   /** The balance at the end of that day. */
@@ -34,15 +36,16 @@ export function buildFixedFlow(input: {
   month: string;
   /** Checking balance at the start of the month (cents), or null when no statement gives one. */
   opening: number | null;
-  rows: Pick<VasteLastRow, "type" | "status" | "amount" | "date">[];
+  rows: Pick<VasteLastRow, "type" | "status" | "amount" | "date" | "name">[];
 }): FixedFlow {
   const days = daysInMonth(input.month);
   const start = input.opening ?? 0;
-  const byDay = new Map<number, { out: number; in: number }>();
+  const byDay = new Map<number, { out: number; in: number; names: string[] }>();
   for (const r of input.rows) {
     if (r.status === "missed" || !r.date.startsWith(input.month)) continue;
     const day = Math.min(Math.max(Number(r.date.slice(8, 10)), 1), days);
-    const d = byDay.get(day) ?? { out: 0, in: 0 };
+    const d = byDay.get(day) ?? { out: 0, in: 0, names: [] };
+    d.names.push(r.name);
     if (r.type === "expense") d.out += r.amount;
     else d.in += r.amount;
     byDay.set(day, d);
@@ -57,7 +60,7 @@ export function buildFixedFlow(input: {
       balance -= d.out;
       if (balance < lowest.balance) lowest = { day, balance };
       balance += d.in;
-      events.push({ day, amount: d.in - d.out, balance });
+      events.push({ day, names: d.names, amount: d.in - d.out, balance });
     }
     series.push(balance);
   }

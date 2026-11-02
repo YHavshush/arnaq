@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import { buildFixedFlow } from "./fixed-flow";
 
 const row = (type: "expense" | "income", date: string, amount: number, status = "expected") =>
-  ({ type, date, amount, status }) as Parameters<typeof buildFixedFlow>[0]["rows"][number];
+  ({ type, date, amount, status, name: `${type} ${amount}` }) as Parameters<
+    typeof buildFixedFlow
+  >[0]["rows"][number];
 
 describe("buildFixedFlow", () => {
   it("runs the balance day by day from the opening balance and finds the lowest point", () => {
