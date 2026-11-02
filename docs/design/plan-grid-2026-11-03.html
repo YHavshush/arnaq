@@ -188,13 +188,13 @@ table.plan { width:100%; border-collapse:collapse; font-size:13.5px; font-varian
 
   var fixedCell = function (r, m) { return typed(r, m) ? '<td class="num plan"><i class="dot"></i>' + E(val(r, m)) + '</td>' : '<td class="num">' + E(val(r, m)) + '</td>'; };
   var sugCell = function (c, m) { return typed(c, m) ? '<td class="num typ"><i class="dot"></i>' + E(val(c, m)) + '</td>' : '<td class="num sug">' + E(val(c, m)) + '</td>'; };
-  var head = function (r) { return '<th class="rowh">' + r.n + (r.note ? '<small>' + r.note + '</small>' : "") + '</th>'; };
+  var head = function (r) { return '<th class="rowh">' + r.n + '</th>'; };
   var h = '<thead><tr><th></th>' + MONTHS.map(function (n, m) { return '<th class="' + (m === CUR ? "cur" : "") + '">' + n + (m === CUR ? '<small>this month</small>' : "") + '</th>'; }).join("") + '</tr></thead><tbody>';
   h += '<tr class="grp"><td colspan="7">Income</td></tr>';
   INCOME.forEach(function (r) { h += '<tr>' + head(r) + MONTHS.map(function (_, m) { return fixedCell(r, m); }).join("") + '</tr>'; });
   h += '<tr class="grp"><td colspan="7">Fixed costs</td></tr>';
   FIXED.forEach(function (r) { h += '<tr>' + head(r) + MONTHS.map(function (_, m) { return fixedCell(r, m); }).join("") + '</tr>'; });
-  h += '<tr><th class="rowh">BTW set aside<small>21/121 of featurn, follows income</small></th>' + MONTHS.map(function (_, m) { return '<td class="num cmpc"><i class="eq">=</i>' + E(btw(m)) + '</td>'; }).join("") + '</tr>';
+  h += '<tr><th class="rowh">BTW set aside</th>' + MONTHS.map(function (_, m) { return '<td class="num cmpc"><i class="eq">=</i>' + E(btw(m)) + '</td>'; }).join("") + '</tr>';
   h += '<tr class="grp"><td colspan="7">Everyday spending</td></tr>';
   CATS.forEach(function (c) { h += '<tr>' + head(c) + MONTHS.map(function (_, m) { return sugCell(c, m); }).join("") + '</tr>'; });
   h += '</tbody><tfoot>';
@@ -209,10 +209,10 @@ table.plan { width:100%; border-collapse:collapse; font-size:13.5px; font-varian
   var SEL = 4;
   document.getElementById("monthpick").innerHTML = MONTHS.map(function (n, m) { return '<span class="' + (m === SEL ? "on" : "") + '">' + n + '</span>'; }).join("");
   var rows = "";
-  INCOME.forEach(function (r) { var t = typed(r, SEL); rows += '<div class="prow ' + (t ? "plan" : "") + '"><span>' + (t ? '<i class="dot"></i>' : "") + r.n + '<small>' + (t ? "planned change, now " + E(r.v) : "income") + '</small></span><b>' + E(val(r, SEL)) + '</b></div>'; });
-  FIXED.forEach(function (r) { var t = typed(r, SEL); rows += '<div class="prow ' + (t ? "plan" : "") + '"><span>' + (t ? '<i class="dot"></i>' : "") + r.n + '<small>' + (t ? "planned change, now " + E(r.v) : "fixed") + '</small></span><b>' + E(val(r, SEL)) + '</b></div>'; });
-  rows += '<div class="prow"><span>BTW set aside<small>follows income</small></span><b>' + E(btw(SEL)) + '</b></div>';
-  CATS.forEach(function (c) { var t = typed(c, SEL); rows += '<div class="prow ' + (t ? "typ" : "sug") + '"><span>' + (t ? '<i class="dot"></i>' : "") + c.n + '<small>' + (t ? "you typed it. Suggestion " + E(c.s) : c.why) + '</small></span><b>' + E(val(c, SEL)) + '</b></div>'; });
+  INCOME.forEach(function (r) { var t = typed(r, SEL); rows += '<div class="prow ' + (t ? "plan" : "") + '"><span>' + (t ? '<i class="dot"></i>' : "") + r.n + '<small>' + (t ? "planned change, now " + E(r.v) : "") + '</small></span><b>' + E(val(r, SEL)) + '</b></div>'; });
+  FIXED.forEach(function (r) { var t = typed(r, SEL); rows += '<div class="prow ' + (t ? "plan" : "") + '"><span>' + (t ? '<i class="dot"></i>' : "") + r.n + '<small>' + (t ? "planned change, now " + E(r.v) : "") + '</small></span><b>' + E(val(r, SEL)) + '</b></div>'; });
+  rows += '<div class="prow"><span>BTW set aside</span><b>' + E(btw(SEL)) + '</b></div>';
+  CATS.forEach(function (c) { var t = typed(c, SEL); rows += '<div class="prow ' + (t ? "typ" : "sug") + '"><span>' + (t ? '<i class="dot"></i>' : "") + c.n + '<small>' + (t ? "you typed it. Suggestion " + E(c.s) : "") + '</small></span><b>' + E(val(c, SEL)) + '</b></div>'; });
   document.getElementById("phonelist").innerHTML = rows;
   var g = inc[SEL] - exp[SEL];
   document.getElementById("phonesum").innerHTML = '<div class="cardh"><b>March</b><span class="muted">forecast</span></div><div class="pills3"><div>Expected income<b>' + E(inc[SEL]) + '</b></div><div>Expected expenses<b>' + E(exp[SEL]) + '</b></div><div>Growth<b style="color:' + (g < 0 ? "#c4473a" : "#2f7d5b") + '">' + (g < 0 ? "−" : "+") + E(Math.abs(g)) + '</b></div></div>';
