@@ -80,6 +80,7 @@ History: until 2026-10-22 the dark themes also had a _status wash_, a glow at th
 
 - **Cards:** radius 24px, hairline border, glass blur. Not every block is a card: the hero has none (it sits on the wash).
 - **One radius for every card:** 24px, also for a table or chart. What fills a card to its edges gets at least 16px of padding inside it, so text never sits against a curve (the Fixed tracker once clipped its first and last column with 8px).
+- **Rings with several arcs** (Fixed: income split by fixed item; Ahead: net worth split by account) follow the same ring rules, one arc at a time: light = one gradient across the whole ring (pale at the bottom left, deep at the top right) with round caps and no glow; dark = each arc runs dim to lit with a round start, a lit head and a tight glow in its own colour, plus the halo behind; a share too small for two caps is a flat sliver at its true size. The arc colours are the chip families (`--ring-slot-0..4`: sky, lavender, mint, peach, and a grey for the grouped rest), decided 2026-11-03 (palette B in `docs/design/ring-colours-2026-11-03.html`).
 - **Ring:** 14px stroke at hero size, round caps, gradient from `ring-<tone>-from` to `-to`, track `track`. Never an SVG filter (see Glow).
 - **Rows:** icon chip (40px, 12px radius) + name + amount, with a thin status bar. Planned fixed costs show "komt 25 okt" instead of a spent amount.
 - **Status tiles:** label, one status word, short sub-line. Two across on phone, four on laptop.

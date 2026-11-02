@@ -31,6 +31,19 @@ describe.each(THEMES)("theme %s", (name) => {
     expect(contrastRatio(ink, bg)).toBeGreaterThanOrEqual(AA);
   });
 
+  it("has five ring-arc colours, all different, and in dark they are the chips' own lit inks", () => {
+    expect(t.ringSlots).toHaveLength(5);
+    expect(new Set(t.ringSlots).size).toBe(5);
+    if (name !== "light")
+      expect(t.ringSlots).toEqual([
+        t.chip.sky[1],
+        t.chip.lavender[1],
+        t.chip.mint[1],
+        t.chip.peach[1],
+        t.chip.gray[1],
+      ]);
+  });
+
   it("defines every tone", () => {
     expect(Object.keys(t.ring).sort()).toEqual([...TONES].sort());
     expect(Object.keys(t.glow).sort()).toEqual([...TONES].sort());

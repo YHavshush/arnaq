@@ -31,6 +31,11 @@
   --chip-yellow-ink: #7a5e00;
   --chip-gray: #efeff2;
   --chip-gray-ink: #55555c;
+  --ring-slot-0: #5ea8e8;
+  --ring-slot-1: #9585dd;
+  --ring-slot-2: #55c490;
+  --ring-slot-3: #f2a468;
+  --ring-slot-4: #9aa0ad;
   --ring-accent-from: #33c6ff;
   --ring-accent-to: #7f8cff;
   --glow-accent: rgba(120,170,255,.55);
@@ -84,6 +89,11 @@
     --chip-yellow-ink: #f3d866;
     --chip-gray: #2a2a30;
     --chip-gray-ink: #b0b0ba;
+    --ring-slot-0: #8ec3ff;
+    --ring-slot-1: #b9a9ff;
+    --ring-slot-2: #7fdca6;
+    --ring-slot-3: #ffbe8a;
+    --ring-slot-4: #b0b0ba;
     --ring-accent-from: #2ac9ff;
     --ring-accent-to: #7d8bff;
     --glow-accent: rgba(125,139,255,.20);
@@ -137,6 +147,11 @@
   --chip-yellow-ink: #7a5e00;
   --chip-gray: #efeff2;
   --chip-gray-ink: #55555c;
+  --ring-slot-0: #5ea8e8;
+  --ring-slot-1: #9585dd;
+  --ring-slot-2: #55c490;
+  --ring-slot-3: #f2a468;
+  --ring-slot-4: #9aa0ad;
   --ring-accent-from: #33c6ff;
   --ring-accent-to: #7f8cff;
   --glow-accent: rgba(120,170,255,.55);
@@ -189,6 +204,11 @@
   --chip-yellow-ink: #f3d866;
   --chip-gray: #2a2a30;
   --chip-gray-ink: #b0b0ba;
+  --ring-slot-0: #8ec3ff;
+  --ring-slot-1: #b9a9ff;
+  --ring-slot-2: #7fdca6;
+  --ring-slot-3: #ffbe8a;
+  --ring-slot-4: #b0b0ba;
   --ring-accent-from: #2ac9ff;
   --ring-accent-to: #7d8bff;
   --glow-accent: rgba(125,139,255,.20);

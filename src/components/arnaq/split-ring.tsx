@@ -2,14 +2,8 @@ import { useId, type CSSProperties, type ReactNode } from "react";
 import type { RingSegment } from "@/lib/view/fixed-ring";
 import { arcFor, capFraction } from "@/lib/view/ring-arcs";
 
-/** The colour of each slot: four ring tokens for the largest items, a muted ink for the grouped rest. */
-const SLOT_COLOURS = [
-  "var(--ring-accent-from)",
-  "var(--ring-accent-to)",
-  "var(--ring-good-to)",
-  "var(--ring-warn-to)",
-  "var(--ink-muted)",
-];
+/** The colour of each slot: the chip families (sky, lavender, mint, peach) and a grey for the grouped rest (see `ringSlots`). */
+const SLOT_COLOURS = [0, 1, 2, 3, 4].map((i) => `var(--ring-slot-${i})`);
 
 export const slotColour = (slot: number) =>
   SLOT_COLOURS[slot] ?? SLOT_COLOURS[SLOT_COLOURS.length - 1];

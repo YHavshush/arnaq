@@ -92,6 +92,12 @@ export interface ThemeTokens {
   chip: Record<Chip, [background: string, ink: string]>;
   /** Ring gradient per status tone. */
   ring: Record<Tone, [from: string, to: string]>;
+  /**
+   * The colours of the arcs of a ring that has several (Fixed, and Ahead split by account). The families of the icon
+   * chips (sky, lavender, mint, peach, gray), strong enough to read as an arc: in light a mid tone of each chip, in
+   * dark the chip's own lit ink. The grey is also the grouped "other" arc.
+   */
+  ringSlots: [string, string, string, string, string];
   /** Soft tint behind/under the hero ring per tone. */
   glow: Record<Tone, string>;
   page: PageTokens;
@@ -149,6 +155,7 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     warn: "#8f5200",
     bad: "#b3362c",
     chip: lightChips,
+    ringSlots: ["#5ea8e8", "#9585dd", "#55c490", "#f2a468", "#9aa0ad"],
     ring: {
       accent: ["#33c6ff", "#7f8cff"],
       good: ["#8fe0bd", "#23a371"],
@@ -188,6 +195,13 @@ export const themes: Record<ThemeName, ThemeTokens> = {
     warn: "#f2b84b",
     bad: "#ff7b6e",
     chip: darkChips,
+    ringSlots: [
+      darkChips.sky[1],
+      darkChips.lavender[1],
+      darkChips.mint[1],
+      darkChips.peach[1],
+      darkChips.gray[1],
+    ],
     ring: darkRing,
     glow: darkGlow,
     glass: {

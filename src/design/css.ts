@@ -32,6 +32,7 @@ function declarations(t: ThemeTokens): string[] {
   }
   for (const c of CHIPS)
     d.push(`--chip-${c}: ${t.chip[c][0]};`, `--chip-${c}-ink: ${t.chip[c][1]};`);
+  t.ringSlots.forEach((c, i) => d.push(`--ring-slot-${i}: ${c};`));
   for (const tone of TONES)
     d.push(
       `--ring-${tone}-from: ${t.ring[tone][0]};`,
