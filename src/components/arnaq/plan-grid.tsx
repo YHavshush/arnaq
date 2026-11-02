@@ -430,7 +430,8 @@ function Phone({ plan, sections, f, open, add, toggle }: ViewProps) {
     row.scrollLeft = chip.offsetLeft - (row.clientWidth - chip.clientWidth) / 2;
   }, [month]);
 
-  const pill = "bg-soft grid content-start gap-0.5 rounded-2xl px-2 py-2 text-center";
+  const pill =
+    "bg-soft flex flex-col items-center justify-between gap-1.5 rounded-xl px-2 py-2.5 text-center";
 
   return (
     <div className="grid gap-4">
@@ -499,19 +500,19 @@ function Phone({ plan, sections, f, open, add, toggle }: ViewProps) {
           <h3 className="font-display text-[19px] font-medium">{f.monthName(month)}</h3>
           <div className="grid grid-cols-3 gap-2">
             <div className={pill}>
-              <span className="text-ink-muted text-[11.5px] leading-tight">
+              <span className="text-ink-muted text-[11.5px] leading-tight text-balance">
                 {text.footer.income}
               </span>
               <b className="text-[14.5px] tabular-nums">{f.euro(foot.income)}</b>
             </div>
             <div className={pill}>
-              <span className="text-ink-muted text-[11.5px] leading-tight">
+              <span className="text-ink-muted text-[11.5px] leading-tight text-balance">
                 {text.footer.expenses}
               </span>
               <b className="text-[14.5px] tabular-nums">{f.euro(foot.expenses)}</b>
             </div>
             <div className={pill}>
-              <span className="text-ink-muted text-[11.5px] leading-tight">
+              <span className="text-ink-muted text-[11.5px] leading-tight text-balance">
                 {text.footer.growth}
               </span>
               <b
