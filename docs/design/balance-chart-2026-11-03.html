@@ -1,0 +1,193 @@
+<title>arnaq balance chart</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: a short answer first, then option A (chart on Ahead) and option B (sparkline on Fixed), each on laptop and phone. */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); --pick:#2f7d5b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --pick:#5fcf9a; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --pick:#5fcf9a; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding-block:28px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width:1180px; margin:0 auto; display:grid; gap:34px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; text-wrap:balance; } h2 { font:500 21px/1.2 Georgia,serif; margin:0; text-wrap:balance; }
+p { margin:0; } .note { color:var(--muted); font-size:14px; max-width:78ch; } .note b { color:var(--ink); }
+.sec { display:grid; gap:14px; padding-top:18px; border-top:1px solid var(--line); }
+.row { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; } .row > * { min-width:0; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+.scroll { overflow-x:auto; max-width:100%; padding-bottom:6px; }
+.q { display:grid; gap:8px; padding-left:18px; margin:0; max-width:78ch; color:var(--muted); font-size:14px; } .q b { color:var(--ink); }
+.pick { color:var(--pick); font-weight:700; }
+
+/* The mock app is always shown in its light dawn look. */
+.app { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.66); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --track:rgba(23,32,46,.10); --a:#33c6ff; --b:#7f8cff;
+  --sky:#dcecfa; --skyi:#1a4e86; --lav:#e6e0f5; --lavi:#4b3a99; --mint:#d9f3e1; --minti:#14683a;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 55%,#f6e8d8); }
+.phone { width:360px; flex:none; border-radius:34px; border:9px solid #1b2230; padding:14px 14px 20px; display:grid; gap:12px; align-content:start; overflow:hidden; }
+.laptop { width:min(100%,1040px); min-width:820px; border-radius:14px; border:8px solid #1b2230; display:grid; grid-template-columns:130px 1fr; overflow:hidden; }
+.side { background:rgba(255,255,255,.5); padding:14px 10px; display:grid; gap:7px; align-content:start; font-size:13px; } .side b { font:500 17px/1 Georgia,serif; margin-bottom:8px; } .side span { padding:6px 9px; border-radius:9px; } .side .on { background:var(--soft); font-weight:600; }
+.page { padding:16px 22px 22px; display:grid; gap:14px; align-content:start; min-width:0; }
+.hdr { display:flex; justify-content:space-between; align-items:end; } .hdr small { display:block; color:var(--muted); font-size:12.5px; } .hdr b { font:500 28px/1.1 Georgia,serif; }
+.ring { width:130px; height:130px; position:relative; flex:none; } .ring svg { width:100%; height:100%; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:11; stroke-linecap:round; } .ring .t { stroke:var(--track); }
+.ring .c { position:absolute; inset:0; display:grid; place-content:center; text-align:center; } .ring .c b { font-size:24px; font-weight:500; font-variant-numeric:tabular-nums; } .ring .c small { color:var(--muted); font-size:12px; }
+.sentence { font:500 22px/1.22 Georgia,serif; text-wrap:balance; }
+.muted { color:var(--muted); } .good { color:var(--good); } .bad { color:var(--bad); }
+.card { border-radius:24px; background:var(--card); border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); overflow:hidden; } .pad { padding:13px 15px; display:grid; gap:8px; }
+.sech { display:flex; justify-content:space-between; align-items:baseline; gap:10px; } .sech b { font:500 17px/1.2 Georgia,serif; } .sech span { font-size:12.5px; color:var(--muted); }
+.pill { display:inline-block; font-size:12.5px; font-weight:600; border-radius:99px; padding:3px 11px; background:color-mix(in oklab,var(--bad) 14%,transparent); color:var(--bad); }
+.bar { display:flex; gap:3px; height:46px; border-radius:16px; overflow:hidden; } .bar i { display:grid; align-content:center; padding:0 12px; font-style:normal; font-size:11.5px; line-height:1.2; } .bar b { font-size:14px; }
+.seg { display:inline-grid; grid-auto-flow:column; background:var(--soft); border-radius:99px; padding:3px; gap:2px; font-size:12.5px; font-weight:600; } .seg span { padding:5px 11px; border-radius:99px; white-space:nowrap; color:var(--ink); } .seg .on { background:var(--card); }
+.basis { font-style:normal; font-weight:700; color:var(--ink); } .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:5px; }
+.chart { width:100%; height:auto; display:block; } .chart text { fill:var(--muted); font-size:10.5px; font-family:-apple-system,system-ui,sans-serif; font-variant-numeric:tabular-nums; }
+.tl { display:grid; grid-template-columns:48px 1fr auto 62px; gap:8px; padding:8px 0; border-top:1px solid var(--hair); font-size:13px; align-items:baseline; } .tl:first-of-type { border-top:0; } .tl .d { color:var(--muted); } .tl .a, .tl .r { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; } .tl.low .r { color:var(--bad); }
+.spark { display:block; flex:none; } .tlh { display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; } .tlh b { font:500 16px/1.2 Georgia,serif; margin-right:auto; } .tlh .lo { font-size:12.5px; color:var(--muted); white-space:nowrap; }
+.fixedpage { max-width:620px; margin:0 auto; width:100%; display:grid; gap:14px; }
+</style>
+
+<main>
+<header style="display:grid;gap:8px">
+  <h1>Balance chart: Ahead or a sparkline</h1>
+  <p class="note">The balance chart you asked about, shown two ways, on laptop and phone. Demo numbers, nothing in the app has changed. Both charts are drawn from the same example month so the scale is real.</p>
+</header>
+
+<section class="sec">
+  <h2>My answer</h2>
+  <p class="note"><b>Put the big chart on Ahead, and keep Fixed to the timeline list.</b> Ahead is the page that answers "how long does my money last", and a line that starts at your real balance and runs through the next months answers that in one look. Fixed only has four events a month, so a big chart there is a flat line with steps.</p>
+  <p class="note"><b>I would skip the sparkline.</b> The timeline already says the lowest point in red. A thin line next to it says the same thing a second time. If you like the extra touch, it is cheap and Option B shows how it would look.</p>
+  <p class="note"><b>One honest limit:</b> past the fixed items, the line is a guess built from your averages, budgets or own amounts. That is why it is dashed, and why "Based on" stays under the chart.</p>
+</section>
+
+<section class="sec">
+  <h2><span class="pick">Option A</span> · A balance chart on Ahead</h2>
+  <p class="note">Your checking balance, day by day, from today to the end of the horizon. The big steps are fixed items (rent down on the 1st, income up on the 4th and 5th). The slope between them is everyday spending. The area under €0 is tinted, so the day you run out is easy to see.</p>
+  <div class="cap">Ahead, laptop</div>
+  <div class="scroll">
+    <div class="app laptop">
+      <div class="side"><b>arnaq</b><span>today</span><span class="on">ahead</span><span>fixed</span><span>add</span></div>
+      <div class="page">
+        <div class="hdr"><div><small>The next 6 months</small><b>ahead</b></div></div>
+        <div style="display:flex;gap:26px;align-items:center;flex-wrap:wrap">
+          <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="44" stroke="var(--b)" stroke-dasharray="40 276.5"/></svg><div class="c"><b data-end>…</b><small>by April</small></div></div>
+          <div style="display:grid;gap:10px;flex:1;min-width:260px"><div class="sentence">Your balance shrinks by about €1,300 a month</div><div><span class="pill" data-stay>…</span></div></div>
+        </div>
+        <div class="card pad">
+          <div class="sech"><b>Your balance, day by day</b><span class="seg"><span>3</span><span class="on">6</span><span>12</span><span>24 months</span></span></div>
+          <svg class="chart" id="chartLaptop" role="img" aria-label="Forecast of the checking balance over six months, falling from 561 euros to about minus 7,000 euros"></svg>
+          <div class="sech"><span>Based on: <i class="basis">your averages ▾</i></span><span><i class="dot" style="background:#243b73"></i>Today €561 &nbsp;·&nbsp; <i class="dot" style="background:#c4473a"></i><span data-endfull style="display:inline">…</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div><div class="cap">Ahead, phone</div>
+      <div class="app phone">
+        <div class="hdr"><div><small>The next 6 months</small><b>ahead</b></div></div>
+        <div style="display:grid;gap:8px"><div class="sentence" style="font-size:20px">Your balance shrinks by about €1,300 a month</div><div><span class="pill" data-stay>…</span></div></div>
+        <div class="card pad" style="padding:12px 12px">
+          <div class="sech"><b style="font-size:16px">Your balance</b><span class="seg"><span>3</span><span class="on">6</span><span>12</span></span></div>
+          <svg class="chart" id="chartPhone" role="img" aria-label="Forecast of the checking balance over six months"></svg>
+          <div class="sech"><span>Based on: <i class="basis">your averages ▾</i></span></div>
+          <div class="sech"><span><i class="dot" style="background:#243b73"></i>Today €561 &nbsp;·&nbsp; <i class="dot" style="background:#c4473a"></i><span data-endfull style="display:inline">…</span></span></div>
+        </div>
+      </div></div>
+    <div style="max-width:380px;display:grid;gap:10px;align-content:start"><div class="cap">What changes in the app</div>
+      <p class="note">• The chart card on Ahead shows this balance line instead of "Net worth over time". Net worth stays as the single number under the money bar.<br>
+      • Horizon (3, 6, 12, 24) is the only control row. "Based on" stays a small choice under the chart.<br>
+      • <b>Fixed</b> keeps the ring, the sentence and "The month in order" exactly as shipped. Nothing is added.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>Option B · A thin sparkline on Fixed</h2>
+  <p class="note">Same timeline card as today, with a thin line in its header: no labels, no axis. The red dot is the lowest point. The line shows the same month as the list, fixed items only.</p>
+  <div class="row">
+    <div style="flex:1 1 300px;max-width:620px"><div class="cap">Fixed, laptop (the timeline card)</div>
+      <div class="app" style="border-radius:14px;border:8px solid #1b2230;padding:18px">
+        <div class="card pad fixedpage">
+          <div class="tlh"><b>The month in order</b><svg class="spark" id="sparkLaptop" width="120" height="30" role="img" aria-label="The balance over November from fixed items only, lowest on 1 November"></svg><span class="lo">lowest <b class="bad">−€71</b> on 1 Nov</span></div>
+          <div><div class="tl"><span class="d">1 Nov</span><span>Rent and health insurance</span><span class="a bad">−€632</span><span class="r bad">−€71</span></div><div class="tl"><span class="d">4 Nov</span><span>featurn B.V.</span><span class="a good">+€968</span><span class="r">€897</span></div><div class="tl"><span class="d">5 Nov</span><span>Oren Havshush</span><span class="a good">+€500</span><span class="r">€1,397</span></div><div class="tl"><span class="d">20 Nov</span><span>Claude, Netflix</span><span class="a bad">−€43</span><span class="r">€1,355</span></div></div>
+        </div>
+      </div></div>
+    <div><div class="cap">Fixed, phone</div>
+      <div class="app phone">
+        <div class="card pad">
+          <div class="tlh"><b style="font-size:15px">The month in order</b><svg class="spark" id="sparkPhone" width="72" height="26" role="img" aria-label="The balance over November from fixed items only"></svg><span class="lo">low <b class="bad">−€71</b></span></div>
+          <div><div class="tl"><span class="d">1 Nov</span><span>Rent, insurance</span><span class="a bad">−€632</span><span class="r bad">−€71</span></div><div class="tl"><span class="d">4 Nov</span><span>featurn</span><span class="a good">+€968</span><span class="r">€897</span></div><div class="tl"><span class="d">5 Nov</span><span>Oren</span><span class="a good">+€500</span><span class="r">€1,397</span></div></div>
+        </div>
+      </div></div>
+  </div>
+  <p class="note">On a phone the line is only about 70 pixels wide, so it shows the dip and the climb back and nothing more.</p>
+</section>
+
+<section class="sec">
+  <h2>What I need from you</h2>
+  <ol class="q">
+    <li><b>A, B or both?</b> My advice is A only.</li>
+    <li><b>Does the balance line replace "Net worth over time" on Ahead?</b> My advice is yes, to keep Ahead calm. Net worth stays as a number. The net worth change itself is still waiting for your yes.</li>
+    <li><b>Which balance?</b> Checking (Rabobank) only, because that is the account that runs to zero. Revolut and savings would stay in the money bar. Say if you want all accounts added up instead.</li>
+  </ol>
+</section>
+</main>
+
+<script>
+(function () {
+  var EURO = function (v) { return (v < 0 ? "−" : "") + "€" + Math.abs(Math.round(v)).toLocaleString("en-US"); };
+  var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  /* Ahead: 181 days from 1 Nov 2026. Start 561. Fixed items as in the Fixed mockup, plus everyday spending of 2,093 a month. */
+  var pts = [], bal = 561, d;
+  /* Point j is the balance at the start of day j (day 0 is 1 Nov), so the rent on 1 Nov shows in point 1. */
+  for (var i = 0; i < 181; i++) {
+    d = new Date(2026, 10, 1 + i);
+    var dom = d.getDate();
+    pts.push({ i: i, m: d.getMonth(), dom: dom, v: bal });
+    var delta = -2093 / 30.4;
+    if (dom === 1) delta -= 632; if (dom === 4) delta += 968; if (dom === 5) delta += 500; if (dom === 20) delta -= 43;
+    bal += delta;
+  }
+  var last = pts[pts.length - 1], stay = pts.length - 1;
+  while (stay > 0 && pts[stay - 1].v < 0) stay--;
+  var sd = new Date(2026, 10, 1 + stay), stayTxt = sd.getDate() + " " + MON[sd.getMonth()];
+  document.querySelectorAll("[data-end]").forEach(function (e) { e.textContent = EURO(last.v); });
+  document.querySelectorAll("[data-endfull]").forEach(function (e) { e.textContent = "Ends at " + EURO(last.v) + " on 30 Apr"; });
+  document.querySelectorAll("[data-stay]").forEach(function (e) { e.textContent = "Below €0 for good from " + stayTxt; });
+
+  function chart(svg, w, h, padL) {
+    var L = padL, R = w - 10, T = 26, B = h - 24, N = pts.length;
+    var vs = pts.map(function (p) { return p.v; });
+    var hi = Math.max.apply(null, vs) + 500, lo = Math.min.apply(null, vs) - 300;
+    var x = function (i) { return L + (R - L) * i / (N - 1); };
+    var y = function (v) { return T + (B - T) * (hi - v) / (hi - lo); };
+    var y0 = y(0), g = "", t;
+    svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+    for (t = Math.ceil(lo / 2000) * 2000; t <= hi; t += 2000) {
+      g += '<line x1="' + L + '" x2="' + R + '" y1="' + y(t) + '" y2="' + y(t) + '" stroke="' + (t === 0 ? "rgba(23,32,46,.45)" : "rgba(23,32,46,.10)") + '" stroke-width="' + (t === 0 ? 1.2 : 1) + '"/>';
+      g += '<text x="' + (L - 7) + '" y="' + (y(t) + 3.5) + '" text-anchor="end"' + (t === 0 ? ' style="font-weight:700"' : "") + ">" + (t === 0 ? "€0" : EURO(t)) + "</text>";
+    }
+    var path = pts.map(function (p, k) { return (k ? "L" : "M") + x(p.i).toFixed(1) + " " + y(p.v).toFixed(1); }).join(" ");
+    var cid = "clip" + w;
+    g += '<clipPath id="' + cid + '"><rect x="' + L + '" y="' + y0 + '" width="' + (R - L) + '" height="' + (B - y0 + 2) + '"/></clipPath>';
+    g += '<path d="' + path + " L" + x(N - 1) + " " + y0 + " L" + x(0) + " " + y0 + ' Z" fill="#c4473a" fill-opacity=".16" clip-path="url(#' + cid + ')"/>';
+    g += '<path d="' + path + '" fill="none" stroke="#243b73" stroke-width="2.2" stroke-linejoin="round" stroke-dasharray="6 4"/>';
+    pts.forEach(function (p) { if (p.dom === 1) g += '<text x="' + x(p.i) + '" y="' + (h - 6) + '" text-anchor="' + (p.i === 0 ? "start" : "middle") + '">' + MON[p.m] + "</text>"; });
+    var e = pts[N - 1];
+    g += '<circle cx="' + x(0) + '" cy="' + y(pts[0].v) + '" r="4" fill="#243b73"/>';
+    g += '<circle cx="' + x(N - 1) + '" cy="' + y(e.v) + '" r="4.5" fill="#c4473a" stroke="#fff" stroke-width="1.5"/>';
+    svg.innerHTML = g;
+  }
+  chart(document.getElementById("chartLaptop"), 760, 250, 56);
+  chart(document.getElementById("chartPhone"), 306, 230, 50);
+
+  /* Fixed: November, fixed items only (the same four events as the timeline list). */
+  var ev = { 1: -632, 4: 968, 5: 500, 20: -43 }, fb = 561, fp = [];
+  for (var k = 1; k <= 30; k++) { fb += ev[k] || 0; fp.push(fb); }
+  function spark(svg) {
+    var w = +svg.getAttribute("width"), h = +svg.getAttribute("height"), m = 4;
+    var lo = Math.min.apply(null, fp), hi = Math.max.apply(null, fp);
+    var x = function (j) { return m + (w - 2 * m) * j / 29; }, y = function (v) { return m + (h - 2 * m) * (hi - v) / (hi - lo); };
+    var p = "M" + x(0) + " " + y(561), prev = 561;
+    fp.forEach(function (v, j) { if (v !== prev) { p += " H" + x(j) + " V" + y(v); prev = v; } });
+    p += " H" + x(29);
+    svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+    svg.innerHTML = '<path d="' + p + '" fill="none" stroke="#243b73" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + x(0) + '" cy="' + y(lo) + '" r="2.8" fill="#c4473a"/>';
+  }
+  spark(document.getElementById("sparkLaptop")); spark(document.getElementById("sparkPhone"));
+})();
+</script>
