@@ -74,6 +74,9 @@ table.plan { width:100%; border-collapse:collapse; font-size:13.5px; font-varian
 .plan .ng { color:#c4473a; } .plan .ps { color:#2f7d5b; }
 .gridfoot { display:flex; flex-wrap:wrap; gap:6px 20px; padding:11px 18px 13px; font-size:12px; color:var(--muted); border-top:1px solid var(--hair); margin-top:6px; align-items:center; } .gridfoot .rt { margin-left:auto; font-weight:600; color:#17202e; }
 .sw { display:inline-block; width:14px; height:14px; border-radius:5px; margin-right:6px; vertical-align:-3px; } .sw.sug { background:rgba(36,59,115,.09); } .sw.typ { background:rgba(51,198,255,.3); box-shadow:inset 0 0 0 1.5px rgba(36,59,115,.4); } .sw.lock { background:transparent; box-shadow:inset 0 0 0 1.5px rgba(23,32,46,.25); }
+.sw.cmpsw { background:transparent; box-shadow:inset 0 0 0 1.5px rgba(23,32,46,.25); } .sw.plansw { background:rgba(127,140,255,.22); box-shadow:inset 0 0 0 1.5px rgba(75,58,153,.45); }
+.plan td.plan { font-weight:700; color:#17202e; background:rgba(127,140,255,.2); box-shadow:inset 0 0 0 1.5px rgba(75,58,153,.45); border-radius:8px; } .plan td.cmpc { color:#4a5568; } .eq { font-style:normal; margin-right:5px; opacity:.6; }
+.prow.plan b { font-weight:700; } .prow.plan { background:rgba(127,140,255,.14); }
 .pop { max-width:560px; margin-left:auto; margin-right:22px; box-shadow:0 14px 34px -14px rgba(23,32,46,.4); }
 .popbody { display:flex; flex-wrap:wrap; gap:12px; align-items:center; } .inputbox { display:flex; align-items:center; gap:6px; border:2px solid #243b73; border-radius:14px; padding:7px 12px; background:#fff; min-width:120px; font-size:19px; } .inputbox b { font-variant-numeric:tabular-nums; } .caret { width:2px; height:20px; background:#243b73; }
 .popopts { display:grid; gap:8px; } .reset { font-size:12.5px; font-weight:600; color:#243b73; text-decoration:underline; text-underline-offset:3px; }
@@ -92,9 +95,10 @@ table.plan { width:100%; border-collapse:collapse; font-size:13.5px; font-varian
 <section class="sec">
   <h2>How I would build it</h2>
   <ol class="q">
-    <li><b>Three kinds of cell.</b> A <i>suggestion</i> (grey, italic): your average or your budget, whichever you pick as the source. A number <i>you typed</i> (bold, with a dot). A <i>locked</i> cell (padlock): fixed items and the BTW, which come from the Fixed page and cannot be typed over here.</li>
+    <li><b>Three kinds of cell.</b> A <i>suggestion</i> (grey, italic): your average or your budget, whichever you pick as the source. A number <i>you typed</i> (bold, with a dot). A <i>computed</i> cell (the BTW): it follows your income, so you do not type it.</li>
+    <li><b>Fixed costs and income are editable too.</b> They start from the Fixed page, and you can plan a change before it is real: rent goes up from March, income goes up from March. The cell shows "planned change". When it takes effect, you update the item on the Fixed page, and the cell then says "same as Fixed now" and offers a reset, so an old override never lingers.</li>
     <li><b>Tap a cell, see why.</b> A suggestion says where it comes from: "average of Aug to Oct" or "your November budget". That answers "why is January so high" without guessing.</li>
-    <li><b>Type once, choose how far it goes.</b> After typing you pick "Only this month" or "This and the months after". The second is the fill-right of a spreadsheet, and it is also how a budget carries forward.</li>
+    <li><b>Type once, choose how far it goes.</b> After typing you pick "Only this month" (the default) or "This and the months after". The second is the fill-right of a spreadsheet, and it is also how a budget carries forward.</li>
     <li><b>Reset per cell.</b> One tap puts the suggestion back. Nothing you typed is ever lost silently.</li>
     <li><b>Past months are read-only</b> and show what really happened, so the grid reads as history on the left and plan on the right.</li>
     <li><b>The chart follows the grid.</b> The totals at the bottom are exactly what the Ahead chart draws.</li>
@@ -110,11 +114,11 @@ table.plan { width:100%; border-collapse:collapse; font-size:13.5px; font-varian
     <div class="page">
       <div class="hdr"><div><small>Ahead · the plan</small><b>edit the plan</b></div><span class="seg2"><span class="on">Based on averages</span><span>Based on budgets</span></span></div>
       <div class="card gridcard"><div class="scrollx"><table class="plan" id="plan"></table></div>
-        <div class="gridfoot"><span><i class="sw sug"></i>suggestion</span><span><i class="sw typ"></i>you typed</span><span><i class="sw lock"></i>fixed, from the Fixed page</span><span class="rt">Show all 11 categories</span></div></div>
+        <div class="gridfoot"><span><i class="sw sug"></i>suggestion</span><span><i class="sw typ"></i>you typed</span><span><i class="sw cmpsw"></i>follows your income</span><span><i class="sw plansw"></i>planned change to a fixed item or income</span><span class="rt">Show all 11 categories</span></div></div>
       <div class="card pad pop"><div class="cardh"><b>Fun and hobbies · December</b><span class="muted">editing</span></div>
         <div class="popbody"><div class="inputbox"><span class="muted">€</span><b>250</b><i class="caret"></i></div>
-          <div class="popopts"><span class="seg2"><span>Only this month</span><span class="on">This and the months after</span></span><span class="reset">Reset to suggestion €96</span></div></div>
-        <p class="note" style="font-size:12.5px">Suggestion: your average over Aug, Sep and Oct. "This and the months after" fills January to April with €250 until you type something else.</p></div>
+          <div class="popopts"><span class="seg2"><span class="on">Only this month</span><span>This and the months after</span></span><span class="reset">Reset to suggestion €96</span></div></div>
+        <p class="note" style="font-size:12.5px">Suggestion: your average over Aug, Sep and Oct. "This and the months after" would fill January to April with €250 until you type something else.</p></div>
     </div>
   </div></div>
 </section>
@@ -130,19 +134,19 @@ table.plan { width:100%; border-collapse:collapse; font-size:13.5px; font-varian
       <div class="card pad" id="phonesum"></div>
     </div></div>
     <div style="max-width:380px;display:grid;gap:10px;align-content:start"><div class="cap">What it takes</div>
-      <p class="note">• <b>One new table</b> with your typed amounts (category, month, amount), your own rows only, like every other table. That is a hosted database change, so I will ask for your exact go-ahead before applying it.<br>
-      • The forecast uses a typed cell first, then the suggestion. Past months are never overwritten.<br>
+      <p class="note">• <b>One new table</b> with your typed amounts (a category, a fixed item or an income item; the month; the amount), your own rows only, like every other table. That is a hosted database change, so I will ask for your exact go-ahead before applying it.<br>
+      • The forecast uses a typed cell first, then the suggestion or the Fixed page. Past months are never overwritten. The Fixed page itself never changes.<br>
       • The Ahead chart, the pills and the lowest-point marks follow the grid automatically.<br>
       • The "My own" basis goes away; its amount moves into the grid.</p></div>
   </div>
 </section>
 
 <section class="sec">
-  <h2>What I need from you</h2>
+  <h2>Decided, and what is still open</h2>
   <ol class="q">
-    <li><b>Is "Edit the plan" one tap from Ahead the right place?</b> My advice is yes.</li>
-    <li><b>Expected income in the grid too?</b> I included it as locked rows (featurn, Oren). Typing over them would let you plan a raise or a quiet month.</li>
-    <li><b>Should "This and the months after" be the default after typing?</b> I would make "Only this month" the default, so a one-off such as December does not leak into the spring by accident.</li>
+    <li><b>Decided:</b> "Edit the plan" is one tap from Ahead. Expected income is in the grid. After typing, the default is "Only this month". Fixed costs and income are editable.</li>
+    <li><b>Open:</b> when a planned change has really happened (the rent did go up), should the grid drop the override by itself once the Fixed page shows the same amount? I would, and show a short note "now same as Fixed" for a month so it does not vanish silently.</li>
+    <li><b>Open:</b> the BTW row follows income. Should you be able to type over it for a quarter where you know it will differ? I would say no, to keep it honest.</li>
   </ol>
 </section>
 </main>
@@ -152,48 +156,65 @@ table.plan { width:100%; border-collapse:collapse; font-size:13.5px; font-varian
   var E = function (v) { return (v < 0 ? "−" : "") + "€" + Math.abs(Math.round(v)).toLocaleString("en-US"); };
   var MONTHS = ["Nov", "Dec", "Jan", "Feb", "Mar", "Apr"];
   var CUR = 0;
-  var FIXED = 654, BTW = 188, INCOME = [{ n: "featurn", v: 968 }, { n: "Oren Havshush", v: 500 }];
+  /* Fixed items and income start from the Fixed page; a typed value is a planned change. */
+  var FIXED = [
+    { n: "Rent, Stichting DUWO", v: 481, o: { 4: 520, 5: 520 }, note: "rent goes up from March" },
+    { n: "Health insurance", v: 151, o: {} },
+    { n: "Claude, Netflix", v: 22, o: {} },
+    { n: "Tax office, monthly", v: 20, o: {}, note: "a fixed item in the taxes category" }
+  ];
+  var INCOME = [
+    { n: "featurn", v: 968, o: { 4: 1100, 5: 1100 }, client: true, note: "raise from March" },
+    { n: "Oren Havshush", v: 500, o: {} }
+  ];
   var CATS = [
     { n: "Groceries", s: 312, why: "average of Aug to Oct", o: { 1: 380 } },
     { n: "Eating out", s: 142, why: "average of Aug to Oct", o: {} },
     { n: "Transport", s: 58, why: "average of Aug to Oct", o: { 3: 140 } },
-    { n: "Fun and hobbies", s: 96, why: "average of Aug to Oct", o: { 1: 250, 2: 250, 3: 250, 4: 250, 5: 250 } },
-    { n: "Clothing", s: 64, why: "average of Aug to Oct", o: { 4: 180 } },
+    { n: "Fun and hobbies", s: 96, why: "average of Aug to Oct", o: { 1: 250 } },
+    { n: "Clothing", s: 64, why: "average of Aug to Oct", o: {} },
     { n: "Everything else", s: 120, why: "average of Aug to Oct", o: {} }
   ];
-  var val = function (c, m) { return c.o[m] !== undefined ? c.o[m] : c.s; };
-  var typed = function (c, m) { return c.o[m] !== undefined; };
-  var exp = MONTHS.map(function (_, m) { return FIXED + BTW + CATS.reduce(function (s, c) { return s + val(c, m); }, 0); });
-  var inc = MONTHS.map(function () { return INCOME.reduce(function (s, i) { return s + i.v; }, 0); });
+  var base = function (r) { return r.s !== undefined ? r.s : r.v; };
+  var val = function (r, m) { return r.o[m] !== undefined ? r.o[m] : base(r); };
+  var typed = function (r, m) { return r.o[m] !== undefined; };
+  var clientIncome = function (m) { return INCOME.filter(function (i) { return i.client; }).reduce(function (s, i) { return s + val(i, m); }, 0); };
+  var btw = function (m) { return Math.round(clientIncome(m) * 21 / 121); };
+  var sum = function (rows, m) { return rows.reduce(function (s, r) { return s + val(r, m); }, 0); };
+  var inc = MONTHS.map(function (_, m) { return sum(INCOME, m); });
+  var exp = MONTHS.map(function (_, m) { return sum(FIXED, m) + btw(m) + sum(CATS, m); });
   var nw = [], bal = 2010;
   MONTHS.forEach(function (_, m) { bal += inc[m] - exp[m]; nw.push(bal); });
-  var lock = '<svg class="lk" viewBox="0 0 12 12" aria-hidden="true"><rect x="2.5" y="5.5" width="7" height="5" rx="1.2" fill="currentColor"/><path d="M4 5.5V4a2 2 0 0 1 4 0v1.5" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>';
-  var cell = function (c, m) { return typed(c, m) ? '<td class="num typ"><i class="dot"></i>' + E(val(c, m)) + '</td>' : '<td class="num sug">' + E(val(c, m)) + '</td>'; };
+
+  var fixedCell = function (r, m) { return typed(r, m) ? '<td class="num plan"><i class="dot"></i>' + E(val(r, m)) + '</td>' : '<td class="num">' + E(val(r, m)) + '</td>'; };
+  var sugCell = function (c, m) { return typed(c, m) ? '<td class="num typ"><i class="dot"></i>' + E(val(c, m)) + '</td>' : '<td class="num sug">' + E(val(c, m)) + '</td>'; };
+  var head = function (r) { return '<th class="rowh">' + r.n + (r.note ? '<small>' + r.note + '</small>' : "") + '</th>'; };
   var h = '<thead><tr><th></th>' + MONTHS.map(function (n, m) { return '<th class="' + (m === CUR ? "cur" : "") + '">' + n + (m === CUR ? '<small>this month</small>' : "") + '</th>'; }).join("") + '</tr></thead><tbody>';
   h += '<tr class="grp"><td colspan="7">Income</td></tr>';
-  INCOME.forEach(function (i) { h += '<tr><th class="rowh">' + i.n + '</th>' + MONTHS.map(function () { return '<td class="num lck">' + lock + E(i.v) + '</td>'; }).join("") + '</tr>'; });
-  h += '<tr class="grp"><td colspan="7">Expenses</td></tr>';
-  h += '<tr><th class="rowh">Fixed costs</th>' + MONTHS.map(function () { return '<td class="num lck">' + lock + E(FIXED) + '</td>'; }).join("") + '</tr>';
-  h += '<tr><th class="rowh">BTW and taxes<small>BTW set aside €168 + fixed €20</small></th>' + MONTHS.map(function () { return '<td class="num lck">' + lock + E(BTW) + '</td>'; }).join("") + '</tr>';
-  CATS.forEach(function (c) { h += '<tr><th class="rowh">' + c.n + '</th>' + MONTHS.map(function (_, m) { return cell(c, m); }).join("") + '</tr>'; });
+  INCOME.forEach(function (r) { h += '<tr>' + head(r) + MONTHS.map(function (_, m) { return fixedCell(r, m); }).join("") + '</tr>'; });
+  h += '<tr class="grp"><td colspan="7">Fixed costs</td></tr>';
+  FIXED.forEach(function (r) { h += '<tr>' + head(r) + MONTHS.map(function (_, m) { return fixedCell(r, m); }).join("") + '</tr>'; });
+  h += '<tr><th class="rowh">BTW set aside<small>21/121 of featurn, follows income</small></th>' + MONTHS.map(function (_, m) { return '<td class="num cmpc"><i class="eq">=</i>' + E(btw(m)) + '</td>'; }).join("") + '</tr>';
+  h += '<tr class="grp"><td colspan="7">Everyday spending</td></tr>';
+  CATS.forEach(function (c) { h += '<tr>' + head(c) + MONTHS.map(function (_, m) { return sugCell(c, m); }).join("") + '</tr>'; });
   h += '</tbody><tfoot>';
   h += '<tr><th class="rowh">Expected income</th>' + inc.map(function (v) { return '<td class="num">' + E(v) + '</td>'; }).join("") + '</tr>';
   h += '<tr><th class="rowh">Expected expenses</th>' + exp.map(function (v) { return '<td class="num">' + E(v) + '</td>'; }).join("") + '</tr>';
-  h += '<tr><th class="rowh">Growth</th>' + MONTHS.map(function (_, m) { var g = inc[m] - exp[m]; return '<td class="num ' + (g < 0 ? "ng" : "ps") + '">' + (g < 0 ? "−" : "+") + E(Math.abs(g)).replace("€", "€") + '</td>'; }).join("") + '</tr>';
+  h += '<tr><th class="rowh">Growth</th>' + MONTHS.map(function (_, m) { var g = inc[m] - exp[m]; return '<td class="num ' + (g < 0 ? "ng" : "ps") + '">' + (g < 0 ? "−" : "+") + E(Math.abs(g)) + '</td>'; }).join("") + '</tr>';
   h += '<tr class="strong"><th class="rowh">Net worth after</th>' + nw.map(function (v) { return '<td class="num">' + E(v) + '</td>'; }).join("") + '</tr>';
   h += '</tfoot>';
   document.getElementById("plan").innerHTML = h;
 
-  /* Phone: one month at a time (December is open, the month with the most typed cells). */
-  var SEL = 1;
+  /* Phone: one month at a time. March is open: it shows the planned rent and income changes. */
+  var SEL = 4;
   document.getElementById("monthpick").innerHTML = MONTHS.map(function (n, m) { return '<span class="' + (m === SEL ? "on" : "") + '">' + n + '</span>'; }).join("");
-  var rows = '<div class="prow lck"><span>' + lock + 'Fixed costs</span><b>' + E(FIXED) + '</b></div><div class="prow lck"><span>' + lock + 'BTW and taxes</span><b>' + E(BTW) + '</b></div>';
-  CATS.forEach(function (c) {
-    var t = typed(c, SEL);
-    rows += '<div class="prow ' + (t ? "typ" : "sug") + '"><span>' + (t ? '<i class="dot"></i>' : "") + c.n + '<small>' + (t ? "you typed it. Suggestion " + E(c.s) : c.why) + '</small></span><b>' + E(val(c, SEL)) + '</b></div>';
-  });
+  var rows = "";
+  INCOME.forEach(function (r) { var t = typed(r, SEL); rows += '<div class="prow ' + (t ? "plan" : "") + '"><span>' + (t ? '<i class="dot"></i>' : "") + r.n + '<small>' + (t ? "planned change, now " + E(r.v) : "income") + '</small></span><b>' + E(val(r, SEL)) + '</b></div>'; });
+  FIXED.forEach(function (r) { var t = typed(r, SEL); rows += '<div class="prow ' + (t ? "plan" : "") + '"><span>' + (t ? '<i class="dot"></i>' : "") + r.n + '<small>' + (t ? "planned change, now " + E(r.v) : "fixed") + '</small></span><b>' + E(val(r, SEL)) + '</b></div>'; });
+  rows += '<div class="prow"><span>BTW set aside<small>follows income</small></span><b>' + E(btw(SEL)) + '</b></div>';
+  CATS.forEach(function (c) { var t = typed(c, SEL); rows += '<div class="prow ' + (t ? "typ" : "sug") + '"><span>' + (t ? '<i class="dot"></i>' : "") + c.n + '<small>' + (t ? "you typed it. Suggestion " + E(c.s) : c.why) + '</small></span><b>' + E(val(c, SEL)) + '</b></div>'; });
   document.getElementById("phonelist").innerHTML = rows;
   var g = inc[SEL] - exp[SEL];
-  document.getElementById("phonesum").innerHTML = '<div class="cardh"><b>December</b><span class="muted">forecast</span></div><div class="pills3"><div>Expected income<b>' + E(inc[SEL]) + '</b></div><div>Expected expenses<b>' + E(exp[SEL]) + '</b></div><div>Growth<b style="color:' + (g < 0 ? "#c4473a" : "#2f7d5b") + '">' + (g < 0 ? "−" : "+") + E(Math.abs(g)) + '</b></div></div>';
+  document.getElementById("phonesum").innerHTML = '<div class="cardh"><b>March</b><span class="muted">forecast</span></div><div class="pills3"><div>Expected income<b>' + E(inc[SEL]) + '</b></div><div>Expected expenses<b>' + E(exp[SEL]) + '</b></div><div>Growth<b style="color:' + (g < 0 ? "#c4473a" : "#2f7d5b") + '">' + (g < 0 ? "−" : "+") + E(Math.abs(g)) + '</b></div></div>';
 })();
 </script>
