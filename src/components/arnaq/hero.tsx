@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Tone } from "@/design/tokens";
 import type { Sentence } from "@/lib/view/overzicht";
+import { CountText } from "./count-text";
 import { Ring } from "./ring";
 import { SentenceText } from "./sentence";
 
@@ -57,7 +58,7 @@ export function Hero({
           className="num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
           style={{ fontSize: typeof centre === "string" ? numberSize(centre.length) : NUMBER_MAX }}
         >
-          {centre}
+          {typeof centre === "string" ? <CountText text={centre} /> : centre}
         </div>
         <div className="text-ink-muted mt-2 text-sm">{caption}</div>
       </Ring>

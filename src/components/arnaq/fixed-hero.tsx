@@ -3,6 +3,7 @@ import type { SplitRingModel } from "@/lib/view/fixed-ring";
 import type { Formatter } from "@/lib/view/format";
 import type { Sentence } from "@/lib/view/overzicht";
 import { displayName } from "@/lib/view/names";
+import { CountText } from "./count-text";
 import { numberSize } from "./hero";
 import { SentenceText } from "./sentence";
 import { SplitRing, TO_PAY_OPACITY, slotColour } from "./split-ring";
@@ -56,7 +57,7 @@ export function FixedHero({
             className={`num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal ${centre.bad ? "text-bad" : ""}`}
             style={{ fontSize: numberSize(centre.text.length) }}
           >
-            {centre.text}
+            <CountText text={centre.text} />
           </div>
           <div className={`mt-2 text-sm ${centre.bad ? "text-bad" : "text-ink-muted"}`}>
             {centre.caption}
