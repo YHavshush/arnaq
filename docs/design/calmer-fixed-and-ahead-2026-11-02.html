@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>arnaq calmer fixed and ahead</title>
+<style>
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); }
+@media (prefers-color-scheme: dark) { :root { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; } }
+* { box-sizing:border-box; }
+html { background:var(--bg); }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding:28px 16px 64px; }
+main { max-width:1240px; margin:0 auto; display:grid; gap:34px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; } h2 { font:500 21px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:13px; max-width:86ch; }
+.sec { display:grid; gap:14px; padding-top:18px; border-top:1px solid var(--line); }
+.row { display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; }
+.cap { font-size:12px; color:var(--muted); margin-bottom:6px; letter-spacing:.04em; text-transform:uppercase; }
+.app { --ink:#17202e; --muted:#4a5568; --soft:rgba(36,59,115,.08); --card:rgba(255,255,255,.66); --hair:rgba(23,32,46,.12); --accent:#243b73; --good:#2f7d5b; --bad:#c4473a; --track:rgba(23,32,46,.10); --a:#33c6ff; --b:#7f8cff; --g:#23a371; --w:#e98859;
+  --sky:#dcecfa; --skyi:#1a4e86; --lav:#e6e0f5; --lavi:#4b3a99; --mint:#d9f3e1; --minti:#14683a; --chipbg:#e6e0f5; --chipink:#4b3a99;
+  color:#17202e; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 55%,#f6e8d8); }
+.phone { width:360px; border-radius:34px; border:9px solid #1b2230; padding:14px 14px 20px; display:grid; gap:12px; align-content:start; overflow:hidden; }
+.laptop { width:min(100%,1040px); border-radius:14px; border:8px solid #1b2230; display:grid; grid-template-columns:130px 1fr; overflow:hidden; }
+.side { background:rgba(255,255,255,.5); padding:14px 10px; display:grid; gap:7px; align-content:start; font-size:13px; } .side b { font:500 17px/1 Georgia,serif; margin-bottom:8px; } .side span { padding:6px 9px; border-radius:9px; } .side .on { background:var(--soft); font-weight:600; }
+.page { padding:16px 22px 22px; display:grid; gap:14px; align-content:start; }
+.hdr small { display:block; color:var(--muted); font-size:12.5px; } .hdr b { font:500 28px/1.1 Georgia,serif; }
+.hdr { display:flex; justify-content:space-between; align-items:end; } .step { display:flex; gap:6px; } .step i { width:30px; height:30px; border-radius:50%; background:var(--card); display:grid; place-items:center; font-style:normal; font-size:13px; }
+.ring { width:150px; height:150px; position:relative; margin:0 auto; } .ring svg { width:100%; height:100%; transform:rotate(-90deg); } .ring circle { fill:none; stroke-width:11; stroke-linecap:round; } .ring .t { stroke:var(--track); }
+.ring .c { position:absolute; inset:0; display:grid; place-content:center; text-align:center; } .ring .c b { font-size:34px; font-weight:500; font-variant-numeric:tabular-nums; } .ring .c small { color:var(--muted); font-size:12px; }
+.sentence { font:500 20px/1.22 Georgia,serif; text-wrap:balance; text-align:center; } .sentence i { font-style:italic; }
+.legend { display:grid; gap:5px; font-size:13.5px; max-width:260px; margin:0 auto; width:100%; } .legend div { display:grid; grid-template-columns:12px 1fr auto; gap:9px; align-items:center; } .legend i { width:11px; height:11px; border-radius:50%; } .legend span:last-child { color:var(--muted); font-variant-numeric:tabular-nums; }
+.muted { color:var(--muted); } .good { color:var(--good); } .bad { color:var(--bad); }
+.card { border-radius:24px; background:var(--card); border:1px solid color-mix(in oklab,var(--hair) 80%,transparent); overflow:hidden; } .pad { padding:13px 15px; display:grid; gap:8px; }
+.sech { display:flex; justify-content:space-between; align-items:baseline; padding:0 4px; margin-top:2px; } .sech b { font:500 18px/1.2 Georgia,serif; } .sech span { font-size:12.5px; color:var(--muted); }
+.li { display:grid; grid-template-columns:2.2rem minmax(0,1fr) auto; gap:10px; align-items:center; padding:9px 14px; border-top:1px solid var(--hair); } .li:first-child { border-top:0; } .ic { width:2.2rem; height:2.2rem; border-radius:12px; background:var(--soft); } .li small { color:var(--muted); display:block; font-size:12px; } .amt { font-weight:600; font-variant-numeric:tabular-nums; }
+.tl { display:grid; grid-template-columns:48px 1fr auto 62px; gap:8px; padding:8px 0; border-top:1px solid var(--hair); font-size:13px; align-items:baseline; } .tl:first-of-type { border-top:0; } .tl .d { color:var(--muted); } .tl .a, .tl .r { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; } .tl.low .r { color:var(--bad); }
+.pill { display:inline-block; font-size:12.5px; font-weight:600; border-radius:99px; padding:3px 11px; background:color-mix(in oklab,var(--bad) 14%,transparent); color:var(--bad); }
+.bar { display:flex; gap:3px; height:48px; border-radius:16px; overflow:hidden; } .bar i { display:grid; align-content:center; padding:0 12px; font-style:normal; font-size:11.5px; line-height:1.2; } .bar b { font-size:14px; }
+.seg { display:inline-grid; grid-auto-flow:column; background:var(--soft); border-radius:99px; padding:3px; gap:2px; font-size:12.5px; font-weight:600; } .seg span { padding:5px 11px; border-radius:99px; white-space:nowrap; } .seg .on { background:var(--card); }
+.chart { width:100%; height:150px; display:block; } .chart text { fill:var(--muted); font-size:10px; }
+.col { max-width:620px; margin:0 auto; display:grid; gap:14px; width:100%; }
+.cols2 { display:grid; grid-template-columns:260px 1fr; gap:26px; align-items:start; }
+.tag { display:inline-block; font-size:11.5px; font-weight:700; border-radius:99px; padding:2px 9px; background:var(--soft); color:var(--muted); }
+.count { display:grid; gap:4px; font-size:13px; } .count span { display:flex; gap:8px; align-items:center; } .count i { width:20px; height:20px; border-radius:50%; background:var(--bad); color:#fff; font-style:normal; font-size:11px; font-weight:700; display:grid; place-items:center; flex:none; }
+</style>
+</head>
+<body>
+<main>
+<header style="display:grid;gap:8px">
+  <h1>Calmer: Fixed and Ahead</h1>
+  <p class="note">Answers first, then three layouts for Fixed and a calmer Ahead. Demo numbers, nothing in the app has changed.</p>
+</header>
+
+<section class="sec">
+  <h2>Is the graph worth it? My honest answer</h2>
+  <p class="note"><b>For the Fixed page, no.</b> It only draws your fixed items, so it is a flat line with two or three steps. That is not much to look at, and it takes the most room on the page. What is useful in it is two facts: <b>when money arrives and leaves</b> and <b>the lowest point</b>. A short list says both better (date, what, amount, balance after, lowest in red), and it is easier to read on a phone. So: drop the graph, keep a timeline list. (The Ahead chart is different: it has a real shape over many months, so it stays.)</p>
+  <p class="note"><b>Why it sat next to the list:</b> I put the ring in a left column and everything else on the right so a laptop screen would not be empty on the sides. It ended up looking like two separate pages. A single centred column (like the phone) is calmer and is what most budget apps do on a laptop too.</p>
+</section>
+
+<section class="sec">
+  <h2>1 · Fixed: three layouts without the graph</h2>
+  <div class="row">
+    <div><div class="cap">F-A · one calm column (laptop) — my pick</div>
+      <div class="app laptop">
+        <div class="side"><b>arnaq</b><span>today</span><span>ahead</span><span class="on">fixed</span><span>add</span></div>
+        <div class="page">
+          <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+          <div class="col">
+            <div style="display:grid;gap:10px;justify-items:center">
+              <div class="ring"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="44" stroke="var(--a)" stroke-dasharray="97 276.5"/><circle cx="50" cy="50" r="44" stroke="var(--b)" stroke-dasharray="30 276.5" stroke-dashoffset="-98"/><circle cx="50" cy="50" r="44" stroke="var(--g)" stroke-dasharray="4 276.5" stroke-dashoffset="-130"/></svg><div class="c"><b>€793</b><small>left over</small></div></div>
+              <div class="sentence" style="font-size:19px">€1,468 in, €675 fixed, the rest is yours</div>
+            </div>
+            <div class="card pad"><div class="sech" style="padding:0"><b style="font-size:16px">The month in order</b><span>lowest <b class="bad">−€71</b> on 1 Nov</span></div>
+              <div><div class="tl"><span class="d">1 Nov</span><span>Rent and health insurance</span><span class="a bad">−€632</span><span class="r">−€71</span></div><div class="tl"><span class="d">4 Nov</span><span>featurn B.V.</span><span class="a good">+€968</span><span class="r">€897</span></div><div class="tl"><span class="d">5 Nov</span><span>Oren Havshush</span><span class="a good">+€500</span><span class="r">€1,397</span></div><div class="tl"><span class="d">20 Nov</span><span>Claude, Netflix</span><span class="a bad">−€43</span><span class="r">€1,355</span></div></div></div>
+            <div class="sech"><b>Expenses</b><span>€675 · 0 of 4 paid</span></div>
+            <div class="card"><div class="li"><div class="ic"></div><div><b>Stichting DUWO</b><small>due 1 Nov</small></div><div class="amt">€481.45</div></div><div class="li"><div class="ic"></div><div><b>FBTO Zorgverzekeringen</b><small>due 1 Nov</small></div><div class="amt">€151.00</div></div></div>
+          </div>
+        </div>
+      </div></div>
+  </div>
+  <p class="note">Same content as now, in one column: ring, one sentence, then <b>"The month in order"</b> (replaces the graph; the red balance column is the lowest-point idea), then the lists. The legend under the ring goes away (the colours are explained in the list rows, which can carry a small dot of the same colour). Fewer things side by side, nothing floating.</p>
+  <div class="row">
+    <div><div class="cap">F-B · same, on a phone</div>
+      <div class="app phone">
+        <div class="hdr"><div><small>November 2026</small><b>fixed</b></div><div class="step"><i>‹</i><i>›</i></div></div>
+        <div style="display:grid;gap:8px;justify-items:center"><div class="ring" style="width:140px;height:140px"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="44" stroke="var(--a)" stroke-dasharray="97 276.5"/><circle cx="50" cy="50" r="44" stroke="var(--b)" stroke-dasharray="30 276.5" stroke-dashoffset="-98"/></svg><div class="c"><b style="font-size:30px">€793</b><small>left over</small></div></div><div class="sentence" style="font-size:18px">€1,468 in, €675 fixed, the rest is yours</div></div>
+        <div class="card pad"><div class="sech" style="padding:0"><b style="font-size:15px">The month in order</b><span>lowest <b class="bad">−€71</b></span></div><div><div class="tl"><span class="d">1 Nov</span><span>Rent, insurance</span><span class="a bad">−€632</span><span class="r">−€71</span></div><div class="tl"><span class="d">4 Nov</span><span>featurn</span><span class="a good">+€968</span><span class="r">€897</span></div><div class="tl"><span class="d">5 Nov</span><span>Oren</span><span class="a good">+€500</span><span class="r">€1,397</span></div></div></div>
+        <div class="sech"><b>Expenses</b><span>€675</span></div>
+        <div class="card"><div class="li"><div class="ic"></div><div><b>Stichting DUWO</b><small>due 1 Nov</small></div><div class="amt">€481</div></div></div>
+      </div></div>
+    <div style="max-width:380px;display:grid;gap:10px;align-content:start"><div class="cap">F-C · if you would rather keep a graph</div>
+      <p class="note">Then make it earn its place: put it on <b>Ahead</b> instead, where it can show the real balance over the next months, and let Fixed only show the timeline. Or keep a very small sparkline (a thin line, no labels) in the timeline card header. I would not keep the big version.</p>
+      <p class="note">The table you had before (items down, months across) is still in the app's history. It is good for <i>checking</i> months (did everything come in?) and bad as a first impression. If you miss it, it can come back as a "Months" view behind one tap, below the lists.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>2 · Ahead: yes, too cluttered. Counting it.</h2>
+  <p class="note">Right now the top of Ahead has: a ring, a two-line sentence in italics, a coloured pill, a grey note, the "where your money is" bar with its own header, then a title, <b>two</b> sets of toggles (Averages / Budget / My own, and 3 / 6 / 12 / 24), a sentence about the basis, a card with a <b>third</b> toggle (Net worth / Per month), the chart, its legend sentence, and then the month. That is around 11 things before you reach the numbers. Calmer version:</p>
+  <div class="row">
+    <div><div class="cap">Ahead, calmer (laptop)</div>
+      <div class="app laptop">
+        <div class="side"><b>arnaq</b><span>today</span><span class="on">ahead</span><span>fixed</span><span>add</span></div>
+        <div class="page">
+          <div class="hdr"><div><small>The next 6 months</small><b>ahead</b></div></div>
+          <div style="display:grid;grid-template-columns:200px 1fr;gap:28px;align-items:center">
+            <div class="ring" style="width:170px;height:170px"><svg viewBox="0 0 100 100"><circle class="t" cx="50" cy="50" r="44"/><circle cx="50" cy="50" r="44" stroke="var(--b)" stroke-dasharray="40 276.5"/></svg><div class="c"><b>−€5,948</b><small>by May</small></div></div>
+            <div style="display:grid;gap:10px"><div class="sentence" style="text-align:left;font-size:24px">Your money shrinks by about €1,300 a month</div><div><span class="pill">−€7,653 over 6 months</span></div>
+              <div style="display:grid;gap:6px"><div class="bar"><i style="width:48%;background:var(--sky);color:var(--skyi)">Rabobank<b>€357</b></i><i style="width:28%;background:var(--lav);color:var(--lavi)">Revolut<b>€205</b></i><i style="flex:1;background:var(--mint);color:var(--minti)">Savings<b>€201</b></i></div><div class="muted" style="font-size:12.5px;text-align:right"><b style="color:var(--ink)">€763</b> net worth now</div></div></div>
+          </div>
+          <div class="card pad"><div class="sech" style="padding:0"><b style="font-size:17px">Net worth over time</b><span class="seg"><span>3</span><span class="on">6</span><span>12</span><span>24 months</span></span></div>
+            <svg class="chart" viewBox="0 0 700 150" preserveAspectRatio="none" style="height:150px"><path d="M10 30 L110 40 L210 60 L310 88 L410 104 L510 118 L610 130 L690 140" stroke="var(--accent)" stroke-width="2.6" fill="none" stroke-dasharray="6 5"/></svg>
+            <div class="sech" style="padding:0"><span>Based on: <b style="color:var(--ink)">your averages ▾</b></span><span>Per month · Net worth</span></div></div>
+        </div>
+      </div></div>
+    <div style="max-width:380px;display:grid;gap:10px;align-content:start"><div class="cap">What I took out and why</div>
+      <p class="note">• <b>The italic month names sentence</b> becomes one plain line that says the thing that matters (the direction and the size).<br>
+      • <b>The "0 of 7 months end in the plus" note</b> goes: the pill already says it, and the ring arc stays as a quiet gauge. (If you want, the ring can lose its arc entirely and be a plain circle.)<br>
+      • <b>One row of controls</b> in the chart card header (the horizon), and the basis becomes a small "Based on: your averages ▾" choice at the bottom of the card instead of a second toggle row and a sentence. It still switches in one tap.<br>
+      • <b>The chart's own legend sentence</b> goes (the dashes are already explained once by the word "forecast" on the months).<br>
+      • <b>The bar</b> sits next to the ring's text, right-aligned total underneath, with no title.<br>
+      • The BTW card and the month list stay below, unchanged.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>What I would do</h2>
+  <p class="note">Fixed: layout <b>F-A</b> (one column, timeline instead of the graph). Ahead: the calmer version above. If you agree I will build both, and I will look at them styled on laptop and phone before I tell you they are done.</p>
+</section>
+</main>
+</body>
+</html>
