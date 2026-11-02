@@ -11,7 +11,7 @@ type T = Messages["ui"]["fixed"]["hero"];
 
 /**
  * The top of the Fixed page: the month's income as a ring split by fixed expense, what is left over
- * in the middle, a legend and one sentence. Whole euros here: the exact cents are in the list below.
+ * in the middle, one sentence and a legend (beside the ring on a laptop, under it on a phone). Whole euros here: the exact cents are in the list below.
  */
 export function FixedHero({
   ring,
@@ -49,39 +49,43 @@ export function FixedHero({
           : t.sentence.normal(euro(ring.income), euro(ring.fixed));
 
   return (
-    <section className="flex flex-col items-center gap-4 pt-2 pb-2 text-center">
-      <SplitRing segments={ring.segments} label={label}>
-        <div
-          className={`num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal ${centre.bad ? "text-bad" : ""}`}
-          style={{ fontSize: numberSize(centre.text.length) }}
-        >
-          {centre.text}
-        </div>
-        <div className={`mt-2 text-sm ${centre.bad ? "text-bad" : "text-ink-muted"}`}>
-          {centre.caption}
-        </div>
-      </SplitRing>
-      {ring.legend.length > 0 && (
-        <ul className="grid w-full max-w-[19rem] gap-1.5 text-left text-[14px]">
-          {ring.legend.map((l) => (
-            <li
-              key={l.key}
-              className="grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-2.5"
-            >
-              <i
-                aria-hidden
-                className="block size-3 rounded-full"
-                style={{ background: slotColour(l.slot), opacity: l.paid ? 1 : TO_PAY_OPACITY }}
-              />
-              <span className="truncate">{l.name ? displayName(l.name) : t.other}</span>
-              <span className="num text-ink-muted">{euro(l.amount)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-      <p className="font-display max-w-[30ch] text-[22px] leading-[1.2] text-balance">
-        <SentenceText parts={sentence} />
-      </p>
+    <section className="grid gap-4 pt-2 pb-2 text-center @min-[900px]/app:grid-cols-[auto_minmax(0,1fr)] @min-[900px]/app:items-center @min-[900px]/app:gap-12 @min-[900px]/app:text-left">
+      <div className="flex justify-center @min-[900px]/app:justify-start">
+        <SplitRing segments={ring.segments} label={label}>
+          <div
+            className={`num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal ${centre.bad ? "text-bad" : ""}`}
+            style={{ fontSize: numberSize(centre.text.length) }}
+          >
+            {centre.text}
+          </div>
+          <div className={`mt-2 text-sm ${centre.bad ? "text-bad" : "text-ink-muted"}`}>
+            {centre.caption}
+          </div>
+        </SplitRing>
+      </div>
+      <div className="grid justify-items-center gap-4 @min-[900px]/app:justify-items-start">
+        <p className="font-display max-w-[30ch] text-[22px] leading-[1.2] text-balance @min-[900px]/app:text-[30px]">
+          <SentenceText parts={sentence} />
+        </p>
+        {ring.legend.length > 0 && (
+          <ul className="grid w-full max-w-[19rem] gap-1.5 text-left text-[14px]">
+            {ring.legend.map((l) => (
+              <li
+                key={l.key}
+                className="grid grid-cols-[0.75rem_minmax(0,1fr)_auto] items-center gap-2.5"
+              >
+                <i
+                  aria-hidden
+                  className="block size-3 rounded-full"
+                  style={{ background: slotColour(l.slot), opacity: l.paid ? 1 : TO_PAY_OPACITY }}
+                />
+                <span className="truncate">{l.name ? displayName(l.name) : t.other}</span>
+                <span className="num text-ink-muted">{euro(l.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </section>
   );
 }

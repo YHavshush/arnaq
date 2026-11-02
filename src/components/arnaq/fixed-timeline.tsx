@@ -43,10 +43,10 @@ export function FixedTimeline({
           return (
             <li
               key={e.day}
-              className="grid grid-cols-[3.2rem_minmax(0,1fr)_auto_4.2rem] items-baseline gap-2 py-2.5 text-[14px]"
+              className="grid grid-cols-[3.2rem_minmax(0,1fr)_auto_4.2rem] items-baseline gap-2 py-2.5 text-[14px] leading-snug"
             >
               <span className="text-ink-muted">{day(e.day)}</span>
-              <span className="truncate">{e.names.map(displayName).join(", ")}</span>
+              <span className="min-w-0 break-words">{e.names.map(displayName).join(", ")}</span>
               <span
                 className={`num text-right font-semibold ${e.amount < 0 ? "text-bad" : "text-good"}`}
               >
@@ -61,8 +61,8 @@ export function FixedTimeline({
       </ol>
       <p className="text-ink-muted pt-1 text-[13px] leading-snug">
         {dips
-          ? text.lowest(fmt.euroSigned(flow.lowest.balance), day(flow.lowest.day))
-          : text.neverBelow(fmt.euroSigned(flow.start))}
+          ? text.lowest(fmt.euro(flow.lowest.balance), day(flow.lowest.day))
+          : text.neverBelow(fmt.euro(flow.start))}
         {flow.startKnown ? "" : ` ${text.fromZero}`}
       </p>
     </section>
