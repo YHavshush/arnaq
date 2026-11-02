@@ -29,6 +29,11 @@ export const ui: typeof en = {
     unknown: "Onbekend",
     noConnection: "Geen verbinding. Probeer het opnieuw.",
     somethingWrong: (status: number) => `Er ging iets mis (${status}).`,
+    slide: {
+      remove: "Schuif om te verwijderen",
+      restore: "Schuif om te herstellen",
+      erase: "Schuif om te wissen",
+    },
     uploadStatement: "Afschrift uploaden",
   },
   states: {

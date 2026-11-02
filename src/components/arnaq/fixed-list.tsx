@@ -12,6 +12,7 @@ import { formatter } from "@/lib/view/format";
 import { CategoryIcon } from "./category-icon";
 import { ErrorLine, GhostButton, PrimaryButton } from "./form";
 import { Section } from "./page-header";
+import { SlideOrButton } from "./slide-to-confirm";
 import { StatusChip } from "./status-chip";
 import { useItemActions } from "./vaste-lasten-actions";
 
@@ -206,13 +207,19 @@ function FixedRow({
               </GhostButton>
               {actions.confirming === row.itemId ? (
                 <>
-                  <PrimaryButton
-                    type="button"
+                  <SlideOrButton
+                    label={t.ui.common.slide.remove}
                     disabled={actions.busy}
-                    onClick={() => actions.remove(row.itemId)}
+                    onConfirm={() => actions.remove(row.itemId)}
                   >
-                    {f.item.confirmRemove}
-                  </PrimaryButton>
+                    <PrimaryButton
+                      type="button"
+                      disabled={actions.busy}
+                      onClick={() => actions.remove(row.itemId)}
+                    >
+                      {f.item.confirmRemove}
+                    </PrimaryButton>
+                  </SlideOrButton>
                   <GhostButton type="button" onClick={actions.cancelRemove}>
                     {t.ui.common.cancel}
                   </GhostButton>

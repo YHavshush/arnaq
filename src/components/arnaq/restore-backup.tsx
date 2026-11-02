@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
 import { useToast } from "./toast";
 import { ErrorLine, GhostButton } from "./form";
+import { SlideOrButton } from "./slide-to-confirm";
 
 const MAX_BYTES = 25 * 1024 * 1024;
 
@@ -69,9 +70,19 @@ export function RestoreBackup() {
         {s.agree}
       </label>
       <div>
-        <GhostButton type="button" disabled={!file || !agreed || working || busy} onClick={restore}>
-          {working ? s.working : s.button}
-        </GhostButton>
+        <SlideOrButton
+          label={t.ui.common.slide.restore}
+          disabled={!file || !agreed || working || busy}
+          onConfirm={restore}
+        >
+          <GhostButton
+            type="button"
+            disabled={!file || !agreed || working || busy}
+            onClick={restore}
+          >
+            {working ? s.working : s.button}
+          </GhostButton>
+        </SlideOrButton>
       </div>
       <div aria-live="polite">
         {error ? (

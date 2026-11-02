@@ -30,6 +30,7 @@ export const ui = {
     noConnection: "No connection. Try again.",
     somethingWrong: (status: number) => `Something went wrong (${status}).`,
     uploadStatement: "Upload a statement",
+    slide: { remove: "Slide to delete", restore: "Slide to restore", erase: "Slide to erase" },
   },
   states: {
     loading: {

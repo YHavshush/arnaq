@@ -6,6 +6,7 @@ import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
 import { useToast } from "./toast";
 import { ErrorLine, Field, DangerButton, inputClass } from "./form";
+import { SlideOrButton } from "./slide-to-confirm";
 
 /** Deletes everything the person has stored; asks them to type a word first. */
 export function EraseData() {
@@ -40,13 +41,19 @@ export function EraseData() {
         />
       </Field>
       <div>
-        <DangerButton
-          type="button"
+        <SlideOrButton
+          label={t.ui.common.slide.erase}
           disabled={busy || typed.trim().toLowerCase() !== s.word}
-          onClick={erase}
+          onConfirm={erase}
         >
-          {s.button}
-        </DangerButton>
+          <DangerButton
+            type="button"
+            disabled={busy || typed.trim().toLowerCase() !== s.word}
+            onClick={erase}
+          >
+            {s.button}
+          </DangerButton>
+        </SlideOrButton>
       </div>
       <div aria-live="polite">
         {error ? (
