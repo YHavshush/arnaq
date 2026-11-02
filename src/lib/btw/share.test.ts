@@ -250,3 +250,95 @@ describe("the taxes budget with the BTW share (the Today screen)", () => {
     expect(row.budget).toBe(2000 + 63000);
   });
 });
+
+describe("the quarter's true-up: paying less than was set aside lowers that month's taxes budget", () => {
+  const TODAY_JAN = "2027-01-28";
+  async function q4(paidAmount: number | null) {
+    const w = await world();
+    // Q4: the client pays 1,000.00 a month, so 3 x 173.55 (rounded) is set aside; the quarter's BTW owed is 520.66.
+    for (const d of ["2026-10-04", "2026-11-04", "2026-12-04"]) await w.paid(d, 100000);
+    await w.paid("2027-01-04", 100000); // January's own income: its normal share is 173.55
+    if (paidAmount !== null)
+      await w.tx("2027-01-25", -paidAmount, {
+        counterparty: "Belastingdienst",
+        categoryId: w.taxes,
+      });
+    return w;
+  }
+  const share = async (db: Awaited<ReturnType<typeof world>>["db"], month: string) =>
+    (await getBudgetsByMonth(db, month, month, { btw: { today: TODAY_JAN } })).get(month)?.btw;
+
+  it("takes what was paid less than the quarter's BTW off the payment month's share, and only that month's", async () => {
+    const w = await q4(40000); // owed 52066, paid 40000: 12066 less
+    const taxes = w.taxes;
+    expect((await share(w.db, "2027-01"))?.get(taxes)).toBe(17355 - 12066);
+    expect((await share(w.db, "2026-12"))?.get(taxes)).toBe(17355); // other months stay as they were
+    expect((await share(w.db, "2026-11"))?.get(taxes)).toBe(17355);
+  });
+
+  it("never goes below zero, and does not carry the rest to another month", async () => {
+    const w = await q4(10000); // 42066 less than owed, more than January's share of 17355
+    expect((await share(w.db, "2027-01"))?.get(w.taxes)).toBeUndefined(); // share 0: no BTW part at all
+    expect((await share(w.db, "2027-02"))?.get(w.taxes)).toBeUndefined(); // no income in February in this world
+  });
+
+  it("changes nothing before the quarter is paid, or when it was paid in full or more", async () => {
+    const before = await q4(null);
+    expect((await share(before.db, "2027-01"))?.get(before.taxes)).toBe(17355);
+    const full = await q4(60000); // more than owed
+    expect((await share(full.db, "2027-01"))?.get(full.taxes)).toBe(17355);
+  });
+});
+
+describe("moves into the BTW pocket count as set aside on the taxes row (the Today screen only)", () => {
+  it("adds this month's net moves into the pocket to the taxes row's actual, and to the month's spending", async () => {
+    const w = await world();
+    await w.paid("2026-10-04", 100000);
+    await w.tx("2026-10-05", -10000, {
+      counterparty: "To EUR BTW",
+      categoryId: w.savings,
+      isInternalTransfer: true,
+    });
+    await w.tx("2026-10-09", 2000, {
+      counterparty: "From EUR BTW",
+      categoryId: w.savings,
+      isInternalTransfer: true,
+    });
+    const plain = await getMonthOverview(w.db, "2026-10");
+    const withBtw = await getMonthOverview(w.db, "2026-10", { btw: { today: TODAY } });
+    const line = (o: typeof plain) => o.expenses.find((l) => l.categoryId === w.taxes)!;
+    expect(line(plain).actual).toBe(0);
+    expect(line(withBtw).actual).toBe(8000); // 100.00 in, 20.00 out
+    expect(line(withBtw).remaining).toBe(line(withBtw).budget! - 8000);
+    expect(withBtw.totals.expenseActual - plain.totals.expenseActual).toBe(8000);
+  });
+});
+
+describe("the Today screen with the BTW share in the taxes budget", () => {
+  async function home(movedIn: number) {
+    const w = await world();
+    await w.cover("2026-10");
+    await w.paid("2026-10-04", 100000); // share: 17355
+    if (movedIn > 0)
+      await w.tx("2026-10-05", -movedIn, {
+        counterparty: "To EUR BTW",
+        categoryId: w.savings,
+        isInternalTransfer: true,
+      });
+    return loadOverzicht(w.db, "2026-10", TODAY, "en");
+  }
+
+  it("the share is planned until it is moved into the pocket, then spent: free to spend does not change", async () => {
+    const none = await home(0);
+    const part = await home(8000);
+    const all = await home(17355);
+    const over = await home(30000); // more than this month's share: only the share counts
+    expect(none.free).toBe(part.free);
+    expect(none.free).toBe(all.free);
+    expect(none.free).toBe(over.free);
+    expect(none.planned - part.planned).toBe(8000);
+    expect(none.planned - all.planned).toBe(17355);
+    expect(part.spent - none.spent).toBe(8000);
+    expect(over.spent - none.spent).toBe(17355);
+  });
+});

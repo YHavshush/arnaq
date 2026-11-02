@@ -3,7 +3,7 @@ import { schema, type Db } from "@/db";
 import { countedAs, projectRecurring } from "@/lib/forecast/recurring";
 import { addMonths, monthOf } from "@/lib/recurring/dates";
 import { getBtwSettings } from "./settings";
-import { btwInside, mentions } from "./summary";
+import { btwInside, getBtwSummary, mentions } from "./summary";
 
 /**
  * A fixed income item is the client's when its counterparty names the client (whole words, like every BTW match).
@@ -99,4 +99,45 @@ export async function btwShareForMonth(
 
   const income = received + expected;
   return { received, expected, income, share: btwInside(income) };
+}
+
+/**
+ * What was paid to the tax office for a quarter less than was set aside for it, in the month the payment was made
+ * (cents; 0 in every other month, before the payment, and when it was paid in full or more).
+ *
+ * The BTW set aside for a quarter is the BTW inside what the client paid in it (what the summary calls `owed`). The tax
+ * office can ask for less (BTW back on purchases, for example), and the difference is the person's again. It lowers that
+ * one month's BTW share, and nothing carries over to a later month. A payment made after the next quarter has begun
+ * (very late) is not matched to its quarter here.
+ */
+export async function btwTrueUp(db: Db, opts: { month: string }): Promise<number> {
+  const summary = await getBtwSummary(db, { today: `${opts.month}-01` });
+  if (!summary.paid || monthOf(summary.paid.date) !== opts.month) return 0;
+  return Math.max(summary.owed - summary.paid.amount, 0);
+}
+
+/**
+ * The net money moved into the BTW pocket in a month (cents): moves in, minus moves back out. A move into the pocket is a
+ * transfer between the person's own accounts, not spending, but it is the BTW share being set aside, so the Today screen
+ * counts it against the taxes budget.
+ */
+export async function btwMovedIn(db: Db, opts: { month: string }): Promise<number> {
+  const { pocket } = await getBtwSettings(db);
+  const t = schema.transactions;
+  const rows = await db
+    .select({ amount: t.amount, counterparty: t.counterparty, description: t.description })
+    .from(t)
+    .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
+    .innerJoin(schema.categories, eq(schema.categories.id, t.categoryId))
+    .where(
+      and(
+        eq(t.currency, schema.accounts.currency),
+        eq(schema.categories.type, "savings"),
+        gte(t.date, `${opts.month}-01`),
+        lt(t.date, `${addMonths(opts.month, 1)}-01`),
+      ),
+    );
+  return rows
+    .filter((r) => mentions([r.counterparty, r.description], pocket))
+    .reduce((s, r) => s - r.amount, 0);
 }

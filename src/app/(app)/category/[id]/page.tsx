@@ -34,7 +34,7 @@ async function Content({ params, searchParams }: Props) {
   const id = Number((await params).id);
   if (!Number.isInteger(id) || id <= 0) notFound();
   const month = parseMonth((await searchParams).month, todayIso().slice(0, 7));
-  const d = await pageDb((db) => loadCategoryDetail(db, id, month));
+  const d = await pageDb((db) => loadCategoryDetail(db, id, month, { today: todayIso() }));
   if (!d) notFound();
 
   return (

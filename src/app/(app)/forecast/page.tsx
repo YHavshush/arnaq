@@ -81,8 +81,12 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
             ? { text: t.ui.forecast.dipPill(p.dipMonths), good: false }
             : p.netWorth && !p.incomeMissing
               ? {
-                  text: t.ui.forecast.growthPill(f.euroSigned(p.growth), months),
-                  good: p.growth >= 0,
+                  // The change of the net worth line (which also takes off the BTW taken on), so the pill and the chart agree.
+                  text: t.ui.forecast.growthPill(
+                    f.euroSigned(p.netWorth.end - p.netWorth.start),
+                    months,
+                  ),
+                  good: p.netWorth.end - p.netWorth.start >= 0,
                 }
               : undefined
         }

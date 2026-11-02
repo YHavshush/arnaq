@@ -67,11 +67,16 @@ export async function getDailyBalances(
   if (accounts.length === 0) return null;
   const out = new Map<string, number>();
   // Per account: the balance so far and how far into its rows the walk is.
-  const state = accounts.map((list) => ({ list, next: 0, balance: list[0].balance - list[0].amount }));
+  const state = accounts.map((list) => ({
+    list,
+    next: 0,
+    balance: list[0].balance - list[0].amount,
+  }));
   for (let day = from; day <= to; day = addDays(day, 1)) {
     let total = 0;
     for (const s of state) {
-      while (s.next < s.list.length && s.list[s.next].date <= day) s.balance = s.list[s.next++].balance;
+      while (s.next < s.list.length && s.list[s.next].date <= day)
+        s.balance = s.list[s.next++].balance;
       total += s.balance;
     }
     out.set(day, total);

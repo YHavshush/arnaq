@@ -223,6 +223,11 @@ export const ui = {
     lowest: (amount: string, day: string) =>
       `Lowest point ${amount} on ${day}. Rabobank and Revolut together, savings left out.`,
     lowShort: (amount: string) => `low ${amount}`,
+    sources: (fixed: string, budgets: string, averages: string) =>
+      `Expected expenses: fixed costs ${fixed}, budgets ${budgets}, averages ${averages}.`,
+    fellBack: (names: string) => `No budget for ${names}, so the average is used.`,
+    btwAccrued: (amount: string) =>
+      `${amount} of this month's income is BTW you will owe. The net worth line takes it off.`,
     table: { caption: "Forecast per month", month: "Month", total: "Total", growth: "Growth" },
     /** The parts under a month's Income and Expenses tiles. */
     parts: {

@@ -3,7 +3,7 @@ import { first, schema, type Db } from "@/db";
 import { MAX_CENTS } from "@/lib/money";
 import { addMonths } from "@/lib/recurring/dates";
 import { isScheduled } from "@/lib/recurring/occurrences";
-import { btwShareForMonth } from "@/lib/btw/share";
+import { btwShareForMonth, btwTrueUp } from "@/lib/btw/share";
 import { TAXES_CATEGORY } from "@/lib/categories/defaults";
 
 export class BudgetError extends Error {}
@@ -208,7 +208,9 @@ export async function getBudgetsByMonth(
     if (taxes !== null)
       for (let m = fromMonth; m <= toMonth; m = addMonths(m, 1)) {
         const { share } = await btwShareForMonth(db, { month: m, today: opts.btw.today });
-        if (share > 0) at(m).btw.set(taxes, share);
+        // The month the quarter's BTW is paid: what was paid less than was set aside comes off, never below zero.
+        const adjusted = Math.max(share - (await btwTrueUp(db, { month: m })), 0);
+        if (adjusted > 0) at(m).btw.set(taxes, adjusted);
       }
   }
 
@@ -224,7 +226,7 @@ export async function getBudgetsByMonth(
 }
 
 /** The taxes category: the default one by its stable slug, else by its default name; null when the person has none. */
-async function taxesCategoryId(db: Db): Promise<number | null> {
+export async function taxesCategoryId(db: Db): Promise<number | null> {
   const rows = await db
     .select({ id: schema.categories.id, slug: schema.categories.slug })
     .from(schema.categories)

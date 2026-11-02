@@ -229,6 +229,11 @@ export const ui: typeof en = {
     lowest: (amount: string, day: string) =>
       `Laagste punt ${amount} op ${day}. Rabobank en Revolut samen, spaargeld niet meegeteld.`,
     lowShort: (amount: string) => `laag ${amount}`,
+    sources: (fixed: string, budgets: string, averages: string) =>
+      `Verwachte uitgaven: vaste lasten ${fixed}, budgetten ${budgets}, gemiddelden ${averages}.`,
+    fellBack: (names: string) => `Geen budget voor ${names}, dus het gemiddelde is gebruikt.`,
+    btwAccrued: (amount: string) =>
+      `${amount} van het inkomen van deze maand is btw die je nog moet betalen. De vermogenslijn trekt dat eraf.`,
     table: { caption: "Prognose per maand", month: "Maand", total: "Totaal", growth: "Groei" },
     parts: {
       total: "Totaal",

@@ -2,7 +2,14 @@ import { and, eq, gte, isNull, lt, type SQL } from "drizzle-orm";
 import { daysInMonth } from "@/lib/recurring/dates";
 import { schema, type Db } from "@/db";
 import { addMonths } from "@/lib/recurring/dates";
-import { assertMonth, getBudgetsByMonth, resolveTotalBudget, type BudgetOptions } from "./budgets";
+import { btwMovedIn } from "@/lib/btw/share";
+import {
+  assertMonth,
+  getBudgetsByMonth,
+  resolveTotalBudget,
+  taxesCategoryId,
+  type BudgetOptions,
+} from "./budgets";
 export interface CategoryLine {
   categoryId: number | null;
   name: string;
@@ -20,6 +27,11 @@ export interface CategoryLine {
    * taxes budget is then at least `fixed + btw`. 0 otherwise.
    */
   btw: number;
+  /**
+   * With the `btw` option, the part of `btw` already moved into the BTW pocket this month (cents), counted in `actual`
+   * of the taxes row (never more than `btw`). 0 otherwise.
+   */
+  btwMoved: number;
   actual: number; // cents, positive: money spent (expense) or received (income)
   remaining: number | null; // budget - actual for expenses, actual - budget for income
 }
@@ -138,10 +150,17 @@ export async function getMonthOverview(
   const budget = (await getBudgetsByMonth(db, month, month, { btw: opts.btw })).get(month);
   const sums = (await sumTransactions(db, { fromMonth: month, toMonth: month })).get(month);
   const unc = sums?.uncategorised ?? { expense: 0, income: 0, count: 0 };
+  // With `btw` (the Today screen) the BTW moved into the pocket this month counts as set aside on the taxes row: it is
+  // part of that row's budget, and a transfer is not spending, so without this the row would never look used.
+  const taxesId = opts.btw ? await taxesCategoryId(db) : null;
+  const movedIn = opts.btw && taxesId !== null ? await btwMovedIn(db, { month }) : 0;
 
   const line = (c: (typeof categories)[number], type: "expense" | "income"): CategoryLine => {
     const raw = sums?.byCategory.get(c.id) ?? 0;
-    const actual = type === "expense" ? 0 - raw : raw; // 0 - x avoids -0
+    const base = type === "expense" ? 0 - raw : raw; // 0 - x avoids -0
+    const share = budget?.btw.get(c.id) ?? 0;
+    const btwMoved = c.id === taxesId ? Math.min(Math.max(movedIn, 0), share) : 0;
+    const actual = base + btwMoved;
     const b = budget?.byCategory.get(c.id) ?? null;
     return {
       categoryId: c.id,
@@ -151,7 +170,8 @@ export async function getMonthOverview(
       budget: b,
       fixed: budget?.fixed.get(c.id) ?? 0,
       extra: budget?.explicit.get(c.id) ?? null,
-      btw: budget?.btw.get(c.id) ?? 0,
+      btw: share,
+      btwMoved,
       actual,
       remaining: b === null ? null : type === "expense" ? b - actual : actual - b,
     };

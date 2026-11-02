@@ -55,6 +55,32 @@ export function MonthDetail({ point }: { point: PrognosePoint }) {
           </span>
         </div>
       </div>
+      {(point.kind === "forecast" || point.kind === "mixed") && (
+        <div className="text-ink-muted grid gap-1 px-1 text-[13px] leading-snug">
+          {point.expenseSources.fixed +
+            point.expenseSources.budgets +
+            point.expenseSources.averages >
+            0 && (
+            <p>
+              {t.ui.chart.sources(
+                euro(point.expenseSources.fixed),
+                euro(point.expenseSources.budgets),
+                euro(point.expenseSources.averages),
+              )}
+            </p>
+          )}
+          {point.expenseSources.fellBack.length > 0 && (
+            <p>
+              {t.ui.chart.fellBack(
+                new Intl.ListFormat(locale, { style: "long", type: "conjunction" }).format(
+                  point.expenseSources.fellBack,
+                ),
+              )}
+            </p>
+          )}
+          {point.btwAccrued > 0 && <p>{t.ui.chart.btwAccrued(euro(point.btwAccrued))}</p>}
+        </div>
+      )}
       {point.low !== null && point.low.amount < 0 && (
         <p
           className="text-bad flex items-start gap-2 rounded-2xl px-3.5 py-2.5 text-[13px] leading-snug"

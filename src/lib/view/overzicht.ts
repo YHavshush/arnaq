@@ -320,9 +320,12 @@ export function buildOverzicht({
   const compact = sumBudget !== null || (budget === null && totals.incomeActual > 0);
 
   const expenseOcc = occurrences.filter((o) => o.type === "expense");
-  const planned = expenseOcc
-    .filter((o) => o.status === "expected")
-    .reduce((s, o) => s + o.expectedAmount, 0);
+  // The BTW share of the taxes budget is planned until it is moved into the pocket (then it is spent): either way it
+  // is not free to spend. The move itself is counted in the taxes row's actual (see getMonthOverview).
+  const unsetBtw = overview.expenses.reduce((s, l) => s + Math.max(l.btw - l.btwMoved, 0), 0);
+  const planned =
+    expenseOcc.filter((o) => o.status === "expected").reduce((s, o) => s + o.expectedAmount, 0) +
+    unsetBtw;
   const paidFixed = expenseOcc
     .filter((o) => o.status === "matched")
     .reduce((s, o) => s + (o.actualAmount ?? 0), 0);
