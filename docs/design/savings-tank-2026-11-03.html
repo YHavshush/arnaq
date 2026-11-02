@@ -1,0 +1,77 @@
+<title>arnaq savings tank</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the answer first, then where the tank goes: the Today tile (three looks) and the savings card (two looks). */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); --pick:#2f7d5b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --pick:#5fcf9a; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --pick:#5fcf9a; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding-block:28px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width:1040px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr); gap:30px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; text-wrap:balance; } h2 { font:500 21px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note { color:var(--muted); font-size:14px; max-width:74ch; } .note b { color:var(--ink); }
+.sec { display:grid; grid-template-columns:minmax(0,1fr); gap:14px; padding-top:18px; border-top:1px solid var(--line); }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:18px; align-items:start; }
+.opt { display:grid; gap:9px; align-content:start; } .opt b { font:500 17px/1.2 Georgia,serif; } .pick { color:var(--pick); font-weight:700; }
+.stage { border-radius:24px; padding:18px; display:grid; gap:12px; align-content:center; min-height:170px; background:linear-gradient(180deg,#d9e5f5,#f1e6dd 60%,#f6e8d8); border:1px solid rgba(23,32,46,.1); color:#17202e; --soft:rgba(36,59,115,.08); --a:#33c6ff; --b:#7f8cff; --good:#2f7d5b; --muted:#4a5568; }
+.glass { border-radius:22px; background:rgba(255,255,255,.66); border:1px solid rgba(23,32,46,.1); padding:14px 15px; }
+.cap { font-size:12px; color:#4a5568; letter-spacing:.04em; text-transform:uppercase; }
+.pct { font-size:30px; line-height:1; font-weight:600; letter-spacing:-.035em; font-variant-numeric:tabular-nums; }
+.sm { font-size:12.5px; color:#4a5568; }
+.row { display:flex; gap:14px; align-items:center; }
+.dotline { display:flex; align-items:center; gap:7px; font-weight:600; font-size:14.5px; } .dotline i { width:8px; height:8px; border-radius:50%; background:var(--b); }
+
+/* The tank: a glass vessel; the liquid rises once when the screen opens, then its top drifts slowly. Only transform moves. */
+.tank { position:relative; overflow:hidden; border:1.5px solid rgba(23,32,46,.22); background:rgba(23,32,46,.06); flex:none; }
+.level { position:absolute; inset:0; transform:translateY(calc((1 - var(--p)) * 100%)); animation:rise 1.7s cubic-bezier(.2,.8,.2,1) both; }
+.level::before { content:""; position:absolute; inset:0; background:linear-gradient(180deg,var(--a),var(--b)); opacity:.9; }
+.wave { position:absolute; left:0; top:-7px; width:200%; height:8px; animation:drift 3.4s linear infinite; }
+.wave path { fill:var(--a); opacity:.9; }
+@keyframes rise { from { transform:translateY(100%); } }
+@keyframes drift { to { transform:translateX(-50%); } }
+.v { width:42px; height:68px; border-radius:14px 14px 18px 18px; }
+.h { height:26px; width:100%; border-radius:99px; }
+.big { width:92px; height:132px; border-radius:20px 20px 28px 28px; }
+.tank.full .level::before { background:linear-gradient(180deg,#5fd9a0,#23a371); } .tank.full .wave path { fill:#5fd9a0; }
+.tick { width:22px; height:22px; border-radius:50%; background:#23a371; color:#fff; display:grid; place-items:center; font-size:13px; font-weight:700; }
+@media (prefers-reduced-motion: reduce) { .level, .wave { animation:none !important; } }
+</style>
+
+<main>
+<header style="display:grid;gap:8px">
+  <h1>The savings tank</h1>
+  <p class="note">The savings goal as a glass tank that fills to your percentage. It rises once when the screen opens, then its surface drifts slowly. Only movement is used, no filters, so it is safe on an iPhone, and it stands still when the phone asks for less motion. Demo numbers.</p>
+</header>
+
+<section class="sec">
+  <h2>On Today: the small savings tile</h2>
+  <p class="note">It shows up where the savings tile is now. Three looks for the same tile.</p>
+  <div class="grid">
+    <div class="opt"><div class="stage"><div class="glass"><div class="cap">Goal · Japan trip</div><div class="row" style="margin-top:8px"><div><div class="pct">42%</div><div class="sm">€2,100 of €5,000</div></div><div class="tank v" style="--p:.42;margin-left:auto"><div class="level"><svg class="wave" viewBox="0 0 80 8" preserveAspectRatio="none"><path d="M0 4 Q10 0 20 4 T40 4 T60 4 T80 4 V8 H0Z"/></svg></div></div></div></div></div>
+      <b><span class="pick">A · Small upright tank</span> (my pick)</b><p class="note">A little vessel on the right of the tile. Takes the same room as the tile does now, and reads at a glance.</p></div>
+    <div class="opt"><div class="stage"><div class="glass"><div class="cap">Goal · Japan trip</div><div class="row" style="margin-top:6px;align-items:baseline"><div class="pct">42%</div><span class="sm" style="margin-left:auto">€2,100 of €5,000</span></div><div class="tank h" style="--p:.42;margin-top:10px"><div class="level" style="transform:translateX(calc((var(--p) - 1) * 100%));animation-name:riseh"><svg class="wave" viewBox="0 0 80 8" style="display:none"></svg></div></div></div></div>
+      <b>B · Flat tank bar</b><p class="note">The progress bar you have, made into a tank: a rounded glass bar that fills from the left. Lowest height of the three.</p></div>
+    <div class="opt"><div class="stage"><div class="glass"><div class="cap">Goal · Japan trip</div><div class="row" style="margin-top:8px"><div><div class="pct">100%</div><div class="sm">€5,000 of €5,000</div></div><div style="margin-left:auto;display:flex;gap:10px;align-items:center"><span class="tick">✓</span><div class="tank v full" style="--p:1"><div class="level"><svg class="wave" viewBox="0 0 80 8" preserveAspectRatio="none"><path d="M0 4 Q10 0 20 4 T40 4 T60 4 T80 4 V8 H0Z"/></svg></div></div></div></div></div></div>
+      <b>When the goal is reached</b><p class="note">The tank is full and turns green, with the tick. The surface keeps drifting, so it still feels alive.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>In Settings: the savings card</h2>
+  <p class="note">The card with the goal and the amount typed. Here there is room for a bigger tank.</p>
+  <div class="grid">
+    <div class="opt"><div class="stage"><div class="glass"><div class="row" style="align-items:center"><div class="tank big" style="--p:.42"><div class="level"><svg class="wave" viewBox="0 0 80 8" preserveAspectRatio="none"><path d="M0 4 Q10 0 20 4 T40 4 T60 4 T80 4 V8 H0Z"/></svg></div></div><div style="display:grid;gap:6px"><div class="cap">Savings goal</div><div class="pct" style="font-size:38px">42%</div><div class="dotline"><i></i>Under way</div><div class="sm">€2,100 saved of €5,000</div><div class="sm">€2,900 to go</div></div></div></div></div>
+      <b><span class="pick">C · Big tank with the facts beside it</span> (my pick)</b><p class="note">The tank, the percentage, the word that says the status ("Under way", "Reached") and the two amounts. The status stays in words, as it is now.</p></div>
+    <div class="opt"><div class="stage"><div class="glass"><div class="cap">Savings goal</div><div class="row" style="margin-top:6px;align-items:baseline"><div class="pct" style="font-size:38px">42%</div><div class="dotline" style="margin-left:auto"><i></i>Under way</div></div><div class="tank h" style="--p:.42;height:34px;margin-top:10px"><div class="level" style="transform:translateX(calc((var(--p) - 1) * 100%));animation-name:riseh"></div></div><div class="sm" style="margin-top:8px">€2,100 saved of €5,000</div></div></div>
+      <b>D · The same card, with the flat tank</b><p class="note">Keeps the card as it is and only swaps its bar for the flat tank.</p></div>
+  </div>
+</section>
+
+<section class="sec">
+  <h2>My advice</h2>
+  <p class="note"><b>A on Today and C in Settings.</b> A tank only means something when it is big enough to see the level, so Settings gets the large one, and Today gets the small upright one, not a bar. If you keep only one, keep C. Everything animates only when the screen opens, never while you scroll.</p>
+</section>
+</main>
+<style>
+@keyframes riseh { from { transform:translateX(-100%); } }
+</style>
