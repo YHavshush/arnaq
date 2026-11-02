@@ -159,6 +159,15 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         title={p.hasBalance ? t.ui.forecast.progressWorth : t.ui.forecast.progress}
         aside={
           <span className="flex flex-wrap items-center justify-end gap-2">
+            {!p.incomeMissing && (
+              <Link
+                href={`/plan?months=${months}`}
+                className="bg-action text-action-ink inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold"
+              >
+                <Pencil className="size-3.5" aria-hidden />
+                {t.ui.forecast.editPlan}
+              </Link>
+            )}
             <nav aria-label={t.ui.forecast.horizon} className="liquid seg">
               {HORIZONS.map((h) => (
                 <StepLink
@@ -174,17 +183,6 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           </span>
         }
       >
-        {!p.incomeMissing && (
-          <div className="mb-2 px-1">
-            <Link
-              href={`/plan?months=${months}`}
-              className="text-accent -ml-2 inline-flex min-h-11 items-center gap-1.5 rounded-full px-2 text-sm font-semibold"
-            >
-              <Pencil className="size-3.5" aria-hidden />
-              {t.ui.forecast.editPlan}
-            </Link>
-          </div>
-        )}
         {p.incomeMissing ? (
           <div className="glass p-4">
             <p className="font-semibold">{t.ui.forecast.needIncomeTitle}</p>

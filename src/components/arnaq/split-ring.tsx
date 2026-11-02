@@ -32,8 +32,12 @@ interface SplitRingProps {
 const RING_MASK = (w: number) =>
   `radial-gradient(farthest-side, transparent calc(100% - ${w}px), #000 calc(100% - ${w}px + .6px))`;
 
-/** Light: where an arc's gradient starts (a paler version of its colour) and ends (the colour itself). */
-const pale = (slot: number) => `color-mix(in oklab, ${slotColour(slot)} 68%, white)`;
+/**
+ * Light: the two ends of an arc's gradient, like the single ring's `from` and `to`: a pale tint of its colour and a
+ * deeper version of it. The gradient runs across the whole ring (see below), so every arc picks up part of it.
+ */
+const pale = (slot: number) => `color-mix(in oklab, ${slotColour(slot)} 38%, white)`;
+const deep = (slot: number) => `color-mix(in oklab, ${slotColour(slot)} 82%, #1b2550)`;
 /** Dark: where an arc starts (dimmer) on its way to the lit end. */
 const dim = (slot: number) => `color-mix(in oklab, ${slotColour(slot)} 58%, var(--canvas))`;
 
@@ -51,15 +55,11 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
   const r = 50 - width / 2; // outer edge exactly on the box
   const cap = capFraction(stroke, size);
   const only = segments.length === 1;
+  const slots = [...new Set(segments.map((s) => s.slot))];
   const arcs = segments.map((s) => ({
     s,
     arc: arcFor({ start: s.start, end: s.end }, cap, GAP / 100, only),
   }));
-  // The gradient of an arc runs from where it starts to where it ends, so every arc shows it.
-  const at = (fraction: number) => {
-    const angle = (fraction * 360 - 90) * (Math.PI / 180);
-    return { x: 50 + r * Math.cos(angle), y: 50 + r * Math.sin(angle) };
-  };
   const dot: CSSProperties = {
     position: "absolute",
     left: "50%",
@@ -88,24 +88,22 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
         className="absolute inset-0 dark:hidden"
       >
         <defs>
-          {arcs.map(({ s, arc }, i) => {
-            const from = at(arc.start);
-            const to = at(arc.start + arc.length);
-            return (
-              <linearGradient
-                key={i}
-                id={`${id}-${i}`}
-                gradientUnits="userSpaceOnUse"
-                x1={from.x}
-                y1={from.y}
-                x2={to.x}
-                y2={to.y}
-              >
-                <stop offset="0%" style={{ stopColor: pale(s.slot) }} />
-                <stop offset="100%" style={{ stopColor: slotColour(s.slot) }} />
-              </linearGradient>
-            );
-          })}
+          {slots.map((slot) => (
+            // One gradient across the whole ring, as the single ring has it: pale at the bottom left, deep at the top
+            // right (the circles are turned a quarter, so the corners are the ones of the turned box).
+            <linearGradient
+              key={slot}
+              id={`${id}-${slot}`}
+              gradientUnits="userSpaceOnUse"
+              x1="0"
+              y1="0"
+              x2="100"
+              y2="100"
+            >
+              <stop offset="0%" style={{ stopColor: pale(slot) }} />
+              <stop offset="100%" style={{ stopColor: deep(slot) }} />
+            </linearGradient>
+          ))}
         </defs>
         <circle
           cx="50"
@@ -115,7 +113,7 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
           strokeWidth={width}
           style={{ stroke: "var(--track)" }}
         />
-        {arcs.map(({ s, arc }, i) => (
+        {arcs.map(({ s, arc }) => (
           <circle
             key={`${s.key}-${s.paid ? "paid" : "open"}`}
             cx="50"
@@ -128,7 +126,7 @@ export function SplitRing({ segments, label, size = 224, children }: SplitRingPr
             strokeDasharray={`${arc.length * 100} ${100 - arc.length * 100}`}
             strokeDashoffset={-arc.start * 100}
             transform="rotate(-90 50 50)"
-            stroke={`url(#${id}-${i})`}
+            stroke={`url(#${id}-${s.slot})`}
             opacity={s.paid ? 1 : TO_PAY_OPACITY}
           />
         ))}

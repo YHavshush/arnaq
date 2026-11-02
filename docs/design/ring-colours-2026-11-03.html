@@ -77,15 +77,14 @@ p { margin:0; } .note { color:var(--muted); font-size:14px; max-width:76ch; } .n
     if (mode === "dark") html += '<div class="halo" style="background:radial-gradient(closest-side, rgba(125,139,255,.20), transparent 72%)"></div>';
     if (mode === "light") {
       html += '<svg viewBox="0 0 100 100"><defs>';
-      arcs.forEach(function (x, k) {
-        var p0 = pt(r, x.a.start), p1 = pt(r, x.a.start + x.a.length), c = pal.light[x.s.i];
-        html += '<linearGradient id="g' + (gid + k) + '" gradientUnits="userSpaceOnUse" x1="' + p0.x + '" y1="' + p0.y + '" x2="' + p1.x + '" y2="' + p1.y + '"><stop offset="0" stop-color="' + c[0] + '"/><stop offset="1" stop-color="' + c[1] + '"/></linearGradient>';
+      pal.light.forEach(function (c, k) {
+        html += '<linearGradient id="g' + (gid + k) + '" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="100"><stop offset="0" style="stop-color:color-mix(in oklab,' + c[1] + ' 38%,white)"/><stop offset="1" style="stop-color:color-mix(in oklab,' + c[1] + ' 82%,#1b2550)"/></linearGradient>';
       });
       html += '</defs><circle cx="50" cy="50" r="' + r + '" fill="none" stroke-width="' + width + '" stroke="var(--track)"/>';
-      arcs.forEach(function (x, k) {
-        html += '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke-width="' + width + '" stroke-linecap="' + (x.a.round ? "round" : "butt") + '" pathLength="100" stroke-dasharray="' + (x.a.length * 100) + ' ' + (100 - x.a.length * 100) + '" stroke-dashoffset="' + (-x.a.start * 100) + '" transform="rotate(-90 50 50)" stroke="url(#g' + (gid + k) + ')" opacity="' + (x.s.paid ? 1 : 0.5) + '"/>';
+      arcs.forEach(function (x) {
+        html += '<circle cx="50" cy="50" r="' + r + '" fill="none" stroke-width="' + width + '" stroke-linecap="' + (x.a.round ? "round" : "butt") + '" pathLength="100" stroke-dasharray="' + (x.a.length * 100) + ' ' + (100 - x.a.length * 100) + '" stroke-dashoffset="' + (-x.a.start * 100) + '" transform="rotate(-90 50 50)" stroke="url(#g' + (gid + x.s.i) + ')" opacity="' + (x.s.paid ? 1 : 0.5) + '"/>';
       });
-      html += '</svg>'; gid += arcs.length;
+      html += '</svg>'; gid += pal.light.length;
     } else {
       html += '<div class="dk"><i style="border-radius:50%;background:var(--track);-webkit-mask:' + MASK + ';mask:' + MASK + '"></i>';
       arcs.forEach(function (x) {
