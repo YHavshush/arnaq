@@ -4,14 +4,51 @@
     {
       "name": "kasboek-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "-p", "3200"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3200"
+      ],
       "port": 3200
     },
     {
       "name": "kasboek-real",
       "runtimeExecutable": "env",
-      "runtimeArgs": ["DATABASE_URL=./data/real", "npm", "run", "dev", "--", "-p", "3201"],
+      "runtimeArgs": [
+        "DATABASE_URL=./data/real",
+        "npm",
+        "run",
+        "dev",
+        "--",
+        "-p",
+        "3201"
+      ],
       "port": 3201
+    },
+    {
+      "name": "kasboek-auth",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "next",
+        "dev",
+        "-p",
+        "3202"
+      ],
+      "port": 3202
+    },
+    {
+      "name": "design-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "3299",
+        "--directory",
+        "docs/design"
+      ],
+      "port": 3299
     }
   ]
 }
