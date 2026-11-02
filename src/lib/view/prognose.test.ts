@@ -62,3 +62,43 @@ describe("buildPrognose: the lowest point in each month", () => {
     expect(p.dipMonths).toBe(0);
   });
 });
+
+describe("buildPrognose: when the money runs out", () => {
+  const month = (m: string, kind: ForecastMonth["kind"], cumulativeNet: number) =>
+    ({
+      ...fm(m, kind, undefined),
+      cumulativeNet,
+      net: 0,
+    }) as unknown as ForecastMonth;
+
+  it("is the first month ahead that ends below zero, or null when none does", () => {
+    const out = buildPrognose(
+      forecast([
+        month("2026-10", "mixed", 0),
+        month("2026-11", "forecast", -5000),
+        month("2026-12", "forecast", -30000),
+        month("2027-01", "forecast", -60000),
+      ]),
+      "en",
+    );
+    // Opening balance 200.00: October 200, November 150, December -100: it runs out in December.
+    expect(out.runsOutIn).toBe("2026-12");
+    const fine = buildPrognose(
+      forecast([month("2026-10", "mixed", 0), month("2026-11", "forecast", 1000)]),
+      "en",
+    );
+    expect(fine.runsOutIn).toBeNull();
+  });
+
+  it("never looks at months that are already real", () => {
+    const out = buildPrognose(
+      forecast([
+        month("2026-09", "actual", -90000),
+        month("2026-10", "mixed", 0),
+        month("2026-11", "forecast", 1000),
+      ]),
+      "en",
+    );
+    expect(out.runsOutIn).toBeNull();
+  });
+});

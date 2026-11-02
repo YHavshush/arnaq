@@ -186,6 +186,12 @@ export const view = {
       plain(" gets tight, "),
       plain(`${best} is your best month.`),
     ],
+    runsOut: (month: string): Sentence => [plain("Your money runs out in "), em(month), plain(".")],
+    lastsBeyond: (month: string): Sentence => [
+      plain("Your money lasts beyond "),
+      em(month),
+      plain("."),
+    ],
     bestTightest: (best: string, tight: string): Sentence => [
       em(cap(best)),
       plain(` is your best month, ${tight} the tightest.`),

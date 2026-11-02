@@ -183,6 +183,12 @@ export const view: typeof en = {
       plain(" wordt krap, "),
       plain(`${best} is je beste maand.`),
     ],
+    runsOut: (month: string): Sentence => [plain("Je geld is op in "), em(month), plain(".")],
+    lastsBeyond: (month: string): Sentence => [
+      plain("Je geld gaat langer mee dan "),
+      em(month),
+      plain("."),
+    ],
     bestTightest: (best: string, tight: string): Sentence => [
       em(cap(best)),
       plain(` is je beste maand, ${tight} de krapste.`),

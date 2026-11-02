@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import type { Tone } from "@/design/tokens";
 import type { Sentence } from "@/lib/view/overzicht";
 import { CountText } from "./count-text";
+import type { RingSegment } from "@/lib/view/fixed-ring";
+import { numberSize } from "./hero";
 import { Ring } from "./ring";
 import { SentenceText } from "./sentence";
+import { SplitRing } from "./split-ring";
 
 /**
  * The top of Ahead. The ring holds the number; the sentence, the change and the small facts sit next to it on a laptop
@@ -15,6 +18,7 @@ export function AheadTop({
   ringLabel,
   amount,
   caption,
+  split,
   pill,
   ringNote,
   sentence,
@@ -28,6 +32,11 @@ export function AheadTop({
   amount: string;
   /** What the number is ("net worth by Apr"). */
   caption: string;
+  /**
+   * Draw the ring as arcs (one per account) instead of one arc for `value`: net worth now, split by where it is. `sub` is
+   * a small line under the caption, inside the ring.
+   */
+  split?: { segments: RingSegment[]; sub?: string };
   /** How far it moves, with its tone; left out when there is nothing honest to say. */
   pill?: { text: string; good: boolean };
   /** One line that says what the arc means; left out when the pill says it. */
@@ -39,12 +48,27 @@ export function AheadTop({
   return (
     <section className="grid gap-5 pt-2 pb-5 @min-[900px]/app:grid-cols-[auto_minmax(0,1fr)] @min-[900px]/app:items-center @min-[900px]/app:gap-12">
       <div className="flex justify-center @min-[900px]/app:justify-start">
-        <Ring value={value} tone={tone} label={ringLabel}>
-          <div className="num text-[34px] leading-none font-medium tracking-[-0.03em] whitespace-nowrap dark:font-normal">
-            <CountText text={amount} />
-          </div>
-          <div className="text-ink-muted mt-2 max-w-[9rem] text-xs leading-tight">{caption}</div>
-        </Ring>
+        {split ? (
+          <SplitRing segments={split.segments} label={ringLabel}>
+            <div
+              className="num leading-none font-medium tracking-[-0.035em] whitespace-nowrap dark:font-normal"
+              style={{ fontSize: numberSize(amount.length) }}
+            >
+              <CountText text={amount} />
+            </div>
+            <div className="text-ink-muted mt-2 text-sm">{caption}</div>
+            {split.sub ? (
+              <div className="text-ink-muted mt-0.5 text-xs leading-tight">{split.sub}</div>
+            ) : null}
+          </SplitRing>
+        ) : (
+          <Ring value={value} tone={tone} label={ringLabel}>
+            <div className="num text-[34px] leading-none font-medium tracking-[-0.03em] whitespace-nowrap dark:font-normal">
+              <CountText text={amount} />
+            </div>
+            <div className="text-ink-muted mt-2 max-w-[9rem] text-xs leading-tight">{caption}</div>
+          </Ring>
+        )}
       </div>
       <div className="grid gap-3 text-center @min-[900px]/app:text-left">
         <p className="font-display text-[24px] leading-[1.2] text-balance @min-[900px]/app:text-[30px]">

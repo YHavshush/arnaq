@@ -55,6 +55,10 @@ export interface Prognose {
   points: PrognosePoint[];
   /** How many points have a low below zero: months in which the checking balance dips into the red. */
   dipMonths: number;
+  /** The first month ahead whose end is below zero (net worth, when balances are known), YYYY-MM; null when none is. */
+  runsOutIn: string | null;
+  /** "Your money runs out in December 2026." or "...lasts beyond May 2027."; null without balances or income. */
+  runwaySentence: Sentence | null;
   /** Months ahead (current month included) and how many of them end in the plus. */
   ahead: number;
   inThePlus: number;
@@ -111,6 +115,9 @@ export function buildPrognose(
     projected: m.kind === "forecast" || m.kind === "mixed",
     low: m.low ?? null,
   }));
+  const runsOutIn = hasBalance
+    ? (points.find((p) => p.projected && p.cumulative < 0)?.month ?? null)
+    : null;
   const dipMonths = points.filter((p) => p.low !== null && p.low.amount < 0).length;
   // With no data at all every month nets to 0: that is "nothing to say", not "all in the plus".
   const hasData = points.some((p) => p.income !== 0 || p.expenses !== 0);
@@ -189,6 +196,13 @@ export function buildPrognose(
     hasBalance,
     points,
     dipMonths,
+    runsOutIn,
+    runwaySentence:
+      hasBalance && !incomeMissing && ahead.length > 0
+        ? runsOutIn
+          ? t.runsOut(monthName(runsOutIn))
+          : t.lastsBeyond(monthName(points[points.length - 1].month))
+        : null,
     ahead: ahead.length,
     inThePlus,
     share: incomeMissing ? 0 : share,

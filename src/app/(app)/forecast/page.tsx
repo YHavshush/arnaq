@@ -4,7 +4,7 @@ import { pageDb } from "@/lib/auth/request";
 import { BtwCard } from "@/components/arnaq/btw-card";
 import { StepLink } from "@/components/arnaq/step-link";
 import { AheadTop } from "@/components/arnaq/ahead-top";
-import { WorthBar } from "@/components/arnaq/worth-bar";
+import { WorthLegend } from "@/components/arnaq/worth-legend";
 import { MonthList } from "@/components/arnaq/month-list";
 import { MoodSetter } from "@/components/arnaq/mood";
 import { PageHeader, Section } from "@/components/arnaq/page-header";
@@ -16,6 +16,7 @@ import { getBtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
 import { HORIZONS, loadNetWorth, loadPrognose, parseHorizon } from "@/lib/view/load";
 import { netWorthParts } from "@/lib/view/net-worth-parts";
+import { worthRing } from "@/lib/view/worth-ring";
 
 export default function ForecastPage({ searchParams }: PageProps<"/forecast">) {
   return (
@@ -40,8 +41,8 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
       worth: await loadNetWorth(db, today),
     };
   });
-  // The bar shows the money there is. The BTW (what is set aside minus what is still owed) takes money off, so it
-  // has no width: it is listed under the bar, and the total next to the bar already includes it.
+  // The ring shows the money there is, one arc per account. The BTW (what is set aside minus what is still owed) takes
+  // money off, so it has no arc: it is listed under the ring, and the number in the middle already includes it.
   const parts = [
     ...netWorthParts(worth, t.ui.netWorth.savingsName),
     ...(worth.btw.net !== 0
@@ -55,6 +56,15 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
         ]
       : []),
   ];
+
+  const ring = worthRing(parts);
+  // Net worth now in the ring needs balances and income; without them the ring keeps showing the forecast.
+  const nowRing =
+    worth.hasAny && !p.incomeMissing && p.netWorth !== null && p.runwaySentence !== null;
+  const ringLabel = t.ui.netWorth.ringLabel(
+    f.euro(worth.total),
+    ring.legend.map((e) => `${e.name} ${f.euro(e.amount)}`).join(", "),
+  );
 
   if (!p.hasForecast)
     return (
@@ -77,40 +87,61 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
       <AheadTop
         tone={p.tone}
         value={p.share}
-        ringLabel={t.ui.forecast.ring(p.inThePlus, p.ahead)}
-        amount={p.netWorth && !p.incomeMissing ? f.euro(p.netWorth.end) : f.euroSigned(p.growth)}
+        ringLabel={nowRing ? ringLabel : t.ui.forecast.ring(p.inThePlus, p.ahead)}
+        amount={
+          nowRing
+            ? f.euro(worth.total)
+            : p.netWorth && !p.incomeMissing
+              ? f.euro(p.netWorth.end)
+              : f.euroSigned(p.growth)
+        }
         caption={
-          p.incomeMissing
-            ? t.ui.forecast.captionSpend(p.points.at(-1)?.label ?? "")
-            : p.netWorth
-              ? t.ui.forecast.captionWorth(p.points.at(-1)?.label ?? "")
-              : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
+          nowRing
+            ? t.ui.netWorth.nowCaption
+            : p.incomeMissing
+              ? t.ui.forecast.captionSpend(p.points.at(-1)?.label ?? "")
+              : p.netWorth
+                ? t.ui.forecast.captionWorth(p.points.at(-1)?.label ?? "")
+                : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
+        }
+        split={
+          nowRing
+            ? {
+                segments: ring.segments,
+                sub:
+                  worth.btw.net !== 0
+                    ? t.ui.netWorth.afterBtw(f.euroSigned(worth.btw.net))
+                    : undefined,
+              }
+            : undefined
         }
         pill={
-          p.dipMonths > 0 && !p.incomeMissing
-            ? { text: t.ui.forecast.dipPill(p.dipMonths), good: false }
-            : p.netWorth && !p.incomeMissing
-              ? {
-                  // The change of the net worth line (which also takes off the BTW taken on), so the pill and the chart agree.
-                  text: t.ui.forecast.growthPill(
-                    f.euroSigned(p.netWorth.end - p.netWorth.start),
-                    months,
-                  ),
-                  good: p.netWorth.end - p.netWorth.start >= 0,
-                }
-              : undefined
+          nowRing && p.netWorth
+            ? {
+                // Where the money ends: the number the ring used to show, now one glance away.
+                text: t.ui.forecast.byMonth(
+                  f.euroSigned(p.netWorth.end),
+                  p.points.at(-1)?.label ?? "",
+                ),
+                good: p.netWorth.end >= 0,
+              }
+            : p.dipMonths > 0 && !p.incomeMissing
+              ? { text: t.ui.forecast.dipPill(p.dipMonths), good: false }
+              : p.netWorth && !p.incomeMissing
+                ? {
+                    // The change of the net worth line (which also takes off the BTW taken on), so the pill and the chart agree.
+                    text: t.ui.forecast.growthPill(
+                      f.euroSigned(p.netWorth.end - p.netWorth.start),
+                      months,
+                    ),
+                    good: p.netWorth.end - p.netWorth.start >= 0,
+                  }
+                : undefined
         }
-        sentence={p.sentence}
+        ringNote={nowRing && p.dipMonths > 0 ? t.ui.forecast.dipPill(p.dipMonths) : undefined}
+        sentence={nowRing && p.runwaySentence ? p.runwaySentence : p.sentence}
       >
-        {worth.hasAny && !p.incomeMissing && (
-          <WorthBar
-            parts={parts}
-            label={t.ui.netWorth.where}
-            total={f.euro(worth.total)}
-            totalLabel={t.ui.netWorth.now}
-            format={f.euro}
-          />
-        )}
+        {nowRing && <WorthLegend entries={ring.legend} format={f.euro} />}
       </AheadTop>
       {p.incomeMissing && (
         <div className="pb-2">
