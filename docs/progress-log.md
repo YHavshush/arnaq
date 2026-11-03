@@ -197,7 +197,7 @@ Work is paced by the 5-hour usage limit: stop at 70% (see memory), commit, repor
 
 ## Where the code lives (2026-10-20)
 
-Private GitHub repository: https://github.com/YHavshush/budget-app (name without a space; the brand name is still to be decided).
+Private GitHub repository: https://github.com/YHavshush/arnaq (renamed from budget-app on 2026-11-03).
 `main` is pushed; all other branches were already merged into it. Push new work with `git push`.
 
 ## Waiting on the owner (2026-10-16)

@@ -4,7 +4,7 @@
 CLAUDE CODE (local CLI)
       |  writes the code and the database migrations (Drizzle)
       v
-GITHUB (private: YHavshush/budget-app) --(auto deploy)--> VERCEL (hosts the Next.js app)
+GITHUB (private: YHavshush/arnaq) --(auto deploy)--> VERCEL (hosts the Next.js app)
                                                               |
                                                               |  server side SQL (pooler) + Auth
                                                               v
@@ -16,7 +16,7 @@ GITHUB (private: YHavshush/budget-app) --(auto deploy)--> VERCEL (hosts the Next
 | Part                         | State                                                                                                                                                                    |
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Claude Code writes the code  | done                                                                                                                                                                     |
-| GitHub                       | done, private repo `YHavshush/budget-app`, `main` pushed                                                                                                                 |
+| GitHub                       | done, private repo `YHavshush/arnaq`, `main` pushed                                                                                                                      |
 | GitHub to Vercel auto deploy | not connected yet (see `docs/deploy.md`)                                                                                                                                 |
 | Vercel hosts the app         | not yet                                                                                                                                                                  |
 | Supabase Postgres and Auth   | done: project `kasboek`, migrations 0000 to 0005, row level security on every table. Dashboard settings (Site URL, mail templates) still to do, see `docs/auth-setup.md` |
