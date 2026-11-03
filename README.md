@@ -1,6 +1,6 @@
-# Budget Tracker
+# arnaq
 
-Personal budget tracker: upload one CSV per bank per month (Rabobank, Revolut, ABN AMRO, ING, Knab), see budget vs actual, manage vaste lasten and inkomen, and get an adjustable prognose. See [PLAN.md](PLAN.md) for the full plan and [CLAUDE.md](CLAUDE.md) for repo rules.
+arnaq is a personal budget tracker. Upload a bank file per month (CSV or TXT from Rabobank, Revolut, ABN AMRO, ING or Knab, or a Rabobank PDF statement), see budget vs actual, manage your fixed costs and income, and get an adjustable forecast. English and Dutch. See [PLAN.md](PLAN.md) for the full plan and [CLAUDE.md](CLAUDE.md) for repo rules.
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · Postgres via Drizzle ORM (PGlite locally, Supabase when hosted) · Vitest
 

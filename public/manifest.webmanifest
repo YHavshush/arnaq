@@ -1,7 +1,7 @@
 {
   "name": "arnaq",
   "short_name": "arnaq",
-  "description": "Personal budget overview",
+  "description": "Personal budget tracker: see what is left this month and plan ahead.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#d9e5f5",

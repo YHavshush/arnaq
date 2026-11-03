@@ -14,7 +14,7 @@ const display = Newsreader({
 
 export const metadata: Metadata = {
   title: "arnaq",
-  description: "Personal budget overview",
+  description: "Personal budget tracker: see what is left this month and plan ahead.",
   // A static file, not a metadata route: in development a route made every page reload in a loop.
   manifest: "/manifest.webmanifest",
   icons: {
