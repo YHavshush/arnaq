@@ -39,6 +39,10 @@ export function numberSize(chars: number): number {
  * Phone: stacked and centred. Laptop (app width 900px or more): the ring on the left, the sentence
  * and its explanation on the right, as in the design.
  */
+/** The big serif sentence under the ring, the same on every page (Today, Ahead, Fixed). */
+export const HERO_SENTENCE =
+  "font-display max-w-[34ch] text-[26px] leading-[1.2] text-balance @min-[900px]/app:text-[32px]";
+
 export function Hero({
   tone,
   value,
@@ -63,7 +67,7 @@ export function Hero({
         <div className="text-ink-muted mt-2 text-sm">{caption}</div>
       </Ring>
       <div className="grid gap-3 @min-[900px]/app:max-w-[40ch]">
-        <p className="font-display max-w-[34ch] text-[26px] leading-[1.2] text-balance @min-[900px]/app:text-[32px]">
+        <p className={HERO_SENTENCE}>
           <SentenceText parts={sentence} />
         </p>
         {detail ? (

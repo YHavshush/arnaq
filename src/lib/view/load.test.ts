@@ -26,7 +26,8 @@ describe("parseMonth / parseHorizon", () => {
     expect(parseHorizon("12")).toBe(12);
     expect(parseHorizon("5")).toBe(6);
     expect(parseHorizon(undefined)).toBe(6);
-    expect(HORIZONS).toContain(24);
+    expect(HORIZONS).toEqual([3, 6, 12]);
+    expect(parseHorizon("24")).toBe(6); // an old link with 24 months opens the default
   });
 });
 

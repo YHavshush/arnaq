@@ -13,7 +13,7 @@ export function WorthLegend({
   format: (cents: number) => string;
 }) {
   return (
-    <ul className="grid w-full max-w-[19rem] gap-1.5 text-left text-[14px]">
+    <ul className="mx-auto grid w-full max-w-[19rem] gap-1.5 text-left text-[14px] @min-[900px]/app:mx-0">
       {entries.map((e) => (
         <li
           key={e.key}

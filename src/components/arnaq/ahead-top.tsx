@@ -3,7 +3,7 @@ import type { Tone } from "@/design/tokens";
 import type { Sentence } from "@/lib/view/overzicht";
 import { CountText } from "./count-text";
 import type { RingSegment } from "@/lib/view/fixed-ring";
-import { numberSize } from "./hero";
+import { HERO_SENTENCE, numberSize } from "./hero";
 import { Ring } from "./ring";
 import { SentenceText } from "./sentence";
 import { SplitRing } from "./split-ring";
@@ -76,7 +76,7 @@ export function AheadTop({
         )}
       </div>
       <div className="grid gap-3 text-center @min-[900px]/app:text-left">
-        <p className="font-display text-[24px] leading-[1.2] text-balance @min-[900px]/app:text-[30px]">
+        <p className={HERO_SENTENCE}>
           <SentenceText parts={sentence} />
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 @min-[900px]/app:justify-start">

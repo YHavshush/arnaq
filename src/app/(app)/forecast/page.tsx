@@ -162,10 +162,11 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
             {!p.incomeMissing && (
               <Link
                 href={`/plan?months=${months}`}
-                className="bg-action text-action-ink inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-sm font-semibold"
+                aria-label={t.ui.forecast.editPlan}
+                title={t.ui.forecast.editPlan}
+                className="bg-action text-action-ink inline-flex size-9 items-center justify-center rounded-full"
               >
-                <Pencil className="size-3.5" aria-hidden />
-                {t.ui.forecast.editPlan}
+                <Pencil className="size-4" aria-hidden />
               </Link>
             )}
             <nav aria-label={t.ui.forecast.horizon} className="liquid seg">

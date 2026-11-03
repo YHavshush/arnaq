@@ -4,7 +4,7 @@ import type { Formatter } from "@/lib/view/format";
 import type { Sentence } from "@/lib/view/overzicht";
 import { displayName } from "@/lib/view/names";
 import { CountText } from "./count-text";
-import { numberSize } from "./hero";
+import { HERO_SENTENCE, numberSize } from "./hero";
 import { SentenceText } from "./sentence";
 import { SplitRing, TO_PAY_OPACITY, slotColour } from "./split-ring";
 
@@ -65,7 +65,7 @@ export function FixedHero({
         </SplitRing>
       </div>
       <div className="grid justify-items-center gap-4 @min-[900px]/app:justify-items-start">
-        <p className="font-display max-w-[30ch] text-[22px] leading-[1.2] text-balance @min-[900px]/app:text-[30px]">
+        <p className={HERO_SENTENCE}>
           <SentenceText parts={sentence} />
         </p>
         {ring.legend.length > 0 && (

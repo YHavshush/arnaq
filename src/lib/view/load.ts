@@ -31,7 +31,7 @@ export function parseMonth(raw: string | string[] | undefined, fallback: string)
   return typeof s === "string" && /^20\d\d-(0[1-9]|1[0-2])$/.test(s) ? s : fallback;
 }
 
-export const HORIZONS = [3, 6, 12, 24] as const;
+export const HORIZONS = [3, 6, 12] as const;
 
 /** What the coming months are based on, from the address; anything unknown is the averages. */
 export function parseBasis(raw: string | string[] | undefined): "averages" | "budget" | "own" {
