@@ -1,3 +1,4 @@
+import { bankName } from "@/lib/import/banks";
 import type { Locale } from "./config";
 
 /**
@@ -8,7 +9,7 @@ import type { Locale } from "./config";
  */
 type Rule = [RegExp, (m: RegExpExecArray) => string];
 
-const bank = (b: string) => (b === "rabobank" ? "Rabobank" : b === "revolut" ? "Revolut" : b);
+const bank = bankName;
 
 const NL: Rule[] = [
   [/^Not signed in\.$/, () => "Je bent niet ingelogd."],
@@ -29,8 +30,9 @@ const NL: Rule[] = [
       `Dit lijkt een ${bank(m[1])}-bestand, maar de gekozen rekening is een ${bank(m[2])}-rekening.`,
   ],
   [
-    /^Could not recognise this (?:file|CSV) as a Rabobank or Revolut export\.$/,
-    () => "Dit bestand is niet herkend als Revolut-CSV of Rabobank-afschrift.",
+    /^Could not recognise this (?:file|CSV) as (?:a Rabobank or Revolut export|an export from a bank the app reads)\.$/,
+    () =>
+      "Dit bestand is niet herkend. Ik lees CSV of TXT van Rabobank, Revolut, ABN AMRO, ING en Knab, en Rabobank-afschriften als PDF.",
   ],
   [
     /^Too many rows \(max (\d+) per file\)\.$/,
@@ -57,6 +59,20 @@ const NL: Rule[] = [
   [
     /^Not a Rabobank export, missing: (.*)$/,
     (m) => `Dit is geen Rabobank-export; er ontbreken kolommen: ${m[1]}`,
+  ],
+  [
+    /^Not (?:an ING|a Knab|an ABN AMRO) export, missing: (.*)$/,
+    (m) => `Dit is niet het verwachte bestand van de bank; er ontbreken kolommen: ${m[1]}`,
+  ],
+  [
+    /^Not an ABN AMRO export, (?:the file is empty|no transaction lines found)$/,
+    () => "Dit is geen ABN AMRO-export: er staan geen transactieregels in.",
+  ],
+  [/^Not a transaction line$/, () => "Geen transactieregel"],
+  [/^Af Bij must be Af or Bij, not "(.*)"$/, (m) => `Af Bij moet Af of Bij zijn, niet "${m[1]}"`],
+  [
+    /^CreditDebet must be Credit or Debet, not "(.*)"$/,
+    (m) => `CreditDebet moet Credit of Debet zijn, niet "${m[1]}"`,
   ],
   [
     /^State (.*), only COMPLETED is imported$/,

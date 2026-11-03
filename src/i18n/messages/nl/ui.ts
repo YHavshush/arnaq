@@ -517,7 +517,7 @@ export const ui: typeof en = {
     period: (from: string, to: string) => `${from} t/m ${to}`,
     panel: {
       pick: "Kies het afschrift van je bank",
-      hint: "Sleep het bestand hierheen of kies het. Een Revolut-CSV of een Rabobank-afschrift (PDF) wordt herkend; dubbele regels worden overgeslagen.",
+      hint: "Sleep het bestand hierheen of kies het. CSV of TXT van Rabobank, Revolut, ABN AMRO, ING of Knab, of een Rabobank-afschrift (PDF), wordt herkend; dubbele regels worden overgeslagen.",
       ready: (kb: number) => `${kb} kB, klaar om te uploaden`,
       other: "Ander bestand",
       choose: "Bestand kiezen",

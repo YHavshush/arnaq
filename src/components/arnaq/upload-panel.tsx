@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useI18n } from "@/i18n/client";
+import { BANK_NAMES } from "@/lib/import/banks";
 import { formatter } from "@/lib/view/format";
 import { ErrorLine, Field, PrimaryButton, inputClass } from "./form";
 import { ChaseSpinner, DoneRing } from "./motion";
@@ -33,7 +34,7 @@ interface Summary {
   } | null;
 }
 
-const BANK = { rabobank: "Rabobank", revolut: "Revolut" } as Record<string, string>;
+const BANK = BANK_NAMES as Record<string, string>;
 
 /** Pick or drop one bank statement. The bank and month are detected; both can be set under "Options". */
 export function UploadPanel({ accounts }: { accounts: { id: number; name: string }[] }) {
@@ -126,7 +127,7 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
         <input
           ref={input}
           type="file"
-          accept=".csv,.pdf,text/csv,application/pdf"
+          accept=".csv,.txt,.pdf,text/csv,text/plain,application/pdf"
           className="peer sr-only"
           id="csv"
           disabled={busy}

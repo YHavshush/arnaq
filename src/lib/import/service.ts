@@ -9,7 +9,9 @@ import { merchantKey } from "@/lib/smart/merchant";
 import { detectInternalTransfers, flagCardTopUps } from "@/lib/categories/transfers";
 import { isDate } from "@/lib/recurring/dates";
 import { latestTransactionMonth, syncRecurring, type SyncResult } from "@/lib/recurring/sync";
+import { bankName } from "./banks";
 import { detectBank, getParser } from "./parsers";
+import { decodeBankText } from "./text";
 import {
   StatementError,
   looksLikeRabobankStatement,
@@ -103,7 +105,7 @@ async function resolveAccount(db: Db, bank: Bank, identifier: string | null): Pr
     const [created] = await db
       .insert(schema.accounts)
       .values({
-        name: `${bank === "rabobank" ? "Rabobank" : "Revolut"} ${identifier}`,
+        name: `${bankName(bank)} ${identifier}`,
         bank,
         iban: identifier,
       })
@@ -114,7 +116,7 @@ async function resolveAccount(db: Db, bank: Bank, identifier: string | null): Pr
   if (accounts.length === 0) {
     const [created] = await db
       .insert(schema.accounts)
-      .values({ name: bank === "rabobank" ? "Rabobank" : "Revolut", bank })
+      .values({ name: bankName(bank), bank })
       .returning();
     return created.id;
   }
@@ -140,10 +142,10 @@ async function readSource(content: string | Uint8Array): Promise<Source> {
       throw e;
     }
   }
-  return { kind: "text", text: new TextDecoder("utf-8").decode(content) };
+  return { kind: "text", text: decodeBankText(content) };
 }
 
-/** Import one bank file (CSV or Rabobank PDF statement) into an account. Re-uploads are safe. */
+/** Import one bank file (CSV or TXT, or a Rabobank PDF statement) into an account. Re-uploads are safe. */
 export async function importStatement(db: Db, input: ImportInput): Promise<ImportSummary> {
   if (input.month && !MONTH_RE.test(input.month))
     throw new ImportError(`Invalid month "${input.month}", use YYYY-MM.`);
@@ -175,7 +177,9 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
     }
   } else {
     if (!detected)
-      throw new ImportError("Could not recognise this file as a Rabobank or Revolut export.");
+      throw new ImportError(
+        "Could not recognise this file as an export from a bank the app reads.",
+      );
     bank = detected;
   }
 

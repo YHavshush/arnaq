@@ -496,7 +496,7 @@ export const ui = {
     period: (from: string, to: string) => `${from} to ${to}`,
     panel: {
       pick: "Choose your bank statement",
-      hint: "Drop the file here or choose it. A Revolut CSV or a Rabobank statement (PDF) is recognised; duplicate rows are skipped.",
+      hint: "Drop the file here or choose it. CSV or TXT from Rabobank, Revolut, ABN AMRO, ING or Knab, or a Rabobank statement (PDF), is recognised; duplicate rows are skipped.",
       ready: (kb: number) => `${kb} kB, ready to upload`,
       other: "Another file",
       choose: "Choose file",

@@ -15,4 +15,6 @@ Anonymised sample bank exports used by the parser tests.
 
 **Revolut: verified** against a real export (same columns and `State` values; one difference found and fixed: the date is the _Completed_ date, because the statement period is by completion). **Rabobank CSV: not verified.** The owner's Rabobank statements arrive as **PDF** ("Rekeningafschrift"), which is read by `src/lib/import/parsers/rabobank-pdf.ts` and tested with a generated, invented statement (`tests/helpers/statement-pdf.ts`). Real statements are never committed (`*.pdf` is git-ignored).
 
+ING, Knab and ABN AMRO (`ing-sample.csv`, `knab-sample.csv`, `abnamro-sample.txt`) are **invented** from the documented layouts, with balances that add up. **None is verified against a real export.** Only Rabobank has a PDF reader.
+
 To verify the Rabobank CSV: To verify: take a real export, anonymise it (change names, IBANs, descriptions, amounts), save it here as a new fixture, and add a parser test. If a header differs, adjust the parser in `src/lib/import/parsers/`.

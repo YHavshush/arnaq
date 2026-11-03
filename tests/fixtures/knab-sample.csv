@@ -1,0 +1,7 @@
+Rekeningnummer;Transactiedatum;Valutacode;CreditDebet;Bedrag;Tegenrekeningnummer;Tegenrekeninghouder;Valutadatum;Betaalwijze;Omschrijving;Type betaling;Machtigingsnummer;Incassant ID;Adres;Referentie;Boekdatum
+NL00KNAB0000000001;01-09-2026;EUR;Debet;650,00;NL00BANK0000000011;Verhuurder Voorbeeld BV;01-09-2026;Overboeking;Huur september;;;;;REF001;01-09-2026
+NL00KNAB0000000001;02-09-2026;EUR;Debet;42,37;;Albert Heijn 1234 Amsterdam;02-09-2026;Betaalpas;Pas 001 02-09-2026 12:34;;;;;REF002;02-09-2026
+NL00KNAB0000000001;05-09-2026;EUR;Credit;1.234,56;NL00BANK0000000013;Voorbeeld Werkgever BV;05-09-2026;Overboeking;Salaris augustus;;;;;REF003;05-09-2026
+NL00KNAB0000000001;06-09-2026;EUR;Debet;4,50;;Koffie Bar;06-09-2026;Betaalpas;Pas 002;;;;;REF004;06-09-2026
+NL00KNAB0000000001;06-09-2026;EUR;Debet;4,50;;Koffie Bar;06-09-2026;Betaalpas;Pas 002;;;;;REF004;06-09-2026
+NL00KNAB0000000001;10-09-2026;EUR;Credit;15,00;NL00BANK0000000015;Vriend Voorbeeld;10-09-2026;Overboeking;Terugbetaling;;;;;REF005;10-09-2026

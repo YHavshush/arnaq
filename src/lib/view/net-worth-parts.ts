@@ -1,3 +1,5 @@
+import { BANK_NAMES } from "@/lib/import/banks";
+
 /** One part of net worth: a checking account, or the savings. */
 export interface WorthPart {
   key: string;
@@ -8,7 +10,7 @@ export interface WorthPart {
   share: number;
 }
 
-const BANK: Record<string, string> = { rabobank: "Rabobank", revolut: "Revolut" };
+const BANK: Record<string, string> = BANK_NAMES;
 
 /**
  * The parts of net worth for the bar on Ahead: each account with a stated balance, then the savings. A part at or
