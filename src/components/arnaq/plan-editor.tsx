@@ -26,6 +26,13 @@ import { useAction } from "./use-action";
 export const DIALOG_CLASS =
   "sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl border p-0 shadow-xl @min-[900px]/app:[inset:auto] @min-[900px]/app:[top:var(--pop-top,auto)] @min-[900px]/app:[bottom:var(--pop-bottom,auto)] @min-[900px]/app:[left:var(--pop-left,1rem)] @min-[900px]/app:mt-0 @min-[900px]/app:w-[23rem] @min-[900px]/app:max-w-[calc(100vw-2rem)] @min-[900px]/app:rounded-3xl @min-[900px]/app:backdrop:bg-transparent";
 
+/** The editor holds one number, so its popover is narrower than the "add" dialog's. */
+const EDITOR_REM = 20;
+const EDITOR_CLASS = DIALOG_CLASS.replace(
+  "@min-[900px]/app:w-[23rem]",
+  "@min-[900px]/app:w-[20rem]", // written out in full so Tailwind finds it
+);
+
 /** The cell being edited: the row's key and the month, and the element to give focus back to. */
 export interface EditTarget {
   rowKey: string;
@@ -54,7 +61,7 @@ export function PlanEditor({
     const dialog = ref.current;
     if (!dialog) return;
     if (target && !dialog.open) {
-      place(dialog, target.anchor);
+      place(dialog, target.anchor, EDITOR_REM);
       dialog.showModal();
       fit(dialog, target.anchor);
       const input = dialog.querySelector<HTMLInputElement>("input[inputmode=decimal]");
@@ -79,7 +86,7 @@ export function PlanEditor({
       onClick={(e) => {
         if (e.target === ref.current) ref.current?.close(); // a tap on the dimmed area
       }}
-      className={DIALOG_CLASS}
+      className={EDITOR_CLASS}
     >
       {open && found && (
         <EditorBody
@@ -95,14 +102,14 @@ export function PlanEditor({
 }
 
 /** Put the popover under (or, near the bottom of the screen, over) the cell. A phone's sheet ignores this. */
-export function place(dialog: HTMLDialogElement, anchor: HTMLElement | null) {
+export function place(dialog: HTMLDialogElement, anchor: HTMLElement | null, rem = 23) {
   const style = dialog.style;
   style.removeProperty("--pop-top");
   style.removeProperty("--pop-bottom");
   style.removeProperty("--pop-left");
   if (!anchor) return;
   const r = anchor.getBoundingClientRect();
-  const width = 23 * 16;
+  const width = rem * 16;
   const left = Math.max(
     16,
     Math.min(r.left + r.width / 2 - width / 2, window.innerWidth - width - 16),
@@ -172,16 +179,16 @@ function EditorBody({
   }
 
   return (
-    <form onSubmit={submit} className="grid grid-cols-[minmax(0,1fr)] gap-4 p-5">
+    <form onSubmit={submit} className="grid grid-cols-[minmax(0,1fr)] gap-3 p-4">
       <div className="flex items-baseline justify-between gap-3">
-        <h2 id="plan-editor-title" className="font-display text-xl font-medium">
+        <h2 id="plan-editor-title" className="font-display text-lg font-medium">
           {e.title(rowLabel(row, text.rows, locale), monthWord(locale, month))}
         </h2>
       </div>
 
       <label className="grid grid-cols-[minmax(0,1fr)] gap-1.5 text-sm font-medium">
         {e.amountLabel}
-        <span className="bg-soft border-hair focus-within:border-accent flex min-h-12 items-center gap-2 rounded-2xl border px-3">
+        <span className="bg-soft border-hair focus-within:border-accent flex min-h-11 items-center gap-2 rounded-2xl border px-3">
           <span aria-hidden className="text-ink-muted text-lg">
             €
           </span>
@@ -199,7 +206,7 @@ function EditorBody({
       </label>
 
       <fieldset className="grid min-w-0 gap-1.5">
-        <legend className="mb-1.5 text-sm font-medium">{e.scopeLabel}</legend>
+        <legend className="mb-1 text-sm font-medium">{e.scopeLabel}</legend>
         <div className="bg-soft grid grid-cols-2 gap-0.5 rounded-2xl p-[3px]">
           {(
             [
@@ -209,7 +216,7 @@ function EditorBody({
           ).map(([id, label]) => (
             <label
               key={id}
-              className="has-[:checked]:bg-surface has-[:focus-visible]:outline-accent grid min-h-11 cursor-pointer place-items-center rounded-[13px] px-2 py-1.5 text-center text-[13.5px] leading-tight font-semibold has-[:checked]:shadow-sm has-[:focus-visible]:outline-2"
+              className="has-[:checked]:bg-surface has-[:focus-visible]:outline-accent grid min-h-10 cursor-pointer place-items-center rounded-[13px] px-2 py-1.5 text-center text-[13.5px] leading-tight font-semibold has-[:checked]:shadow-sm has-[:focus-visible]:outline-2"
             >
               <input
                 type="radio"

@@ -284,7 +284,7 @@ export const ui: typeof en = {
       amountLabel: "Bedrag in euro's",
       scopeLabel: "Hoe ver gaat het?",
       scopeMonth: "Alleen deze maand",
-      scopeAfter: "Deze en de maanden erna",
+      scopeAfter: "Vanaf deze maand",
       save: "Opslaan",
       saving: "Opslaan…",
       resetSuggestion: (amount: string) => `Terug naar de suggestie ${amount}`,
