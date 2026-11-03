@@ -25,7 +25,7 @@ import {
 // - Foreign keys are composite (user_id, x_id): a row can never point at another user's row.
 // - Dates are ISO strings: "YYYY-MM-DD" for days, "YYYY-MM" for months.
 
-export const BANKS = ["rabobank", "revolut"] as const;
+export const BANKS = ["rabobank", "revolut", "abnamro", "ing", "knab"] as const;
 /** "transfer": a move between the person's own accounts. "savings": money into or out of savings. Neither is income or spending. */
 export const CATEGORY_TYPES = ["expense", "income", "transfer", "savings"] as const;
 export const RECURRING_TYPES = ["expense", "income"] as const;

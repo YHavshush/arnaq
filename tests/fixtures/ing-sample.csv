@@ -1,0 +1,7 @@
+"Datum";"Naam / Omschrijving";"Rekening";"Tegenrekening";"Code";"Af Bij";"Bedrag (EUR)";"Mutatiesoort";"Mededelingen";"Saldo na mutatie";"Tag"
+"20260901";"Verhuurder Voorbeeld BV";"NL00INGB0000000001";"NL00BANK0000000011";"OV";"Af";"650,00";"Overschrijving";"Naam: Verhuurder Voorbeeld BV Omschrijving: Huur september IBAN: NL00BANK0000000011";"2350,00";""
+"20260902";"Albert Heijn 1234 Amsterdam";"NL00INGB0000000001";"";"BA";"Af";"42,37";"Betaalautomaat";"Pasvolgnr: 001 02-09-2026 12:34 Transactie: 1A2B3C";"2307,63";""
+"20260905";"Voorbeeld Werkgever BV";"NL00INGB0000000001";"NL00BANK0000000013";"GT";"Bij";"1.234,56";"Online bankieren";"Naam: Voorbeeld Werkgever BV Omschrijving: Salaris augustus IBAN: NL00BANK0000000013";"3542,19";""
+"20260906";"Koffie Bar";"NL00INGB0000000001";"";"BA";"Af";"4,50";"Betaalautomaat";"Pasvolgnr: 002 06-09-2026 09:01";"3537,69";""
+"20260906";"Koffie Bar";"NL00INGB0000000001";"";"BA";"Af";"4,50";"Betaalautomaat";"Pasvolgnr: 002 06-09-2026 09:01";"3533,19";""
+"20260910";"Vriend Voorbeeld";"NL00INGB0000000001";"NL00BANK0000000015";"GT";"Bij";"15,00";"Online bankieren";"Naam: Vriend Voorbeeld Omschrijving: Terugbetaling IBAN: NL00BANK0000000015";"3548,19";""

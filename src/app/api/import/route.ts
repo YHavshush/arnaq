@@ -4,6 +4,7 @@ import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { localizeMessage } from "@/i18n/server-messages";
 import { MAX_ID, errorResponse, requestLocale, todayIso } from "@/lib/api";
 import { isPdf } from "@/lib/import/pdf";
+import { decodeBankText } from "@/lib/import/text";
 import { ImportError, importStatement } from "@/lib/import/service";
 import { clearSample } from "@/lib/sample/sample";
 
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
       await clearSample(db, todayIso());
       return importStatement(db, {
         // A PDF goes in as bytes. Text must not hold NUL characters (Postgres cannot store them).
-        content: isPdf(bytes) ? bytes : new TextDecoder().decode(bytes).replaceAll("\u0000", ""),
+        content: isPdf(bytes) ? bytes : decodeBankText(bytes).replaceAll("\u0000", ""),
         filename: file.name,
         accountId,
         month: typeof monthRaw === "string" && monthRaw ? monthRaw : undefined,
