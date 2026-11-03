@@ -110,6 +110,8 @@
   body {
     @apply text-foreground;
     background-color: var(--canvas);
+    /* Nothing may make the page wider than the screen: a long word once pushed the upload card off the right edge. */
+    overflow-x: clip;
   }
   /* The page background: one gradient per theme, the same on every screen (--page-bg, from the design tokens).
      It lives on a fixed layer behind the page, not on the body: a `fixed` keyword in the `background`

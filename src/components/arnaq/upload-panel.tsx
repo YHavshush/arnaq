@@ -102,7 +102,7 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
         e.preventDefault();
         void submit(new FormData(e.currentTarget));
       }}
-      className="grid gap-4"
+      className="grid grid-cols-[minmax(0,1fr)] gap-4"
     >
       <div
         onDragOver={(e) => {
@@ -115,12 +115,14 @@ export function UploadPanel({ accounts }: { accounts: { id: number; name: string
           setDrag(false);
           choose(e.dataTransfer.files[0]);
         }}
-        className={`glass grid justify-items-center gap-2 border-2 border-dashed px-4 py-8 text-center ${drag ? "border-accent" : ""}`}
+        className={`glass grid min-w-0 grid-cols-[minmax(0,1fr)] justify-items-center gap-2 border-2 border-dashed px-4 py-8 text-center ${drag ? "border-accent" : ""}`}
       >
         <span className="bg-soft text-accent grid size-12 place-items-center rounded-2xl">
           <FileUp className="size-6" />
         </span>
-        <p className="text-[17px] font-semibold">{file ? file.name : p.pick}</p>
+        <p className="max-w-full text-[17px] font-semibold [overflow-wrap:anywhere]">
+          {file ? file.name.replaceAll("_", "_\u200b") : p.pick}
+        </p>
         <p className="text-ink-muted max-w-[40ch] text-sm">
           {file ? p.ready(Math.max(1, Math.round(file.size / 1024))) : p.hint}
         </p>
