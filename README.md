@@ -45,21 +45,8 @@ Good to know:
 - In Settings you can make a full backup, restore one, and delete all your data.
 - The app never needs your bank login. You bring the files.
 
-## Try it
+## Source available, not open source
 
-You need [Node.js](https://nodejs.org) 22 or newer.
+The code is public so you can read how arnaq works. It is **not open source**: all rights are reserved (see [LICENSE](LICENSE)), so please do not copy, host or redistribute it without asking first. Ideas, bug reports and bank-file problems are welcome as [issues](../../issues).
 
-```bash
-git clone https://github.com/YHavshush/arnaq.git
-cd arnaq
-npm install
-npm run dev
-```
-
-Open <http://localhost:3000>. There is nothing else to set up: arnaq keeps its data in a small local database in the `data` folder. Pick "Try it with sample data" to look around before you upload anything.
-
-To host it for yourself or for others, see [docs/deploy.md](docs/deploy.md). To work on the code, see [docs/development.md](docs/development.md).
-
-## Contributing
-
-Issues and ideas are welcome. The notes for working on the code are in [docs/development.md](docs/development.md); the look of the app is described in [DESIGN.md](DESIGN.md).
+Notes on how the code is organised are in [docs/development.md](docs/development.md); the look of the app is described in [DESIGN.md](DESIGN.md).

@@ -42,7 +42,7 @@ Model table:
 
 ## Supabase (2026-10-12)
 
-- Project `kasboek`, ref `vdjqqidkoputigxxeqoz`, eu-central-1. Schema applied (migrations 0000 to 0002, registered in `drizzle.__drizzle_migrations`). The older project "yonathanhav@gmail.com's Project" (paused) is not used.
+- The hosted Supabase project has the schema applied (migrations registered in `drizzle.__drizzle_migrations`). Its ID, region and the older paused project are in the owner's Supabase dashboard, not in this repo.
 - The DB password and connection strings are the owner's; they never go in the repo or the chat. Use `DATABASE_URL` (see README).
 
 ## Decisions 2026-10-12 (language, accounts)

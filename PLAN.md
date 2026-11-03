@@ -8,7 +8,7 @@ Personal budget tracker. I upload one CSV per bank account per month. The app sh
 
 - Banks: Rabobank + Revolut (two accounts)
 - Stack: Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Postgres (Drizzle ORM; PGlite locally, Supabase hosted)
-- Hosting: local first, later on a friend's Hetzner server via Docker
+- Hosting: local first, then Vercel + Supabase
 - Prognose horizon: adjustable in the UI. Default 6 months (placeholder, can change)
 - Budget: per category per month, plus an optional total per month
 - Categories: default set below, editable
@@ -36,7 +36,7 @@ Personal budget tracker. I upload one CSV per bank account per month. The app sh
 6. Missed: an expected occurrence with no match after its window passes becomes missed and is shown for review.
 7. Prognose (adjustable horizon), per future month: unmatched recurring occurrences (known income and vaste lasten) plus the average variable spend per category over past months (excluding recurring items), with the budget as a comparison line. Months with an upload show actuals. The current month is a mix of actual and still-expected.
 
-## Default categories (student, 23, no kids, renting)
+## Default categories
 
 Expenses: Huur, Gas/water/licht, Internet & telefoon, Zorgverzekering, Boodschappen, Eten & drinken (uit eten, afhaal, koffie), Uitgaan & social, Vervoer (OV, fiets, taxi), Sport (gym), Abonnementen (Claude, Spotify, Netflix etc.), Studie (collegegeld, boeken), Kleding & verzorging, Gezondheid (huisarts, apotheek, eigen risico), Reizen & vakantie, Cadeaus & donaties, Sparen & beleggen, Overig.
 
@@ -60,4 +60,4 @@ Other: Interne overboeking (excluded from totals).
 6. feat/design-system (Sonnet): install UI UX Pro Max, generate a design system for a personal finance dashboard (style, palette, fonts), save as design tokens (Tailwind config / CSS variables), document in DESIGN.md. No new styles from the catalog after this.
 7. feat/dashboard (Sonnet): upload screen, month overview (budget vs actual per category and total), recurring items screen with suggestions, forecast chart with horizon selector, needs-review list, settings (categories, rules, budgets).
 8. feat/polish (Sonnet, Haiku for small fixes): install Impeccable, run /teach-impeccable once, run critique and audit on each screen and fix findings, transfer detection edge cases, database backup/export.
-9. feat/deploy (Sonnet, Opus for a final security review): Supabase project (migrations, RLS deny-all, pooled connection), app hosting, Supabase Auth (login required, this is financial data), backups/export, authentication (login required, this is financial data on someone else's server), HTTPS via reverse proxy, automated encrypted backups, deploy notes for the Hetzner server.
+9. feat/deploy (Sonnet, Opus for a final security review): Supabase project (migrations, RLS deny-all, pooled connection), app hosting, Supabase Auth (login required, this is financial data), backups/export, authentication (login required, this is financial data on someone else's server), HTTPS via reverse proxy, automated encrypted backups.

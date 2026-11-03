@@ -1,6 +1,6 @@
 # Development
 
-Notes for people who run, change or host arnaq. The user-facing overview is in the [README](../README.md); repo rules for contributors and the coding agent are in [CLAUDE.md](../CLAUDE.md).
+Notes for people who run, change or host arnaq. The user-facing overview is in the [README](../README.md). The code is source-available, all rights reserved ([LICENSE](../LICENSE)); repo rules for contributors and the coding agent are in [CLAUDE.md](../CLAUDE.md).
 
 **Stack:** Next.js (App Router) · TypeScript · Tailwind · shadcn/ui · Postgres via Drizzle ORM (PGlite locally, Supabase when hosted) · Vitest
 
