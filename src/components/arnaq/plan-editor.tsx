@@ -207,7 +207,7 @@ function EditorBody({
 
       <fieldset className="grid min-w-0 gap-1.5">
         <legend className="mb-1 text-sm font-medium">{e.scopeLabel}</legend>
-        <div className="bg-soft grid grid-cols-2 gap-0.5 rounded-2xl p-[3px]">
+        <div className="bg-soft grid grid-cols-2 rounded-full p-1">
           {(
             [
               ["month", e.scopeMonth],
@@ -216,7 +216,7 @@ function EditorBody({
           ).map(([id, label]) => (
             <label
               key={id}
-              className="has-[:checked]:bg-surface has-[:focus-visible]:outline-accent grid min-h-10 cursor-pointer place-items-center rounded-[13px] px-2 py-1.5 text-center text-[13.5px] leading-tight font-semibold has-[:checked]:shadow-sm has-[:focus-visible]:outline-2"
+              className="has-[:checked]:bg-surface has-[:checked]:border-hair has-[:focus-visible]:outline-accent grid min-h-10 cursor-pointer place-items-center rounded-full border border-transparent px-2 py-1.5 text-center text-[13.5px] leading-tight font-semibold has-[:checked]:shadow-sm has-[:focus-visible]:outline-2"
             >
               <input
                 type="radio"

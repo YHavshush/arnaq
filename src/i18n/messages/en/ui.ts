@@ -275,7 +275,7 @@ export const ui = {
       amountLabel: "Amount in euros",
       scopeLabel: "How far does it go?",
       scopeMonth: "Only this month",
-      scopeAfter: "This month on",
+      scopeAfter: "From this month",
       save: "Save",
       saving: "Saving…",
       resetSuggestion: (amount: string) => `Reset to suggestion ${amount}`,
