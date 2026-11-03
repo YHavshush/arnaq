@@ -42,10 +42,13 @@ function SavingsRow({
   const { euroExact, euroSigned } = formatter(locale);
   const s = t.ui.overview.savingsRow;
   // Like the other rows: what went in this month, and how far that has got you (the goal, else the total saved).
+  // With a goal, the savings card next to this list shows the progress, so the row only says this month's part.
   const base =
-    row.goal !== null
-      ? s.goalOf(euroExact(row.saved), euroExact(row.goal))
-      : s.savedTotal(euroExact(row.saved));
+    row.goal !== null && row.goal > 0
+      ? null
+      : row.goal !== null
+        ? s.goalOf(euroExact(row.saved), euroExact(row.goal))
+        : s.savedTotal(euroExact(row.saved));
   const kind = row.thisMonth > 0 ? "put" : row.thisMonth < 0 ? "taken" : "none";
   return (
     <Row

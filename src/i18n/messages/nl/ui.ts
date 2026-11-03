@@ -143,12 +143,13 @@ export const ui: typeof en = {
       name: "Sparen",
       savedTotal: (saved: string) => `${saved} in totaal gespaard`,
       goalOf: (saved: string, goal: string) => `${saved} van doel ${goal}`,
-      sub: (kind: "put" | "taken" | "none", base: string) =>
+      // `base` is null als het doel een eigen kaart ernaast heeft: dan staat het er niet twee keer.
+      sub: (kind: "put" | "taken" | "none", base: string | null) =>
         kind === "put"
-          ? `deze maand erbij · ${base}`
+          ? `deze maand erbij${base ? ` · ${base}` : ""}`
           : kind === "taken"
-            ? `deze maand eruit gehaald · ${base}`
-            : base,
+            ? `deze maand eruit gehaald${base ? ` · ${base}` : ""}`
+            : (base ?? "deze maand niets erbij"),
     },
     paceTitle: "Tempo van de maand",
     paceAside: "alleen dagelijkse uitgaven",

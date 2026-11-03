@@ -138,12 +138,13 @@ export const ui = {
       name: "Savings",
       savedTotal: (saved: string) => `${saved} saved in total`,
       goalOf: (saved: string, goal: string) => `${saved} of ${goal} goal`,
-      sub: (kind: "put" | "taken" | "none", base: string) =>
+      // `base` is null when the goal has its own card next to this list: then it is not said twice.
+      sub: (kind: "put" | "taken" | "none", base: string | null) =>
         kind === "put"
-          ? `put in this month · ${base}`
+          ? `put in this month${base ? ` · ${base}` : ""}`
           : kind === "taken"
-            ? `taken out this month · ${base}`
-            : base,
+            ? `taken out this month${base ? ` · ${base}` : ""}`
+            : (base ?? "nothing put in this month"),
     },
     paceTitle: "Pace of the month",
     paceAside: "everyday spending only",
