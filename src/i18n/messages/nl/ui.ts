@@ -153,8 +153,7 @@ export const ui: typeof en = {
     },
     paceTitle: "Tempo van de maand",
     paceAside: "alleen dagelijkse uitgaven",
-    paceBridge: (total: string, fixed: string, everyday: string) =>
-      `${total} uitgegeven = ${fixed} vast + ${everyday} dagelijks`,
+    paceBridge: (fixed: string) => `Vaste lasten (${fixed}) tellen hier niet mee.`,
     paceOf: (budget: string) => `van ${budget}`,
     paceAhead: (amount: string) => `${amount} onder het tempo`,
     paceBehind: (amount: string) => `${amount} boven het tempo`,

@@ -38,11 +38,11 @@ export const view = {
     headerLastDay: [em("Last day"), plain(" of the month")] as Sentence,
     headerDone: (month: string): Sentence => [em(cap(month)), plain(" is done")],
     headerNotStarted: [plain("This month hasn't started yet")] as Sentence,
-    headerTotals: (spent: string, income: string) => `${spent} spent · ${income} came in`,
+    headerTotals: (spent: string, income: string) => `You spent ${spent}; ${income} came in.`,
     headerTotalsPlanned: (spent: string, planned: string, budget: string, income: string) =>
-      `${spent} spent + ${planned} fixed still to pay, of your ${budget} budget · ${income} came in`,
+      `Of your ${budget} budget, ${spent} is spent and ${planned} still has to be paid. ${income} came in.`,
     headerTotalsBudget: (spent: string, budget: string, income: string) =>
-      `${spent} of your ${budget} budget spent · ${income} came in`,
+      `Of your ${budget} budget, ${spent} is spent. ${income} came in.`,
     facts: {
       over: (name: string, amount: string) => `Over budget on ${name} (+${amount}).`,
       under: (name: string, amount: string) => `Under budget on ${name}, ${amount} left.`,

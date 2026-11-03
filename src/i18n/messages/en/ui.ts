@@ -148,8 +148,7 @@ export const ui = {
     },
     paceTitle: "Pace of the month",
     paceAside: "everyday spending only",
-    paceBridge: (total: string, fixed: string, everyday: string) =>
-      `${total} spent = ${fixed} fixed + ${everyday} everyday`,
+    paceBridge: (fixed: string) => `Fixed costs (${fixed}) are not counted here.`,
     paceOf: (budget: string) => `of ${budget}`,
     paceAhead: (amount: string) => `${amount} under pace`,
     paceBehind: (amount: string) => `${amount} over pace`,

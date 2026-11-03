@@ -563,7 +563,10 @@ export function buildOverzicht({
       candidates.push(
         f.income(coming.itemName, euro(coming.expectedAmount), dayLabel(coming.expectedDate)),
       );
-    if (openFixed.length > 0) candidates.push(f.fixed(openFixed.length, euro(planned)));
+    // With a budget the header already says what still has to be paid, so it is not said again here.
+    const headerSaysPlanned = budget !== null && planned > 0;
+    if (openFixed.length > 0 && !headerSaysPlanned)
+      candidates.push(f.fixed(openFixed.length, euro(planned)));
     if (under)
       candidates.push(
         f.under(categoryLabel(under.name, locale), euro(under.budget! - under.actual)),

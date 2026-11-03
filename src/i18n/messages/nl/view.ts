@@ -39,11 +39,11 @@ export const view: typeof en = {
     headerDone: (month: string): Sentence => [em(cap(month)), plain(" is klaar")],
     headerNotStarted: [plain("Deze maand is nog niet begonnen")] as Sentence,
     headerTotals: (spent: string, income: string) =>
-      `${spent} uitgegeven · ${income} binnengekomen`,
+      `Je gaf ${spent} uit; er kwam ${income} binnen.`,
     headerTotalsPlanned: (spent: string, planned: string, budget: string, income: string) =>
-      `${spent} uitgegeven + ${planned} vaste lasten nog te betalen, van je budget van ${budget} · ${income} binnengekomen`,
+      `Van je budget van ${budget} is ${spent} uitgegeven en moet ${planned} nog betaald worden. Er kwam ${income} binnen.`,
     headerTotalsBudget: (spent: string, budget: string, income: string) =>
-      `${spent} van je budget van ${budget} uitgegeven · ${income} binnengekomen`,
+      `Van je budget van ${budget} is ${spent} uitgegeven. Er kwam ${income} binnen.`,
     facts: {
       over: (name: string, amount: string) => `Over budget bij ${name} (+${amount}).`,
       under: (name: string, amount: string) => `Onder budget bij ${name}, nog ${amount} over.`,

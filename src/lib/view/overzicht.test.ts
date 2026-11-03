@@ -454,7 +454,17 @@ describe("buildOverzicht: the parts the design adds", () => {
       expect(o.free).toBe(20000);
       expect(o.used).toBeCloseTo(0.5);
       expect(o.facts.join(" ")).toContain("€1,500 more went to categories without a budget");
-      expect(o.detail).toContain("€200 of your €400 budget spent");
+      expect(o.detail).toBe("Of your €400 budget, €200 is spent. €651 came in.");
+    });
+    it("says what is still to pay once: in the header sentence, not again in the facts", () => {
+      const occurrences = [occ(1, "expected", 10000), occ(2, "expected", 5000)];
+      for (const today of ["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04", "2026-10-05"]) {
+        const o = run(sumOf([line(1, "Boodschappen", 20000, 40000)], 2100), { occurrences, today });
+        expect(o.detail).toBe(
+          "Of your €400 budget, €200 is spent and €150 still has to be paid. €21 came in.",
+        );
+        expect(o.facts.join(" ")).not.toMatch(/fixed costs? still to pay/);
+      }
     });
     it("is over budget only when the budgeted categories together are over the sum", () => {
       const o = run(sumOf([line(1, "Boodschappen", 45000, 40000), line(2, "Overig", 1000, null)]));
@@ -616,7 +626,7 @@ describe("buildOverzicht: the parts the design adds", () => {
       expect(seen.size).toBeGreaterThan(1);
     });
     it("the line under it gives the totals", () => {
-      expect(header("2026-10-19").detail).toBe("€580 spent · €1,851 came in");
+      expect(header("2026-10-19").detail).toBe("You spent €580; €1,851 came in.");
     });
     it("offers at most two facts, from over budget, under budget, income to come and fixed costs to pay", () => {
       const facts = header("2026-10-19").facts;
