@@ -24,7 +24,7 @@ import { ErrorLine, GhostButton, PrimaryButton } from "./form";
 import { useAction } from "./use-action";
 
 export const DIALOG_CLASS =
-  "sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-3xl border p-0 shadow-xl @min-[900px]/app:[inset:auto] @min-[900px]/app:[top:var(--pop-top,auto)] @min-[900px]/app:[bottom:var(--pop-bottom,auto)] @min-[900px]/app:[left:var(--pop-left,1rem)] @min-[900px]/app:mt-0 @min-[900px]/app:w-[23rem] @min-[900px]/app:max-w-[calc(100vw-2rem)] @min-[900px]/app:rounded-3xl @min-[900px]/app:backdrop:bg-transparent";
+  "sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[90dvh] w-full max-w-none overflow-y-auto rounded-t-[24px] border p-0 shadow-xl @min-[900px]/app:[inset:auto] @min-[900px]/app:[top:var(--pop-top,auto)] @min-[900px]/app:[bottom:var(--pop-bottom,auto)] @min-[900px]/app:[left:var(--pop-left,1rem)] @min-[900px]/app:mt-0 @min-[900px]/app:w-[23rem] @min-[900px]/app:max-w-[calc(100vw-2rem)] @min-[900px]/app:rounded-[24px] @min-[900px]/app:backdrop:bg-transparent";
 
 /** The editor holds one number, so its popover is narrower than the "add" dialog's. */
 const EDITOR_REM = 20;

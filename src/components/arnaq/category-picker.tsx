@@ -50,7 +50,7 @@ export function CategorySheet(props: SheetProps) {
       onClick={(e) => {
         if (e.target === ref.current) onClose(); // a tap on the dimmed area
       }}
-      className="sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[85dvh] w-full max-w-none overflow-hidden rounded-t-3xl border p-0 shadow-xl md:m-auto md:max-w-md md:rounded-3xl"
+      className="sheet bg-surface text-ink border-hair backdrop:bg-ink/40 m-0 mt-auto max-h-[85dvh] w-full max-w-none overflow-hidden rounded-t-[24px] border p-0 shadow-xl md:m-auto md:max-w-md md:rounded-[24px]"
     >
       {open && <SheetBody {...props} />}
     </dialog>
