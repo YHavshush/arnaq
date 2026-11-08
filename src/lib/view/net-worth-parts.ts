@@ -9,10 +9,8 @@ export interface WorthPart {
   amount: number;
   /** 0..1 of the money that is above zero: how wide its part of the bar is. */
   share: number;
-  /** Take the colour of this other part (the BTW line takes the colour of the BTW pot). */
+  /** Take the colour of this other part (the BTW pot line takes the colour of the savings it is part of). */
   slotOf?: string;
-  /** Words shown instead of the amount ("covered by your pot"). */
-  text?: string;
 }
 
 const BANK: Record<string, string> = BANK_NAMES;
@@ -27,10 +25,7 @@ export function netWorthParts(
     savings: { saved: number };
   },
   savingsName: string,
-  pot?: { amount: number; name: string },
 ): WorthPart[] {
-  // With a BTW pot inside the savings, the savings line holds what is left and the pot follows it.
-  const potCents = pot && pot.amount > 0 ? pot.amount : 0;
   const raw = [
     ...w.accounts.map((a) => ({
       key: `a${a.accountId}`,
@@ -38,9 +33,8 @@ export function netWorthParts(
       amount: a.balance,
     })),
     ...(w.savings.saved !== 0
-      ? [{ key: "savings", name: savingsName, amount: w.savings.saved - potCents }]
+      ? [{ key: "savings", name: savingsName, amount: w.savings.saved }]
       : []),
-    ...(pot && potCents > 0 ? [{ key: "btwPot", name: pot.name, amount: potCents }] : []),
   ];
   const positive = raw.reduce((s, p) => s + Math.max(p.amount, 0), 0);
   return raw.map((p) => ({ ...p, share: positive > 0 ? Math.max(p.amount, 0) / positive : 0 }));
@@ -52,21 +46,18 @@ export interface WorthNames {
   btwOwed: string;
   btwSpare: string;
   btwPot: string;
-  btwShort: string;
-  btwCovered: string;
 }
 
 /**
  * Every line under the ring on Ahead, in order: the accounts, the savings, and the BTW.
  *
  * - Setting off (or no pot): the BTW is one line, the pocket minus what is still owed (`btw.net`), with no arc.
- * - With a BTW pot inside the savings (see btwPot): the savings line holds what is left, the pot is its own line and
- *   arc, and the BTW line is what the pot does not cover: "covered by your pot", or the amount still short. The BTW
- *   line takes the pot's colour.
+ * - With a BTW pot inside the savings (see btwPot): the savings line shows what is left after the pot and the pot is
+ *   the line right after it, in the savings' colour. The ring is the same as without a pot: the pot has no arc of its
+ *   own (it is part of the savings arc), and there is no BTW line, because the pot is where the BTW money is.
  *
  * The pot is shown but it is owed, so it is not the person's money: the other lines add up to net worth (the centre of
- * the ring) with the setting on or off, and the arcs still fill the circle with the same money (the savings arc
- * shrinks by the pot's arc).
+ * the ring) with the setting on or off.
  */
 export function aheadWorthParts(
   w: {
@@ -77,10 +68,11 @@ export function aheadWorthParts(
   },
   n: WorthNames,
 ): WorthPart[] {
+  const parts = netWorthParts(w, n.savingsName);
   const pot = w.btwPot.pot;
   if (pot <= 0) {
     return [
-      ...netWorthParts(w, n.savingsName),
+      ...parts,
       ...(w.btw.net !== 0
         ? [
             {
@@ -93,11 +85,17 @@ export function aheadWorthParts(
         : []),
     ];
   }
+  const withPot = parts.flatMap((p) =>
+    p.key === "savings"
+      ? [
+          { ...p, amount: p.amount - pot },
+          { key: "btwPot", name: n.btwPot, amount: pot, share: 0, slotOf: "savings" },
+        ]
+      : [p],
+  );
+  // Only when the pot cannot cover it all: what is still owed is a line again, so the lines add up to the centre.
   const short = w.btwPot.short;
-  return [
-    ...netWorthParts(w, n.savingsName, { amount: pot, name: n.btwPot }),
-    short > 0
-      ? { key: "btw", name: n.btwShort, amount: -short, share: 0, slotOf: "btwPot" }
-      : { key: "btw", name: n.btwOwed, amount: 0, share: 0, slotOf: "btwPot", text: n.btwCovered },
-  ];
+  return short > 0
+    ? [...withPot, { key: "btw", name: n.btwOwed, amount: -short, share: 0 }]
+    : withPot;
 }

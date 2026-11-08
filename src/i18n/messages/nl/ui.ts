@@ -62,8 +62,6 @@ export const ui: typeof en = {
     btwOwed: "Btw die je nog moet betalen",
     btwSpare: "Btw opzij gezet, over",
     btwPot: "Btw-pot",
-    btwShort: "Btw nog tekort",
-    btwCovered: "gedekt door je pot",
     afterBtwCovered: (amount: string) => `na ${amount} btw, gedekt door je pot`,
     afterBtwShort: (amount: string, short: string) => `na ${amount} btw, ${short} nog niet gedekt`,
   },

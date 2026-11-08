@@ -59,8 +59,6 @@ export const ui = {
     btwSpare: "BTW set aside, spare",
     /** "My BTW pot is part of my savings": the part of the savings held for the BTW, and what it does not cover yet. */
     btwPot: "BTW pot",
-    btwShort: "BTW still short",
-    btwCovered: "covered by your pot",
     afterBtwCovered: (amount: string) => `after ${amount} BTW, covered by your pot`,
     afterBtwShort: (amount: string, short: string) =>
       `after ${amount} BTW, ${short} not covered yet`,

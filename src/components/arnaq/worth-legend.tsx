@@ -3,8 +3,7 @@ import { slotColour } from "./split-ring";
 
 /**
  * What the ring is made of: one line per part of net worth with its amount, the dot in the colour of its arc. A part
- * without money (an account in the red, the BTW still owed) has a dot and a red amount but no arc. A line with
- * words (the BTW "covered by your pot") shows them instead of the amount.
+ * without money (an account in the red, the BTW still owed) has a dot and a red amount but no arc.
  */
 export function WorthLegend({
   entries,
@@ -27,7 +26,7 @@ export function WorthLegend({
           />
           <span className="truncate">{e.name}</span>
           <span className={`num ${e.amount < 0 ? "text-bad" : "text-ink-muted"}`}>
-            {e.text ?? format(e.amount)}
+            {format(e.amount)}
           </span>
         </li>
       ))}

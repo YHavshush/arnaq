@@ -10,7 +10,6 @@ export interface WorthLegendEntry {
   /** Cents; negative for an account in the red or the BTW still owed. */
   amount: number;
   /** Words shown instead of the amount ("covered by your pot"). */
-  text?: string;
 }
 
 /** The last colour slot: parts beyond it share the grey. */
@@ -48,7 +47,6 @@ export function worthRing(parts: WorthPart[]): {
     slot: slotOf(p, i),
     name: p.name,
     amount: p.amount,
-    ...(p.text !== undefined ? { text: p.text } : {}),
   }));
   return { segments, legend };
 }

@@ -60,7 +60,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
     worth.hasAny && !p.incomeMissing && p.netWorth !== null && p.runwaySentence !== null;
   const ringLabel = t.ui.netWorth.ringLabel(
     f.euro(worth.total),
-    ring.legend.map((e) => `${e.name} ${e.text ?? f.euro(e.amount)}`).join(", "),
+    ring.legend.map((e) => `${e.name} ${f.euro(e.amount)}`).join(", "),
   );
 
   if (!p.hasForecast)
