@@ -76,7 +76,9 @@ export function BtwSettings({
           }}
           className={inputClass}
         >
-          {BTW_PAYMENT_LAGS.map((l) => (
+          {/* Two months is not offered: the return is due a month after the quarter, so money arriving later than that
+              could never count on a card in time (the data layer still accepts it). */}
+          {BTW_PAYMENT_LAGS.filter((l) => l <= 1 || l === lag).map((l) => (
             <option key={l} value={l}>
               {s.lagOption(l)}
             </option>
