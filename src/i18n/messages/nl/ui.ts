@@ -61,9 +61,6 @@ export const ui: typeof en = {
     ringLabel: (total: string, parts: string) => `Vermogen nu ${total}: ${parts}`,
     btwOwed: "Btw die je nog moet betalen",
     btwSpare: "Btw opzij gezet, over",
-    btwPot: "Btw-pot",
-    afterBtwCovered: (amount: string) => `na ${amount} btw, gedekt door je pot`,
-    afterBtwShort: (amount: string, short: string) => `na ${amount} btw, ${short} nog niet gedekt`,
   },
   category: {
     back: "Vandaag",

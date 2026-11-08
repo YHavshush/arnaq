@@ -9,7 +9,6 @@ export interface WorthLegendEntry {
   name: string;
   /** Cents; negative for an account in the red or the BTW still owed. */
   amount: number;
-  /** Words shown instead of the amount ("covered by your pot"). */
 }
 
 /** The last colour slot: parts beyond it share the grey. */
@@ -24,17 +23,13 @@ export function worthRing(parts: WorthPart[]): {
   segments: RingSegment[];
   legend: WorthLegendEntry[];
 } {
-  // A part's slot is its place in the list, unless it takes the colour of another part (`slotOf`).
-  const own = new Map(parts.map((p, i) => [p.key, Math.min(i, LAST_SLOT)]));
-  const slotOf = (p: WorthPart, i: number) =>
-    (p.slotOf !== undefined ? own.get(p.slotOf) : undefined) ?? Math.min(i, LAST_SLOT);
   const segments: RingSegment[] = [];
   let at = 0;
   parts.forEach((p, i) => {
     if (p.share <= 0) return;
     segments.push({
       key: p.key,
-      slot: slotOf(p, i),
+      slot: Math.min(i, LAST_SLOT),
       paid: true,
       start: at,
       end: at + p.share,
@@ -44,7 +39,7 @@ export function worthRing(parts: WorthPart[]): {
   });
   const legend = parts.map((p, i) => ({
     key: p.key,
-    slot: slotOf(p, i),
+    slot: Math.min(i, LAST_SLOT),
     name: p.name,
     amount: p.amount,
   }));
