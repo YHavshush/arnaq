@@ -144,3 +144,83 @@ describe("getBtwSummary", () => {
     expect(s.fromOwnMoney).toBe(30000);
   });
 });
+
+describe("getBtwSummary with a payment lag (the client pays about a month after the invoice)", () => {
+  async function world(paymentLag: 0 | 1 | 2) {
+    const s = await setup();
+    const taxes = await s.cat("Belastingen");
+    await setBtwSettings(s.db, { paymentLag });
+    const income = (date: string, amount: number) =>
+      s.tx(date, amount, { counterparty: "Featurn B.V." });
+    const tax = (date: string, amount: number) =>
+      s.tx(date, amount, { counterparty: "Belastingdienst", categoryId: taxes });
+    // Invoices dated September to December (invented amounts), each paid early the next month.
+    await income("2026-10-03", 121000); // September's invoice: the third quarter
+    await income("2026-11-03", 242000); // October's
+    await income("2026-12-03", 363000); // November's
+    await income("2027-01-05", 484000); // December's
+    return { ...s, income, tax };
+  }
+
+  it("lag 1: the fourth quarter is the money that arrived in November to January", async () => {
+    const w = await world(1);
+    const s = await getBtwSummary(w.db, { today: "2027-01-20" });
+    expect(s.quarter).toMatchObject({ label: "2026-Q4", from: "2026-10-01", to: "2026-12-31" });
+    expect(s.receipts).toEqual({ from: "2026-11-01", to: "2027-01-31" });
+    expect(s.received).toBe(242000 + 363000 + 484000);
+    expect(s.owed).toBe(189000); // 1089000 x 21 / 121
+  });
+
+  it("lag 0: the same money, counted by the calendar quarter it arrived in (as before)", async () => {
+    const w = await world(0);
+    const s = await getBtwSummary(w.db, { today: "2027-01-20" });
+    expect(s.receipts).toEqual({ from: "2026-10-01", to: "2026-12-31" });
+    expect(s.received).toBe(121000 + 242000 + 363000);
+    expect(s.owed).toBe(126000); // 726000 x 21 / 121
+  });
+
+  it("lag 1: October's money counts for the third quarter", async () => {
+    const w = await world(1);
+    const s = await getBtwSummary(w.db, { today: "2026-10-20" });
+    expect(s.quarter.label).toBe("2026-Q3");
+    expect(s.receipts).toEqual({ from: "2026-08-01", to: "2026-10-31" });
+    expect(s.received).toBe(121000);
+  });
+
+  it("lag 2: the fourth quarter is the money that arrived in December to February", async () => {
+    const w = await world(2);
+    await w.income("2027-02-04", 121000);
+    await w.income("2027-03-04", 99999); // the first quarter's
+    const s = await getBtwSummary(w.db, { today: "2027-01-20" });
+    expect(s.receipts).toEqual({ from: "2026-12-01", to: "2027-02-28" });
+    expect(s.received).toBe(363000 + 484000 + 121000);
+  });
+
+  it("does not move the due date or where the payment to the tax office is looked for", async () => {
+    const w = await world(1);
+    // Inside the receipt window, but before the quarter ended: not this quarter's payment.
+    await w.tax("2026-12-20", -5000);
+    expect((await getBtwSummary(w.db, { today: "2027-01-20" })).paid).toBeNull();
+    await w.tax("2027-01-25", -180000);
+    const s = await getBtwSummary(w.db, { today: "2027-01-28" });
+    expect(s.quarter.due).toBe("2027-01-31");
+    expect(s.paid).toEqual({ amount: 180000, date: "2027-01-25" });
+  });
+
+  it("says whether all of the quarter's money is in: only once its receipt window has ended", async () => {
+    const lag1 = await world(1);
+    expect((await getBtwSummary(lag1.db, { today: "2026-11-20" })).complete).toBe(false);
+    expect((await getBtwSummary(lag1.db, { today: "2027-01-31" })).complete).toBe(false);
+    expect((await getBtwSummary(lag1.db, { today: "2026-10-20" })).complete).toBe(false); // Q3 until 31 Oct
+    const lag0 = await world(0);
+    expect((await getBtwSummary(lag0.db, { today: "2026-10-20" })).complete).toBe(true);
+    expect((await getBtwSummary(lag0.db, { today: "2026-11-20" })).complete).toBe(false);
+    expect((await getBtwSummary(lag0.db, { today: "2027-01-20" })).complete).toBe(true);
+  });
+
+  it("a lag passed in wins over the saved one", async () => {
+    const w = await world(0);
+    const s = await getBtwSummary(w.db, { today: "2027-01-20", paymentLag: 1 });
+    expect(s.received).toBe(1089000);
+  });
+});

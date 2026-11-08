@@ -4,6 +4,7 @@ import { wipeMyData } from "@/lib/account";
 import { ensureSavingsCategory, ensureTaxesCategory, seedDefaults } from "@/lib/categories/seed";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/defaults";
 import { EXPORT_VERSION } from "@/lib/export";
+import { isBtwPaymentLag } from "@/lib/btw/defaults";
 import { BtwError, setBtwSettings } from "@/lib/btw/settings";
 import { ForecastError } from "@/lib/forecast/errors";
 import { setOwnSpending } from "@/lib/forecast/own";
@@ -319,6 +320,9 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
     } catch (e) {
       if (!(e instanceof BtwError)) throw e;
     }
+    // The BTW payment lag (a backup from before version 9 has none, and a damaged one is skipped: 0 stays).
+    if (isBtwPaymentLag(settings.btwPaymentLag))
+      await setBtwSettings(db, { paymentLag: settings.btwPaymentLag });
   }
   // A backup from before the Savings category existed does not have it.
   await ensureSavingsCategory(db);

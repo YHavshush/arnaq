@@ -126,7 +126,11 @@ async function Content() {
       </Section>
 
       <Section title={t.ui.btw.settings.title}>
-        <BtwSettings client={btwSettings.client} pocket={btwSettings.pocket} />
+        <BtwSettings
+          client={btwSettings.client}
+          pocket={btwSettings.pocket}
+          paymentLag={btwSettings.paymentLag}
+        />
       </Section>
 
       {/* Smart sorting has no provider yet: showing a consent flow for a feature that cannot run would only confuse. */}

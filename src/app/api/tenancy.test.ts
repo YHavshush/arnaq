@@ -479,18 +479,26 @@ describe("BTW settings are per person", () => {
         await call(
           "btw/settings",
           "PUT",
-          json("PUT", "/api/btw/settings", { client: "Acme", pocket: "Tax pot" }),
+          json("PUT", "/api/btw/settings", { client: "Acme", pocket: "Tax pot", paymentLag: 1 }),
         )
       ).status,
     ).toBe(200);
-    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot" });
+    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot", paymentLag: 1 });
     setTestUser(TEST_USER_B);
-    expect(await get()).toEqual({ client: "Featurn", pocket: "BTW" });
+    expect(await get()).toEqual({ client: "Featurn", pocket: "BTW", paymentLag: 0 });
     expect(
       (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { client: 5 }))).status,
     ).toBe(422);
+    expect(
+      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { paymentLag: "1" })))
+        .status,
+    ).toBe(422);
+    expect(
+      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { paymentLag: 3 })))
+        .status,
+    ).toBe(422);
     setTestUser(TEST_USER_A);
-    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot" });
+    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot", paymentLag: 1 });
   });
 });
 

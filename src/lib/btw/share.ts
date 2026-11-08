@@ -50,6 +50,9 @@ export interface BtwShare {
  *
  * The move into the BTW pocket is a transfer between the person's own accounts, never a transaction that "pays" this;
  * this is the amount that move should be.
+ *
+ * The share is set aside in the month the money arrives, whatever the payment lag: the lag only decides which quarter
+ * that money counts for (btwQuarterOfReceipt), which matters for the quarter's total and its true-up, not for the month.
  */
 export async function btwShareForMonth(
   db: Db,
@@ -105,7 +108,9 @@ export async function btwShareForMonth(
  * What was paid to the tax office for a quarter less than was set aside for it, in the month the payment was made
  * (cents; 0 in every other month, before the payment, and when it was paid in full or more).
  *
- * The BTW set aside for a quarter is the BTW inside what the client paid in it (what the summary calls `owed`). The tax
+ * The BTW set aside for a quarter is the BTW inside what the client paid in its receipt window (what the summary calls
+ * `owed`; with a payment lag the window is moved later, see btwReceiptWindow). The payment month itself is calendar
+ * based: the month after the quarter, where getBtwSummary looks for the payment. The tax
  * office can ask for less (BTW back on purchases, for example), and the difference is the person's again. It lowers that
  * one month's BTW share, and nothing carries over to a later month. A payment made after the next quarter has begun
  * (very late) is not matched to its quarter here.

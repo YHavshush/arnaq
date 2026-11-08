@@ -96,6 +96,12 @@ export const ui = {
     sentenceMissing: (amount: string, date: string) => `Set aside ${amount} more before ${date}.`,
     sentenceCovered: (date: string) => `The pocket covers it. Pay by ${date}.`,
     sentencePaid: (date: string) => `Paid on ${date}.`,
+    /** While money for the quarter can still arrive (a payment lag, or a quarter that has not ended). */
+    sentenceMissingSoFar: (amount: string, until: string, due: string) =>
+      `Set aside ${amount} more for what has arrived so far. Money arriving until ${until} still counts; pay by ${due}.`,
+    sentenceCoveredSoFar: (until: string, due: string) =>
+      `The pocket covers what has arrived so far. Money arriving until ${until} still counts; pay by ${due}.`,
+    pocketOfSoFar: (pocket: string, owed: string) => `${pocket} of ${owed} so far`,
     paidAmount: (amount: string) => `${amount} paid`,
     settings: {
       title: "BTW",
@@ -106,6 +112,19 @@ export const ui = {
       pocketLabel: "Word that marks BTW money",
       pocketHint:
         "Put it in the name of the savings move, for example To BTW. Leave empty for BTW.",
+      lagLabel: "When your client pays an invoice",
+      lagOption: (lag: 0 | 1 | 2): string =>
+        lag === 0
+          ? "In the same month"
+          : lag === 1
+            ? "About a month later"
+            : "About two months later",
+      lagHint: (lag: 0 | 1 | 2): string =>
+        lag === 0
+          ? "My client pays in the month of the invoice, so money arriving in October to December counts for the fourth quarter."
+          : lag === 1
+            ? "My client pays about a month after the invoice, so money arriving in November to January counts for the fourth quarter."
+            : "My client pays about two months after the invoice, so money arriving in December to February counts for the fourth quarter.",
       save: "Save",
       saved: "BTW settings saved",
     },

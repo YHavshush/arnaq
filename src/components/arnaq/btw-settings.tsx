@@ -3,23 +3,47 @@
 import { useState } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
-import { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH } from "@/lib/btw/defaults";
+import {
+  BTW_PAYMENT_LAGS,
+  DEFAULT_BTW_INCOME_MATCH,
+  DEFAULT_BTW_POCKET_MATCH,
+  isBtwPaymentLag,
+  type BtwPaymentLag,
+} from "@/lib/btw/defaults";
 import { ErrorLine, Field, PrimaryButton, inputClass } from "./form";
 import { useAction } from "./use-action";
 
-/** Who pays the invoices the BTW is set aside for, and the word that marks a move to savings as BTW money. */
-export function BtwSettings({ client, pocket }: { client: string; pocket: string }) {
+/**
+ * Who pays the invoices the BTW is set aside for, the word that marks a move to savings as BTW money, and how long
+ * after the invoice the client usually pays.
+ */
+export function BtwSettings({
+  client,
+  pocket,
+  paymentLag,
+}: {
+  client: string;
+  pocket: string;
+  paymentLag: BtwPaymentLag;
+}) {
   const { t } = useI18n();
   const s = t.ui.btw.settings;
   const [clientText, setClientText] = useState(client);
   const [pocketText, setPocketText] = useState(pocket);
+  const [lag, setLag] = useState<BtwPaymentLag>(paymentLag);
   const { run, pending, error } = useAction();
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    await run(() => api("PUT", "/api/btw/settings", { client: clientText, pocket: pocketText }), {
-      success: s.saved,
-    });
+    await run(
+      () =>
+        api("PUT", "/api/btw/settings", {
+          client: clientText,
+          pocket: pocketText,
+          paymentLag: lag,
+        }),
+      { success: s.saved },
+    );
   }
 
   return (
@@ -42,6 +66,22 @@ export function BtwSettings({ client, pocket }: { client: string; pocket: string
           maxLength={60}
           className={inputClass}
         />
+      </Field>
+      <Field label={s.lagLabel} hint={s.lagHint(lag)}>
+        <select
+          value={lag}
+          onChange={(e) => {
+            const next = Number(e.target.value);
+            if (isBtwPaymentLag(next)) setLag(next);
+          }}
+          className={inputClass}
+        >
+          {BTW_PAYMENT_LAGS.map((l) => (
+            <option key={l} value={l}>
+              {s.lagOption(l)}
+            </option>
+          ))}
+        </select>
       </Field>
       <ErrorLine message={error} />
       <div>

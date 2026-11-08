@@ -89,6 +89,7 @@ async function seeded() {
       savingsStart: 120000,
       savingsAnchor: 20085,
       savingsAnchorDate: "2026-10-29",
+      btwPaymentLag: 1,
     });
   });
   const backup = JSON.parse(JSON.stringify(await withUser(db, A, (tx) => buildExport(tx))));
@@ -225,6 +226,26 @@ describe("restoreFromBackup", () => {
     expect(
       await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)),
     ).toMatchObject([{ savingsGoal: null, savingsStart: 2500 }]);
+  });
+
+  it("brings back the BTW payment lag; an older backup without it, or a damaged one, keeps 0", async () => {
+    const { db, backup } = await seeded();
+    const lag = async () =>
+      (await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)))[0]
+        ?.btwPaymentLag;
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
+    expect(await lag()).toBe(1);
+
+    const old = JSON.parse(JSON.stringify(backup));
+    delete old.tables.userSettings[0].btwPaymentLag;
+    old.version = 8;
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, old));
+    expect(await lag()).toBe(0);
+
+    const damaged = JSON.parse(JSON.stringify(backup));
+    damaged.tables.userSettings[0].btwPaymentLag = 7;
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, damaged));
+    expect(await lag()).toBe(0);
   });
 
   it("gives a backup from before the Savings category the category", async () => {

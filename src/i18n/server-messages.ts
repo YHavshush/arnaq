@@ -174,6 +174,10 @@ const NL: Rule[] = [
     /^The name is too long \(max (\d+)\)\.$/,
     (m) => `De naam is te lang (maximaal ${m[1]} tekens).`,
   ],
+  [
+    /^The payment lag must be 0, 1 or 2 months\.$/,
+    () => "De betaaltermijn moet 0, 1 of 2 maanden zijn.",
+  ],
   // sample data
   [
     /^Sample data can only be added to an empty account\.$/,

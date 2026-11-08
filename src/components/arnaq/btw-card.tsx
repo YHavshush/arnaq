@@ -8,11 +8,19 @@ export function BtwCard({ btw, t, locale }: { btw: BtwSummary; t: Messages; loca
   const b = t.ui.btw;
   const { euro, dayLabel } = formatter(locale);
   const surplus = btw.pocket - btw.owed;
+  // Until the quarter's receipt window has ended, more money for it can arrive: say it is what is known so far.
+  const soFar = !btw.paid && !btw.complete;
+  const until = dayLabel(btw.receipts.to);
+  const due = dayLabel(btw.quarter.due);
   const sentence = btw.paid
     ? b.sentencePaid(dayLabel(btw.paid.date))
     : btw.toSetAside > 0
-      ? b.sentenceMissing(euro(btw.toSetAside), dayLabel(btw.quarter.due))
-      : b.sentenceCovered(dayLabel(btw.quarter.due));
+      ? soFar
+        ? b.sentenceMissingSoFar(euro(btw.toSetAside), until, due)
+        : b.sentenceMissing(euro(btw.toSetAside), due)
+      : soFar
+        ? b.sentenceCoveredSoFar(until, due)
+        : b.sentenceCovered(due);
   const fill = btw.paid ? 1 : btw.owed > 0 ? Math.min(Math.max(btw.pocket, 0) / btw.owed, 1) : 0;
   const lines: [string, string][] = [];
   if (btw.paid) lines.push([b.paid, euro(btw.paid.amount)]);
@@ -26,7 +34,9 @@ export function BtwCard({ btw, t, locale }: { btw: BtwSummary; t: Messages; loca
         <p className="num text-[15px]">
           {btw.paid
             ? b.paidAmount(euro(btw.paid.amount))
-            : b.pocketOf(euro(btw.pocket), euro(btw.owed))}
+            : soFar
+              ? b.pocketOfSoFar(euro(btw.pocket), euro(btw.owed))
+              : b.pocketOf(euro(btw.pocket), euro(btw.owed))}
         </p>
       </div>
       <div aria-hidden className="bg-track mt-2 h-1.5 overflow-hidden rounded-full">

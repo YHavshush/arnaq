@@ -100,6 +100,11 @@ export const ui: typeof en = {
     sentenceMissing: (amount: string, date: string) => `Zet nog ${amount} opzij vóór ${date}.`,
     sentenceCovered: (date: string) => `De pot dekt het. Betaal uiterlijk ${date}.`,
     sentencePaid: (date: string) => `Betaald op ${date}.`,
+    sentenceMissingSoFar: (amount: string, until: string, due: string) =>
+      `Zet nog ${amount} opzij voor wat er tot nu toe binnen is. Geld dat tot en met ${until} binnenkomt telt nog mee; betaal uiterlijk ${due}.`,
+    sentenceCoveredSoFar: (until: string, due: string) =>
+      `De pot dekt wat er tot nu toe binnen is. Geld dat tot en met ${until} binnenkomt telt nog mee; betaal uiterlijk ${due}.`,
+    pocketOfSoFar: (pocket: string, owed: string) => `${pocket} van ${owed} tot nu toe`,
     paidAmount: (amount: string) => `${amount} betaald`,
     settings: {
       title: "BTW",
@@ -110,6 +115,19 @@ export const ui: typeof en = {
       pocketLabel: "Woord dat BTW-geld aanwijst",
       pocketHint:
         "Zet het in de naam van de overboeking naar sparen, bijvoorbeeld Naar BTW. Laat leeg voor BTW.",
+      lagLabel: "Wanneer je klant een factuur betaalt",
+      lagOption: (lag: 0 | 1 | 2) =>
+        lag === 0
+          ? "In dezelfde maand"
+          : lag === 1
+            ? "Ongeveer een maand later"
+            : "Ongeveer twee maanden later",
+      lagHint: (lag: 0 | 1 | 2) =>
+        lag === 0
+          ? "Mijn klant betaalt in de maand van de factuur, dus geld dat in oktober tot en met december binnenkomt telt voor het vierde kwartaal."
+          : lag === 1
+            ? "Mijn klant betaalt ongeveer een maand na de factuur, dus geld dat in november tot en met januari binnenkomt telt voor het vierde kwartaal."
+            : "Mijn klant betaalt ongeveer twee maanden na de factuur, dus geld dat in december tot en met februari binnenkomt telt voor het vierde kwartaal.",
       save: "Opslaan",
       saved: "BTW-instellingen opgeslagen",
     },

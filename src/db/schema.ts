@@ -378,6 +378,8 @@ export const userSettings = pgTable(
     /** Who pays the invoices the BTW is set aside for, and the word that marks the pocket's moves; null = the default. */
     btwClient: text("btw_client"),
     btwPocket: text("btw_pocket"),
+    /** Months between the invoice and the client's payment (0, 1 or 2): which BTW quarter money arriving counts for. */
+    btwPaymentLag: integer("btw_payment_lag").notNull().default(0),
     /** What the person expects to spend each month on everyday things (cents); the "my own" basis of the forecast. */
     forecastOwnSpending: cents("forecast_own_spending"),
   },
@@ -399,6 +401,7 @@ export const userSettings = pgTable(
       "user_settings_btw_check",
       sql`(btw_client is null or char_length(btw_client) between 1 and 60) and (btw_pocket is null or char_length(btw_pocket) between 1 and 60)`,
     ),
+    check("user_settings_btw_payment_lag_check", sql`btw_payment_lag between 0 and 2`),
   ],
 ).enableRLS();
 

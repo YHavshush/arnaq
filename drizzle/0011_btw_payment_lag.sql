@@ -1,0 +1,2 @@
+ALTER TABLE "user_settings" ADD COLUMN "btw_payment_lag" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "user_settings" ADD CONSTRAINT "user_settings_btw_payment_lag_check" CHECK (btw_payment_lag between 0 and 2);

@@ -52,6 +52,7 @@ describe("localizeMessage", () => {
     ],
     ["The plan goes up to 24 months ahead.", "Het plan gaat tot 24 maanden vooruit."],
     ["Unknown fixed item.", "Deze vaste post bestaat niet."],
+    ["The payment lag must be 0, 1 or 2 months.", "De betaaltermijn moet 0, 1 of 2 maanden zijn."],
     ["File too large (max 4 MB).", "Dit bestand is te groot (maximaal 4 MB)."],
     [
       "The savings goal must be a positive amount.",

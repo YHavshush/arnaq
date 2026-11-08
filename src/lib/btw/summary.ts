@@ -1,8 +1,15 @@
 import { and, eq, gte, lt, lte } from "drizzle-orm";
 import { schema, type Db } from "@/db";
-import { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH } from "./defaults";
+import { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH, type BtwPaymentLag } from "./defaults";
+import {
+  btwQuarter,
+  btwReceiptWindow,
+  calendarQuarter,
+  previousQuarter,
+  type BtwQuarter,
+} from "./quarter";
 import { getBtwSettings } from "./settings";
-import { addDays, addMonths, clampDay } from "@/lib/recurring/dates";
+import { addDays } from "@/lib/recurring/dates";
 import { normaliseCounterparty } from "@/lib/recurring/normalise";
 
 /** The standard Dutch rate. */
@@ -20,34 +27,8 @@ const TAX_OFFICE_MATCH = "Belastingdienst";
 /** A payment to the tax office counts for a quarter up to this many days after its due date. */
 const PAYMENT_GRACE_DAYS = 31;
 
-export interface BtwQuarter {
-  /** "2026-Q3". */
-  label: string;
-  from: string;
-  to: string;
-  /** The last day to file and pay: the end of the month after the quarter. */
-  due: string;
-}
-
-function quarterOf(year: number, q: number): BtwQuarter {
-  const first = `${year}-${String((q - 1) * 3 + 1).padStart(2, "0")}`;
-  const last = addMonths(first, 2);
-  return {
-    label: `${year}-Q${q}`,
-    from: `${first}-01`,
-    to: clampDay(last, 31),
-    due: clampDay(addMonths(last, 1), 31),
-  };
-}
-
-/** The quarter the card is about: the earliest one whose payment is still due today or later. */
-export function btwQuarter(today: string): BtwQuarter {
-  const year = Number(today.slice(0, 4));
-  const q = Math.floor((Number(today.slice(5, 7)) - 1) / 3) + 1;
-  const current = quarterOf(year, q);
-  const previous = q === 1 ? quarterOf(year - 1, 4) : quarterOf(year, q - 1);
-  return previous.due >= today ? previous : current;
-}
+/** Which quarter is which, and which money funds it, lives in ./quarter (one rule for every screen). */
+export { btwQuarter, type BtwQuarter } from "./quarter";
 
 interface Outflow {
   amount: number;
@@ -82,9 +63,8 @@ export function taxOfficeClassifier(outflows: Outflow[]) {
  * (the window getBtwSummary looks in). Only the quarter before the day's own quarter can reach it.
  */
 export function inBtwPaymentWindow(date: string): boolean {
-  const year = Number(date.slice(0, 4));
-  const q = Math.floor((Number(date.slice(5, 7)) - 1) / 3) + 1;
-  const previous = q === 1 ? quarterOf(year - 1, 4) : quarterOf(year, q - 1);
+  // Calendar based for every payment lag: the return is due after the quarter of the invoices, not of the money.
+  const previous = previousQuarter(calendarQuarter(date));
   return date > previous.to && date <= addDays(previous.due, PAYMENT_GRACE_DAYS);
 }
 
@@ -119,8 +99,19 @@ export async function quarterlyBtwPaymentIds(db: Db): Promise<Set<number>> {
 }
 
 export interface BtwSummary {
+  /** The quarter of the invoices, with its due date (calendar based, whatever the payment lag). */
   quarter: BtwQuarter;
-  /** Cents the client paid in the quarter. */
+  /**
+   * The days whose money from the client counts for the quarter (btwReceiptWindow): the quarter itself without a
+   * payment lag, moved later by the lag otherwise.
+   */
+  receipts: { from: string; to: string };
+  /**
+   * All of the quarter's money can be in: today is after `receipts.to`. Until then `received`, `owed` and `toSetAside`
+   * are what is known so far, and more money for this quarter can still arrive.
+   */
+  complete: boolean;
+  /** Cents the client paid in the receipt window. */
   received: number;
   /** The BTW inside what was received: 21 parts of every 121 (cents). */
   owed: number;
@@ -149,15 +140,24 @@ export const mentions = (text: Array<string | null>, needle: string) =>
  * The BTW to set aside, per quarter, from the statements alone: the BTW inside what the client paid (which includes BTW), what is
  * in the pocket, what is still missing, and what was paid to the tax office. Deductions are not known
  * here, so `owed` is the safe side: the surplus after paying is real money left over.
+ *
+ * With a payment lag (the client pays some months after the invoice) the money counted is the quarter's receipt window
+ * (btwReceiptWindow). The quarter itself, its due date and where the payment to the tax office is looked for do not move.
  */
 export async function getBtwSummary(
   db: Db,
-  opts: { today: string; incomeMatch?: string; pocketMatch?: string },
+  opts: {
+    today: string;
+    incomeMatch?: string;
+    pocketMatch?: string;
+    paymentLag?: BtwPaymentLag;
+  },
 ): Promise<BtwSummary> {
   const settings = await getBtwSettings(db);
   const incomeMatch = opts.incomeMatch ?? settings.client;
   const pocketMatch = opts.pocketMatch ?? settings.pocket;
   const quarter = btwQuarter(opts.today);
+  const receipts = btwReceiptWindow(quarter, opts.paymentLag ?? settings.paymentLag);
   const t = schema.transactions;
   const ownCurrency = eq(t.currency, schema.accounts.currency);
   const columns = {
@@ -178,8 +178,8 @@ export async function getBtwSummary(
           ownCurrency,
           eq(t.isInternalTransfer, false),
           gte(t.amount, 1),
-          gte(t.date, quarter.from),
-          lte(t.date, quarter.to),
+          gte(t.date, receipts.from),
+          lte(t.date, receipts.to),
         ),
       ),
     db
@@ -227,12 +227,15 @@ export async function getBtwSummary(
     paidRows.length > 0
       ? { amount: paidAmount, date: paidRows.map((r) => r.date).sort()[0] }
       : null;
+  // Taken out of the pocket to pay: after the quarter of the invoices ended (calendar, like the payment itself).
   const pulledOut = mine
     .filter((r) => r.amount > 0 && r.date > quarter.to)
     .reduce((s, r) => s + r.amount, 0);
 
   return {
     quarter,
+    receipts,
+    complete: opts.today > receipts.to,
     received,
     owed,
     pocket,
