@@ -30,6 +30,8 @@ export interface ParseResult {
   accountIdentifier: string | null;
   /** The period the file says it covers (YYYY-MM-DD, inclusive), when it says so. */
   period?: { from: string; to: string };
+  /** Things worth telling the person about how the file was read (shown after the import). */
+  warnings?: string[];
   /** The savings balance the file reports (cents) and the day it is for, when the file has a savings account. */
   savingsBalance?: { amount: number; asOf: string };
 }

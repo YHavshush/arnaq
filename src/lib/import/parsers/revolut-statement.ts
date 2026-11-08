@@ -8,9 +8,14 @@ import type { ParsedRow, ParseResult } from "../types";
  * current and savings accounts (account number, opening and closing balance), a table of the current account's
  * transactions with a running balance, and a savings table that holds interest only.
  *
- * Only the current account's transactions are read. A statement is accepted only when it adds up: the opening
- * balance plus every amount gives the closing balance, and each running balance follows from the one before it.
- * Anything else is refused whole, so a half-read statement can never skew the budget.
+ * Only the current account's transactions are read. A statement is accepted only when it adds up: each running balance
+ * follows from the one before it and the last one is the closing balance. Anything else is refused whole, so a
+ * half-read statement can never skew the budget.
+ *
+ * One real-world exception: Revolut sometimes leaves a movement out of the list (a real file had a top-up whose balance
+ * rose €105 less than its amount, with nothing listed to explain it). A single, isolated gap like that is kept as a
+ * visible row, "Unlisted difference", so every balance stays right, and the person is warned and asked to sort it. At
+ * most MAX_GAPS of them, and never two that cancel out each other (that is a misread balance, not a missing line).
  *
  * Checked against a real statement (916 transactions, every balance followed). The amounts already include any
  * fee, so nothing is subtracted again.
@@ -21,6 +26,11 @@ const TITLE = {
   transactions: "Current Accounts Transaction Statements",
   savingsTransactions: "Savings Accounts Transaction Statements",
 } as const;
+
+/** How many unexplained gaps a statement may have and still be accepted. */
+export const MAX_GAPS = 3;
+/** The name of the row that stands for a movement the statement leaves out. */
+export const GAP_NAME = "Unlisted difference";
 
 const NOT_RELIABLE =
   "The statement could not be read reliably: the transactions do not match the totals and balances on the statement. Nothing was imported. Download the statement again from Revolut.";
@@ -131,6 +141,9 @@ export function parseRevolutStatement(content: string): ParseResult {
     throw new Error("Not a Revolut statement: the transactions table lacks expected columns.");
 
   const rows: ParsedRow[] = [];
+  const gaps: number[] = [];
+  const warnings: string[] = [];
+  let firstGapLine = 0;
   let previous = opening;
   for (let i = headerIdx + 1; i < txEnd; i++) {
     const r = grid[i] ?? [];
@@ -149,10 +162,29 @@ export function parseRevolutStatement(content: string): ParseResult {
         `${NOT_RELIABLE} (line ${i + 1}: ${e instanceof Error ? e.message : "unreadable row"})`,
       );
     }
-    if (previous + amount !== balanceAfter)
-      throw new Error(
-        `${NOT_RELIABLE} (the balance after line ${i + 1} does not follow from the one before)`,
+    const gap = balanceAfter - (previous + amount);
+    if (gap !== 0) {
+      gaps.push(gap);
+      if (gaps.length > MAX_GAPS)
+        throw new Error(
+          `${NOT_RELIABLE} (more than ${MAX_GAPS} balances do not follow from the one before, the first at line ${firstGapLine})`,
+        );
+      firstGapLine ||= i + 1;
+      rows.push({
+        date,
+        amount: gap,
+        currency,
+        counterparty: GAP_NAME,
+        counterpartyIban: null,
+        description: GAP_NAME,
+        sourceKey: ["gap", first, gap, cell(r, cBalance)].join("|"),
+        balanceAfter: previous + gap,
+        bankCategory: null,
+      });
+      warnings.push(
+        `A difference of ${(gap / 100).toFixed(2)} on ${date} is missing from the statement. It was added as "${GAP_NAME}" so the balance is right: please sort it.`,
       );
+    }
     previous = balanceAfter;
     const description = cell(r, cDesc) || null;
     rows.push({
@@ -173,6 +205,11 @@ export function parseRevolutStatement(content: string): ParseResult {
       bankCategory: cCat >= 0 ? cell(r, cCat) || null : null,
     });
   }
+  // Two gaps that cancel out each other are one misread balance, not a missing line: refuse those.
+  if (gaps.length > 1 && gaps.reduce((a, b) => a + b, 0) === 0)
+    throw new Error(
+      `${NOT_RELIABLE} (a balance near line ${firstGapLine} does not follow from the ones around it)`,
+    );
   if (previous !== closing)
     throw new Error(`${NOT_RELIABLE} (the closing balance does not match the transactions)`);
 
@@ -210,5 +247,6 @@ export function parseRevolutStatement(content: string): ParseResult {
     accountIdentifier: null,
     period: dates.length ? { from: dates[0], to: dates[dates.length - 1] } : undefined,
     savingsBalance,
+    warnings: warnings.length ? warnings : undefined,
   };
 }

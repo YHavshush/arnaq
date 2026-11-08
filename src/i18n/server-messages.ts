@@ -49,6 +49,11 @@ const NL: Rule[] = [
     (m) => `${m[1]} regel(s) vallen buiten ${m[2]}; ze zijn toch geïmporteerd.`,
   ],
   [
+    /^A difference of (-?[\d.]+) on (\d{4}-\d{2}-\d{2}) is missing from the statement\. It was added as "Unlisted difference" so the balance is right: please sort it\.$/,
+    (m) =>
+      `Een verschil van ${m[1].replace(".", ",")} op ${m[2]} staat niet op het afschrift. Het is toegevoegd als "Unlisted difference" zodat het saldo klopt: sorteer het zelf.`,
+  ],
+  [
     /^(\d+) row\(s\) are not in (\w+); review them manually\.$/,
     (m) => `${m[1]} regel(s) staan niet in ${m[2]}; kijk ze zelf na.`,
   ],

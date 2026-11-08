@@ -99,6 +99,56 @@ describe("parseRevolutStatement", () => {
   });
 });
 
+describe("a movement the statement leaves out", () => {
+  const without = (...needles: string[]) =>
+    statement()
+      .split("\n")
+      .filter((l) => !needles.some((n) => l.includes(n)))
+      .join("\n");
+
+  it("is kept as one visible row, so every balance stays right, and the person is warned", () => {
+    const r = parseRevolutStatement(without("Cafe De Proef"));
+    const gap = r.rows.filter((x) => x.description === "Unlisted difference");
+    expect(gap).toHaveLength(1);
+    expect(gap[0]).toMatchObject({ amount: -400, date: "2026-10-02", bankCategory: null });
+    expect(r.warnings).toHaveLength(1);
+    expect(r.warnings![0]).toContain("-4.00");
+    // the balances still chain from row to row, ending on the closing balance
+    r.rows
+      .slice(1)
+      .forEach((x, i) => expect(x.balanceAfter! - x.amount).toBe(r.rows[i].balanceAfter));
+    expect(r.rows.at(-1)!.balanceAfter).toBe(127450);
+  });
+  it("is imported with the warning, and the row comes up to be sorted", async () => {
+    const db = await createDb(":memory:");
+    const s = await importStatement(db, { content: without("Cafe De Proef"), filename: "x.csv" });
+    expect(s.warnings.join(" ")).toContain("Unlisted difference");
+    const rows = await db.select().from(schema.transactions);
+    expect(rows.filter((t) => t.counterparty === "Unlisted difference")).toHaveLength(1);
+  });
+  it("a second upload of the same file adds nothing", async () => {
+    const db = await createDb(":memory:");
+    await importStatement(db, { content: without("Cafe De Proef"), filename: "x.csv" });
+    const again = await importStatement(db, {
+      content: without("Cafe De Proef"),
+      filename: "x.csv",
+    });
+    expect(again.rowsImported).toBe(0);
+  });
+  it("is refused when there are more than three", () => {
+    expect(() =>
+      parseRevolutStatement(
+        without(
+          "Cafe De Proef",
+          "To Instant Access Savings",
+          'Refund,€5.00,"€1,380.50"',
+          "Cash withdrawal",
+        ),
+      ),
+    ).toThrow(/reliably/i);
+  });
+});
+
 describe("a statement that does not add up is refused", () => {
   const withClosing = (value: string) =>
     statement().replace('Closing balance,"€1,274.50"', `Closing balance,"${value}"`);

@@ -211,7 +211,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
   if (parsed.rows.length === 0 && parsed.skipped.length === 0 && !period)
     throw new ImportError("The file contains no transactions.");
 
-  const warnings: string[] = [];
+  const warnings: string[] = [...(parsed.warnings ?? [])];
   const month = input.month ?? (period ? period.to.slice(0, 7) : dominantMonth(parsed.rows));
   if (!month)
     throw new ImportError(
