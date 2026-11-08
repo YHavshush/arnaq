@@ -178,6 +178,10 @@ const NL: Rule[] = [
     /^The payment lag must be 0, 1 or 2 months\.$/,
     () => "De betaaltermijn moet 0, 1 of 2 maanden zijn.",
   ],
+  [
+    /^The BTW pot setting must be on or off\.$/,
+    () => "De instelling voor de BTW-pot moet aan of uit staan.",
+  ],
   // sample data
   [
     /^Sample data can only be added to an empty account\.$/,

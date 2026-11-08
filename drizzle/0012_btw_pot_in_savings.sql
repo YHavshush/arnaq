@@ -1,0 +1,1 @@
+ALTER TABLE "user_settings" ADD COLUMN "btw_pot_in_savings" boolean DEFAULT false NOT NULL;

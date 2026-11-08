@@ -3,10 +3,30 @@ import type { Locale } from "@/i18n/config";
 import type { BtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
 
-/** The BTW for one quarter: what to set aside, what is in the pocket, and what is still missing. */
-export function BtwCard({ btw, t, locale }: { btw: BtwSummary; t: Messages; locale: Locale }) {
+/**
+ * The BTW for one quarter: what to set aside, what is in the pocket, and what is still missing. `pot` is the part of the
+ * savings counted as BTW money ("My BTW pot is part of my savings", see btwPot): it counts as set aside, like the pocket.
+ */
+export function BtwCard({
+  btw: summary,
+  pot = 0,
+  t,
+  locale,
+}: {
+  btw: BtwSummary;
+  pot?: number;
+  t: Messages;
+  locale: Locale;
+}) {
   const b = t.ui.btw;
   const { euro, dayLabel } = formatter(locale);
+  // The pot is never more than what is still to set aside (btwPot), so it only fills the gap.
+  const fromSavings = summary.paid ? 0 : Math.min(Math.max(pot, 0), summary.toSetAside);
+  const btw: BtwSummary = {
+    ...summary,
+    pocket: summary.pocket + fromSavings,
+    toSetAside: summary.toSetAside - fromSavings,
+  };
   const surplus = btw.pocket - btw.owed;
   // Until the quarter's receipt window has ended, more money for it can arrive: say it is what is known so far.
   const soFar = !btw.paid && !btw.complete;
@@ -27,6 +47,7 @@ export function BtwCard({ btw, t, locale }: { btw: BtwSummary; t: Messages; loca
   if (btw.paid && btw.fromOwnMoney > 0) lines.push([b.ownMoney, euro(btw.fromOwnMoney)]);
   if (btw.paid && btw.pocket > 0) lines.push([b.surplus, euro(btw.pocket)]);
   if (!btw.paid && surplus > 0) lines.push([b.surplus, euro(surplus)]);
+  if (fromSavings > 0) lines.push([b.fromSavings, euro(fromSavings)]);
   return (
     <div className="glass p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">

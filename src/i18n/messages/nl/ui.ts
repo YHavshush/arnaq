@@ -61,6 +61,11 @@ export const ui: typeof en = {
     ringLabel: (total: string, parts: string) => `Vermogen nu ${total}: ${parts}`,
     btwOwed: "Btw die je nog moet betalen",
     btwSpare: "Btw opzij gezet, over",
+    btwPot: "Btw-pot",
+    btwShort: "Btw nog tekort",
+    btwCovered: "gedekt door je pot",
+    afterBtwCovered: (amount: string) => `na ${amount} btw, gedekt door je pot`,
+    afterBtwShort: (amount: string, short: string) => `na ${amount} btw, ${short} nog niet gedekt`,
   },
   category: {
     back: "Vandaag",
@@ -106,6 +111,7 @@ export const ui: typeof en = {
       `De pot dekt wat er tot nu toe binnen is. Geld dat tot en met ${until} binnenkomt telt nog mee; betaal uiterlijk ${due}.`,
     pocketOfSoFar: (pocket: string, owed: string) => `${pocket} van ${owed} tot nu toe`,
     paidAmount: (amount: string) => `${amount} betaald`,
+    fromSavings: "Waarvan in je spaargeld",
     settings: {
       title: "BTW",
       intro:
@@ -128,6 +134,9 @@ export const ui: typeof en = {
           : lag === 1
             ? "Mijn klant betaalt ongeveer een maand na de factuur, dus geld dat in november tot en met januari binnenkomt telt voor het vierde kwartaal."
             : "Mijn klant betaalt ongeveer twee maanden na de factuur, dus geld dat in december tot en met februari binnenkomt telt voor het vierde kwartaal.",
+      potLabel: "Mijn BTW-pot zit in mijn spaargeld",
+      potHint:
+        "Mijn BTW-geld is een pot in mijn spaarrekening. arnaq telt mijn spaargeld eerst voor de BTW, zodat je ziet dat die gedekt is.",
       save: "Opslaan",
       saved: "BTW-instellingen opgeslagen",
     },
@@ -678,6 +687,8 @@ export const ui: typeof en = {
       startHint: "Je voortgang begint bij dit bedrag. Laat leeg als je bij nul begon.",
       fromStatement: (amount: string, day: string) =>
         `Je spaarsaldo komt uit je laatste afschrift: ${amount} op ${day}. Nieuwe spaarbewegingen komen erbij.`,
+      potNote:
+        "Je BTW-pot zit in je spaargeld (zie BTW hieronder), dus je doel telt alleen het spaargeld dat na de BTW overblijft.",
       save: "Opslaan",
       saved: "Opgeslagen",
       errAmount: "Vul een bedrag in, bijvoorbeeld 1250 of 1250,50.",

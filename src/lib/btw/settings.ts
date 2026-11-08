@@ -19,6 +19,11 @@ export interface BtwSettings {
   pocket: string;
   /** How many months after the invoice the client usually pays (0, 1 or 2); see btwQuarterOfReceipt. */
   paymentLag: BtwPaymentLag;
+  /**
+   * The BTW pot is a part of the savings account that the bank does not name: the savings count toward the BTW still
+   * to set aside first (see btwPot). Off by default.
+   */
+  potInSavings: boolean;
 }
 
 export async function getBtwSettings(db: Db): Promise<BtwSettings> {
@@ -28,16 +33,21 @@ export async function getBtwSettings(db: Db): Promise<BtwSettings> {
     client: row?.btwClient ?? DEFAULT_BTW_INCOME_MATCH,
     pocket: row?.btwPocket ?? DEFAULT_BTW_POCKET_MATCH,
     paymentLag: isBtwPaymentLag(lag) ? lag : DEFAULT_BTW_PAYMENT_LAG,
+    potInSavings: row?.btwPotInSavings === true,
   };
 }
 
 /** Empty means "the default again" (stored as null). Leave a field out to keep it. */
 export async function setBtwSettings(
   db: Db,
-  input: { client?: string; pocket?: string; paymentLag?: number },
+  input: { client?: string; pocket?: string; paymentLag?: number; potInSavings?: unknown },
 ): Promise<BtwSettings> {
-  const values: { btwClient?: string | null; btwPocket?: string | null; btwPaymentLag?: number } =
-    {};
+  const values: {
+    btwClient?: string | null;
+    btwPocket?: string | null;
+    btwPaymentLag?: number;
+    btwPotInSavings?: boolean;
+  } = {};
   const clean = (v: string) => {
     const text = v.trim().replace(/\s+/g, " ");
     if (text.length > MAX_LENGTH) throw new BtwError(`The name is too long (max ${MAX_LENGTH}).`);
@@ -52,6 +62,11 @@ export async function setBtwSettings(
     if (!isBtwPaymentLag(input.paymentLag))
       throw new BtwError("The payment lag must be 0, 1 or 2 months.");
     values.btwPaymentLag = input.paymentLag;
+  }
+  if (input.potInSavings !== undefined) {
+    if (typeof input.potInSavings !== "boolean")
+      throw new BtwError("The BTW pot setting must be on or off.");
+    values.btwPotInSavings = input.potInSavings;
   }
   if (Object.keys(values).length > 0)
     await db

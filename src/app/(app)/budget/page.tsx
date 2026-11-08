@@ -7,6 +7,7 @@ import { HeroSkeleton } from "@/components/arnaq/states";
 import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { getMonthOverview } from "@/lib/budget/overview";
+import { goalSaved } from "@/lib/btw/pot";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { addMonths } from "@/lib/recurring/dates";
 import { formatter } from "@/lib/view/format";
@@ -47,7 +48,7 @@ async function Content({ searchParams }: Pick<PageProps<"/budget">, "searchParam
         month={month}
         prevMonth={prev}
         prevLabel={monthName(prev)}
-        savings={{ saved: savings.saved, goal: savings.goal }}
+        savings={{ saved: goalSaved(savings), goal: savings.goal }}
         total={o.totals.totalBudgetIsExplicit ? o.totals.totalBudget : null}
         lines={o.expenses.map((l) => ({
           categoryId: l.categoryId!,

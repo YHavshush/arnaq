@@ -483,9 +483,19 @@ describe("BTW settings are per person", () => {
         )
       ).status,
     ).toBe(200);
-    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot", paymentLag: 1 });
+    expect(await get()).toEqual({
+      client: "Acme",
+      pocket: "Tax pot",
+      paymentLag: 1,
+      potInSavings: false,
+    });
     setTestUser(TEST_USER_B);
-    expect(await get()).toEqual({ client: "Featurn", pocket: "BTW", paymentLag: 0 });
+    expect(await get()).toEqual({
+      client: "Featurn",
+      pocket: "BTW",
+      paymentLag: 0,
+      potInSavings: false,
+    });
     expect(
       (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { client: 5 }))).status,
     ).toBe(422);
@@ -498,7 +508,34 @@ describe("BTW settings are per person", () => {
         .status,
     ).toBe(422);
     setTestUser(TEST_USER_A);
-    expect(await get()).toEqual({ client: "Acme", pocket: "Tax pot", paymentLag: 1 });
+    expect(await get()).toEqual({
+      client: "Acme",
+      pocket: "Tax pot",
+      paymentLag: 1,
+      potInSavings: false,
+    });
+  });
+
+  it("saves whether the BTW pot is part of the savings, per person, and refuses anything but true or false", async () => {
+    const get = async () =>
+      await (await call("btw/settings", "GET", new Request(url("/api/btw/settings")))).json();
+    const put = async (body: unknown) =>
+      await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", body));
+    setTestUser(TEST_USER_A);
+    expect((await put({ potInSavings: true })).status).toBe(200);
+    expect((await get()).potInSavings).toBe(true);
+    setTestUser(TEST_USER_B);
+    expect((await get()).potInSavings).toBe(false);
+    for (const bad of ["true", 1, null, {}]) {
+      const res = await put({ potInSavings: bad });
+      expect(res.status).toBe(422);
+      expect((await res.json()).error).toBe("The BTW pot setting must be on or off.");
+    }
+    expect((await get()).potInSavings).toBe(false);
+    setTestUser(TEST_USER_A);
+    expect((await get()).potInSavings).toBe(true);
+    expect((await put({ potInSavings: false })).status).toBe(200);
+    expect((await get()).potInSavings).toBe(false);
   });
 });
 

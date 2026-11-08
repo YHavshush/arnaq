@@ -380,6 +380,8 @@ export const userSettings = pgTable(
     btwPocket: text("btw_pocket"),
     /** Months between the invoice and the client's payment (0, 1 or 2): which BTW quarter money arriving counts for. */
     btwPaymentLag: integer("btw_payment_lag").notNull().default(0),
+    /** The BTW pot is a part of the savings account (the bank does not name it): the savings count toward the BTW first. */
+    btwPotInSavings: boolean("btw_pot_in_savings").notNull().default(false),
     /** What the person expects to spend each month on everyday things (cents); the "my own" basis of the forecast. */
     forecastOwnSpending: cents("forecast_own_spending"),
   },

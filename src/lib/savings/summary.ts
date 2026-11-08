@@ -1,7 +1,8 @@
 import { and, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getBtwSettings } from "@/lib/btw/settings";
-import { mentions } from "@/lib/btw/summary";
+import { btwPot } from "@/lib/btw/pot";
+import { getBtwSummary, mentions } from "@/lib/btw/summary";
 import { getSavingsSettings } from "./settings";
 
 export interface SavingsSummary {
@@ -21,6 +22,11 @@ export interface SavingsSummary {
   thisMonth: number;
   /** How many transactions are in the Savings category. */
   lines: number;
+  /**
+   * With "My BTW pot is part of my savings" on: the part of `saved` counted as BTW money (cents, see btwPot); 0 or left
+   * out otherwise. `saved` still holds it (net worth counts the savings once); the goal does not (goalSaved).
+   */
+  btwPot?: number;
 }
 
 const monthRange = (today: string) => {
@@ -42,7 +48,7 @@ export async function getSavingsSummary(
   // `month` (YYYY-MM) is the month shown on the page; without it, the month of `today`.
   const { from, to } = monthRange(opts.month ? `${opts.month}-01` : opts.today);
   const settings = await getSavingsSettings(db);
-  const pocket = (await getBtwSettings(db)).pocket;
+  const { pocket, potInSavings } = await getBtwSettings(db);
   const moves = (
     await db
       .select({
@@ -64,13 +70,23 @@ export async function getSavingsSummary(
   // With a statement's savings balance, only the moves after its date add to it.
   const counted = moves.filter((r) => settings.anchorDate === null || r.date > settings.anchorDate);
   const deposited = (rows: typeof moves) => rows.reduce((s, r) => s - r.amount, 0);
+  const saved = (settings.anchor ?? settings.start) + deposited(counted);
+  // The pot is what the savings hold for the BTW now (today), whatever month is shown.
+  const pot = potInSavings
+    ? btwPot({
+        on: true,
+        saved,
+        toSetAside: (await getBtwSummary(db, { today: opts.today })).toSetAside,
+      }).pot
+    : 0;
   return {
     goal: settings.goal,
     start: settings.start,
-    saved: (settings.anchor ?? settings.start) + deposited(counted),
+    saved,
     anchored: settings.anchor !== null,
     anchorDate: settings.anchorDate,
     thisMonth: deposited(moves.filter((r) => r.date >= from && r.date <= to)),
     lines: counted.length,
+    btwPot: pot,
   };
 }
