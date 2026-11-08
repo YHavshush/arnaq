@@ -57,6 +57,13 @@ export const ui = {
     ringLabel: (total: string, parts: string) => `Net worth now ${total}: ${parts}`,
     btwOwed: "BTW still owed",
     btwSpare: "BTW set aside, spare",
+    /** "My BTW pot is part of my savings": the part of the savings held for the BTW, and what it does not cover yet. */
+    btwPot: "BTW pot",
+    btwShort: "BTW still short",
+    btwCovered: "covered by your pot",
+    afterBtwCovered: (amount: string) => `after ${amount} BTW, covered by your pot`,
+    afterBtwShort: (amount: string, short: string) =>
+      `after ${amount} BTW, ${short} not covered yet`,
   },
   category: {
     back: "Today",
@@ -103,6 +110,7 @@ export const ui = {
       `The pocket covers what has arrived so far. Money arriving until ${until} still counts; pay by ${due}.`,
     pocketOfSoFar: (pocket: string, owed: string) => `${pocket} of ${owed} so far`,
     paidAmount: (amount: string) => `${amount} paid`,
+    fromSavings: "Of which in your savings",
     settings: {
       title: "BTW",
       intro:
@@ -125,6 +133,9 @@ export const ui = {
           : lag === 1
             ? "My client pays about a month after the invoice, so money arriving in November to January counts for the fourth quarter."
             : "My client pays about two months after the invoice, so money arriving in December to February counts for the fourth quarter.",
+      potLabel: "My BTW pot is part of my savings",
+      potHint:
+        "My BTW money is a pot inside my savings account. arnaq counts my savings toward the BTW first, so you can see it is covered.",
       save: "Save",
       saved: "BTW settings saved",
     },
@@ -656,6 +667,8 @@ export const ui = {
       startHint: "Your progress starts from this amount. Leave empty if you started from zero.",
       fromStatement: (amount: string, day: string) =>
         `Your savings balance comes from your latest statement: ${amount} on ${day}. New savings moves are added to it.`,
+      potNote:
+        "Your BTW pot is part of your savings (see BTW below), so your goal counts only the savings left after the BTW.",
       save: "Save",
       saved: "Saved",
       errAmount: "Enter an amount, for example 1250 or 1250.50.",

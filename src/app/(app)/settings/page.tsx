@@ -23,6 +23,7 @@ import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
 import { getBtwSettings } from "@/lib/btw/settings";
 import { getSavingsSettings } from "@/lib/savings/settings";
+import { goalSaved } from "@/lib/btw/pot";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { SavingsProgress } from "@/components/arnaq/savings-progress";
 import { messages } from "@/i18n/messages";
@@ -60,7 +61,9 @@ async function Content() {
   const tiles = messages[locale].view.overzicht.tiles.sparen;
   const { euro } = formatter(locale);
   const goal = savingsSettings.goal;
-  const reached = goal !== null && savingsNow.saved >= goal;
+  // The BTW pot inside the savings is owed, not goal money (see goalSaved).
+  const forGoal = goalSaved(savingsNow);
+  const reached = goal !== null && forGoal >= goal;
   const name = new Map(categories.map((c) => [c.id, c.name]));
   const user = await currentUser(); // pageDb above already sent anyone signed out to the login
   return (
@@ -107,15 +110,18 @@ async function Content() {
         {goal !== null && (
           <SavingsProgress
             variant="card"
-            toGo={s.savings.toGo(euro(Math.max(goal - savingsNow.saved, 0)))}
+            toGo={s.savings.toGo(euro(Math.max(goal - forGoal, 0)))}
             className="mb-3"
             label={s.savings.title}
             word={reached ? tiles.wordReached : tiles.wordUnderway}
-            sub={tiles.subOf(euro(savingsNow.saved), euro(goal))}
-            saved={savingsNow.saved}
+            sub={tiles.subOf(euro(forGoal), euro(goal))}
+            saved={forGoal}
             target={goal}
             tone={reached ? "good" : "accent"}
           />
+        )}
+        {btwSettings.potInSavings && (
+          <p className="text-ink-muted mb-3 max-w-[56ch] px-1 text-[15px]">{s.savings.potNote}</p>
         )}
         <SavingsGoal
           goal={savingsSettings.goal}
@@ -130,6 +136,7 @@ async function Content() {
           client={btwSettings.client}
           pocket={btwSettings.pocket}
           paymentLag={btwSettings.paymentLag}
+          potInSavings={btwSettings.potInSavings}
         />
       </Section>
 

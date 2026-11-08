@@ -323,6 +323,10 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
     // The BTW payment lag (a backup from before version 9 has none, and a damaged one is skipped: 0 stays).
     if (isBtwPaymentLag(settings.btwPaymentLag))
       await setBtwSettings(db, { paymentLag: settings.btwPaymentLag });
+    // Whether the BTW pot is part of the savings (before version 10 there is none, and anything but true or false is
+    // skipped: off stays).
+    if (typeof settings.btwPotInSavings === "boolean")
+      await setBtwSettings(db, { potInSavings: settings.btwPotInSavings });
   }
   // A backup from before the Savings category existed does not have it.
   await ensureSavingsCategory(db);

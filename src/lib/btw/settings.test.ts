@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createDb } from "@/db";
 import { BtwError, getBtwSettings, setBtwSettings } from "./settings";
 
-const DEFAULTS = { client: "Featurn", pocket: "BTW", paymentLag: 0 };
+const DEFAULTS = { client: "Featurn", pocket: "BTW", paymentLag: 0, potInSavings: false };
 
 describe("btw settings", () => {
   it("starts with the defaults", async () => {
@@ -50,6 +50,30 @@ describe("btw settings", () => {
     const db = await createDb(":memory:");
     for (const bad of [-1, 3, 1.5, Number.NaN])
       await expect(setBtwSettings(db, { paymentLag: bad })).rejects.toBeInstanceOf(BtwError);
+    expect(await getBtwSettings(db)).toEqual(DEFAULTS);
+  });
+
+  it("saves whether the BTW pot is part of the savings, and keeps the rest", async () => {
+    const db = await createDb(":memory:");
+    await setBtwSettings(db, { client: "Acme", paymentLag: 1 });
+    await setBtwSettings(db, { potInSavings: true });
+    expect(await getBtwSettings(db)).toEqual({
+      ...DEFAULTS,
+      client: "Acme",
+      paymentLag: 1,
+      potInSavings: true,
+    });
+    // Saving the other fields leaves it alone.
+    await setBtwSettings(db, { client: "Globex", paymentLag: 0 });
+    expect((await getBtwSettings(db)).potInSavings).toBe(true);
+    await setBtwSettings(db, { potInSavings: false });
+    expect((await getBtwSettings(db)).potInSavings).toBe(false);
+  });
+
+  it("refuses anything but true or false for the pot", async () => {
+    const db = await createDb(":memory:");
+    for (const bad of ["true", 1, 0, null, {}])
+      await expect(setBtwSettings(db, { potInSavings: bad })).rejects.toBeInstanceOf(BtwError);
     expect(await getBtwSettings(db)).toEqual(DEFAULTS);
   });
 });

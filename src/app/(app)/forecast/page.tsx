@@ -16,7 +16,7 @@ import { requestTime, todayIso } from "@/lib/api";
 import { getBtwSummary } from "@/lib/btw/summary";
 import { formatter } from "@/lib/view/format";
 import { HORIZONS, loadNetWorth, loadPrognose, parseHorizon } from "@/lib/view/load";
-import { netWorthParts } from "@/lib/view/net-worth-parts";
+import { aheadWorthParts } from "@/lib/view/net-worth-parts";
 import { worthRing } from "@/lib/view/worth-ring";
 
 export default function ForecastPage({ searchParams }: PageProps<"/forecast">) {
@@ -43,28 +43,24 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
     };
   });
   // The ring shows the money there is, one arc per account. The BTW (what is set aside minus what is still owed) takes
-  // money off, so it has no arc: it is listed under the ring, and the number in the middle already includes it.
-  const parts = [
-    ...netWorthParts(worth, t.ui.netWorth.savingsName),
-    ...(worth.btw.net !== 0
-      ? [
-          {
-            key: "btw",
-            name: worth.btw.net < 0 ? t.ui.netWorth.btwOwed : t.ui.netWorth.btwSpare,
-            amount: worth.btw.net,
-            share: 0,
-          },
-        ]
-      : []),
-  ];
-
-  const ring = worthRing(parts);
+  // money off, so it has no arc: it is listed under the ring, and the number in the middle already includes it. With
+  // the BTW pot inside the savings, the pot is an arc of its own and the BTW line is what it does not cover yet.
+  const ring = worthRing(aheadWorthParts(worth, t.ui.netWorth));
+  const pot = worth.btwPot;
+  const ringSub =
+    pot.pot > 0
+      ? pot.short > 0
+        ? t.ui.netWorth.afterBtwShort(f.euro(pot.pot + pot.short), f.euro(pot.short))
+        : t.ui.netWorth.afterBtwCovered(f.euro(pot.pot))
+      : worth.btw.net !== 0
+        ? t.ui.netWorth.afterBtw(f.euroSigned(worth.btw.net))
+        : undefined;
   // Net worth now in the ring needs balances and income; without them the ring keeps showing the forecast.
   const nowRing =
     worth.hasAny && !p.incomeMissing && p.netWorth !== null && p.runwaySentence !== null;
   const ringLabel = t.ui.netWorth.ringLabel(
     f.euro(worth.total),
-    ring.legend.map((e) => `${e.name} ${f.euro(e.amount)}`).join(", "),
+    ring.legend.map((e) => `${e.name} ${e.text ?? f.euro(e.amount)}`).join(", "),
   );
 
   if (!p.hasForecast)
@@ -106,17 +102,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
                 ? t.ui.forecast.captionWorth(p.points.at(-1)?.label ?? "")
                 : t.ui.forecast.caption(p.points.at(-1)?.label ?? "")
         }
-        split={
-          nowRing
-            ? {
-                segments: ring.segments,
-                sub:
-                  worth.btw.net !== 0
-                    ? t.ui.netWorth.afterBtw(f.euroSigned(worth.btw.net))
-                    : undefined,
-              }
-            : undefined
-        }
+        split={nowRing ? { segments: ring.segments, sub: ringSub } : undefined}
         pill={
           nowRing && p.netWorth
             ? {
@@ -207,7 +193,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
       </Section>
       {btw.hasData && (
         <Section title={t.ui.btw.title(btw.quarter.label.replace("-", " "))} aside={t.ui.btw.aside}>
-          <BtwCard btw={btw} t={t} locale={locale} />
+          <BtwCard btw={btw} pot={pot.pot} t={t} locale={locale} />
         </Section>
       )}
       {!p.incomeMissing && (

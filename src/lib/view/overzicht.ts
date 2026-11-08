@@ -1,5 +1,6 @@
 import type { Mood, Tone } from "@/design/tokens";
 import type { Locale } from "@/i18n/config";
+import { goalSaved } from "@/lib/btw/pot";
 import type { SavingsSummary } from "@/lib/savings/summary";
 import { messages } from "@/i18n/messages";
 import type { Sentence } from "@/i18n/types";
@@ -100,7 +101,8 @@ export interface Overzicht {
   /** Small lines under the header: over or under budget, income still to come, fixed costs still to pay (at most two). */
   facts: string[];
   /** The Savings row among the categories: the total saved, this month's movement and the goal. Null when unknown. */
-  savingsRow: { saved: number; thisMonth: number; goal: number | null } | null;
+  /** `forGoal` is what counts toward the goal: the savings without the BTW pot (see goalSaved). */
+  savingsRow: { saved: number; forGoal: number; thisMonth: number; goal: number | null } | null;
   /** What the accounts hold plus what is saved, or null when neither is known. */
   netWorth: { accounts: number; savings: number; total: number } | null;
   budget: number | null;
@@ -251,13 +253,15 @@ function sparenTile(
   const own = { key: "sparen" as const, label: t.label };
   // Real savings (the Savings category) and the goal come first: a deposit raises the progress, a withdrawal lowers it.
   if (savings && savings.goal !== null) {
-    const reached = savings.saved >= savings.goal;
+    // The BTW pot inside the savings is owed, not goal money (see goalSaved).
+    const saved = goalSaved(savings);
+    const reached = saved >= savings.goal;
     return {
       ...own,
       word: reached ? t.wordReached : t.wordUnderway,
-      sub: t.subOf(euro(savings.saved), euro(savings.goal)),
+      sub: t.subOf(euro(saved), euro(savings.goal)),
       tone: reached ? "good" : "accent",
-      goal: { saved: savings.saved, target: savings.goal },
+      goal: { saved, target: savings.goal },
     };
   }
   if (savings && (savings.lines > 0 || savings.anchored)) {
@@ -588,7 +592,12 @@ export function buildOverzicht({
     facts: compact ? headerFacts() : [],
     savingsRow:
       savings && (savings.anchored || savings.lines > 0 || savings.saved > 0)
-        ? { saved: savings.saved, thisMonth: savings.thisMonth, goal: savings.goal }
+        ? {
+            saved: savings.saved,
+            forGoal: goalSaved(savings),
+            thisMonth: savings.thisMonth,
+            goal: savings.goal,
+          }
         : null,
     netWorth:
       accountsBalance === null && (savings === null || (savings.saved === 0 && !savings.anchored))

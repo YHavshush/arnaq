@@ -47,7 +47,7 @@ function SavingsRow({
     row.goal !== null && row.goal > 0
       ? null
       : row.goal !== null
-        ? s.goalOf(euroExact(row.saved), euroExact(row.goal))
+        ? s.goalOf(euroExact(row.forGoal), euroExact(row.goal))
         : s.savedTotal(euroExact(row.saved));
   const kind = row.thisMonth > 0 ? "put" : row.thisMonth < 0 ? "taken" : "none";
   return (
@@ -219,17 +219,17 @@ async function Content({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
               <SavingsProgress
                 label={t.ui.settings.savings.title}
                 word={
-                  o.savingsRow.saved >= o.savingsRow.goal
+                  o.savingsRow.forGoal >= o.savingsRow.goal
                     ? t.view.overzicht.tiles.sparen.wordReached
                     : t.view.overzicht.tiles.sparen.wordUnderway
                 }
                 sub={t.view.overzicht.tiles.sparen.subOf(
-                  f.euro(o.savingsRow.saved),
+                  f.euro(o.savingsRow.forGoal),
                   f.euro(o.savingsRow.goal),
                 )}
-                saved={o.savingsRow.saved}
+                saved={o.savingsRow.forGoal}
                 target={o.savingsRow.goal}
-                tone={o.savingsRow.saved >= o.savingsRow.goal ? "good" : "accent"}
+                tone={o.savingsRow.forGoal >= o.savingsRow.goal ? "good" : "accent"}
               />
             </Section>
           )}

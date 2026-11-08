@@ -84,4 +84,35 @@ describe("BtwCard", () => {
     expect(out).toContain("Paid on 20 Jan");
     expect(out).not.toContain("so far");
   });
+  describe("with the BTW pot inside the savings", () => {
+    const withPot = (btw: BtwSummary, pot: number, locale: "en" | "nl" = "en") =>
+      renderToStaticMarkup(createElement(BtwCard, { btw, pot, t: messages[locale], locale }));
+    // Invented: 168.00 owed, nothing in a BTW pocket.
+    const owed: BtwSummary = { ...base, owed: 16800, pocket: 0, toSetAside: 16800 };
+
+    it("counts the pot as set aside: covered, and says how much comes from the savings", () => {
+      const out = withPot(owed, 16800);
+      expect(out).toContain("The pocket covers it.");
+      expect(out).toContain("€168 of €168");
+      expect(out).toContain("Of which in your savings");
+      expect(out).not.toContain("Set aside €");
+      expect(withPot(owed, 16800, "nl")).toContain("Waarvan in je spaargeld");
+    });
+
+    it("a pot smaller than the BTW leaves the rest to set aside", () => {
+      const out = withPot(owed, 10000);
+      expect(out).toContain("Set aside €68 more");
+      expect(out).toContain("€100 of €168");
+    });
+
+    it("no pot is today's card", () => {
+      expect(withPot(owed, 0)).toBe(html(owed));
+      expect(withPot(base, 0)).toBe(html(base));
+    });
+
+    it("once paid, the pot plays no part", () => {
+      const paid = { ...owed, toSetAside: 0, paid: { amount: 16800, date: "2026-10-06" } };
+      expect(withPot(paid, 5000)).toBe(html(paid));
+    });
+  });
 });

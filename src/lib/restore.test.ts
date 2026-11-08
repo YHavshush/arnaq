@@ -90,6 +90,7 @@ async function seeded() {
       savingsAnchor: 20085,
       savingsAnchorDate: "2026-10-29",
       btwPaymentLag: 1,
+      btwPotInSavings: true,
     });
   });
   const backup = JSON.parse(JSON.stringify(await withUser(db, A, (tx) => buildExport(tx))));
@@ -246,6 +247,28 @@ describe("restoreFromBackup", () => {
     damaged.tables.userSettings[0].btwPaymentLag = 7;
     await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, damaged));
     expect(await lag()).toBe(0);
+  });
+
+  it("brings back whether the BTW pot is part of the savings; an older backup without it, or a damaged one, restores as off", async () => {
+    const { db, backup } = await seeded();
+    expect(backup.version).toBe(10);
+    const pot = async () =>
+      (await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)))[0]
+        ?.btwPotInSavings;
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
+    expect(await pot()).toBe(true);
+
+    const old = JSON.parse(JSON.stringify(backup));
+    delete old.tables.userSettings[0].btwPotInSavings;
+    old.version = 9;
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, old));
+    expect(await pot()).toBe(false);
+
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
+    const damaged = JSON.parse(JSON.stringify(backup));
+    damaged.tables.userSettings[0].btwPotInSavings = "yes";
+    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, damaged));
+    expect(await pot()).toBe(false);
   });
 
   it("gives a backup from before the Savings category the category", async () => {

@@ -14,6 +14,8 @@ import { listLinkableTransactions } from "@/lib/recurring/linkable";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
 import type { Locale } from "@/i18n/config";
 import { getAccountBalances, getOpeningBalance } from "@/lib/forecast/balance";
+import { btwPot } from "@/lib/btw/pot";
+import { getBtwSettings } from "@/lib/btw/settings";
 import { btwNetWorth, getBtwSummary } from "@/lib/btw/summary";
 import { getSavingsSettings } from "@/lib/savings/settings";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
@@ -227,11 +229,12 @@ export async function loadUpload(db: Db) {
 
 /** What net worth is made of: the balance of each account, the savings and how they add up. */
 export async function loadNetWorth(db: Db, today: string) {
-  const [accounts, savings, settings, btw] = await Promise.all([
+  const [accounts, savings, settings, btw, btwSettings] = await Promise.all([
     getAccountBalances(db),
     getSavingsSummary(db, { today }),
     getSavingsSettings(db),
     getBtwSummary(db, { today }),
+    getBtwSettings(db),
   ]);
   const accountsTotal = accounts.reduce((s, a) => s + a.balance, 0);
   const net = btwNetWorth(btw);
@@ -257,6 +260,15 @@ export async function loadNetWorth(db: Db, today: string) {
      * what is still owed (nothing is owed once the quarter is paid): negative while the pocket is short.
      */
     btw: { owed: btw.owed, pocket: btw.pocket, paid: btw.paid !== null, net },
+    /**
+     * "My BTW pot is part of my savings" (see btwPot): the part of the savings counted as BTW money, the savings left
+     * after it, and what the pot does not cover yet. Presentation only: `total` is the same with the setting on or off.
+     */
+    btwPot: btwPot({
+      on: btwSettings.potInSavings,
+      saved: savings.saved,
+      toSetAside: btw.toSetAside,
+    }),
     total: accountsTotal + savings.saved + net,
     hasAny: accounts.length > 0 || savings.anchored || savings.lines > 0 || savings.saved > 0,
   };
