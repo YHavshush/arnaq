@@ -449,6 +449,34 @@ export const planOverrides = pgTable(
   ],
 ).enableRLS();
 
+/**
+ * The person's BTW clients: whose payments carry BTW to set aside (see src/lib/btw/clients.ts). A payment counts for the
+ * client whose name it mentions (whole words, like every BTW match); `paymentLag` is how many months after the invoice
+ * that client pays (which quarter their money counts for), `vatPercent` the rate on their invoices (21, or 0 when no BTW
+ * is charged, for example a business client in another EU country). Replaces user_settings.btw_client and
+ * btw_payment_lag (migration 0013 moved them here; those columns are no longer read).
+ */
+export const btwClients = pgTable(
+  "btw_clients",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: owner(),
+    name: text("name").notNull(),
+    paymentLag: integer("payment_lag").notNull().default(0),
+    vatPercent: integer("vat_percent").notNull().default(21),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique("btw_clients_user_id_id_unique").on(t.userId, t.id),
+    uniqueIndex("btw_clients_user_name_idx").on(t.userId, sql`lower(${t.name})`),
+    check("btw_clients_name_check", sql`char_length(${t.name}) between 1 and 60`),
+    check("btw_clients_payment_lag_check", sql`${t.paymentLag} between 0 and 2`),
+    check("btw_clients_vat_percent_check", sql`${t.vatPercent} in (0, 21)`),
+  ],
+).enableRLS();
+
 /** What the language model has been asked for, per user per day (caps and cost). */
 export const aiUsage = pgTable(
   "ai_usage",

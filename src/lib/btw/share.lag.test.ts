@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getBudgetsByMonth } from "@/lib/budget/budgets";
 import { setup } from "@/lib/recurring/test-utils";
 import { loadPlan } from "@/lib/view/plan";
-import { setBtwSettings } from "./settings";
+import { replaceBtwClients } from "./clients";
 import { btwShareForMonth, btwTrueUp } from "./share";
 
 /**
@@ -13,7 +13,7 @@ import { btwShareForMonth, btwTrueUp } from "./share";
 async function world(paymentLag: 0 | 1) {
   const s = await setup();
   const taxes = await s.cat("Belastingen");
-  await setBtwSettings(s.db, { paymentLag });
+  await replaceBtwClients(s.db, [{ name: "Featurn", paymentLag, vatPercent: 21 }]);
   const paid = (date: string, amount: number) =>
     s.tx(date, amount, { counterparty: "Featurn B.V." });
   await paid("2026-10-04", 100000);

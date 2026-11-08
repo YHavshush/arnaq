@@ -110,25 +110,59 @@ export const ui: typeof en = {
     settings: {
       title: "BTW",
       intro:
-        "arnaq zet de BTW opzij die in wat je klant je betaalt zit (de betaling is inclusief BTW), en telt een overboeking naar sparen als BTW-geld wanneer het BTW-woord in de naam staat. Dat geld is verschuldigd, dus het telt niet mee in je spaargeld of vermogen.",
-      clientLabel: "Klant die je facturen betaalt",
-      clientHint: "De naam zoals op je afschrift. Laat leeg voor Featurn.",
-      pocketLabel: "Woord dat BTW-geld aanwijst",
-      pocketHint:
-        "Zet het in de naam van de overboeking naar sparen, bijvoorbeeld Naar BTW. Laat leeg voor BTW.",
-      lagLabel: "Wanneer je klant een factuur betaalt",
+        "arnaq zet de BTW opzij die in wat je klanten je betalen zit (de betaling is inclusief BTW), en telt een overboeking naar sparen als BTW-geld wanneer het BTW-woord in de naam staat. Dat geld is verschuldigd, dus het telt niet mee in je spaargeld of vermogen.",
+      clientsTitle: "Klanten die je facturen betalen",
+      clientsIntro:
+        "Een betaling telt voor de klant wiens naam erop staat. Staan er twee klanten op, dan telt de langste naam.",
+      noClients: "Nog geen klanten, dus arnaq zet geen BTW opzij.",
+      addClient: "Klant toevoegen",
+      editClient: "Wijzigen",
+      editClientLabel: (name: string) => `${name} wijzigen`,
+      removeClient: "Verwijderen",
+      removeClientLabel: (name: string) => `${name} verwijderen`,
+      confirmRemoveClient: "Klant verwijderen",
+      removeQuestion: (name: string) =>
+        `${name} verwijderen? De betalingen tellen dan niet meer mee voor de BTW.`,
+      clientAdded: "Klant toegevoegd",
+      clientSaved: "Klant opgeslagen",
+      clientRemoved: "Klant verwijderd",
+      clientLimit: (max: number) => `Je hebt ${max} klanten, het maximum dat arnaq bijhoudt.`,
+      nameLabel: "Naam op je afschrift",
+      nameHint: "Zoals die op je bankafschrift staat, bijvoorbeeld Featurn.",
+      lagLabel: "Wanneer deze klant een factuur betaalt",
       lagOption: (lag: 0 | 1 | 2) =>
         lag === 0
           ? "In dezelfde maand"
           : lag === 1
             ? "Ongeveer een maand later"
             : "Ongeveer twee maanden later",
+      lagSummary: (lag: 0 | 1 | 2) =>
+        lag === 0
+          ? "Betaalt in de maand van de factuur"
+          : lag === 1
+            ? "Betaalt ongeveer een maand na de factuur"
+            : "Betaalt ongeveer twee maanden na de factuur",
       lagHint: (lag: 0 | 1 | 2) =>
         lag === 0
-          ? "Mijn klant betaalt in de maand van de factuur, dus geld dat in oktober tot en met december binnenkomt telt voor het vierde kwartaal."
+          ? "Geld dat in oktober tot en met december binnenkomt telt voor het vierde kwartaal."
           : lag === 1
-            ? "Mijn klant betaalt ongeveer een maand na de factuur, dus geld dat in november tot en met januari binnenkomt telt voor het vierde kwartaal."
-            : "Mijn klant betaalt ongeveer twee maanden na de factuur, dus geld dat in december tot en met februari binnenkomt telt voor het vierde kwartaal.",
+            ? "Geld dat in november tot en met januari binnenkomt telt voor het vierde kwartaal."
+            : "Geld dat in december tot en met februari binnenkomt telt voor het vierde kwartaal.",
+      rateLabel: "BTW op de facturen van deze klant",
+      rateOption: (rate: 21 | 0) => (rate === 21 ? "21% BTW" : "0%: geen BTW gerekend"),
+      rateSummary: (rate: 21 | 0) =>
+        rate === 21
+          ? "21% BTW"
+          : "0%: geen BTW gerekend, bijvoorbeeld een zakelijke klant in een ander EU-land",
+      rateHint: (rate: 21 | 0) =>
+        rate === 21
+          ? "Het gewone tarief: van elke 121 euro die deze klant betaalt is 21 BTW."
+          : "0%: geen BTW gerekend, bijvoorbeeld een zakelijke klant in een ander EU-land. Hun betalingen tellen niet mee voor de BTW.",
+      saveClient: "Klant opslaan",
+      settingsTitle: "BTW-geld",
+      pocketLabel: "Woord dat BTW-geld aanwijst",
+      pocketHint:
+        "Zet het in de naam van de overboeking naar sparen, bijvoorbeeld Naar BTW. Laat leeg voor BTW.",
       potLabel: "Mijn BTW-pot zit in mijn spaargeld",
       potHint:
         "Mijn BTW-geld is een pot in mijn spaarrekening. arnaq telt mijn spaargeld eerst voor de BTW, zodat je ziet dat die gedekt is.",

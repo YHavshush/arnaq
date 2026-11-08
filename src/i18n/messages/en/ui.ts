@@ -107,25 +107,60 @@ export const ui = {
     settings: {
       title: "BTW",
       intro:
-        "arnaq sets aside the BTW inside what your client pays you (the payment includes BTW), and counts a move to savings as BTW money when its name has the BTW word in it. That money is owed, so it is not part of your savings or net worth.",
-      clientLabel: "Client who pays your invoices",
-      clientHint: "The name as it appears on your statement. Leave empty for Featurn.",
-      pocketLabel: "Word that marks BTW money",
-      pocketHint:
-        "Put it in the name of the savings move, for example To BTW. Leave empty for BTW.",
-      lagLabel: "When your client pays an invoice",
+        "arnaq sets aside the BTW inside what your clients pay you (the payment includes BTW), and counts a move to savings as BTW money when its name has the BTW word in it. That money is owed, so it is not part of your savings or net worth.",
+      clientsTitle: "Clients who pay your invoices",
+      clientsIntro:
+        "A payment counts for the client whose name is on it. When a payment names two clients, the longer name counts.",
+      noClients: "No clients yet, so arnaq sets no BTW aside.",
+      addClient: "Add client",
+      editClient: "Edit",
+      editClientLabel: (name: string) => `Edit ${name}`,
+      removeClient: "Remove",
+      removeClientLabel: (name: string) => `Remove ${name}`,
+      confirmRemoveClient: "Remove client",
+      removeQuestion: (name: string) => `Remove ${name}? Its payments no longer count for the BTW.`,
+      clientAdded: "Client added",
+      clientSaved: "Client saved",
+      clientRemoved: "Client removed",
+      clientLimit: (max: number) => `You have ${max} clients, the most arnaq keeps.`,
+      nameLabel: "Name on your statement",
+      nameHint: "As it appears on your bank statement, for example Featurn.",
+      lagLabel: "When this client pays an invoice",
       lagOption: (lag: 0 | 1 | 2): string =>
         lag === 0
           ? "In the same month"
           : lag === 1
             ? "About a month later"
             : "About two months later",
+      /** One plain line about the client in the list. */
+      lagSummary: (lag: 0 | 1 | 2): string =>
+        lag === 0
+          ? "Pays in the month of the invoice"
+          : lag === 1
+            ? "Pays about a month after the invoice"
+            : "Pays about two months after the invoice",
       lagHint: (lag: 0 | 1 | 2): string =>
         lag === 0
-          ? "My client pays in the month of the invoice, so money arriving in October to December counts for the fourth quarter."
+          ? "Money arriving in October to December counts for the fourth quarter."
           : lag === 1
-            ? "My client pays about a month after the invoice, so money arriving in November to January counts for the fourth quarter."
-            : "My client pays about two months after the invoice, so money arriving in December to February counts for the fourth quarter.",
+            ? "Money arriving in November to January counts for the fourth quarter."
+            : "Money arriving in December to February counts for the fourth quarter.",
+      rateLabel: "BTW on this client's invoices",
+      rateOption: (rate: 21 | 0): string => (rate === 21 ? "21% BTW" : "0%: no BTW charged"),
+      /** One plain line about the client in the list. */
+      rateSummary: (rate: 21 | 0): string =>
+        rate === 21
+          ? "21% BTW"
+          : "0%: no BTW charged, for example a business client in another EU country",
+      rateHint: (rate: 21 | 0): string =>
+        rate === 21
+          ? "The standard rate: 21 of every 121 euros this client pays is BTW."
+          : "0%: no BTW charged, for example a business client in another EU country. Their payments add nothing to the BTW.",
+      saveClient: "Save client",
+      settingsTitle: "BTW money",
+      pocketLabel: "Word that marks BTW money",
+      pocketHint:
+        "Put it in the name of the savings move, for example To BTW. Leave empty for BTW.",
       potLabel: "My BTW pot is part of my savings",
       potHint:
         "My BTW money is a pot inside my savings account. arnaq counts my savings toward the BTW first, so you can see it is covered.",

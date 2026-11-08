@@ -1,6 +1,7 @@
 import { and, eq, gte, lt, lte } from "drizzle-orm";
 import { schema, type Db } from "@/db";
-import { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH, type BtwPaymentLag } from "./defaults";
+import { btwClientMatcher, getBtwClients, type BtwClientRule } from "./clients";
+import { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH } from "./defaults";
 import {
   btwQuarter,
   btwReceiptWindow,
@@ -8,19 +9,16 @@ import {
   previousQuarter,
   type BtwQuarter,
 } from "./quarter";
+import { btwOfIncome } from "./rate";
 import { getBtwSettings } from "./settings";
+import { mentions } from "./words";
 import { addDays } from "@/lib/recurring/dates";
-import { normaliseCounterparty } from "@/lib/recurring/normalise";
 
-/** The standard Dutch rate. */
-export const BTW_RATE_PERCENT = 21;
-/** The client pays the price plus BTW, so the BTW is 21 parts of every 121 received. */
-const BTW_SHARE_OF_PAYMENT = { numerator: BTW_RATE_PERCENT, denominator: 100 + BTW_RATE_PERCENT };
-/** The BTW inside an amount the client paid (which includes BTW): 21 parts of every 121, in whole cents. */
-export function btwInside(paid: number): number {
-  return Math.round((paid * BTW_SHARE_OF_PAYMENT.numerator) / BTW_SHARE_OF_PAYMENT.denominator);
-}
-/** Who pays the person, and what marks a move into the BTW pocket: the defaults, until the person changes them. */
+/** The rate math lives in ./rate; re-exported for the places that always imported it from here. */
+export { BTW_RATE_PERCENT, btwInside } from "./rate";
+/** The whole-word match lives in ./words (the client matcher shares it). */
+export { mentions } from "./words";
+/** The default client name and pocket word, until the person changes them. */
 export { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH };
 /** Where the person pays the quarterly BTW. */
 const TAX_OFFICE_MATCH = "Belastingdienst";
@@ -102,18 +100,23 @@ export interface BtwSummary {
   /** The quarter of the invoices, with its due date (calendar based, whatever the payment lag). */
   quarter: BtwQuarter;
   /**
-   * The days whose money from the client counts for the quarter (btwReceiptWindow): the quarter itself without a
-   * payment lag, moved later by the lag otherwise.
+   * The days whose money can count for the quarter. Each client has its own receipt window (btwReceiptWindow with that
+   * client's payment lag: the quarter itself without a lag, moved later by the lag otherwise); this is the widest one
+   * covering them all, from the earliest start to the latest end. A payment inside it still only counts when it is inside
+   * its own client's window. Without clients it is the quarter itself.
    */
   receipts: { from: string; to: string };
   /**
-   * All of the quarter's money can be in: today is after `receipts.to`. Until then `received`, `owed` and `toSetAside`
-   * are what is known so far, and more money for this quarter can still arrive.
+   * All of the quarter's money can be in: today is after the latest client window's end (`receipts.to`). Until then
+   * `received`, `owed` and `toSetAside` are what is known so far, and more money for this quarter can still arrive.
    */
   complete: boolean;
-  /** Cents the client paid in the receipt window. */
+  /**
+   * Cents the clients paid, each in its own receipt window: the turnover, including clients charged no BTW (0%), whose
+   * money is income all the same (and goes on the BTW return as turnover without BTW).
+   */
   received: number;
-  /** The BTW inside what was received: 21 parts of every 121 (cents). */
+  /** The BTW inside what was received, per client rate: 21 parts of every 121 for a 21% client, nothing for 0% (cents). */
   owed: number;
   /** Cents in the BTW pocket now: moved in minus moved out. */
   pocket: number;
@@ -123,41 +126,44 @@ export interface BtwSummary {
   paid: { amount: number; date: string } | null;
   /** Of that payment, the part that did not come out of the pocket (cents). */
   fromOwnMoney: number;
-  /** There is anything to show: income from the client or money in the pocket. */
+  /** There is anything to show: income from a client or money in the pocket. */
   hasData: boolean;
 }
 
-/** Whole-word, accent- and case-insensitive: "btw" is in "To EUR BTW" but not in "Tubtwo". */
-const words = (s: string | null | undefined) =>
-  ` ${normaliseCounterparty(s)
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim()} `;
-/** True when the needle appears as a whole word in any of the texts. */
-export const mentions = (text: Array<string | null>, needle: string) =>
-  words(text.filter(Boolean).join(" ")).includes(words(needle));
-
 /**
- * The BTW to set aside, per quarter, from the statements alone: the BTW inside what the client paid (which includes BTW), what is
- * in the pocket, what is still missing, and what was paid to the tax office. Deductions are not known
+ * The BTW to set aside, per quarter, from the statements alone: the BTW inside what the clients paid (which includes
+ * BTW), what is in the pocket, what is still missing, and what was paid to the tax office. Deductions are not known
  * here, so `owed` is the safe side: the surplus after paying is real money left over.
  *
- * With a payment lag (the client pays some months after the invoice) the money counted is the quarter's receipt window
- * (btwReceiptWindow). The quarter itself, its due date and where the payment to the tax office is looked for do not move.
+ * A payment belongs to the client it names (btwClientMatcher: the longest matching name wins). Each client's money is
+ * counted in that client's own receipt window (btwReceiptWindow with its payment lag) and at its own rate, and it is
+ * all added up. The quarter itself, its due date and where the payment to the tax office is looked for do not move.
+ * `clients` replaces the person's saved list (tests, previews).
  */
 export async function getBtwSummary(
   db: Db,
   opts: {
     today: string;
-    incomeMatch?: string;
+    clients?: readonly BtwClientRule[];
     pocketMatch?: string;
-    paymentLag?: BtwPaymentLag;
   },
 ): Promise<BtwSummary> {
   const settings = await getBtwSettings(db);
-  const incomeMatch = opts.incomeMatch ?? settings.client;
+  const clients = opts.clients ?? (await getBtwClients(db));
   const pocketMatch = opts.pocketMatch ?? settings.pocket;
   const quarter = btwQuarter(opts.today);
-  const receipts = btwReceiptWindow(quarter, opts.paymentLag ?? settings.paymentLag);
+  const windows = new Map(clients.map((c) => [c, btwReceiptWindow(quarter, c.paymentLag)]));
+  const receipts =
+    windows.size === 0
+      ? btwReceiptWindow(quarter, 0)
+      : {
+          from: [...windows.values()].map((w) => w.from).sort()[0],
+          to: [...windows.values()]
+            .map((w) => w.to)
+            .sort()
+            .at(-1)!,
+        };
+  const match = btwClientMatcher(clients);
   const t = schema.transactions;
   const ownCurrency = eq(t.currency, schema.accounts.currency);
   const columns = {
@@ -213,10 +219,15 @@ export async function getBtwSummary(
     r.counterparty,
     r.description,
   ];
-  const received = incoming
-    .filter((r) => mentions(text(r), incomeMatch))
-    .reduce((s, r) => s + r.amount, 0);
-  const owed = btwInside(received);
+  const counted = incoming.flatMap((r) => {
+    const client = match(r);
+    const window = client && windows.get(client);
+    return window && r.date >= window.from && r.date <= window.to
+      ? [{ amount: r.amount, vatPercent: client.vatPercent }]
+      : [];
+  });
+  const received = counted.reduce((s, r) => s + r.amount, 0);
+  const owed = btwOfIncome(counted);
   const mine = pocketMoves.filter((r) => mentions(text(r), pocketMatch));
   const pocket = mine.reduce((s, r) => s - r.amount, 0);
 

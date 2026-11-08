@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { setup } from "@/lib/recurring/test-utils";
+import { replaceBtwClients } from "./clients";
 import { setBtwSettings } from "./settings";
 import { btwQuarter, getBtwSummary } from "./summary";
 
@@ -115,7 +116,7 @@ describe("getBtwSummary", () => {
     await w.pocket("2026-08-05", -5000, "To Tax pot");
     const s = await getBtwSummary(w.db, {
       today: "2026-10-20",
-      incomeMatch: "acme",
+      clients: [{ name: "acme", paymentLag: 0, vatPercent: 21 }],
       pocketMatch: "tax pot",
     });
     expect(s).toMatchObject({ received: 100000, owed: 17355, pocket: 5000 });
@@ -125,7 +126,8 @@ describe("getBtwSummary", () => {
     const w = await world();
     await w.income("2026-08-01", 100000, "Acme Consulting");
     await w.pocket("2026-08-05", -5000, "To Tax pot");
-    await setBtwSettings(w.db, { client: "Acme", pocket: "Tax pot" });
+    await replaceBtwClients(w.db, [{ name: "Acme", paymentLag: 0, vatPercent: 21 }]);
+    await setBtwSettings(w.db, { pocket: "Tax pot" });
     expect(await run(w.db, "2026-10-20")).toMatchObject({
       received: 100000,
       owed: 17355,
@@ -149,7 +151,7 @@ describe("getBtwSummary with a payment lag (the client pays about a month after 
   async function world(paymentLag: 0 | 1 | 2) {
     const s = await setup();
     const taxes = await s.cat("Belastingen");
-    await setBtwSettings(s.db, { paymentLag });
+    await replaceBtwClients(s.db, [{ name: "Featurn", paymentLag, vatPercent: 21 }]);
     const income = (date: string, amount: number) =>
       s.tx(date, amount, { counterparty: "Featurn B.V." });
     const tax = (date: string, amount: number) =>
@@ -218,9 +220,12 @@ describe("getBtwSummary with a payment lag (the client pays about a month after 
     expect((await getBtwSummary(lag0.db, { today: "2027-01-20" })).complete).toBe(true);
   });
 
-  it("a lag passed in wins over the saved one", async () => {
+  it("clients passed in win over the saved ones", async () => {
     const w = await world(0);
-    const s = await getBtwSummary(w.db, { today: "2027-01-20", paymentLag: 1 });
+    const s = await getBtwSummary(w.db, {
+      today: "2027-01-20",
+      clients: [{ name: "Featurn", paymentLag: 1, vatPercent: 21 }],
+    });
     expect(s.received).toBe(1089000);
   });
 });

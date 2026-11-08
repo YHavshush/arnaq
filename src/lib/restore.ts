@@ -4,8 +4,14 @@ import { wipeMyData } from "@/lib/account";
 import { ensureSavingsCategory, ensureTaxesCategory, seedDefaults } from "@/lib/categories/seed";
 import { DEFAULT_CATEGORIES } from "@/lib/categories/defaults";
 import { EXPORT_VERSION } from "@/lib/export";
-import { isBtwPaymentLag } from "@/lib/btw/defaults";
-import { BtwError, setBtwSettings } from "@/lib/btw/settings";
+import { replaceBtwClients, type BtwClientRule } from "@/lib/btw/clients";
+import {
+  DEFAULT_BTW_INCOME_MATCH,
+  DEFAULT_BTW_PAYMENT_LAG,
+  isBtwPaymentLag,
+} from "@/lib/btw/defaults";
+import { BTW_RATE_PERCENT } from "@/lib/btw/rate";
+import { BtwError, cleanBtwName, setBtwSettings } from "@/lib/btw/settings";
 import { ForecastError } from "@/lib/forecast/errors";
 import { setOwnSpending } from "@/lib/forecast/own";
 import { SavingsError, setSavingsAnchor, setSavingsSettings } from "@/lib/savings/settings";
@@ -33,6 +39,26 @@ function rowsOf(tables: Record<string, unknown>, name: string): Row[] {
   )
     throw new RestoreError(`The backup has a broken "${name}" table.`);
   return v as Row[];
+}
+
+/**
+ * The one BTW client of a backup from before version 11, as migration 0013 made it for a stored account: the saved name
+ * or the default (also when there are no settings, or the name is damaged), the saved payment lag or 0, at 21%.
+ */
+function legacyBtwClient(settings: Row | undefined): BtwClientRule {
+  let name: string | null = null;
+  try {
+    name = typeof settings?.btwClient === "string" ? cleanBtwName(settings.btwClient) : null;
+  } catch (e) {
+    if (!(e instanceof BtwError)) throw e;
+  }
+  return {
+    name: name ?? DEFAULT_BTW_INCOME_MATCH,
+    paymentLag: isBtwPaymentLag(settings?.btwPaymentLag)
+      ? settings.btwPaymentLag
+      : DEFAULT_BTW_PAYMENT_LAG,
+    vatPercent: BTW_RATE_PERCENT,
+  };
 }
 
 /**
@@ -310,24 +336,27 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
         if (!(e instanceof ForecastError)) throw e;
       }
     }
-    // Who the BTW is for and the pocket word (null or damaged: the defaults stay).
-    const text = (v: unknown) => (typeof v === "string" ? v : undefined);
-    try {
-      await setBtwSettings(db, {
-        client: text(settings.btwClient),
-        pocket: text(settings.btwPocket),
-      });
-    } catch (e) {
-      if (!(e instanceof BtwError)) throw e;
+    // The pocket word (null or damaged: the default stays).
+    if (typeof settings.btwPocket === "string") {
+      try {
+        await setBtwSettings(db, { pocket: settings.btwPocket });
+      } catch (e) {
+        if (!(e instanceof BtwError)) throw e;
+      }
     }
-    // The BTW payment lag (a backup from before version 9 has none, and a damaged one is skipped: 0 stays).
-    if (isBtwPaymentLag(settings.btwPaymentLag))
-      await setBtwSettings(db, { paymentLag: settings.btwPaymentLag });
     // Whether the BTW pot is part of the savings (before version 10 there is none, and anything but true or false is
     // skipped: off stays).
     if (typeof settings.btwPotInSavings === "boolean")
       await setBtwSettings(db, { potInSavings: settings.btwPotInSavings });
   }
+  // The BTW clients. From version 11 the backup has the list (damaged entries are skipped; an empty list stays empty).
+  // An older backup has one client in userSettings, and it becomes the list exactly as migration 0013 did it; so does a
+  // newer one whose list is missing or is not a list at all (hand-edited), rather than failing the whole restore.
+  const clients = t.btwClients;
+  await replaceBtwClients(
+    db,
+    b.version >= 11 && Array.isArray(clients) ? clients : [legacyBtwClient(settings)],
+  );
   // A backup from before the Savings category existed does not have it.
   await ensureSavingsCategory(db);
   await ensureTaxesCategory(db);

@@ -5,8 +5,8 @@ import { matchOccurrences } from "@/lib/recurring/matching";
 import { generateOccurrences } from "@/lib/recurring/occurrences";
 import { setup } from "@/lib/recurring/test-utils";
 import { loadOverzicht } from "@/lib/view/load";
-import { setBtwSettings } from "./settings";
-import { btwShareForMonth, isClientItem } from "./share";
+import { replaceBtwClients } from "./clients";
+import { btwShareForMonth } from "./share";
 
 const TODAY = "2026-10-11";
 
@@ -31,19 +31,6 @@ async function world() {
     });
   return { ...s, taxes, savings, salary, paid, invoice };
 }
-
-describe("isClientItem", () => {
-  it("matches the item's counterparty on whole words, and the name when no counterparty is set", () => {
-    expect(isClientItem({ matchCounterparty: "FEATURN B.V.", name: "x" }, "Featurn")).toBe(true);
-    expect(isClientItem({ matchCounterparty: "Featurnix", name: "Featurn" }, "Featurn")).toBe(
-      false,
-    );
-    expect(isClientItem({ matchCounterparty: null, name: "Featurn invoice" }, "Featurn")).toBe(
-      true,
-    );
-    expect(isClientItem({ matchCounterparty: "Werkgever", name: "Salary" }, "Featurn")).toBe(false);
-  });
-});
 
 describe("btwShareForMonth: the BTW to set aside for a month, from the client's income", () => {
   it("the current month: 21/121 of what the client already paid plus what is still expected from them", async () => {
@@ -151,7 +138,7 @@ describe("btwShareForMonth: the BTW to set aside for a month, from the client's 
 
   it("follows the client name the person saved", async () => {
     const w = await world();
-    await setBtwSettings(w.db, { client: "Acme" });
+    await replaceBtwClients(w.db, [{ name: "Acme", paymentLag: 0, vatPercent: 21 }]);
     await w.paid("2026-10-02", 121000);
     await w.tx("2026-10-03", 121000, { counterparty: "ACME Consulting" });
     expect((await btwShareForMonth(w.db, { month: "2026-10", today: TODAY })).received).toBe(

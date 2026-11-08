@@ -182,6 +182,12 @@ const NL: Rule[] = [
     /^The BTW pot setting must be on or off\.$/,
     () => "De instelling voor de BTW-pot moet aan of uit staan.",
   ],
+  // BTW clients
+  [/^Give the client a name\.$/, () => "Geef de klant een naam."],
+  [/^The BTW rate must be 21% or 0%\.$/, () => "Het BTW-tarief moet 21% of 0% zijn."],
+  [/^You already have a client with this name\.$/, () => "Je hebt al een klant met deze naam."],
+  [/^You can have up to (\d+) clients\.$/, (m) => `Je kunt maximaal ${m[1]} klanten hebben.`],
+  [/^BTW client not found\.$/, () => "Deze klant bestaat niet."],
   // sample data
   [
     /^Sample data can only be added to an empty account\.$/,

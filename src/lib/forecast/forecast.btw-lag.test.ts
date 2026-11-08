@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { setBtwSettings } from "@/lib/btw/settings";
+import { replaceBtwClients } from "@/lib/btw/clients";
 import { setup } from "@/lib/recurring/test-utils";
 import { loadNetWorth } from "@/lib/view/load";
 import { getForecast } from "./forecast";
@@ -13,7 +13,7 @@ const TODAY = "2026-10-20";
  */
 async function world(paymentLag: 0 | 1) {
   const s = await setup();
-  await setBtwSettings(s.db, { paymentLag });
+  await replaceBtwClients(s.db, [{ name: "Featurn", paymentLag, vatPercent: 21 }]);
   await s.cover("2026-07", "2026-09");
   const paid = (date: string, amount: number) =>
     s.tx(date, amount, { counterparty: "Featurn B.V." });

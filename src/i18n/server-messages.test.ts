@@ -57,6 +57,11 @@ describe("localizeMessage", () => {
       "The BTW pot setting must be on or off.",
       "De instelling voor de BTW-pot moet aan of uit staan.",
     ],
+    ["Give the client a name.", "Geef de klant een naam."],
+    ["The BTW rate must be 21% or 0%.", "Het BTW-tarief moet 21% of 0% zijn."],
+    ["You already have a client with this name.", "Je hebt al een klant met deze naam."],
+    ["You can have up to 20 clients.", "Je kunt maximaal 20 klanten hebben."],
+    ["BTW client not found.", "Deze klant bestaat niet."],
     ["File too large (max 4 MB).", "Dit bestand is te groot (maximaal 4 MB)."],
     [
       "The savings goal must be a positive amount.",

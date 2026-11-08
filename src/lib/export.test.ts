@@ -21,6 +21,7 @@ describe("buildExport", () => {
     expect(Object.keys(out.tables).sort()).toEqual(
       [
         "accounts",
+        "btwClients",
         "budgets",
         "categories",
         "categorisationRules",

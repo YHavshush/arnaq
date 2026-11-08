@@ -11,7 +11,7 @@ import { ChangePasswordForm } from "@/components/arnaq/auth-forms";
 import { EraseData } from "@/components/arnaq/erase-data";
 import { LearnedShops } from "@/components/arnaq/learned-shops";
 import { AppearanceSettings } from "@/components/arnaq/appearance-settings";
-import { BtwSettings } from "@/components/arnaq/btw-settings";
+import { BtwClients, BtwSettings } from "@/components/arnaq/btw-settings";
 import { SavingsGoal } from "@/components/arnaq/savings-goal";
 import { RestoreBackup } from "@/components/arnaq/restore-backup";
 import { SmartSettings } from "@/components/arnaq/smart-settings";
@@ -21,6 +21,7 @@ import { getI18n } from "@/i18n/server";
 import { requestTime, todayIso } from "@/lib/api";
 import { categoryLabel } from "@/lib/view/categories";
 import { sortRules } from "@/lib/categories/categorise";
+import { getBtwClients } from "@/lib/btw/clients";
 import { getBtwSettings } from "@/lib/btw/settings";
 import { getSavingsSettings } from "@/lib/savings/settings";
 import { goalSaved } from "@/lib/btw/pot";
@@ -47,8 +48,8 @@ async function Content() {
   await requestTime();
   const { locale, t } = await getI18n();
   const s = t.ui.settings;
-  const [rules, categories, labels, smart, savingsSettings, savingsNow, btwSettings] = await pageDb(
-    async (db) => [
+  const [rules, categories, labels, smart, savingsSettings, savingsNow, btwSettings, btwClients] =
+    await pageDb(async (db) => [
       await db.select().from(schema.categorisationRules),
       await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
       await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
@@ -56,8 +57,8 @@ async function Content() {
       await getSavingsSettings(db),
       await getSavingsSummary(db, { today: todayIso() }),
       await getBtwSettings(db),
-    ],
-  );
+      await getBtwClients(db),
+    ]);
   const tiles = messages[locale].view.overzicht.tiles.sparen;
   const { euro } = formatter(locale);
   const goal = savingsSettings.goal;
@@ -132,12 +133,20 @@ async function Content() {
       </Section>
 
       <Section title={t.ui.btw.settings.title}>
-        <BtwSettings
-          client={btwSettings.client}
-          pocket={btwSettings.pocket}
-          paymentLag={btwSettings.paymentLag}
-          potInSavings={btwSettings.potInSavings}
-        />
+        <div className="grid gap-5">
+          <section className="grid gap-2" aria-labelledby="btw-clients">
+            <h3 id="btw-clients" className="text-ink-muted px-1 text-sm font-semibold">
+              {t.ui.btw.settings.clientsTitle}
+            </h3>
+            <BtwClients clients={btwClients} />
+          </section>
+          <section className="grid gap-2" aria-labelledby="btw-money">
+            <h3 id="btw-money" className="text-ink-muted px-1 text-sm font-semibold">
+              {t.ui.btw.settings.settingsTitle}
+            </h3>
+            <BtwSettings pocket={btwSettings.pocket} potInSavings={btwSettings.potInSavings} />
+          </section>
+        </div>
       </Section>
 
       {/* Smart sorting has no provider yet: showing a consent flow for a feature that cannot run would only confuse. */}

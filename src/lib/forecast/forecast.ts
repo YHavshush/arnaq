@@ -7,8 +7,9 @@ import { addMonths, daysInMonth, isDate, monthOf } from "@/lib/recurring/dates";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { getBtwSettings } from "@/lib/btw/settings";
-import { clientItemIds } from "@/lib/btw/share";
-import { btwInside, btwNetWorth, getBtwSummary, mentions } from "@/lib/btw/summary";
+import { btwOfIncome, type BtwVatPercent } from "@/lib/btw/rate";
+import { clientItemRates } from "@/lib/btw/share";
+import { btwNetWorth, getBtwSummary, mentions } from "@/lib/btw/summary";
 import { getPlanOverrides, indexOverrides, overrideKey } from "@/lib/plan/overrides";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
@@ -227,8 +228,8 @@ interface Context {
   /** The word that marks a move or a planned deposit as BTW money. */
   pocket: string;
   basis: "averages" | "budget";
-  /** The client's fixed income items: what they bring in carries BTW. */
-  clientItems: Set<number>;
+  /** The BTW clients' fixed income items, with their client's rate: what they bring in carries that BTW. */
+  clientItems: Map<number, BtwVatPercent>;
   /** Everyday spending typed in the plan per category and month (overrideKey -> cents), from the current month on. */
   typedCategories: Map<string, number>;
 }
@@ -256,7 +257,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     last,
     ignorePlan: opts.ignorePlan,
   });
-  const { pocket, client } = await getBtwSettings(db);
+  const { pocket } = await getBtwSettings(db);
   const basis = opts.basis === "budget" ? "budget" : "averages";
   const ctx: Context = {
     current,
@@ -281,7 +282,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     savings: await savingsCategoryIds(db),
     pocket,
     basis,
-    clientItems: await clientItemIds(db, client),
+    clientItems: await clientItemRates(db),
     movedToSavings: await getMovedToSavings(db, first, last, pocket),
     typedCategories: opts.ignorePlan
       ? new Map()
@@ -520,7 +521,11 @@ async function buildMonth(
   });
   const counts = occurrences.filter((o) => o.counted !== "none");
   const projecting = kind === "mixed" || kind === "forecast";
-  const clientIncome = sum(projectedIncome.filter((o) => ctx.clientItems.has(o.recurringItemId)));
+  // The BTW on the clients' income still expected, at each client's rate (0% adds nothing).
+  const clientIncome = projectedIncome.flatMap((o) => {
+    const vatPercent = ctx.clientItems.get(o.recurringItemId);
+    return vatPercent === undefined ? [] : [{ amount: o.amount, vatPercent }];
+  });
 
   return {
     month,
@@ -551,7 +556,7 @@ async function buildMonth(
     expenseSources: projecting
       ? expenseSources(ctx, month, categories, sum(projectedExpenses))
       : { fixed: 0, budgets: 0, averages: 0, typed: 0, fellBack: [] },
-    btwAccrued: projecting ? btwInside(clientIncome) : 0,
+    btwAccrued: projecting ? btwOfIncome(clientIncome) : 0,
     plannedReserve,
     budget: {
       total: totalBudget,

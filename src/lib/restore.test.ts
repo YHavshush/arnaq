@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
 import { TEST_USER_B, createDb, schema } from "@/db";
 import { withUser } from "@/db/scoped";
+import { getBtwClients, replaceBtwClients } from "./btw/clients";
 import { buildExport } from "./export";
 import { RestoreError, restoreFromBackup } from "./restore";
 
@@ -92,6 +93,10 @@ async function seeded() {
       btwPaymentLag: 1,
       btwPotInSavings: true,
     });
+    await replaceBtwClients(tx, [
+      { name: "Featurn", paymentLag: 1, vatPercent: 21 },
+      { name: "Globex GmbH", paymentLag: 2, vatPercent: 0 },
+    ]);
   });
   const backup = JSON.parse(JSON.stringify(await withUser(db, A, (tx) => buildExport(tx))));
   return { db, backup };
@@ -229,29 +234,96 @@ describe("restoreFromBackup", () => {
     ).toMatchObject([{ savingsGoal: null, savingsStart: 2500 }]);
   });
 
-  it("brings back the BTW payment lag; an older backup without it, or a damaged one, keeps 0", async () => {
-    const { db, backup } = await seeded();
-    const lag = async () =>
-      (await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)))[0]
-        ?.btwPaymentLag;
-    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
-    expect(await lag()).toBe(1);
+  describe("the BTW clients", () => {
+    const clientsOfB = async (db: Awaited<ReturnType<typeof seeded>>["db"]) =>
+      (await withUser(db, TEST_USER_B, (tx) => getBtwClients(tx))).map(
+        ({ name, paymentLag, vatPercent }) => ({ name, paymentLag, vatPercent }),
+      );
+    const featurn = (paymentLag: number) => ({ name: "Featurn", paymentLag, vatPercent: 21 });
 
-    const old = JSON.parse(JSON.stringify(backup));
-    delete old.tables.userSettings[0].btwPaymentLag;
-    old.version = 8;
-    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, old));
-    expect(await lag()).toBe(0);
+    it("a version 11 backup brings back the whole list, in order", async () => {
+      const { db, backup } = await seeded();
+      expect(backup.version).toBe(11);
+      expect(backup.tables.btwClients.map((c: { name: string }) => c.name)).toEqual([
+        "Featurn",
+        "Globex GmbH",
+      ]);
+      expect(backup.tables.btwClients[0]).not.toHaveProperty("userId");
+      await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, backup));
+      expect(await clientsOfB(db)).toEqual([
+        featurn(1),
+        { name: "Globex GmbH", paymentLag: 2, vatPercent: 0 },
+      ]);
+      // The original is untouched.
+      expect((await withUser(db, A, (tx) => getBtwClients(tx))).length).toBe(2);
+    });
 
-    const damaged = JSON.parse(JSON.stringify(backup));
-    damaged.tables.userSettings[0].btwPaymentLag = 7;
-    await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, damaged));
-    expect(await lag()).toBe(0);
+    it("skips damaged entries, keeps an empty list empty, and never fails the restore over them", async () => {
+      const { db, backup } = await seeded();
+      const damaged = JSON.parse(JSON.stringify(backup));
+      damaged.tables.btwClients = [
+        { name: "Acme", paymentLag: 7, vatPercent: 21 },
+        { name: "---", paymentLag: 0, vatPercent: 21 },
+        { name: "Initech", paymentLag: 1, vatPercent: 9 },
+        "Hooli",
+        null,
+        { name: "Wayne", paymentLag: 1, vatPercent: 0 },
+      ];
+      await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, damaged));
+      expect(await clientsOfB(db)).toEqual([{ name: "Wayne", paymentLag: 1, vatPercent: 0 }]);
+
+      const empty = JSON.parse(JSON.stringify(backup));
+      empty.tables.btwClients = [];
+      await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, empty));
+      expect(await clientsOfB(db)).toEqual([]);
+
+      // Not a list at all (hand-edited): built from the old fields, like an older backup.
+      const broken = JSON.parse(JSON.stringify(backup));
+      broken.tables.btwClients = { name: "Acme" };
+      await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, broken));
+      expect(await clientsOfB(db)).toEqual([featurn(1)]);
+    });
+
+    it("an older backup (version 10 or before) becomes one client from the old name and lag, as the migration did", async () => {
+      const { db, backup } = await seeded();
+      const old = (edit: (settings: Record<string, unknown>) => void, version = 10) => {
+        const copy = JSON.parse(JSON.stringify(backup));
+        delete copy.tables.btwClients;
+        copy.version = version;
+        edit(copy.tables.userSettings[0]);
+        return copy;
+      };
+      const restore = async (b: unknown) => {
+        await withUser(db, TEST_USER_B, (tx) => restoreFromBackup(tx, b));
+        return await clientsOfB(db);
+      };
+      // Its own client and lag (the 0% Globex of version 11 does not exist in an old backup).
+      expect(await restore(old((s) => (s.btwClient = "Acme BV")))).toEqual([
+        { name: "Acme BV", paymentLag: 1, vatPercent: 21 },
+      ]);
+      // No client saved: the default, with the saved lag.
+      expect(await restore(old((s) => (s.btwClient = null)))).toEqual([featurn(1)]);
+      // Before version 9 there was no lag: 0.
+      expect(await restore(old((s) => delete s.btwPaymentLag, 8))).toEqual([featurn(0)]);
+      // Damaged values: the default name, lag 0.
+      expect(
+        await restore(
+          old((s) => {
+            s.btwClient = "---";
+            s.btwPaymentLag = 7;
+          }),
+        ),
+      ).toEqual([featurn(0)]);
+      // No settings at all (a version 1 backup): the default client.
+      const bare = old(() => {}, 1);
+      delete bare.tables.userSettings;
+      expect(await restore(bare)).toEqual([featurn(0)]);
+    });
   });
 
   it("brings back whether the BTW pot is part of the savings; an older backup without it, or a damaged one, restores as off", async () => {
     const { db, backup } = await seeded();
-    expect(backup.version).toBe(10);
+    expect(backup.version).toBe(11);
     const pot = async () =>
       (await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)))[0]
         ?.btwPotInSavings;

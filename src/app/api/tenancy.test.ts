@@ -6,6 +6,7 @@ import path from "node:path";
 import { eq } from "drizzle-orm";
 import { beforeAll, describe, expect, it } from "vitest";
 import { TEST_USER_A, TEST_USER_B, schema } from "@/db";
+import { localizeMessage } from "@/i18n/server-messages";
 import { todayIso } from "@/lib/api";
 import { buildExport } from "@/lib/export";
 import { addMonths, monthOf } from "@/lib/recurring/dates";
@@ -39,6 +40,8 @@ const ROUTES: Record<string, string[]> = {
   "smart/settings": ["GET", "PUT"],
   "savings/settings": ["GET", "PUT"],
   "btw/settings": ["GET", "PUT"],
+  "btw/clients": ["GET", "POST"],
+  "btw/clients/[id]": ["PATCH", "DELETE"],
   "forecast/own": ["GET", "PUT"],
   plan: ["GET", "PUT"],
   sample: ["GET", "POST", "DELETE"],
@@ -82,6 +85,7 @@ interface A {
   ruleId: number;
   accountId: number;
   transactionId: number;
+  btwClientId: number;
 }
 let a: A;
 let exportOfA: string;
@@ -155,6 +159,14 @@ beforeAll(async () => {
       }),
     ),
   );
+  const btwClient = await ok(
+    await call(
+      "btw/clients",
+      "POST",
+      json("POST", "/api/btw/clients", { name: `${MARK} client`, paymentLag: 1, vatPercent: 0 }),
+    ),
+    201,
+  );
   const form = new FormData();
   form.set(
     "file",
@@ -176,6 +188,7 @@ beforeAll(async () => {
     ruleId: rule.id,
     accountId: account.id as number,
     transactionId: review[0].id,
+    btwClientId: btwClient.id as number,
   };
   exportOfA = JSON.stringify((await asTestUser((db) => buildExport(db, new Date(0)))).tables);
 });
@@ -277,6 +290,25 @@ describe("user B cannot change A's data, even knowing its ids", () => {
         )
       ).status,
     ).toBe(404);
+  });
+
+  it("BTW clients: not found, and B's list is B's own", async () => {
+    const id = a.btwClientId;
+    for (const body of [{ name: "hacked" }, { paymentLag: 0 }, {}])
+      expect((await call("btw/clients/[id]", "PATCH", json("PATCH", "/x", body), id)).status).toBe(
+        404,
+      );
+    expect(
+      (await call("btw/clients/[id]", "DELETE", new Request(url("/x"), { method: "DELETE" }), id))
+        .status,
+    ).toBe(404);
+    // B starts with the default client only.
+    const list = (await (
+      await call("btw/clients", "GET", new Request(url("/api/btw/clients")))
+    ).json()) as { name: string; paymentLag: number; vatPercent: number }[];
+    expect(list.map(({ name, paymentLag, vatPercent }) => [name, paymentLag, vatPercent])).toEqual([
+      ["Featurn", 0, 21],
+    ]);
   });
 
   it("A's transaction cannot be categorised, A's category cannot be used", async () => {
@@ -470,50 +502,37 @@ describe("savings settings are per person", () => {
 });
 
 describe("BTW settings are per person", () => {
-  it("B keeps the defaults while A's client stays", async () => {
+  it("B keeps the defaults while A's pocket word stays", async () => {
     const get = async () =>
       await (await call("btw/settings", "GET", new Request(url("/api/btw/settings")))).json();
     setTestUser(TEST_USER_A);
     expect(
-      (
-        await call(
-          "btw/settings",
-          "PUT",
-          json("PUT", "/api/btw/settings", { client: "Acme", pocket: "Tax pot", paymentLag: 1 }),
-        )
-      ).status,
+      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { pocket: "Tax pot" })))
+        .status,
     ).toBe(200);
-    expect(await get()).toEqual({
-      client: "Acme",
-      pocket: "Tax pot",
-      paymentLag: 1,
-      potInSavings: false,
-    });
+    expect(await get()).toEqual({ pocket: "Tax pot", potInSavings: false });
     setTestUser(TEST_USER_B);
-    expect(await get()).toEqual({
-      client: "Featurn",
-      pocket: "BTW",
-      paymentLag: 0,
-      potInSavings: false,
-    });
+    expect(await get()).toEqual({ pocket: "BTW", potInSavings: false });
     expect(
-      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { client: 5 }))).status,
-    ).toBe(422);
-    expect(
-      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { paymentLag: "1" })))
-        .status,
-    ).toBe(422);
-    expect(
-      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { paymentLag: 3 })))
-        .status,
+      (await call("btw/settings", "PUT", json("PUT", "/api/btw/settings", { pocket: 5 }))).status,
     ).toBe(422);
     setTestUser(TEST_USER_A);
-    expect(await get()).toEqual({
-      client: "Acme",
-      pocket: "Tax pot",
-      paymentLag: 1,
-      potInSavings: false,
-    });
+    expect(await get()).toEqual({ pocket: "Tax pot", potInSavings: false });
+  });
+
+  it("ignores the old single-client fields: the clients are a list of their own now", async () => {
+    setTestUser(TEST_USER_A);
+    const clients = async () =>
+      await (await call("btw/clients", "GET", new Request(url("/api/btw/clients")))).json();
+    const before = await clients();
+    const res = await call(
+      "btw/settings",
+      "PUT",
+      json("PUT", "/api/btw/settings", { client: "Acme", paymentLag: 3 }),
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ pocket: "Tax pot", potInSavings: false });
+    expect(await clients()).toEqual(before);
   });
 
   it("saves whether the BTW pot is part of the savings, per person, and refuses anything but true or false", async () => {
@@ -536,6 +555,97 @@ describe("BTW settings are per person", () => {
     expect((await get()).potInSavings).toBe(true);
     expect((await put({ potInSavings: false })).status).toBe(200);
     expect((await get()).potInSavings).toBe(false);
+  });
+});
+
+describe("the BTW client list", () => {
+  type Client = { id: number; name: string; paymentLag: number; vatPercent: number };
+  const list = async () =>
+    (await (
+      await call("btw/clients", "GET", new Request(url("/api/btw/clients")))
+    ).json()) as Client[];
+  const add = async (body: unknown) =>
+    await call("btw/clients", "POST", json("POST", "/api/btw/clients", body));
+  const edit = async (id: number, body: unknown) =>
+    await call("btw/clients/[id]", "PATCH", json("PATCH", "/x", body), id);
+  const remove = async (id: number) =>
+    await call("btw/clients/[id]", "DELETE", new Request(url("/x"), { method: "DELETE" }), id);
+
+  it("adds, edits and removes a client, per person", async () => {
+    setTestUser(TEST_USER_B);
+    const res = await add({ name: " Globex  GmbH ", paymentLag: 2, vatPercent: 0 });
+    expect(res.status).toBe(201);
+    const globex = (await res.json()) as Client;
+    expect(globex).toMatchObject({ name: "Globex GmbH", paymentLag: 2, vatPercent: 0 });
+    // Defaults for what is left out.
+    const acme = (await (await add({ name: "Acme" })).json()) as Client;
+    expect(acme).toMatchObject({ paymentLag: 0, vatPercent: 21 });
+
+    const edited = await edit(globex.id, { paymentLag: 1 });
+    expect(edited.status).toBe(200);
+    expect(await edited.json()).toEqual({ ...globex, paymentLag: 1 });
+    expect((await list()).map((c) => c.name)).toEqual(["Featurn", "Globex GmbH", "Acme"]);
+
+    // A does not see them, and A's client is not in B's list.
+    setTestUser(TEST_USER_A);
+    const ofA = await list();
+    expect(ofA.map((c) => c.name)).not.toContain("Globex GmbH");
+    expect(ofA.map((c) => c.id)).toContain(a.btwClientId);
+    expect((await edit(globex.id, { name: "mine now" })).status).toBe(404);
+    expect((await remove(globex.id)).status).toBe(404);
+
+    setTestUser(TEST_USER_B);
+    expect((await remove(acme.id)).status).toBe(204);
+    expect((await remove(acme.id)).status).toBe(404);
+    expect((await remove(globex.id)).status).toBe(204);
+    expect((await list()).map((c) => c.name)).toEqual(["Featurn"]);
+  });
+
+  it("refuses bad input with a 422 and a message, translated for a Dutch reader", async () => {
+    setTestUser(TEST_USER_B);
+    const cases: [unknown, string][] = [
+      [{}, "Give the client a name."],
+      [{ name: "" }, "Give the client a name."],
+      [{ name: 42 }, "Give the client a name."],
+      [{ name: "x".repeat(61) }, "The name is too long (max 60)."],
+      [{ name: "..." }, "Use letters or numbers in the name."],
+      [{ name: "FEATURN" }, "You already have a client with this name."],
+      [{ name: "Acme", paymentLag: 3 }, "The payment lag must be 0, 1 or 2 months."],
+      [{ name: "Acme", paymentLag: "1" }, "The payment lag must be 0, 1 or 2 months."],
+      [{ name: "Acme", vatPercent: 9 }, "The BTW rate must be 21% or 0%."],
+      [{ name: "Acme", vatPercent: "21" }, "The BTW rate must be 21% or 0%."],
+    ];
+    for (const [body, error] of cases) {
+      const res = await add(body);
+      expect(res.status, JSON.stringify(body)).toBe(422);
+      expect((await res.json()).error).toBe(error);
+    }
+    expect((await add([])).status).toBe(400);
+    expect((await add("Acme")).status).toBe(400);
+    const [featurn] = await list();
+    expect((await edit(featurn.id, { vatPercent: 6 })).status).toBe(422);
+    expect((await edit(featurn.id, [])).status).toBe(400);
+    expect(
+      (await call("btw/clients/[id]", "PATCH", json("PATCH", "/x", {}), "abc" as never)).status,
+    ).toBe(400);
+
+    const nl = localizeMessage("You already have a client with this name.", "nl");
+    expect(nl).toBe("Je hebt al een klant met deze naam.");
+    expect((await list()).map((c) => c.name)).toEqual(["Featurn"]);
+  });
+
+  it("holds at most 20 clients per person", async () => {
+    setTestUser(TEST_USER_B);
+    const made: number[] = [];
+    for (let i = 1; i < 20; i++) {
+      const res = await add({ name: `Client ${i}` });
+      expect(res.status).toBe(201);
+      made.push(((await res.json()) as Client).id);
+    }
+    const res = await add({ name: "Client 20" });
+    expect(res.status).toBe(422);
+    expect((await res.json()).error).toBe("You can have up to 20 clients.");
+    for (const id of made) expect((await remove(id)).status).toBe(204);
   });
 });
 
