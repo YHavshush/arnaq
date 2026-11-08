@@ -1,0 +1,77 @@
+<title>arnaq BTW pot</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the answer first, then phone-sized mock screens side by side (they wrap on a narrow screen), then the setting. Colours are arnaq's own palette B. */
+:root { --bg:#f4f4f7; --ink:#17202e; --muted:#4a5568; --line:rgba(127,127,127,.3); --blue:#5ea8e8; --purple:#9585dd; --green:#55c490; --orange:#f2a468; --good:#2f7d5b; --bad:#c2443b; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --good:#5fcf9a; --bad:#f08a7d; color-scheme: dark; } }
+:root[data-theme="dark"] { --bg:#0d1118; --ink:#eef1f5; --muted:#a8b1bf; --good:#5fcf9a; --bad:#f08a7d; color-scheme: dark; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif; padding-block:28px 64px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width:1180px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr); gap:30px; }
+h1 { font:500 clamp(26px,5vw,34px)/1.1 Georgia,serif; margin:0; text-wrap:balance; } h2 { font:500 21px/1.2 Georgia,serif; margin:0; }
+p { margin:0; } .note-page { color:var(--muted); max-width:74ch; } .note-page b { color:var(--ink); }
+.sec { display:grid; gap:16px; padding-top:18px; border-top:1px solid var(--line); }
+.phones { display:grid; grid-template-columns:repeat(auto-fit,minmax(250px,1fr)); gap:22px; align-items:start; }
+.phone { margin:0; display:grid; gap:10px; } .phone figcaption { font:600 14px/1.3 -apple-system,system-ui,sans-serif; color:var(--ink); }
+.screen { border-radius:30px; padding:20px 18px 18px; border:1px solid rgba(127,127,127,.25); display:grid; gap:8px; justify-items:center; text-align:center; }
+.dark .screen { --t:#eef1f5; --m:#a8b1bf; --track:rgba(255,255,255,.1); --pillbg:rgba(85,196,144,.16); --g:#5fcf9a; --b:#f08a7d; background:linear-gradient(180deg,#1b2d4a,#101a2e); color:var(--t); }
+.light .screen { --t:#17202e; --m:#4a5568; --track:rgba(23,32,46,.09); --pillbg:rgba(47,125,91,.12); --g:#2f7d5b; --b:#c2443b; background:linear-gradient(180deg,#dbe7f6,#f4e9de); color:var(--t); }
+.screen .eye { justify-self:start; font-size:12px; color:var(--m); } .screen h3 { justify-self:start; margin:-4px 0 0; font:500 30px/1 Georgia,serif; }
+.ringwrap { position:relative; width:min(100%,210px); aspect-ratio:1; margin-block:6px; } .ringwrap svg { width:100%; height:100%; display:block; }
+.centre { position:absolute; inset:0; display:grid; place-content:center; gap:2px; } .centre b { font:500 34px/1 -apple-system,system-ui,sans-serif; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.centre span { font-size:12px; color:var(--m); } .centre small { font-size:10.5px; color:var(--m); max-width:11ch; margin-inline:auto; }
+.sentence { font:400 19px/1.2 Georgia,serif; text-wrap:balance; } .sentence em { font-style:italic; }
+.pill { background:var(--pillbg); color:var(--g); font-size:12px; font-weight:700; padding:5px 11px; border-radius:99px; }
+.legend { list-style:none; margin:4px 0 0; padding:0; display:grid; gap:7px; width:100%; max-width:15rem; text-align:left; font-size:13.5px; }
+.legend li { display:grid; grid-template-columns:.7rem minmax(0,1fr) auto; gap:9px; align-items:center; } .legend i { width:.7rem; height:.7rem; border-radius:50%; display:block; }
+.legend b { font-weight:500; color:var(--m); font-variant-numeric:tabular-nums; } .legend b.good { color:var(--g); font-weight:700; } .legend b.bad { color:var(--b); font-weight:700; }
+.screen .note { font-size:11.5px; color:var(--m); max-width:22ch; }
+.settings { max-width:430px; border:1px solid var(--line); border-radius:24px; padding:18px; display:grid; gap:12px; }
+.settings h3 { margin:0; font:500 18px/1.2 Georgia,serif; } .row { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:14px; align-items:center; }
+.switch { width:46px; height:28px; border-radius:99px; background:var(--blue); position:relative; } .switch::after { content:""; position:absolute; top:3px; right:3px; width:22px; height:22px; border-radius:50%; background:#fff; }
+.small { font-size:13px; color:var(--muted); } .btn { justify-self:start; background:var(--blue); color:#0d1118; font-weight:700; padding:9px 20px; border-radius:99px; }
+</style>
+<main>
+<header style="display:grid;gap:8px"><h1>Showing the BTW pot</h1>
+<p class="note-page">The BTW money sits in a pot inside the Revolut savings account, and the bank file never names the pot. With one setting, arnaq counts your savings toward the BTW first, so the Ahead screen shows the BTW as covered. The net worth stays €595: nothing is counted twice. Invented numbers.</p></header>
+<section class="sec"><h2>Ahead, before and after</h2>
+<p class="note-page"><b>Left:</b> today, savings of €201 and a BTW of −€168 that looks unpaid. <b>Next:</b> the setting on. The savings show only what is left (€33), the pot gets its own orange slice and line, and the BTW line says "covered". The ring still adds up to the same total.</p>
+<div class="phones"><figure class="phone dark"><figcaption>Today: arnaq cannot see the pot</figcaption>
+<div class="screen"><p class="eye">The next 6 months</p><h3>ahead</h3>
+<div class="ringwrap"><svg viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="100" fill="none" stroke="var(--track)" stroke-width="22"/><circle cx="120" cy="120" r="100" fill="none" stroke="var(--blue)" stroke-width="22" stroke-linecap="round" stroke-dasharray="287.0 341.3" stroke-dashoffset="-3.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--purple)" stroke-width="22" stroke-linecap="round" stroke-dasharray="161.8 466.5" stroke-dashoffset="-297.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--green)" stroke-width="22" stroke-linecap="round" stroke-dasharray="158.5 469.8" stroke-dashoffset="-466.3" transform="rotate(-90 120 120)"/></svg>
+<div class="centre"><b>€595</b><span>net worth now</span><small>after −€168 BTW</small></div></div>
+<p class="sentence">Your money lasts beyond <em>May 2027</em>.</p><span class="pill">+ €2,835 by May</span>
+<ul class="legend"><li><i style="background:var(--blue)"></i><span>Rabobank</span><b class="">€357</b></li><li><i style="background:var(--purple)"></i><span>Revolut</span><b class="">€205</b></li><li><i style="background:var(--green)"></i><span>Savings</span><b class="">€201</b></li><li><i style="background:var(--orange)"></i><span>BTW still owed</span><b class="bad">−€168</b></li></ul><p class="note"></p></div></figure><figure class="phone dark"><figcaption>With the setting on: pot covers it</figcaption>
+<div class="screen"><p class="eye">The next 6 months</p><h3>ahead</h3>
+<div class="ringwrap"><svg viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="100" fill="none" stroke="var(--track)" stroke-width="22"/><circle cx="120" cy="120" r="100" fill="none" stroke="var(--blue)" stroke-width="22" stroke-linecap="round" stroke-dasharray="287.0 341.3" stroke-dashoffset="-3.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--purple)" stroke-width="22" stroke-linecap="round" stroke-dasharray="161.8 466.5" stroke-dashoffset="-297.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--green)" stroke-width="22" stroke-linecap="round" stroke-dasharray="20.2 608.1" stroke-dashoffset="-466.3" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--orange)" stroke-width="22" stroke-linecap="round" stroke-dasharray="131.3 497.0" stroke-dashoffset="-493.5" transform="rotate(-90 120 120)"/></svg>
+<div class="centre"><b>€595</b><span>net worth now</span><small>net worth now, BTW covered</small></div></div>
+<p class="sentence">Your money lasts beyond <em>May 2027</em>.</p><span class="pill">+ €2,835 by May</span>
+<ul class="legend"><li><i style="background:var(--blue)"></i><span>Rabobank</span><b class="">€357</b></li><li><i style="background:var(--purple)"></i><span>Revolut</span><b class="">€205</b></li><li><i style="background:var(--green)"></i><span>Savings</span><b class="">€33</b></li><li><i style="background:var(--orange)"></i><span>BTW pot</span><b class="good">€168</b></li><li><i style="background:var(--orange)"></i><span>BTW still owed</span><b class="good">covered</b></li></ul><p class="note"></p></div></figure><figure class="phone light"><figcaption>Same, in light mode</figcaption>
+<div class="screen"><p class="eye">The next 6 months</p><h3>ahead</h3>
+<div class="ringwrap"><svg viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="100" fill="none" stroke="var(--track)" stroke-width="22"/><circle cx="120" cy="120" r="100" fill="none" stroke="var(--blue)" stroke-width="22" stroke-linecap="round" stroke-dasharray="287.0 341.3" stroke-dashoffset="-3.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--purple)" stroke-width="22" stroke-linecap="round" stroke-dasharray="161.8 466.5" stroke-dashoffset="-297.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--green)" stroke-width="22" stroke-linecap="round" stroke-dasharray="20.2 608.1" stroke-dashoffset="-466.3" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--orange)" stroke-width="22" stroke-linecap="round" stroke-dasharray="131.3 497.0" stroke-dashoffset="-493.5" transform="rotate(-90 120 120)"/></svg>
+<div class="centre"><b>€595</b><span>net worth now</span><small>net worth now, BTW covered</small></div></div>
+<p class="sentence">Your money lasts beyond <em>May 2027</em>.</p><span class="pill">+ €2,835 by May</span>
+<ul class="legend"><li><i style="background:var(--blue)"></i><span>Rabobank</span><b class="">€357</b></li><li><i style="background:var(--purple)"></i><span>Revolut</span><b class="">€205</b></li><li><i style="background:var(--green)"></i><span>Savings</span><b class="">€33</b></li><li><i style="background:var(--orange)"></i><span>BTW pot</span><b class="good">€168</b></li><li><i style="background:var(--orange)"></i><span>BTW still owed</span><b class="good">covered</b></li></ul><p class="note"></p></div></figure></div></section>
+<section class="sec"><h2>When the pot is smaller than the BTW owed</h2>
+<p class="note-page">If the savings cannot cover the BTW, the line says how much is missing in red, so you can see it at a glance. Here €100 is set aside and €68 is short.</p>
+<div class="phones"><figure class="phone dark"><figcaption>Pot smaller than owed</figcaption>
+<div class="screen"><p class="eye">The next 6 months</p><h3>ahead</h3>
+<div class="ringwrap"><svg viewBox="0 0 240 240" aria-hidden="true"><circle cx="120" cy="120" r="100" fill="none" stroke="var(--track)" stroke-width="22"/><circle cx="120" cy="120" r="100" fill="none" stroke="var(--blue)" stroke-width="22" stroke-linecap="round" stroke-dasharray="287.0 341.3" stroke-dashoffset="-3.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--purple)" stroke-width="22" stroke-linecap="round" stroke-dasharray="161.8 466.5" stroke-dashoffset="-297.5" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--green)" stroke-width="22" stroke-linecap="round" stroke-dasharray="76.2 552.1" stroke-dashoffset="-466.3" transform="rotate(-90 120 120)"/>
+<circle cx="120" cy="120" r="100" fill="none" stroke="var(--orange)" stroke-width="22" stroke-linecap="round" stroke-dasharray="75.3 553.0" stroke-dashoffset="-549.5" transform="rotate(-90 120 120)"/></svg>
+<div class="centre"><b>€595</b><span>net worth now</span><small>net worth now, BTW short</small></div></div>
+<p class="sentence">Your money lasts beyond <em>May 2027</em>.</p><span class="pill">+ €2,835 by May</span>
+<ul class="legend"><li><i style="background:var(--blue)"></i><span>Rabobank</span><b class="">€357</b></li><li><i style="background:var(--purple)"></i><span>Revolut</span><b class="">€205</b></li><li><i style="background:var(--green)"></i><span>Savings</span><b class="">€0</b></li><li><i style="background:var(--orange)"></i><span>BTW pot</span><b class="good">€100</b></li><li><i style="background:var(--orange)"></i><span>BTW still owed</span><b class="bad">short by €68</b></li></ul><p class="note"></p></div></figure></div></section>
+<section class="sec"><h2>The setting, in Settings under BTW</h2>
+<div class="settings"><h3>BTW</h3><div class="row"><div><b>My BTW pot is part of my savings</b><p class="small">Arnaq counts my savings toward the BTW first, so you can see it is covered. The savings goal then counts only what is left after the BTW.</p></div><span class="switch" role="img" aria-label="On"></span></div><span class="btn">Save</span></div>
+<p class="note-page"><b>One effect to know:</b> the savings goal (today €201 of €1,000) would count only the €33 left after the BTW, so its progress looks lower. That is the honest figure, because the BTW money is not goal money.</p></section>
+</main>
