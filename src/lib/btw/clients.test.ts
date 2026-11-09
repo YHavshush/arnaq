@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createDb } from "@/db";
 import { deleteAllMyData } from "@/lib/account";
+import { seedDefaults } from "@/lib/categories/seed";
 import {
   BtwClientNotFound,
   MAX_BTW_CLIENTS,
@@ -24,9 +25,18 @@ const shape = (list: { name: string; paymentLag: number; vatPercent: number }[])
   list.map(({ name, paymentLag, vatPercent }) => ({ name, paymentLag, vatPercent }));
 
 describe("the BTW client list", () => {
-  it("a new person starts with the default client (Featurn, pays in the same month, 21%), as before", async () => {
+  it("the tests start as the owner does, with one client (a fixture)", async () => {
     const db = await createDb(":memory:");
     expect(shape(await getBtwClients(db))).toEqual([rule("Featurn")]);
+  });
+
+  it("a new account starts with no clients: seeding the defaults adds none, whatever was there", async () => {
+    const db = await createDb(":memory:");
+    const [featurn] = await getBtwClients(db);
+    await deleteBtwClient(db, featurn.id);
+    await seedDefaults(db);
+    await seedDefaults(db); // safe to repeat
+    expect(await getBtwClients(db)).toEqual([]);
   });
 
   it("adds clients, trims the name, and lists them oldest first", async () => {
@@ -115,13 +125,11 @@ describe("the BTW client list", () => {
     expect(await getBtwClients(db)).toHaveLength(MAX_BTW_CLIENTS);
   });
 
-  it("erasing everything brings the default client back, like every other default", async () => {
+  it("erasing everything leaves no clients: a person starts again from an empty list", async () => {
     const db = await createDb(":memory:");
-    const [featurn] = await getBtwClients(db);
-    await deleteBtwClient(db, featurn.id);
     await addBtwClient(db, { name: "Acme", paymentLag: 1 });
     await deleteAllMyData(db);
-    expect(shape(await getBtwClients(db))).toEqual([rule("Featurn")]);
+    expect(await getBtwClients(db)).toEqual([]);
   });
 
   it("replaces the whole list (restore), skipping damaged and duplicate entries, never more than the limit", async () => {

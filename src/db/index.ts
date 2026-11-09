@@ -7,6 +7,8 @@ import { migrate as migratePostgres } from "drizzle-orm/postgres-js/migrator";
 import { mkdirSync } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
+import { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_PAYMENT_LAG } from "@/lib/btw/defaults";
+import { BTW_RATE_PERCENT } from "@/lib/btw/rate";
 import { seedDefaults } from "@/lib/categories/seed";
 import * as schema from "./schema";
 
@@ -121,6 +123,13 @@ async function buildTemplateDump(): Promise<Blob | File> {
   await client.query("insert into app_users (user_id) values ($1)", [TEST_USER_A]);
   await client.query("select set_config('app.user_id', $1, false)", [TEST_USER_A]);
   await seedDefaults(db);
+  // A fixture, not a default: tests start as the owner does, with one BTW client. A real new account starts with none
+  // (seedDefaults adds no client), and the tests that check that remove this one first.
+  await db.insert(schema.btwClients).values({
+    name: DEFAULT_BTW_INCOME_MATCH,
+    paymentLag: DEFAULT_BTW_PAYMENT_LAG,
+    vatPercent: BTW_RATE_PERCENT,
+  });
   await client.query("reset app.user_id");
   const dump = await client.dumpDataDir("none");
   await client.close();
