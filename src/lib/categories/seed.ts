@@ -1,10 +1,9 @@
 import type { Db } from "@/db";
 import * as schema from "@/db/schema";
 import { count } from "drizzle-orm";
-import { seedBtwClients } from "@/lib/btw/clients";
 import { DEFAULT_CATEGORIES, DEFAULT_RULES, SAVINGS_CATEGORY, TAXES_CATEGORY } from "./defaults";
 
-/** Insert the current user's default categories, starter rules and default BTW client. Safe to call repeatedly. */
+/** Insert the current user's default categories and starter rules. Safe to call repeatedly. (No BTW client: a new account starts with none, the person adds their own in Settings.) */
 export async function seedDefaults(db: Db): Promise<void> {
   await db
     .insert(schema.categories)
@@ -17,9 +16,6 @@ export async function seedDefaults(db: Db): Promise<void> {
       })),
     )
     .onConflictDoNothing({ target: [schema.categories.userId, schema.categories.name] });
-
-  // The default BTW client, only when the user has no clients (so deleting one sticks).
-  await seedBtwClients(db);
 
   // Starter rules only when the user has none, so deleting a rule sticks.
   const [{ n }] = await db.select({ n: count() }).from(schema.categorisationRules);

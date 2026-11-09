@@ -3,7 +3,6 @@ import type { Db } from "@/db";
 // The schema module itself, not "@/db": seedDefaults (which @/db loads) seeds the default client from here.
 import * as schema from "@/db/schema";
 import {
-  DEFAULT_BTW_INCOME_MATCH,
   DEFAULT_BTW_PAYMENT_LAG,
   MAX_BTW_CLIENTS,
   isBtwPaymentLag,
@@ -222,21 +221,3 @@ export async function replaceBtwClients(db: Db, entries: readonly unknown[]): Pr
   return kept.length;
 }
 
-/**
- * A new person (or one who erased everything) starts with the default client, paid in the month of the invoice, at
- * 21%: what arnaq always did without settings. Only when they have no clients, so deleting one sticks.
- */
-export async function seedBtwClients(db: Db): Promise<void> {
-  // Their own rows only, also when run as the database owner (which row level security does not hold back): the test
-  // template is seeded that way, next to the clients migration 0013 gave other people.
-  const [{ n }] = await db
-    .select({ n: count() })
-    .from(schema.btwClients)
-    .where(sql`${schema.btwClients.userId} = app.uid()`);
-  if (n > 0) return;
-  await db.insert(schema.btwClients).values({
-    name: DEFAULT_BTW_INCOME_MATCH,
-    paymentLag: DEFAULT_BTW_PAYMENT_LAG,
-    vatPercent: BTW_RATE_PERCENT,
-  });
-}
