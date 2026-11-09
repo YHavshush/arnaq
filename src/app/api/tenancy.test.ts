@@ -302,13 +302,11 @@ describe("user B cannot change A's data, even knowing its ids", () => {
       (await call("btw/clients/[id]", "DELETE", new Request(url("/x"), { method: "DELETE" }), id))
         .status,
     ).toBe(404);
-    // B starts with the default client only.
+    // B is a new account: it starts with no clients (A's client is not in B's list).
     const list = (await (
       await call("btw/clients", "GET", new Request(url("/api/btw/clients")))
     ).json()) as { name: string; paymentLag: number; vatPercent: number }[];
-    expect(list.map(({ name, paymentLag, vatPercent }) => [name, paymentLag, vatPercent])).toEqual([
-      ["Featurn", 0, 21],
-    ]);
+    expect(list).toEqual([]);
   });
 
   it("A's transaction cannot be categorised, A's category cannot be used", async () => {
@@ -584,7 +582,7 @@ describe("the BTW client list", () => {
     const edited = await edit(globex.id, { paymentLag: 1 });
     expect(edited.status).toBe(200);
     expect(await edited.json()).toEqual({ ...globex, paymentLag: 1 });
-    expect((await list()).map((c) => c.name)).toEqual(["Featurn", "Globex GmbH", "Acme"]);
+    expect((await list()).map((c) => c.name)).toEqual(["Globex GmbH", "Acme"]);
 
     // A does not see them, and A's client is not in B's list.
     setTestUser(TEST_USER_A);
@@ -598,11 +596,12 @@ describe("the BTW client list", () => {
     expect((await remove(acme.id)).status).toBe(204);
     expect((await remove(acme.id)).status).toBe(404);
     expect((await remove(globex.id)).status).toBe(204);
-    expect((await list()).map((c) => c.name)).toEqual(["Featurn"]);
+    expect(await list()).toEqual([]);
   });
 
   it("refuses bad input with a 422 and a message, translated for a Dutch reader", async () => {
     setTestUser(TEST_USER_B);
+    expect((await add({ name: "Featurn" })).status).toBe(201); // so the duplicate case below has something to clash with
     const cases: [unknown, string][] = [
       [{}, "Give the client a name."],
       [{ name: "" }, "Give the client a name."],
@@ -632,17 +631,18 @@ describe("the BTW client list", () => {
     const nl = localizeMessage("You already have a client with this name.", "nl");
     expect(nl).toBe("Je hebt al een klant met deze naam.");
     expect((await list()).map((c) => c.name)).toEqual(["Featurn"]);
+    expect((await remove(featurn.id)).status).toBe(204);
   });
 
   it("holds at most 20 clients per person", async () => {
     setTestUser(TEST_USER_B);
     const made: number[] = [];
-    for (let i = 1; i < 20; i++) {
+    for (let i = 1; i <= 20; i++) {
       const res = await add({ name: `Client ${i}` });
       expect(res.status).toBe(201);
       made.push(((await res.json()) as Client).id);
     }
-    const res = await add({ name: "Client 20" });
+    const res = await add({ name: "Client 21" });
     expect(res.status).toBe(422);
     expect((await res.json()).error).toBe("You can have up to 20 clients.");
     for (const id of made) expect((await remove(id)).status).toBe(204);
