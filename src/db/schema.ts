@@ -541,3 +541,95 @@ export const aiUsage = pgTable(
   },
   (t) => [primaryKey({ columns: [t.userId, t.day] })],
 ).enableRLS();
+
+export const BANK_CONNECTION_STATUSES = [
+  "pending",
+  "active",
+  "expired",
+  "closed",
+  "failed",
+] as const;
+
+/**
+ * A link to a bank through Enable Banking (src/lib/banking): one consent at one bank (an "ASPSP"). `pending` while the
+ * person is at the bank: then only `stateHash` is set, the SHA-256 of the one-time state that comes back with them, and
+ * it is good for 15 minutes from `createdAt`. `active` once the bank said yes: `sessionId` is Enable Banking's session
+ * and `validUntil` when the consent ends. The session id is no credential on its own (every call also needs the
+ * application's signed token) but it is treated as one: it never leaves the server and is not in the backup. The
+ * private key and the tokens are never stored.
+ */
+export const bankConnections = pgTable(
+  "bank_connections",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: owner(),
+    aspspName: text("aspsp_name").notNull(),
+    aspspCountry: text("aspsp_country").notNull(),
+    status: text("status", { enum: BANK_CONNECTION_STATUSES }).notNull().default("pending"),
+    sessionId: text("session_id"),
+    validUntil: timestamp("valid_until", { withTimezone: true, mode: "string" }),
+    stateHash: text("state_hash"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique("bank_connections_user_id_id_unique").on(t.userId, t.id),
+    uniqueIndex("bank_connections_user_state_idx")
+      .on(t.userId, t.stateHash)
+      .where(sql`${t.stateHash} is not null`),
+    check(
+      "bank_connections_status_check",
+      sql`${t.status} in ('pending','active','expired','closed','failed')`,
+    ),
+    check(
+      "bank_connections_aspsp_check",
+      sql`char_length(${t.aspspName}) between 1 and 100 and ${t.aspspCountry} ~ '^[A-Z]{2}$'`,
+    ),
+    check(
+      "bank_connections_secret_check",
+      sql`(${t.sessionId} is null or char_length(${t.sessionId}) between 1 and 100) and (${t.stateHash} is null or ${t.stateHash} ~ '^[0-9a-f]{64}$')`,
+    ),
+  ],
+).enableRLS();
+
+/**
+ * One bank account a connection gives access to, and the arnaq account its transactions go into. `accountUid` is Enable
+ * Banking's id for the account within the session. Removing the connection or the arnaq account removes the link; the
+ * transactions it brought in stay.
+ */
+export const bankLinks = pgTable(
+  "bank_links",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: owner(),
+    connectionId: integer("connection_id").notNull(),
+    accountUid: text("account_uid").notNull(),
+    iban: text("iban"),
+    currency: text("currency").notNull(),
+    name: text("name").notNull(),
+    accountId: integer("account_id").notNull(),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true, mode: "string" }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique("bank_links_user_id_id_unique").on(t.userId, t.id),
+    unique("bank_links_connection_uid_unique").on(t.userId, t.connectionId, t.accountUid),
+    check(
+      "bank_links_fields_check",
+      sql`char_length(${t.accountUid}) between 1 and 100 and (${t.iban} is null or char_length(${t.iban}) between 5 and 34) and ${t.currency} ~ '^[A-Z]{3}$' and char_length(${t.name}) between 1 and 100`,
+    ),
+    foreignKey({
+      name: "bank_links_connection_fk",
+      columns: [t.userId, t.connectionId],
+      foreignColumns: [bankConnections.userId, bankConnections.id],
+    }).onDelete("cascade"),
+    foreignKey({
+      name: "bank_links_account_fk",
+      columns: [t.userId, t.accountId],
+      foreignColumns: [accounts.userId, accounts.id],
+    }).onDelete("cascade"),
+  ],
+).enableRLS();

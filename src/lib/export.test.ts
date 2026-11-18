@@ -51,6 +51,8 @@ describe("buildExport", () => {
       .filter((t) => is(t, PgTable))
       .map((t) => getTableName(t as never))
       .filter((n) => n !== "app_users" && n !== "ai_usage") // owner bookkeeping and cap counters, not the person's data
+      // A bank consent is not something to copy: the backup holds no session ids; after a restore the person links again.
+      .filter((n) => n !== "bank_connections" && n !== "bank_links")
       .sort();
     const out = await buildExport(await createDb(":memory:"));
     const exported = Object.keys(out.tables)

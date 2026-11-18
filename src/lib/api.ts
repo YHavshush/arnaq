@@ -3,6 +3,7 @@ import { DEFAULT_LOCALE, type Locale } from "@/i18n/config";
 import { getLocale } from "@/i18n/server";
 import { localizeMessage } from "@/i18n/server-messages";
 import { MAX_CENTS } from "@/lib/money";
+import { BankingError } from "@/lib/banking/errors";
 import { BtwError } from "@/lib/btw/settings";
 import { BudgetError } from "@/lib/budget/budgets";
 import { CategoriseError } from "@/lib/categories/categorise";
@@ -16,6 +17,7 @@ import { SavingsError } from "@/lib/savings/settings";
 import { IncomeTaxError } from "@/lib/income-tax/settings";
 
 const DOMAIN_ERRORS = [
+  BankingError,
   BtwError,
   BudgetError,
   CategoriseError,

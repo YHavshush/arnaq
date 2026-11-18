@@ -21,6 +21,8 @@ const TABLES = {
   btwClients: schema.btwClients,
   incomeTaxYears: schema.incomeTaxYears,
   // ai_usage is bookkeeping for the caps, not the person's data: it stays out.
+  // bank_connections and bank_links stay out too: a bank consent (its session id) is not something to copy into a file,
+  // and it would not work in another account. A restore disconnects the banks; the person links them again.
 } as const;
 
 export interface FullExport {
