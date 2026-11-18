@@ -12,6 +12,9 @@ import { EraseData } from "@/components/arnaq/erase-data";
 import { LearnedShops } from "@/components/arnaq/learned-shops";
 import { AppearanceSettings } from "@/components/arnaq/appearance-settings";
 import { BtwClients, BtwSettings } from "@/components/arnaq/btw-settings";
+import { IncomeTaxSettings, IncomeTaxYears } from "@/components/arnaq/income-tax-settings";
+import { getIncomeTaxSettings } from "@/lib/income-tax/settings";
+import { getIncomeTaxYears } from "@/lib/income-tax/years";
 import { SavingsGoal } from "@/components/arnaq/savings-goal";
 import { RestoreBackup } from "@/components/arnaq/restore-backup";
 import { SmartSettings } from "@/components/arnaq/smart-settings";
@@ -48,17 +51,29 @@ async function Content() {
   await requestTime();
   const { locale, t } = await getI18n();
   const s = t.ui.settings;
-  const [rules, categories, labels, smart, savingsSettings, savingsNow, btwSettings, btwClients] =
-    await pageDb(async (db) => [
-      await db.select().from(schema.categorisationRules),
-      await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
-      await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
-      await getSmartSettings(db),
-      await getSavingsSettings(db),
-      await getSavingsSummary(db, { today: todayIso() }),
-      await getBtwSettings(db),
-      await getBtwClients(db),
-    ]);
+  const [
+    rules,
+    categories,
+    labels,
+    smart,
+    savingsSettings,
+    savingsNow,
+    btwSettings,
+    btwClients,
+    incomeTaxSettings,
+    incomeTaxYears,
+  ] = await pageDb(async (db) => [
+    await db.select().from(schema.categorisationRules),
+    await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
+    await db.select().from(schema.merchantLabels).where(eq(schema.merchantLabels.source, "user")),
+    await getSmartSettings(db),
+    await getSavingsSettings(db),
+    await getSavingsSummary(db, { today: todayIso() }),
+    await getBtwSettings(db),
+    await getBtwClients(db),
+    await getIncomeTaxSettings(db),
+    await getIncomeTaxYears(db),
+  ]);
   const tiles = messages[locale].view.overzicht.tiles.sparen;
   const { euro } = formatter(locale);
   const goal = savingsSettings.goal;
@@ -124,6 +139,11 @@ async function Content() {
         {btwSettings.potInSavings && (
           <p className="text-ink-muted mb-3 max-w-[56ch] px-1 text-[15px]">{s.savings.potNote}</p>
         )}
+        {incomeTaxSettings.potInSavings && incomeTaxYears.length > 0 && (
+          <p className="text-ink-muted mb-3 max-w-[56ch] px-1 text-[15px]">
+            {s.savings.incomeTaxPotNote}
+          </p>
+        )}
         <SavingsGoal
           goal={savingsSettings.goal}
           start={savingsSettings.start}
@@ -145,6 +165,27 @@ async function Content() {
               {t.ui.btw.settings.settingsTitle}
             </h3>
             <BtwSettings pocket={btwSettings.pocket} potInSavings={btwSettings.potInSavings} />
+          </section>
+        </div>
+      </Section>
+
+      <Section title={t.ui.incomeTax.settings.title}>
+        <div className="grid gap-5">
+          <section className="grid gap-2" aria-labelledby="income-tax-years">
+            <h3 id="income-tax-years" className="text-ink-muted px-1 text-sm font-semibold">
+              {t.ui.incomeTax.settings.yearsTitle}
+            </h3>
+            <IncomeTaxYears years={incomeTaxYears} thisYear={Number(todayIso().slice(0, 4))} />
+          </section>
+          <section className="grid gap-2" aria-labelledby="income-tax-money">
+            <h3 id="income-tax-money" className="text-ink-muted px-1 text-sm font-semibold">
+              {t.ui.incomeTax.settings.settingsTitle}
+            </h3>
+            <IncomeTaxSettings
+              on={incomeTaxSettings.on}
+              pocket={incomeTaxSettings.pocket}
+              potInSavings={incomeTaxSettings.potInSavings}
+            />
           </section>
         </div>
       </Section>

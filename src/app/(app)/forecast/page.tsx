@@ -3,6 +3,10 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { pageDb } from "@/lib/auth/request";
 import { BtwCard } from "@/components/arnaq/btw-card";
+import { IncomeTaxCard } from "@/components/arnaq/income-tax-card";
+import { IncomeTaxPayments } from "@/components/arnaq/income-tax-payments";
+import { getTaxOfficePayments } from "@/lib/income-tax/payments";
+import { potByYear } from "@/lib/income-tax/pot";
 import { StepLink } from "@/components/arnaq/step-link";
 import { AheadTop } from "@/components/arnaq/ahead-top";
 import { WorthLegend } from "@/components/arnaq/worth-legend";
@@ -34,14 +38,21 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
   const today = todayIso();
   const query = await searchParams;
   const months = parseHorizon(query.months);
-  const { p, btw, worth } = await pageDb(async (db) => {
+  const { p, btw, worth, taxPayments } = await pageDb(async (db) => {
+    const worth = await loadNetWorth(db, today);
     return {
       // One way of working it out: the budget where you set one (carried forward), your average for the rest.
       p: await loadPrognose(db, today, months, locale, "budget"),
       btw: await getBtwSummary(db, { today }),
-      worth: await loadNetWorth(db, today),
+      worth,
+      // The payments to the tax office a year card offers to pick as income tax: from the oldest open year on.
+      taxPayments:
+        worth.incomeTaxYears.length > 0
+          ? await getTaxOfficePayments(db, { from: `${worth.incomeTaxYears[0].year}-01-01` })
+          : [],
     };
   });
+  const potByTaxYear = potByYear(worth.incomeTaxPot.pot, worth.incomeTaxYears);
   // The ring shows the money there is, one arc per account. The BTW (what is set aside minus what is still owed) takes
   // money off, so it has no arc: it is listed under the ring, and the number in the middle already includes it.
   const parts = [
@@ -56,7 +67,30 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           },
         ]
       : []),
+    // The income tax the same way: listed under the ring, already in the number in the middle.
+    ...(worth.incomeTax.net !== 0
+      ? [
+          {
+            key: "incomeTax",
+            name:
+              worth.incomeTax.net < 0 ? t.ui.netWorth.incomeTaxOwed : t.ui.netWorth.incomeTaxSpare,
+            amount: worth.incomeTax.net,
+            share: 0,
+          },
+        ]
+      : []),
   ];
+  const afterTaxes =
+    worth.btw.net !== 0 && worth.incomeTax.net !== 0
+      ? t.ui.netWorth.afterBtwAndIncomeTax(
+          f.euroSigned(worth.btw.net),
+          f.euroSigned(worth.incomeTax.net),
+        )
+      : worth.btw.net !== 0
+        ? t.ui.netWorth.afterBtw(f.euroSigned(worth.btw.net))
+        : worth.incomeTax.net !== 0
+          ? t.ui.netWorth.afterIncomeTax(f.euroSigned(worth.incomeTax.net))
+          : undefined;
 
   const ring = worthRing(parts);
   // Net worth now in the ring needs balances and income; without them the ring keeps showing the forecast.
@@ -110,10 +144,7 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           nowRing
             ? {
                 segments: ring.segments,
-                sub:
-                  worth.btw.net !== 0
-                    ? t.ui.netWorth.afterBtw(f.euroSigned(worth.btw.net))
-                    : undefined,
+                sub: afterTaxes,
               }
             : undefined
         }
@@ -210,6 +241,17 @@ async function Content({ searchParams }: Pick<PageProps<"/forecast">, "searchPar
           <BtwCard btw={btw} pot={worth.btwPot.pot} t={t} locale={locale} />
         </Section>
       )}
+      {/* One card per open tax year: last year's bill and this year's estimate can both be here. */}
+      {worth.incomeTaxYears.map((y) => (
+        <Section key={y.year} title={t.ui.incomeTax.title(y.year)} aside={t.ui.incomeTax.aside}>
+          <IncomeTaxCard year={y} pot={potByTaxYear.get(y.year) ?? 0} t={t} locale={locale}>
+            <IncomeTaxPayments
+              year={y.year}
+              payments={taxPayments.filter((pay) => pay.date >= `${y.year}-01-01`)}
+            />
+          </IncomeTaxCard>
+        </Section>
+      ))}
       {!p.incomeMissing && (
         <Section title={t.ui.chart.allMonths}>
           <MonthList points={p.points} />
