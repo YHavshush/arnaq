@@ -809,7 +809,7 @@ export const ui = {
     },
     restore: {
       title: "Restore a backup",
-      body: "Replaces everything in arnaq with the contents of a backup file you made with Full backup. What you have now is deleted first.",
+      body: "Replaces everything in arnaq with the contents of a backup file you made with Full backup. What you have now is deleted first. A backup holds no bank links: linked banks are disconnected, so link them again afterwards.",
       choose: "Choose the backup file",
       agree: "I understand that my current data is replaced",
       button: "Restore",
@@ -819,7 +819,7 @@ export const ui = {
     },
     erase: {
       title: "Delete my data",
-      body: "Deletes all your transactions, imports, accounts, categories, rules, budgets and settings. Your login stays; ask to have it removed if you want that too. This cannot be undone: download a backup first.",
+      body: "Deletes all your transactions, imports, accounts, bank links, categories, rules, budgets and settings, and disconnects your linked banks. Your login stays; ask to have it removed if you want that too. This cannot be undone: download a backup first.",
       prompt: "Type delete to confirm",
       word: "delete",
       button: "Delete all my data",
@@ -882,6 +882,73 @@ export const ui = {
     sample: "Try it with sample data",
     sampleHint:
       "You'll create an account first. Then you can fill it with sample data to look around.",
+  },
+  banking: {
+    title: "Bank connections",
+    intro:
+      "Link your own bank accounts and arnaq fetches the transactions for you, so you do not have to upload files. This goes through Enable Banking, a licensed service that reads bank accounts for apps like arnaq.",
+    promise:
+      "arnaq only reads your transactions and balances. It can never move money. Your bank asks you to agree, and that consent ends after about six months; then you link the bank again.",
+    notConfigured:
+      "Linking banks is not set up on this server. You can still upload your statements on the Upload screen.",
+    sandbox:
+      "Linking banks is off: this server has an Enable Banking test (sandbox) application, which only shows invented data. Use the production application's key.",
+    unreachable:
+      "Enable Banking cannot be reached right now, so linking banks is unavailable. Try again later.",
+    none: "No banks linked yet.",
+    backupTip:
+      "Tip: make a full backup first (Backup, in Settings), so you can go back if the bank's transactions are not what you expect.",
+    psuNote:
+      "When you press Refresh now, your IP address and browser are passed to your bank through Enable Banking, so the bank knows it is you asking.",
+    link: "Link a bank",
+    chooseBank: "Choose your bank",
+    loadingBanks: "Loading the banks…",
+    noBanks: "There is no bank to link right now.",
+    linkBankLabel: (bank: string) => `Link ${bank}`,
+    opening: "Opening your bank…",
+    refresh: "Refresh now",
+    refreshing: "Refreshing…",
+    reconnect: "Reconnect",
+    reconnectLabel: (bank: string) => `Reconnect ${bank}`,
+    disconnect: "Disconnect",
+    disconnectLabel: (bank: string) => `Disconnect ${bank}`,
+    disconnectQuestion: (bank: string) =>
+      `Disconnect ${bank}? arnaq stops reading it and the consent ends. The transactions already fetched stay.`,
+    confirmDisconnect: "Disconnect bank",
+    disconnected: "The bank is disconnected.",
+    status: {
+      active: "Active",
+      expired: "Consent ended",
+      failed: "Did not work",
+      endsSoon: "Ends soon",
+    },
+    daysLeft: (days: number) =>
+      days === 0
+        ? "The consent ends today."
+        : days === 1
+          ? "The consent ends tomorrow."
+          : `The consent ends in ${days} days.`,
+    ended: "The consent has ended. Reconnect to keep fetching transactions.",
+    syncedOn: (account: string, day: string) => `${account}, last fetched on ${day}`,
+    neverSynced: (account: string) => `${account}, not fetched yet`,
+    refreshed: (count: number) =>
+      count === 0
+        ? "Up to date: nothing new."
+        : count === 1
+          ? "1 new transaction fetched."
+          : `${count} new transactions fetched.`,
+    refreshProblem: (account: string, problem: string) => `${account}: ${problem}`,
+    refreshExpired: (account: string) =>
+      `${account}: the consent has ended. Reconnect the bank to keep fetching.`,
+    result: {
+      linked: "The bank is linked. arnaq is fetching your transactions.",
+      cancelled: "Linking was cancelled at the bank. Nothing changed.",
+      expired: "That link was too old or already used. Start again with Link a bank.",
+      failed: "Linking the bank did not work. Try again.",
+      noaccounts:
+        "The bank gave no accounts to read. Add your accounts in the Enable Banking control panel first, then link again.",
+      unavailable: "Linking banks is not set up on this server.",
+    },
   },
   sample: {
     banner: "Sample data. Invented payments, nothing here is yours.",

@@ -831,7 +831,7 @@ export const ui: typeof en = {
     },
     restore: {
       title: "Back-up terugzetten",
-      body: "Vervangt alles in arnaq door de inhoud van een back-upbestand dat je met Volledige back-up hebt gemaakt. Wat je nu hebt wordt eerst verwijderd.",
+      body: "Vervangt alles in arnaq door de inhoud van een back-upbestand dat je met Volledige back-up hebt gemaakt. Wat je nu hebt wordt eerst verwijderd. Een back-up bevat geen bankkoppelingen: gekoppelde banken worden ontkoppeld, dus koppel ze daarna opnieuw.",
       choose: "Kies het back-upbestand",
       agree: "Ik begrijp dat mijn huidige gegevens worden vervangen",
       button: "Terugzetten",
@@ -841,7 +841,7 @@ export const ui: typeof en = {
     },
     erase: {
       title: "Verwijder mijn gegevens",
-      body: "Verwijdert al je transacties, uploads, rekeningen, categorieën, regels, budgetten en instellingen. Je login blijft bestaan; vraag om verwijdering als je die ook weg wilt. Dit kan niet ongedaan worden gemaakt: maak eerst een back-up.",
+      body: "Verwijdert al je transacties, uploads, rekeningen, bankkoppelingen, categorieën, regels, budgetten en instellingen, en ontkoppelt je gekoppelde banken. Je login blijft bestaan; vraag om verwijdering als je die ook weg wilt. Dit kan niet ongedaan worden gemaakt: maak eerst een back-up.",
       prompt: "Typ verwijder om te bevestigen",
       word: "verwijder",
       button: "Verwijder al mijn gegevens",
@@ -904,6 +904,73 @@ export const ui: typeof en = {
     sample: "Kijk rond met voorbeeldgegevens",
     sampleHint:
       "Je maakt eerst een account. Daarna kun je het vullen met voorbeeldgegevens om rond te kijken.",
+  },
+  banking: {
+    title: "Bankkoppelingen",
+    intro:
+      "Koppel je eigen bankrekeningen en arnaq haalt de transacties voor je op, zodat je geen bestanden hoeft te uploaden. Dat gaat via Enable Banking, een erkende dienst die bankrekeningen uitleest voor apps zoals arnaq.",
+    promise:
+      "arnaq leest alleen je transacties en saldi. Het kan nooit geld overmaken. Je bank vraagt je om toestemming, en die vervalt na ongeveer zes maanden; dan koppel je de bank opnieuw.",
+    notConfigured:
+      "Banken koppelen is op deze server niet ingesteld. Je kunt je afschriften nog steeds uploaden op het scherm Uploaden.",
+    sandbox:
+      "Banken koppelen staat uit: deze server heeft een test-applicatie (sandbox) van Enable Banking, die alleen verzonnen gegevens laat zien. Gebruik de sleutel van de productie-applicatie.",
+    unreachable:
+      "Enable Banking is nu niet bereikbaar, dus banken koppelen werkt even niet. Probeer het later opnieuw.",
+    none: "Nog geen banken gekoppeld.",
+    backupTip:
+      "Tip: maak eerst een volledige back-up (Back-up, in Instellingen), zodat je terug kunt als de transacties van de bank niet zijn wat je verwacht.",
+    psuNote:
+      "Als je op Nu verversen drukt, worden je IP-adres en browser via Enable Banking aan je bank doorgegeven, zodat de bank weet dat jij het vraagt.",
+    link: "Koppel een bank",
+    chooseBank: "Kies je bank",
+    loadingBanks: "De banken worden geladen…",
+    noBanks: "Er is nu geen bank om te koppelen.",
+    linkBankLabel: (bank: string) => `Koppel ${bank}`,
+    opening: "Je bank wordt geopend…",
+    refresh: "Nu verversen",
+    refreshing: "Bezig met verversen…",
+    reconnect: "Opnieuw koppelen",
+    reconnectLabel: (bank: string) => `Koppel ${bank} opnieuw`,
+    disconnect: "Ontkoppelen",
+    disconnectLabel: (bank: string) => `Ontkoppel ${bank}`,
+    disconnectQuestion: (bank: string) =>
+      `${bank} ontkoppelen? arnaq leest de bank dan niet meer en de toestemming vervalt. De transacties die al zijn opgehaald blijven staan.`,
+    confirmDisconnect: "Bank ontkoppelen",
+    disconnected: "De bank is ontkoppeld.",
+    status: {
+      active: "Actief",
+      expired: "Toestemming verlopen",
+      failed: "Niet gelukt",
+      endsSoon: "Verloopt binnenkort",
+    },
+    daysLeft: (days: number) =>
+      days === 0
+        ? "De toestemming verloopt vandaag."
+        : days === 1
+          ? "De toestemming verloopt morgen."
+          : `De toestemming verloopt over ${days} dagen.`,
+    ended: "De toestemming is verlopen. Koppel opnieuw om transacties te blijven ophalen.",
+    syncedOn: (account: string, day: string) => `${account}, laatst opgehaald op ${day}`,
+    neverSynced: (account: string) => `${account}, nog niet opgehaald`,
+    refreshed: (count: number) =>
+      count === 0
+        ? "Bijgewerkt: niets nieuws."
+        : count === 1
+          ? "1 nieuwe transactie opgehaald."
+          : `${count} nieuwe transacties opgehaald.`,
+    refreshProblem: (account: string, problem: string) => `${account}: ${problem}`,
+    refreshExpired: (account: string) =>
+      `${account}: de toestemming is verlopen. Koppel de bank opnieuw om te blijven ophalen.`,
+    result: {
+      linked: "De bank is gekoppeld. arnaq haalt je transacties op.",
+      cancelled: "Het koppelen is bij de bank afgebroken. Er is niets veranderd.",
+      expired: "Die koppeling was te oud of al gebruikt. Begin opnieuw met Koppel een bank.",
+      failed: "Het koppelen van de bank is niet gelukt. Probeer het opnieuw.",
+      noaccounts:
+        "De bank gaf geen rekeningen om te lezen. Voeg je rekeningen eerst toe in het Enable Banking-controlepaneel en koppel dan opnieuw.",
+      unavailable: "Banken koppelen is op deze server niet ingesteld.",
+    },
   },
   sample: {
     banner: "Voorbeeldgegevens. Verzonnen betalingen, niets hiervan is van jou.",

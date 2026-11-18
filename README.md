@@ -43,7 +43,7 @@ Good to know:
 - Your bank files are read by the app itself and are not sent to any other service.
 - Every account only sees its own data, and the database enforces it, not only the app.
 - In Settings you can make a full backup, restore one, and delete all your data.
-- The app never needs your bank login. You bring the files.
+- The app never needs your bank login. You bring the files, or link your own accounts through Enable Banking (see "Linking banks with Enable Banking" in `docs/deploy.md`); arnaq then only reads, and never moves money.
 
 ## Source available, not open source
 

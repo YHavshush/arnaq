@@ -15,13 +15,14 @@ where your money goes and how the coming months look.
 
 ## What we store
 
-| Data                                                                                                           | Why                                                                                | Where                                     |
-| -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------- |
-| Your email address and a password (stored only as a hash by Supabase Auth)                                     | to sign you in                                                                     | Supabase, EU (Frankfurt)                  |
-| The transactions in the statements you upload: date, amount, counterparty name and account number, description | to show your overview and forecast                                                 | Supabase, EU (Frankfurt)                  |
-| Your categories, rules, budgets, fixed costs, the shops arnaq has learned from your choices, your settings   | to work as you set it up                                                           | same                                      |
-| A language and a theme choice                                                                                  | to remember your preference                                                        | your browser (a cookie and local storage) |
-| Sign-in cookies                                                                                                | to keep you signed in; they are not readable by scripts and only sent to this site | your browser                              |
+| Data                                                                                                                                               | Why                                                                                | Where                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ----------------------------------------- |
+| Your email address and a password (stored only as a hash by Supabase Auth)                                                                         | to sign you in                                                                     | Supabase, EU (Frankfurt)                  |
+| The transactions in the statements you upload: date, amount, counterparty name and account number, description                                     | to show your overview and forecast                                                 | Supabase, EU (Frankfurt)                  |
+| If you link a bank: which bank, when the consent ends, the linked accounts (name, IBAN, currency) and the transactions and balances read from them | to fetch your transactions without uploading files                                 | Supabase, EU (Frankfurt)                  |
+| Your categories, rules, budgets, fixed costs, the shops arnaq has learned from your choices, your settings                                         | to work as you set it up                                                           | same                                      |
+| A language and a theme choice                                                                                                                      | to remember your preference                                                        | your browser (a cookie and local storage) |
+| Sign-in cookies                                                                                                                                    | to keep you signed in; they are not readable by scripts and only sent to this site | your browser                              |
 
 We do not use advertising or analytics trackers. We do not sell data.
 
@@ -29,6 +30,13 @@ We do not use advertising or analytics trackers. We do not sell data.
 
 - **Supabase** (database and sign-in), data in the EU. [Link the data processing agreement.]
 - **[Hosting provider, e.g. Vercel or Hetzner]**: serves the app; it handles requests but does not keep your data. [DPA.]
+- **Enable Banking** (Enable Banking Oy, Finland, a licensed account-information service provider), **only if you
+  link a bank** in Settings. It reads the accounts you allow at your bank (account details, balances and
+  transactions) and passes them to arnaq; arnaq can only read, never move money. You give the consent at your bank;
+  it ends after at most 180 days, and "Disconnect" or "Delete my data" ends it at once. When you press "Refresh
+  now", your IP address and browser details are passed to your bank through Enable Banking, so the bank knows you
+  are the one asking. [Link Enable Banking's terms
+  and privacy notice, and check whether a data processing agreement or its own controller role applies.]
 - **Anthropic** (the company behind Claude), **only if you switch on "arnaq AI"** after reading the
   consent text. We then send the name of a shop and a short description with numbers, account numbers and
   e-mail addresses removed. We never send amounts, dates, account numbers, your name, or payments to and

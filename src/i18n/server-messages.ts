@@ -317,6 +317,62 @@ const NL: Rule[] = [
     /^The basis must be "averages", "budget" or "own"\.$/,
     () => "Kies gemiddelden, budget of eigen bedrag als basis.",
   ],
+  // linking banks (Enable Banking)
+  [
+    /^Linking banks is not set up on this server\.$/,
+    () => "Banken koppelen is op deze server niet ingesteld.",
+  ],
+  [
+    /^Enable Banking could not be reached\. Try again later\.$/,
+    () => "Enable Banking is niet bereikbaar. Probeer het later opnieuw.",
+  ],
+  [/^The bank is busy\. Try again later\.$/, () => "De bank is druk. Probeer het later opnieuw."],
+  [/^This bank cannot be linked\.$/, () => "Deze bank kun je niet koppelen."],
+  [/^Choose a bank\.$/, () => "Kies een bank."],
+  [/^Invalid country\.$/, () => "Ongeldig land."],
+  [
+    /^At most (\d+) bank connections at a time\.$/,
+    (m) => `Je kunt hoogstens ${m[1]} bankkoppelingen tegelijk hebben.`,
+  ],
+  [
+    /^No bank accounts are linked to the Enable Banking application yet\. Link them in the Enable Banking control panel first\.$/,
+    () =>
+      "Er zijn nog geen bankrekeningen aan de Enable Banking-applicatie gekoppeld. Koppel ze eerst in het Enable Banking-controlepaneel.",
+  ],
+  [
+    /^The return address is not registered with Enable Banking\. Add it in the Enable Banking control panel\.$/,
+    () =>
+      "Het terugkeeradres is niet bij Enable Banking geregistreerd. Voeg het toe in het Enable Banking-controlepaneel.",
+  ],
+  [/^Bank connection not found\.$/, () => "Deze bankkoppeling bestaat niet."],
+  [
+    /^Too many requests\. Wait a minute and try again\.$/,
+    () => "Te veel verzoeken. Wacht een minuut en probeer het opnieuw.",
+  ],
+  [/^A refresh is already running\.$/, () => "Er wordt al ververst."],
+  [
+    /^The bank sent more transactions than arnaq reads at once\.$/,
+    () => "De bank stuurde meer transacties dan arnaq in één keer leest.",
+  ],
+  [
+    /^The transactions could not be saved\.$/,
+    () => "De transacties konden niet worden opgeslagen.",
+  ],
+  [/^This bank link was removed\.$/, () => "Deze bankkoppeling is verwijderd."],
+  [
+    /^Linking banks is off: this server has an Enable Banking test \(sandbox\) application\. Use the production application's key\.$/,
+    () =>
+      "Banken koppelen staat uit: deze server heeft een test-applicatie (sandbox) van Enable Banking. Gebruik de sleutel van de productie-applicatie.",
+  ],
+  [
+    /^Stopped early to keep the refresh quick\. Refresh again for the rest\.$/,
+    () => "Vroeg gestopt om het verversen kort te houden. Ververs nog een keer voor de rest.",
+  ],
+  [
+    /^This bank link was made with another Enable Banking application\. Link the bank again\.$/,
+    () =>
+      "Deze bankkoppeling is met een andere Enable Banking-applicatie gemaakt. Koppel de bank opnieuw.",
+  ],
 ];
 
 /** The message in the reader's language; English (as thrown) when there is no translation. */

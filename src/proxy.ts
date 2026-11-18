@@ -24,6 +24,7 @@ const PUBLIC = [
 const GUEST_ONLY = [/^\/login$/, /^\/register$/, /^\/forgot-password$/];
 
 const isPublic = (path: string) => PUBLIC.some((re) => re.test(path));
+const BANK_CALLBACK = "/api/banking/callback";
 
 /**
  * Two jobs in front of every request.
@@ -73,6 +74,9 @@ export async function proxy(request: NextRequest) {
   if (signedIn && GUEST_ONLY.some((re) => re.test(path)))
     return carry(response, redirect(request, "/"));
   if (!signedIn && !isPublic(path)) {
+    // The bank sends a browser back to the callback: someone whose session ran out meanwhile gets the login page, not
+    // JSON. Without a `next`: the one-time code and state are not carried along (the link is started again).
+    if (path === BANK_CALLBACK) return carry(response, redirect(request, "/login"));
     if (path.startsWith("/api/")) {
       const locale = toLocale(request.cookies.get(LOCALE_COOKIE)?.value);
       return carry(

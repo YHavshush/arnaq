@@ -12,6 +12,9 @@ data/
 # misc
 .DS_Store
 *.pem
+# Enable Banking application key and certificate (docs/deploy.md)
+*.key
+*.crt
 *.tsbuildinfo
 next-env.d.ts
 /coverage

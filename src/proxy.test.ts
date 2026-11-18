@@ -42,6 +42,18 @@ describe("proxy: signed out", () => {
     expect(await nl.json()).toEqual({ error: "Je bent niet ingelogd." });
   });
 
+  it("sends someone back from the bank without a session to the login page, without the code or state", async () => {
+    setClaims(null);
+    const res = await ask("/api/banking/callback?code=secret-code&state=secret-state");
+    expect(res.status).toBe(307);
+    const to = new URL(location(res)!);
+    expect(to.pathname).toBe("/login");
+    expect(to.search).toBe("");
+    expect(location(res)).not.toContain("secret");
+    // Every other banking route is an API like the rest.
+    expect((await ask("/api/banking/sync", { method: "POST" })).status).toBe(401);
+  });
+
   it("leaves the sign-in pages and the confirmation link open", async () => {
     setClaims(null);
     for (const p of [

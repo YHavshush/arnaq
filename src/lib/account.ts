@@ -2,7 +2,7 @@ import { schema, type Db } from "@/db";
 import { seedDefaults } from "@/lib/categories/seed";
 
 /**
- * Delete everything this person has stored: transactions, imports, accounts, categories, rules, budgets,
+ * Delete everything this person has stored: transactions, imports, accounts, bank links, categories, rules, budgets,
  * fixed costs, learned shops and settings. They keep their login (the sign-in lives in Supabase Auth and
  * is removed there) and start again with fresh default categories. Runs as the current user, so row level
  * security keeps it to their own rows.
@@ -30,6 +30,10 @@ export async function wipeMyData(db: Db): Promise<void> {
   await db.delete(schema.userSettings);
   await db.delete(schema.btwClients);
   await db.delete(schema.incomeTaxYears);
+  // Bank links point at accounts. The sessions themselves are ended at Enable Banking by the caller (the route), which
+  // reads them first with sessionIdsOf (src/lib/banking/connections.ts): this file makes no network calls.
+  await db.delete(schema.bankLinks);
+  await db.delete(schema.bankConnections);
   await db.delete(schema.accounts);
   await db.delete(schema.categories);
 }

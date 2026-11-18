@@ -11,7 +11,7 @@ settings, the app's database role, the migration). Nothing here contains a secre
 | `SUPABASE_PUBLISHABLE_KEY` | the publishable key (`sb_publishable_...`), never a secret or service_role key                                                           | same page                                           |
 | `DATABASE_URL`             | the pooler string for the restricted role `kasboek_app`                                                                                  | `scripts/db-app-role.sh` writes it to `.env.hosted` |
 | `APP_URL`                  | the address the app is served from, e.g. `https://kasboek.example`; redirects and the cross-site check use it instead of the Host header | your own address; leave unset on a local machine    |
-| `KASBOEK_AI_USERS`         | optional: user ids that may use arnaq AI                                                                                               | Supabase > Authentication > Users                   |
+| `KASBOEK_AI_USERS`         | optional: user ids that may use arnaq AI                                                                                                 | Supabase > Authentication > Users                   |
 | `ANTHROPIC_API_KEY`        | only when the Claude provider exists; server side only                                                                                   | console.anthropic.com, with a spend limit           |
 
 The app refuses to run over a database role that bypasses row level security (it says so and serves
@@ -37,6 +37,72 @@ A small VPS in Germany or Finland (close to the Supabase region eu-central-1). I
 `npm ci && npm run build`, run `npm start` behind Caddy or nginx for HTTPS, keep the variables in a root-only
 file used by the service, restart on boot (systemd). You own updates, backups of the server and the
 firewall. Check this outline against a real server before relying on it.
+
+## Linking banks with Enable Banking
+
+arnaq can read the owner's own bank accounts through [Enable Banking](https://enablebanking.com), a licensed PSD2
+account-information service, instead of uploading files. It only reads (transactions and balances); it can never
+move money. It is off until the variables below are set; without them Settings explains that linking is not set
+up and the banking routes answer 503.
+
+| Variable                        | What                                                                                                                          |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ENABLE_BANKING_APPLICATION_ID` | the application id (a UUID) the Enable Banking control panel shows after you upload the certificate                           |
+| `ENABLE_BANKING_PRIVATE_KEY`    | the application's RSA private key, PEM; one line with literal `\n` for the line breaks is fine. A secret.                     |
+| `ENABLE_BANKING_API_URL`        | optional; default `https://api.enablebanking.com`. Only for a test server (https; http on localhost only outside production). |
+| `ENABLE_BANKING_ALLOW_SANDBOX`  | optional; `1` lets a sandbox (test) application run on a production server. Leave unset for real data.                        |
+| `APP_URL`                       | required for linking: the bank sends the person back to `${APP_URL}/api/banking/callback`                                     |
+
+Never commit the key or put it in a `NEXT_PUBLIC_` variable. It stays on the server: `src/lib/banking/enable-banking.ts`
+signs a short-lived token (RS256, one hour) for every call, never stores or logs the key or the token, and refuses to
+load in a browser (ESLint and `src/lib/banking/client-guard.test.ts` keep browser code from importing it).
+
+Steps for the owner, in order:
+
+1. Make the key and certificate (as the Enable Banking docs say): `openssl genrsa -out private.key 2048` and
+   `openssl req -new -x509 -days 3650 -key private.key -out public.crt`. Keep `private.key` out of the repository
+   (`*.key` belongs in a password manager, not in git).
+2. In the Enable Banking control panel, register a **sandbox** application first with `public.crt`. Redirect URL:
+   `http://localhost:3000/api/banking/callback` (and set `APP_URL=http://localhost:3000` locally). Put the two
+   variables in `.env.local` and try linking a sandbox bank in Settings.
+3. Register a **production** application for your own accounts (Enable Banking's free "restricted" mode). Redirect
+   URL: `${APP_URL}/api/banking/callback` with the real address, exactly as `APP_URL` is set.
+4. Restricted mode only reads accounts you have linked to the application yourself: in the control panel, link
+   your own accounts (Rabobank, Revolut, ...). Until then linking in arnaq says no accounts are linked.
+5. Set `ENABLE_BANKING_APPLICATION_ID` and `ENABLE_BANKING_PRIVATE_KEY` in the host's environment (Production only)
+   and redeploy. Then in arnaq: Settings > Bank connections > Link a bank, agree at the bank, and you are back in
+   Settings; the first refresh fetches the last 30 days. Make a full backup before the first link.
+
+How it behaves:
+
+- Only Rabobank, Revolut, ABN AMRO, ING and Knab can be linked (the banks arnaq knows, `BANKS` in
+  `src/db/schema.ts`); others are not offered. Personal accounts only.
+- A linked account goes into the arnaq account with the same IBAN (a Revolut upload has no IBAN: the one Revolut
+  account is used), otherwise into a new one. Rows the account already holds from an uploaded file are not stored
+  twice.
+- "Refresh now" fetches booked transactions since a week before the last refresh. There is no background sync.
+  Pressing it passes the person's IP address and browser (checked, length-capped) to the bank through Enable Banking
+  as PSU headers, which tells the bank the person is present.
+- A refresh stops after 45 seconds or 20 MB; each account is saved as soon as it is read, and the rest report
+  "stopped early" (refresh again). An account that sends more than 10 MB in one refresh is refused.
+- A month counts as complete ("actual") only from the earliest transaction the bank actually sent, never from the
+  date range asked for.
+- Enable Banking tells sandbox and production apart by the application. On a production server
+  (`NODE_ENV=production`) a sandbox application switches linking off unless `ENABLE_BANKING_ALLOW_SANDBOX=1`, so
+  invented data never lands in real accounts; sandbox imports are named "... (Enable Banking sandbox)". If Enable
+  Banking cannot say which application it is, linking is unavailable and it asks again after a minute.
+- New accounts are named with the last four characters of the IBAN only ("Rabobank ••1234"); IBANs with a wrong
+  check digit are not trusted.
+- The consent lasts the bank's maximum, at most 180 days; Settings offers "Reconnect" from 14 days before it ends.
+- "Disconnect", "Delete my data" and restoring a backup end the consent at Enable Banking. A backup holds no bank
+  links: after a restore, link again.
+
+Privacy: with a bank linked, Enable Banking (and through it the bank) processes the account data on arnaq's behalf.
+It is named as a processor in `docs/legal/privacy-notice-DRAFT.md`.
+
+Network and CSP: every call to Enable Banking is made by the server, so the browser's `connect-src 'self'` is
+unaffected. The browser only navigates to the bank's consent page (a top-level navigation, which the CSP does not
+restrict). Bank logos from the list are not shown (they would need `img-src` for another host).
 
 ## Content-Security-Policy
 

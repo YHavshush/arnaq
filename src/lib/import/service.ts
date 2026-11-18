@@ -163,7 +163,7 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
   } else detected = detectBank(source.text);
 
   let bank: Bank;
-  let accountId = input.accountId;
+  const accountId = input.accountId;
   if (accountId !== undefined) {
     const account = await first(
       db.select().from(schema.accounts).where(eq(schema.accounts.id, accountId)),
@@ -205,6 +205,39 @@ export async function importStatement(db: Db, input: ImportInput): Promise<Impor
   }
   const period =
     parsed.period ?? (bank === "revolut" ? periodFromFilename(input.filename) : undefined);
+  return await importRows(db, {
+    bank,
+    accountId,
+    parsed,
+    period,
+    filename: input.filename,
+    month: input.month,
+    today: input.today,
+  });
+}
+
+export interface ImportRowsInput {
+  bank: Bank;
+  /** The account the rows belong to; omitted: resolved from `parsed.accountIdentifier` as for a file. */
+  accountId?: number;
+  /** Rows in the shape every parser returns, from a file or a bank link (src/lib/banking). */
+  parsed: ParseResult;
+  /** The period the rows declare to cover completely (YYYY-MM-DD, inclusive), when they do. */
+  period?: { from: string; to: string };
+  /** What the import log calls it: the file name, or the bank link. */
+  filename: string;
+  month?: string;
+  today?: string;
+}
+
+/**
+ * The importer behind every source: store new rows in one transaction (re-imports and rows the account already holds
+ * from another file are not stored twice), then sort, pair transfers, match fixed costs and log the import. A file
+ * upload (importStatement) and a bank sync (src/lib/banking/sync.ts) both end here, so they behave the same.
+ */
+export async function importRows(db: Db, input: ImportRowsInput): Promise<ImportSummary> {
+  const { bank, parsed, period } = input;
+  let accountId = input.accountId;
   if (parsed.rows.length + parsed.skipped.length > MAX_IMPORT_ROWS)
     throw new ImportError(`Too many rows (max ${MAX_IMPORT_ROWS} per file).`);
   // A statement with a declared period and no transactions is a real answer: a quiet period.

@@ -52,6 +52,12 @@ const ROUTES: Record<string, string[]> = {
   "categorise/smart": ["POST"],
   "categorise/auto": ["POST"],
   "account/delete": ["POST"],
+  // Bank links: covered per person in src/app/api/banking-flow.test.ts and src/lib/banking/flow.test.ts.
+  "banking/aspsps": ["GET"],
+  "banking/connect": ["POST"],
+  "banking/callback": ["GET"],
+  "banking/connections/[id]": ["DELETE"],
+  "banking/sync": ["POST"],
   "account/restore": ["POST"],
   "recurring/missed": ["GET"],
   "recurring/occurrences": ["GET"],
