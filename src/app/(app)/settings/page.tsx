@@ -11,7 +11,10 @@ import { ChangePasswordForm } from "@/components/arnaq/auth-forms";
 import { EraseData } from "@/components/arnaq/erase-data";
 import { LearnedShops } from "@/components/arnaq/learned-shops";
 import { AppearanceSettings } from "@/components/arnaq/appearance-settings";
+import { BankConnections } from "@/components/arnaq/bank-connections";
 import { BtwClients, BtwSettings } from "@/components/arnaq/btw-settings";
+import { listConnections } from "@/lib/banking/connections";
+import { bankingConfig } from "@/lib/banking/enable-banking";
 import { IncomeTaxSettings, IncomeTaxYears } from "@/components/arnaq/income-tax-settings";
 import { getIncomeTaxSettings } from "@/lib/income-tax/settings";
 import { getIncomeTaxYears } from "@/lib/income-tax/years";
@@ -62,6 +65,7 @@ async function Content() {
     btwClients,
     incomeTaxSettings,
     incomeTaxYears,
+    bankLinks,
   ] = await pageDb(async (db) => [
     await db.select().from(schema.categorisationRules),
     await db.select().from(schema.categories).orderBy(schema.categories.sortOrder),
@@ -73,6 +77,7 @@ async function Content() {
     await getBtwClients(db),
     await getIncomeTaxSettings(db),
     await getIncomeTaxYears(db),
+    await listConnections(db),
   ]);
   const tiles = messages[locale].view.overzicht.tiles.sparen;
   const { euro } = formatter(locale);
@@ -104,6 +109,10 @@ async function Content() {
             <ChangePasswordForm />
           </div>
         </details>
+      </Section>
+
+      <Section title={t.ui.banking.title}>
+        <BankConnections configured={bankingConfig() !== null} connections={bankLinks} />
       </Section>
 
       <Section title={s.backup}>
