@@ -913,7 +913,15 @@ export const ui: typeof en = {
       "arnaq leest alleen je transacties en saldi. Het kan nooit geld overmaken. Je bank vraagt je om toestemming, en die vervalt na ongeveer zes maanden; dan koppel je de bank opnieuw.",
     notConfigured:
       "Banken koppelen is op deze server niet ingesteld. Je kunt je afschriften nog steeds uploaden op het scherm Uploaden.",
+    sandbox:
+      "Banken koppelen staat uit: deze server heeft een test-applicatie (sandbox) van Enable Banking, die alleen verzonnen gegevens laat zien. Gebruik de sleutel van de productie-applicatie.",
+    unreachable:
+      "Enable Banking is nu niet bereikbaar, dus banken koppelen werkt even niet. Probeer het later opnieuw.",
     none: "Nog geen banken gekoppeld.",
+    backupTip:
+      "Tip: maak eerst een volledige back-up (Back-up, in Instellingen), zodat je terug kunt als de transacties van de bank niet zijn wat je verwacht.",
+    psuNote:
+      "Als je op Nu verversen drukt, worden je IP-adres en browser via Enable Banking aan je bank doorgegeven, zodat de bank weet dat jij het vraagt.",
     link: "Koppel een bank",
     chooseBank: "Kies je bank",
     loadingBanks: "De banken worden geladen…",

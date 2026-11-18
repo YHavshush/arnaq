@@ -9,9 +9,9 @@ const tx = (over: Record<string, unknown> = {}) => ({
   booking_date: "2026-11-02",
   value_date: "2026-11-01",
   creditor: { name: "Albert Heijn 1234 Amsterdam" },
-  creditor_account: { iban: "NL00BANK0000000012" },
+  creditor_account: { iban: "NL62BANK0000000012" },
   debtor: { name: "Jan Voorbeeld" },
-  debtor_account: { iban: "NL00RABO0000000001" },
+  debtor_account: { iban: "NL03RABO0000000001" },
   remittance_information: ["Pasvolgnr 001", "Boodschappen"],
   ...over,
 });
@@ -52,7 +52,7 @@ describe("convertTransactions", () => {
         credit_debit_indicator: "CRDT",
         transaction_amount: { currency: "EUR", amount: "1234.56" },
         debtor: { name: "Voorbeeld Werkgever BV" },
-        debtor_account: { iban: "NL00BANK0000000013" },
+        debtor_account: { iban: "NL35BANK0000000013" },
         remittance_information: ["Salaris"],
       }),
     ]);
@@ -62,7 +62,7 @@ describe("convertTransactions", () => {
       amount: -4237,
       currency: "EUR",
       counterparty: "Albert Heijn 1234 Amsterdam",
-      counterpartyIban: "NL00BANK0000000012",
+      counterpartyIban: "NL62BANK0000000012",
       description: "Pasvolgnr 001 Boodschappen",
       sourceKey: "eb:ref:ref-1",
       balanceAfter: null,
@@ -71,7 +71,7 @@ describe("convertTransactions", () => {
     expect(rows[1]).toMatchObject({
       amount: 123456,
       counterparty: "Voorbeeld Werkgever BV",
-      counterpartyIban: "NL00BANK0000000013",
+      counterpartyIban: "NL35BANK0000000013",
       description: "Salaris",
     });
   });

@@ -1,5 +1,5 @@
 {
-  "id": "e81ea037-0a4c-4176-9ab5-886f1ef8ea78",
+  "id": "6e3b01f2-d36d-4f15-8af8-e6829552404e",
   "prevId": "e775c917-b424-4f63-a364-98a459c8e0a5",
   "version": "7",
   "dialect": "postgresql",
@@ -254,6 +254,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "environment": {
+          "name": "environment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
         "status": {
           "name": "status",
           "type": "text",
@@ -347,6 +353,10 @@
           "name": "bank_connections_aspsp_check",
           "value": "char_length(\"bank_connections\".\"aspsp_name\") between 1 and 100 and \"bank_connections\".\"aspsp_country\" ~ '^[A-Z]{2}$'"
         },
+        "bank_connections_environment_check": {
+          "name": "bank_connections_environment_check",
+          "value": "\"bank_connections\".\"environment\" in ('PRODUCTION','SANDBOX')"
+        },
         "bank_connections_secret_check": {
           "name": "bank_connections_secret_check",
           "value": "(\"bank_connections\".\"session_id\" is null or char_length(\"bank_connections\".\"session_id\") between 1 and 100) and (\"bank_connections\".\"state_hash\" is null or \"bank_connections\".\"state_hash\" ~ '^[0-9a-f]{64}$')"
@@ -394,20 +404,8 @@
           "primaryKey": false,
           "notNull": true
         },
-        "iban": {
-          "name": "iban",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
         "currency": {
           "name": "currency",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "name": {
-          "name": "name",
           "type": "text",
           "primaryKey": false,
           "notNull": true
@@ -502,7 +500,7 @@
       "checkConstraints": {
         "bank_links_fields_check": {
           "name": "bank_links_fields_check",
-          "value": "char_length(\"bank_links\".\"account_uid\") between 1 and 100 and (\"bank_links\".\"iban\" is null or char_length(\"bank_links\".\"iban\") between 5 and 34) and \"bank_links\".\"currency\" ~ '^[A-Z]{3}$' and char_length(\"bank_links\".\"name\") between 1 and 100"
+          "value": "char_length(\"bank_links\".\"account_uid\") between 1 and 100 and \"bank_links\".\"currency\" ~ '^[A-Z]{3}$'"
         }
       },
       "isRLSEnabled": true

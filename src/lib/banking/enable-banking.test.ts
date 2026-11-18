@@ -3,11 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   EnableBankingError,
   bankingConfig,
+  bankingStatus,
   createSession,
   deleteSession,
   getAspsps,
   getTransactions,
+  ibanChecksumOk,
   isoInstant,
+  maskIban,
+  normaliseIban,
   parseAspsps,
   signToken,
   startAuthorization,
@@ -256,7 +260,7 @@ describe("the other calls", () => {
         {
           body: {
             ...sessionAnswer([
-              { uid: "acc-1", iban: "nl00 rabo 0000 0000 01" },
+              { uid: "acc-1", iban: "nl03 rabo 0000 0000 01" },
               { uid: "acc-2", currency: "usd" },
               { uid: "../../etc" },
             ]),
@@ -268,7 +272,7 @@ describe("the other calls", () => {
     expect(s.sessionId).toBe(SESSION_ID);
     expect(s.validUntil).toBe("2027-05-17T10:00:00.000Z");
     expect(s.accounts).toEqual([
-      { uid: "acc-1", iban: "NL00RABO0000000001", currency: "EUR", name: "Betaalrekening" },
+      { uid: "acc-1", iban: "NL03RABO0000000001", currency: "EUR", name: "Betaalrekening" },
       { uid: "acc-2", iban: null, currency: "EUR", name: "Betaalrekening" },
     ]);
   });
@@ -285,7 +289,11 @@ describe("the other calls", () => {
       dateTo: "2026-11-18",
       continuationKey: "k1",
     });
-    expect(page).toEqual({ transactions: [], continuationKey: "k2" });
+    expect(page).toEqual({
+      transactions: [],
+      continuationKey: "k2",
+      bytes: JSON.stringify({ transactions: [], continuation_key: "k2" }).length,
+    });
     expect(Object.fromEntries(calls[0].url.searchParams)).toEqual({
       date_from: "2026-08-20",
       date_to: "2026-11-18",
@@ -300,5 +308,85 @@ describe("the other calls", () => {
     expect(isoInstant("tomorrow")).toBeNull();
     expect(isoInstant("9999-01-01T00:00:00Z")).toBeNull();
     expect(isoInstant(42)).toBeNull();
+  });
+});
+
+describe("which application this is (sandbox or production)", () => {
+  const env = (over: Record<string, string> = {}) =>
+    ({ ...process.env, ...over }) as NodeJS.ProcessEnv;
+  const application = (environment: string) =>
+    mockEnableBanking([
+      ["GET /application", { body: { name: "arnaq", kid: TEST_APP_ID, environment } }],
+    ]);
+
+  it("a production application is on, and asked only once", async () => {
+    const calls = application("PRODUCTION");
+    const status = await bankingStatus(env({ NODE_ENV: "production" }));
+    expect(status).toMatchObject({ state: "on", environment: "PRODUCTION" });
+    await bankingStatus(env({ NODE_ENV: "production" }));
+    expect(calls).toHaveLength(1);
+  });
+
+  it("a sandbox application is off in production unless ENABLE_BANKING_ALLOW_SANDBOX=1", async () => {
+    application("SANDBOX");
+    expect(await bankingStatus(env({ NODE_ENV: "production" }))).toEqual({ state: "sandbox" });
+    expect(
+      await bankingStatus(env({ NODE_ENV: "production", ENABLE_BANKING_ALLOW_SANDBOX: "1" })),
+    ).toMatchObject({ state: "on", environment: "SANDBOX" });
+    // On a development machine the sandbox is what it is for.
+    expect(await bankingStatus(env({ NODE_ENV: "development" }))).toMatchObject({
+      state: "on",
+      environment: "SANDBOX",
+    });
+  });
+
+  it("when Enable Banking cannot say, the feature is unavailable, and it asks again only after a minute", async () => {
+    const calls = mockEnableBanking([["GET /application", { status: 500, body: {} }]]);
+    const t = Date.UTC(2026, 10, 18);
+    expect(await bankingStatus(env(), t)).toEqual({ state: "unreachable" });
+    expect(await bankingStatus(env(), t + 30_000)).toEqual({ state: "unreachable" });
+    expect(calls).toHaveLength(1);
+    mockEnableBanking([["GET /application", { body: { environment: "PRODUCTION" } }]]);
+    expect(await bankingStatus(env(), t + 61_000)).toMatchObject({ state: "on" });
+    // An answer that names no known environment counts as a failure too.
+    disableBanking();
+    enableBanking();
+    mockEnableBanking([["GET /application", { body: { environment: "STAGING" } }]]);
+    expect(await bankingStatus(env(), t)).toEqual({ state: "unreachable" });
+  });
+
+  it("is off without the variables, without asking anything", async () => {
+    const calls = application("PRODUCTION");
+    disableBanking();
+    expect(await bankingStatus()).toEqual({ state: "off" });
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe("the API address", () => {
+  it("plain http to localhost only outside production, and a bad value warns once without repeating it", () => {
+    const base = { ...process.env, ENABLE_BANKING_API_URL: "http://localhost:9999" };
+    expect(bankingConfig({ ...base, NODE_ENV: "development" } as NodeJS.ProcessEnv)).not.toBeNull();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(bankingConfig({ ...base, NODE_ENV: "production" } as NodeJS.ProcessEnv)).toBeNull();
+    const bad = {
+      ...process.env,
+      ENABLE_BANKING_API_URL: "not a url secret-value",
+    } as NodeJS.ProcessEnv;
+    expect(bankingConfig(bad)).toBeNull();
+    expect(bankingConfig(bad)).toBeNull();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(warn.mock.calls)).not.toContain("secret-value");
+    warn.mockRestore();
+  });
+});
+
+describe("IBANs", () => {
+  it("are checked with mod 97 and shown with the last four characters only", () => {
+    expect(ibanChecksumOk("NL91ABNA0417164300")).toBe(true); // the textbook example
+    expect(ibanChecksumOk("NL92ABNA0417164300")).toBe(false);
+    expect(normaliseIban("nl91 abna 0417 1643 00")).toBe("NL91ABNA0417164300");
+    expect(normaliseIban("NL00RABO0000000001")).toBeNull();
+    expect(maskIban("NL91ABNA0417164300")).toBe("••4300");
   });
 });

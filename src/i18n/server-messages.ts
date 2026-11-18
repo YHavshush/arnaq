@@ -359,6 +359,20 @@ const NL: Rule[] = [
     () => "De transacties konden niet worden opgeslagen.",
   ],
   [/^This bank link was removed\.$/, () => "Deze bankkoppeling is verwijderd."],
+  [
+    /^Linking banks is off: this server has an Enable Banking test \(sandbox\) application\. Use the production application's key\.$/,
+    () =>
+      "Banken koppelen staat uit: deze server heeft een test-applicatie (sandbox) van Enable Banking. Gebruik de sleutel van de productie-applicatie.",
+  ],
+  [
+    /^Stopped early to keep the refresh quick\. Refresh again for the rest\.$/,
+    () => "Vroeg gestopt om het verversen kort te houden. Ververs nog een keer voor de rest.",
+  ],
+  [
+    /^This bank link was made with another Enable Banking application\. Link the bank again\.$/,
+    () =>
+      "Deze bankkoppeling is met een andere Enable Banking-applicatie gemaakt. Koppel de bank opnieuw.",
+  ],
 ];
 
 /** The message in the reader's language; English (as thrown) when there is no translation. */

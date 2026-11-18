@@ -16,11 +16,13 @@ import {
   disconnect,
   hashState,
   listConnections,
+  revokeSessions,
   sessionIdsOf,
   type RunAsUser,
 } from "./connections";
-import { bankingConfig } from "./enable-banking";
-import { syncBankLinks } from "./sync";
+import { coveredMonths } from "@/lib/recurring/occurrences";
+import { bankingConfig, psuHeadersFromRequest } from "./enable-banking";
+import { coveredPeriod, syncBankLinks } from "./sync";
 import {
   SESSION_ID,
   TEST_APP_URL,
@@ -35,8 +37,17 @@ import {
 
 const NOW = Date.UTC(2026, 10, 18, 12, 0, 0);
 const TODAY = "2026-11-18";
+/** A sync nobody pressed a button for: no PSU headers. */
+const BG = { by: "background" } as const;
 const AUTH_URL = "https://auth.eb.test/ais/start?sessionid=x";
-const IBAN = "NL00RABO0000000001"; // the account in tests/fixtures/rabobank-sample.csv
+const IBAN = "NL03RABO0000000001"; // the account of rabobankCsv() below
+const IBAN_2 = "NL73RABO0000000002";
+/** tests/fixtures/rabobank-sample.csv with an IBAN whose check digits are right (the fixture's own has none). */
+const rabobankCsv = () =>
+  readFileSync(path.join(process.cwd(), "tests/fixtures/rabobank-sample.csv"), "utf8").replaceAll(
+    "NL00RABO0000000001",
+    IBAN,
+  );
 
 let root: Db;
 let asA: RunAsUser;
@@ -72,6 +83,7 @@ const connect = (run: RunAsUser = asA, now = NOW, name = "Rabobank") =>
     aspsp: { name, country: "NL" },
     language: "en",
     appUrl: new URL(TEST_APP_URL),
+    environment: "PRODUCTION",
     now,
   });
 
@@ -143,10 +155,7 @@ describe("callback", () => {
     const calls = baseRoutes();
     await asA((db) =>
       importStatement(db, {
-        content: readFileSync(
-          path.join(process.cwd(), "tests/fixtures/rabobank-sample.csv"),
-          "utf8",
-        ),
+        content: rabobankCsv(),
         filename: "rabo.csv",
       }),
     );
@@ -161,9 +170,9 @@ describe("callback", () => {
     expect(l).toMatchObject({
       accountId: accounts[0].id,
       accountUid: "acc-1",
-      iban: IBAN,
       currency: "EUR",
     });
+    expect(c.environment).toBe("PRODUCTION");
     const view = await asA((db) => listConnections(db, NOW));
     expect(view).toEqual([
       {
@@ -335,7 +344,12 @@ describe("sync", () => {
       [/transactions$/, (c) => pages[c.url.searchParams.get("continuation_key") ?? ""]],
     ]);
     await linkRabobank(calls);
-    const reports = await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    const reports = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     expect(reports).toEqual([expect.objectContaining({ status: "ok", imported: 3, duplicate: 0 })]);
     const txCalls = calls.filter((c) => c.url.pathname.endsWith("/transactions"));
     expect(txCalls.map((c) => c.url.searchParams.get("continuation_key"))).toEqual([
@@ -343,7 +357,7 @@ describe("sync", () => {
       "k1",
       "k2",
     ]);
-    expect(txCalls[0].url.searchParams.get("date_from")).toBe("2026-08-20"); // 90 days back the first time
+    expect(txCalls[0].url.searchParams.get("date_from")).toBe("2026-10-19"); // 30 days back the first time
     expect(txCalls[0].url.searchParams.get("transaction_status")).toBe("BOOK");
     const rows = await asA((db) =>
       db.select().from(schema.transactions).orderBy(schema.transactions.date),
@@ -355,7 +369,7 @@ describe("sync", () => {
     ]);
     const [imp] = await asA((db) => db.select().from(schema.imports));
     expect(imp).toMatchObject({
-      periodFrom: "2026-08-20",
+      periodFrom: "2026-11-02", // the earliest row the bank sent, not the date asked for
       periodTo: TODAY,
       rowsImported: 3,
       filename: "Rabobank (Enable Banking)",
@@ -367,8 +381,15 @@ describe("sync", () => {
   it("a second sync starts a week before the last one and stores nothing twice", async () => {
     const calls = baseRoutes([[/transactions$/, page([t("r1", "-12.50", "2026-11-02")])]]);
     await linkRabobank(calls);
-    await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     const second = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
       today: "2026-11-20",
       now: NOW + 2 * 86_400_000,
     });
@@ -387,16 +408,20 @@ describe("sync", () => {
     const calls = baseRoutes([[/transactions$/, page([same, t("new-1", "-5.00", "2026-11-01")])]]);
     await asA((db) =>
       importStatement(db, {
-        content: readFileSync(
-          path.join(process.cwd(), "tests/fixtures/rabobank-sample.csv"),
-          "utf8",
-        ),
+        content: rabobankCsv(),
         filename: "rabo.csv",
       }),
     );
     const before = (await asA((db) => db.select().from(schema.transactions))).length;
     await linkRabobank(calls);
-    const [report] = await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    // A link that last read in early September (a reconnect), so the refresh reaches back to the uploaded month.
+    await asA((db) => db.update(schema.bankLinks).set({ lastSyncedAt: "2026-09-05T12:00:00Z" }));
+    const [report] = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     expect(report).toMatchObject({ status: "ok", imported: 1, duplicate: 1 });
     expect(await asA((db) => db.select().from(schema.transactions))).toHaveLength(before + 1);
   });
@@ -406,7 +431,12 @@ describe("sync", () => {
       [/transactions$/, { status: 401, body: { error: "EXPIRED_SESSION" } }],
     ]);
     await linkRabobank(calls);
-    const [report] = await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    const [report] = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     expect(report.status).toBe("expired");
     expect((await connections(asA))[0].status).toBe("expired");
     expect(await asA((db) => db.select().from(schema.imports))).toEqual([]);
@@ -417,6 +447,8 @@ describe("sync", () => {
     const calls = baseRoutes();
     await linkRabobank(calls);
     const [report] = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
       today: "2027-06-01",
       now: Date.UTC(2027, 5, 1),
     });
@@ -431,7 +463,7 @@ describe("sync", () => {
         {
           body: sessionAnswer([
             { uid: "good", iban: IBAN },
-            { uid: "bad", iban: "NL00RABO0000000002" },
+            { uid: "bad", iban: IBAN_2 },
           ]),
         },
       ],
@@ -439,7 +471,12 @@ describe("sync", () => {
       [/bad\/transactions$/, { status: 500, body: { error: "ASPSP_ERROR" } }],
     ]);
     await linkRabobank(calls);
-    const reports = await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    const reports = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     expect(reports.map((r) => r.status).sort()).toEqual(["failed", "ok"]);
     expect(reports.find((r) => r.status === "failed")!.error).toBe(
       "Enable Banking could not be reached. Try again later.",
@@ -452,7 +489,12 @@ describe("sync", () => {
     let n = 0;
     const calls = baseRoutes([[/transactions$/, () => page([], `k${++n}`)]]);
     await linkRabobank(calls);
-    const [report] = await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    const [report] = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     expect(report.status).toBe("failed");
     expect(calls.filter((c) => c.url.pathname.endsWith("/transactions")).length).toBe(50);
   });
@@ -477,7 +519,12 @@ describe("sync", () => {
       ],
     ]);
     await linkRabobank(calls);
-    await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     const [row] = await asA((db) => db.select().from(schema.transactions));
     expect(row.balanceAfter).toBe(98765);
   });
@@ -487,7 +534,12 @@ describe("disconnect", () => {
   it("ends the session, closes the connection and removes its links; the transactions stay", async () => {
     const calls = baseRoutes([[/transactions$/, page([t("r1", "-12.50", "2026-11-02")])]]);
     await linkRabobank(calls);
-    await syncBankLinks(config(), asA, { today: TODAY, now: NOW });
+    await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
     const [c] = await connections(asA);
     await disconnect(config(), asA, c.id);
     expect(calls.filter((x) => x.method === "DELETE").map((x) => x.url.pathname)).toEqual([
@@ -540,7 +592,6 @@ describe("your data", () => {
           connectionId: c.id,
           accountUid: "x",
           currency: "EUR",
-          name: "x",
           accountId: acc.id,
         });
       }),
@@ -569,5 +620,313 @@ describe("your data", () => {
     expect(stored).not.toContain(token);
     expect(stored).not.toContain("PRIVATE KEY");
     void eq;
+  });
+});
+
+describe("sandbox and production stay apart", () => {
+  it("a sandbox link is recorded as such, and its imports say so", async () => {
+    const calls = baseRoutes([[/transactions$/, page([t("s1", "-1.00", "2026-11-02")])]]);
+    await beginConnect(config(), asA, {
+      aspsp: { name: "Rabobank", country: "NL" },
+      language: "en",
+      appUrl: new URL(TEST_APP_URL),
+      environment: "SANDBOX",
+      now: NOW,
+    });
+    await completeCallback(config(), asA, { state: stateOf(calls), code: "c", error: null }, NOW);
+    expect((await connections(asA))[0].environment).toBe("SANDBOX");
+    // Read with a production application: refused, nothing asked, nothing stored.
+    const [prod] = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
+    expect(prod).toMatchObject({ status: "failed" });
+    expect(prod.error).toMatch(/another Enable Banking application/);
+    expect(calls.some((c) => c.url.pathname.endsWith("/transactions"))).toBe(false);
+    // Read with the sandbox application it was made with: the import is findable by its name.
+    await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "SANDBOX",
+      today: TODAY,
+      now: NOW,
+    });
+    const [imp] = await asA((db) => db.select().from(schema.imports));
+    expect(imp.filename).toBe("Rabobank (Enable Banking sandbox)");
+  });
+});
+
+describe("sync limits", () => {
+  /** A bank that takes `stepMs` of (fake) time per page of transactions. */
+  function slowBank(stepMs: number, pages: Record<string, ReturnType<typeof page>>) {
+    let clock = NOW;
+    const calls = baseRoutes([
+      [
+        /transactions$/,
+        (c) => {
+          clock += stepMs;
+          const uid = c.url.pathname.split("/")[2];
+          return pages[`${uid}:${c.url.searchParams.get("continuation_key") ?? ""}`] ?? page([]);
+        },
+      ],
+      [
+        "POST /sessions",
+        {
+          body: sessionAnswer([
+            { uid: "one", iban: IBAN },
+            { uid: "two", iban: IBAN_2 },
+            { uid: "three" },
+          ]),
+        },
+      ],
+    ]);
+    return { calls, clock: () => clock };
+  }
+
+  it("stops at the deadline: what was read is saved, the rest waits for the next refresh", async () => {
+    const { calls, clock } = slowBank(30_000, {
+      "one:": page([t("o1", "-1.00", "2026-11-02")]),
+      "two:": page([t("w1", "-2.00", "2026-11-03")], "more"),
+      "two:more": page([t("w2", "-3.00", "2026-11-04")]),
+      "three:": page([t("h1", "-4.00", "2026-11-05")]),
+    });
+    await linkRabobank(calls);
+    const reports = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+      clock,
+    });
+    expect(reports.map((r) => r.status)).toEqual(["ok", "stopped", "stopped"]);
+    expect(reports[1].error).toMatch(/Refresh again/);
+    const rows = await asA((db) => db.select().from(schema.transactions));
+    expect(rows.map((r) => r.amount)).toEqual([-100]); // the first account only, nothing half of the second
+    const synced = (await links(asA))
+      .sort((a, b) => a.id - b.id)
+      .map((l) => [l.accountUid, l.lastSyncedAt !== null]);
+    expect(synced).toEqual([
+      ["one", true],
+      ["two", false],
+      ["three", false],
+    ]);
+    // The next refresh (a fresh deadline) goes on with the rest.
+    const again = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+      clock: () => NOW,
+    });
+    expect(again.map((r) => r.status)).toEqual(["ok", "ok", "ok"]);
+    expect(await asA((db) => db.select().from(schema.transactions))).toHaveLength(4);
+  });
+
+  it("an account over its byte budget fails; the whole refresh over its budget stops early", async () => {
+    const big = page(Array.from({ length: 40 }, (_, i) => t(`b${i}`, "-1.00", "2026-11-02")));
+    const { calls } = slowBank(0, { "one:": big, "two:": big, "three:": big });
+    await linkRabobank(calls);
+    const bytes = JSON.stringify(big.body).length;
+    const perLink = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+      limits: { linkBytes: bytes - 1 },
+    });
+    expect(perLink.map((r) => r.status)).toEqual(["failed", "failed", "failed"]);
+    const perRun = await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+      limits: { runBytes: bytes * 2 - 1 },
+    });
+    expect(perRun.map((r) => r.status)).toEqual(["ok", "stopped", "stopped"]);
+  });
+});
+
+describe("the review's smaller points", () => {
+  it("a new account shows only the last four characters of its IBAN; the full IBAN is kept for matching", async () => {
+    const calls = baseRoutes();
+    await linkRabobank(calls);
+    const [account] = await asA((db) => db.select().from(schema.accounts));
+    expect(account.name).toBe("Rabobank ••0001");
+    expect(account.iban).toBe(IBAN);
+  });
+
+  it("an IBAN with wrong check digits is not trusted: no match, no IBAN stored", async () => {
+    const calls = baseRoutes([
+      ["POST /sessions", { body: sessionAnswer([{ uid: "x", iban: "NL00RABO0000000001" }]) }],
+    ]);
+    await linkRabobank(calls);
+    const [account] = await asA((db) => db.select().from(schema.accounts));
+    expect(account).toMatchObject({ name: "Rabobank", iban: null });
+  });
+
+  it("the consent's end is never stored later than 180 days from now", async () => {
+    const calls = baseRoutes([
+      [
+        "POST /sessions",
+        { body: sessionAnswer([{ uid: "a", iban: IBAN }], "2031-01-01T00:00:00Z") },
+      ],
+    ]);
+    await linkRabobank(calls);
+    const [c] = await connections(asA);
+    const stored = Date.parse(c.validUntil!.replace(" ", "T").replace(/([+-]\d{2})$/, "$1:00"));
+    expect(stored).toBeLessThanOrEqual(NOW + 60_000 + 180 * 86_400_000);
+    expect(stored).toBeGreaterThan(NOW + 179 * 86_400_000);
+  });
+
+  it("without a configuration a disconnect closes the connection here and says the bank was not told", async () => {
+    const calls = baseRoutes();
+    await linkRabobank(calls);
+    const [c] = await connections(asA);
+    expect(await disconnect(null, asA, c.id)).toEqual({ revoked: false });
+    expect((await connections(asA))[0]).toMatchObject({ status: "closed", sessionId: null });
+    expect(calls.some((x) => x.method === "DELETE")).toBe(false);
+  });
+
+  it("without a configuration, ending sessions logs only how many were skipped", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    await revokeSessions(null, [SESSION_ID, "bbbbbbbb-0000-4000-8000-000000000002"]);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain("2 bank session(s)");
+    expect(JSON.stringify(warn.mock.calls)).not.toContain(SESSION_ID);
+    warn.mockRestore();
+  });
+
+  it("a state arnaq could not have made is not looked up at all", async () => {
+    baseRoutes();
+    const run = vi.fn(asA) as unknown as RunAsUser;
+    expect(
+      await completeCallback(config(), run, { state: "x".repeat(44), code: "c", error: null }),
+    ).toBe("expired");
+    expect(run).not.toHaveBeenCalled();
+  });
+});
+
+describe("the person is there: PSU headers", () => {
+  // A plain getter, so even values a real Headers object would refuse can be tried.
+  const request = (headers: Record<string, string>) => ({
+    get: (name: string) => headers[name] ?? null,
+  });
+
+  it("are only made from checked values, and not at all without a valid IP address", () => {
+    const psu = psuHeadersFromRequest(
+      request({
+        "x-forwarded-for": "203.0.113.7, 10.0.0.1",
+        "user-agent": "Mozilla/5.0 (Voorbeeld)",
+        "accept-language": "nl-NL,nl;q=0.9",
+        accept: "text/html,*/*;q=0.8",
+        "accept-encoding": "gzip, br",
+      }),
+    );
+    expect(psu).toEqual({
+      "Psu-Ip-Address": "203.0.113.7",
+      "Psu-User-Agent": "Mozilla/5.0 (Voorbeeld)",
+      "Psu-Accept-Language": "nl-NL,nl;q=0.9",
+      "Psu-Accept": "text/html,*/*;q=0.8",
+      "Psu-Accept-Encoding": "gzip, br",
+    });
+    expect(psuHeadersFromRequest(request({ "x-forwarded-for": "2001:db8::1" }))).toEqual({
+      "Psu-Ip-Address": "2001:db8::1",
+    });
+    for (const ip of ["", "not-an-ip", "999.1.1.1", "203.0.113.7\r\nX-Evil: 1"])
+      expect(psuHeadersFromRequest(request({ "x-forwarded-for": ip })), ip).toBeNull();
+    expect(psuHeadersFromRequest(request({ "user-agent": "x" }))).toBeNull();
+    // A value that fails its check is left out; an overlong one is capped.
+    const odd = psuHeadersFromRequest(
+      request({
+        "x-forwarded-for": "203.0.113.7",
+        "accept-language": "nl<script>",
+        "user-agent": "a".repeat(999),
+      }),
+    )!;
+    expect(odd["Psu-Accept-Language"]).toBeUndefined();
+    expect(odd["Psu-User-Agent"]).toHaveLength(300);
+  });
+
+  it("go to the bank when the person pressed Refresh, and never on a background sync", async () => {
+    const calls = baseRoutes([[/transactions$/, page([t("p1", "-1.00", "2026-11-02")])]]);
+    await linkRabobank(calls);
+    const psu = psuHeadersFromRequest(
+      request({ "x-forwarded-for": "203.0.113.7", "user-agent": "UA" }),
+    );
+    await syncBankLinks(config(), asA, {
+      presence: { by: "pressed-refresh", psu },
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
+    const pressed = calls.filter((c) => c.url.pathname.startsWith("/accounts/"));
+    expect(pressed.length).toBeGreaterThan(0);
+    for (const c of pressed) {
+      expect(c.headers.get("psu-ip-address")).toBe("203.0.113.7");
+      expect(c.headers.get("psu-user-agent")).toBe("UA");
+    }
+    // Calls that are not about reading the account never carry them.
+    expect(
+      calls.find((c) => c.url.pathname === "/sessions")!.headers.get("psu-ip-address"),
+    ).toBeNull();
+
+    const before = calls.length;
+    await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
+    const background = calls.slice(before);
+    expect(background.length).toBeGreaterThan(0);
+    for (const c of background)
+      expect([...c.headers.keys()].some((k) => k.startsWith("psu-"))).toBe(false);
+  });
+
+  it("cannot be sent by accident: the caller must say who is asking, and a plain object is not PSU headers", () => {
+    const fake = { "Psu-Ip-Address": "203.0.113.7" };
+    // @ts-expect-error -- `presence` is required: a sync has to say whether the person pressed the button.
+    const missing: Parameters<typeof syncBankLinks>[2] = {
+      environment: "PRODUCTION",
+      today: TODAY,
+    };
+    type Presence = Parameters<typeof syncBankLinks>[2]["presence"];
+    const pressed = (psu: typeof fake) => ({ by: "pressed-refresh" as const, psu });
+    // @ts-expect-error -- only psuHeadersFromRequest makes PSU headers.
+    const forged: Presence = pressed(fake);
+    // @ts-expect-error -- a background sync has no place for them at all.
+    const sneaky: Parameters<typeof syncBankLinks>[2]["presence"] = { by: "background", psu: null };
+    expect([missing, forged, sneaky]).toHaveLength(3);
+  });
+});
+
+describe("which months a sync covers", () => {
+  it("only from the earliest transaction the bank sent, never from the date asked for", async () => {
+    // Asked for 90 days (a reconnect that kept an old sync date), the bank sends only the last 30.
+    const recent = Array.from({ length: 30 }, (_, i) =>
+      t(`c${i}`, "-1.00", new Date(NOW - i * 86_400_000).toISOString().slice(0, 10)),
+    );
+    const calls = baseRoutes([[/transactions$/, page(recent)]]);
+    await linkRabobank(calls);
+    await asA((db) => db.update(schema.bankLinks).set({ lastSyncedAt: "2026-08-27T12:00:00Z" }));
+    await syncBankLinks(config(), asA, {
+      presence: BG,
+      environment: "PRODUCTION",
+      today: TODAY,
+      now: NOW,
+    });
+    const asked = calls.filter((c) => c.url.pathname.endsWith("/transactions")).at(-1)!;
+    expect(asked.url.searchParams.get("date_from")).toBe("2026-08-20");
+    const [imp] = await asA((db) => db.select().from(schema.imports));
+    expect(imp.periodFrom).toBe("2026-10-20");
+    const covered = await asA((db) => coveredMonths(db));
+    expect(covered.has("2026-08")).toBe(false);
+    expect(covered.has("2026-09")).toBe(false);
+    expect(covered.has("2026-10")).toBe(false); // it starts on the 20th: not all of October came
+  });
+
+  it("claims nothing when the bank sent nothing", () => {
+    expect(coveredPeriod([], "2026-10-19", TODAY)).toBeNull();
   });
 });

@@ -14,7 +14,7 @@ import { AppearanceSettings } from "@/components/arnaq/appearance-settings";
 import { BankConnections } from "@/components/arnaq/bank-connections";
 import { BtwClients, BtwSettings } from "@/components/arnaq/btw-settings";
 import { listConnections } from "@/lib/banking/connections";
-import { bankingConfig } from "@/lib/banking/enable-banking";
+import { bankingStatus } from "@/lib/banking/enable-banking";
 import { IncomeTaxSettings, IncomeTaxYears } from "@/components/arnaq/income-tax-settings";
 import { getIncomeTaxSettings } from "@/lib/income-tax/settings";
 import { getIncomeTaxYears } from "@/lib/income-tax/years";
@@ -79,6 +79,8 @@ async function Content() {
     await getIncomeTaxYears(db),
     await listConnections(db),
   ]);
+  // Asked after the database work, so no connection is held while Enable Banking answers (cached after the first time).
+  const banking = await bankingStatus();
   const tiles = messages[locale].view.overzicht.tiles.sparen;
   const { euro } = formatter(locale);
   const goal = savingsSettings.goal;
@@ -112,7 +114,7 @@ async function Content() {
       </Section>
 
       <Section title={t.ui.banking.title}>
-        <BankConnections configured={bankingConfig() !== null} connections={bankLinks} />
+        <BankConnections availability={banking.state} connections={bankLinks} />
       </Section>
 
       <Section title={s.backup}>

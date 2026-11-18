@@ -891,7 +891,15 @@ export const ui = {
       "arnaq only reads your transactions and balances. It can never move money. Your bank asks you to agree, and that consent ends after about six months; then you link the bank again.",
     notConfigured:
       "Linking banks is not set up on this server. You can still upload your statements on the Upload screen.",
+    sandbox:
+      "Linking banks is off: this server has an Enable Banking test (sandbox) application, which only shows invented data. Use the production application's key.",
+    unreachable:
+      "Enable Banking cannot be reached right now, so linking banks is unavailable. Try again later.",
     none: "No banks linked yet.",
+    backupTip:
+      "Tip: make a full backup first (Backup, in Settings), so you can go back if the bank's transactions are not what you expect.",
+    psuNote:
+      "When you press Refresh now, your IP address and browser are passed to your bank through Enable Banking, so the bank knows it is you asking.",
     link: "Link a bank",
     chooseBank: "Choose your bank",
     loadingBanks: "Loading the banks…",

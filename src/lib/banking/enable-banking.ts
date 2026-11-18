@@ -1,4 +1,6 @@
+import "server-only";
 import { createHash, createPrivateKey, sign, type KeyObject } from "node:crypto";
+import { isIP } from "node:net";
 
 /**
  * The Enable Banking API (PSD2 account information), server side only. Every request carries a short-lived token
@@ -49,19 +51,30 @@ export const isSessionOver = (e: unknown): boolean =>
   e instanceof EnableBankingError && e.code !== null && SESSION_OVER.has(e.code);
 
 const configCache = new Map<string, BankingConfig | null>();
+let warnedUrl = false;
 
-/** The API's address: https only (plain http only for a local test server). Anything else switches the feature off. */
-function apiUrl(raw: string | undefined): URL | null {
+/**
+ * The API's address: https only (plain http only for a local test server, and never in production). Anything else
+ * switches the feature off, with one warning that does not repeat the value.
+ */
+function apiUrl(env: NodeJS.ProcessEnv): URL | null {
+  const raw = env.ENABLE_BANKING_API_URL;
   if (!raw?.trim()) return new URL(DEFAULT_API_URL);
+  let ok: URL | null = null;
   try {
     const url = new URL(raw.trim());
     const local = url.hostname === "localhost" || url.hostname === "127.0.0.1";
-    if (url.protocol !== "https:" && !(url.protocol === "http:" && local)) return null;
-    if (url.username || url.password) return null;
-    return new URL(url.origin);
+    const plainLocal = url.protocol === "http:" && local && env.NODE_ENV !== "production";
+    if ((url.protocol === "https:" || plainLocal) && !url.username && !url.password)
+      ok = new URL(url.origin);
   } catch {
-    return null;
+    ok = null;
   }
+  if (!ok && !warnedUrl) {
+    warnedUrl = true;
+    console.warn("Enable Banking is off: ENABLE_BANKING_API_URL is not an https address.");
+  }
+  return ok;
 }
 
 /**
@@ -73,7 +86,7 @@ export function bankingConfig(env: NodeJS.ProcessEnv = process.env): BankingConf
   const pem = env.ENABLE_BANKING_PRIVATE_KEY ?? "";
   if (!applicationId || !pem.trim() || !env.APP_URL?.trim()) return null;
   if (!/^[A-Za-z0-9-]{1,64}$/.test(applicationId)) return null;
-  const baseUrl = apiUrl(env.ENABLE_BANKING_API_URL);
+  const baseUrl = apiUrl(env);
   if (!baseUrl) return null;
   const cacheKey = `${applicationId}|${baseUrl.origin}|${createHash("sha256").update(pem).digest("hex")}`;
   if (configCache.has(cacheKey)) return configCache.get(cacheKey)!;
@@ -133,13 +146,65 @@ const errorCode = (body: unknown): string | null => {
   return typeof code === "string" && /^[A-Z_]{1,64}$/.test(code) ? code : null;
 };
 
+declare const psuBrand: unique symbol;
+
+/**
+ * The "PSU headers": they tell the bank the person is there right now (they pressed Refresh), which PSD2 treats
+ * differently from reading in the background. Only psuHeadersFromRequest makes them, from the request of the person who
+ * pressed the button, and only from values that pass a strict check; a plain object is not one (the brand).
+ */
+export type PsuHeaders = Readonly<Record<string, string>> & { readonly [psuBrand]: true };
+
+const PSU_RULES: [header: string, psu: string, max: number, ok: RegExp][] = [
+  ["user-agent", "Psu-User-Agent", 300, /^[\x20-\x7e]+$/],
+  ["accept-language", "Psu-Accept-Language", 100, /^[A-Za-z0-9\-,;=.* ]+$/],
+  ["accept", "Psu-Accept", 200, /^[A-Za-z0-9\-,;=.*/+ ]+$/],
+  ["accept-encoding", "Psu-Accept-Encoding", 100, /^[A-Za-z0-9\-,;=.* ]+$/],
+  ["accept-charset", "Psu-Accept-Charset", 100, /^[A-Za-z0-9\-,;=.* ]+$/],
+];
+
+/**
+ * PSU headers from the request of a person who pressed "Refresh now", or null. The address is the first entry of
+ * x-forwarded-for and must be an IP address; without one, none are sent at all (Enable Banking wants all of a bank's
+ * required headers or none). The others are passed on only when present and well-formed, capped in length.
+ */
+export function psuHeadersFromRequest(headers: {
+  get(name: string): string | null;
+}): PsuHeaders | null {
+  const ip = headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+  if (ip.length > 45 || isIP(ip) === 0) return null;
+  const out: Record<string, string> = { "Psu-Ip-Address": ip };
+  for (const [header, psu, max, ok] of PSU_RULES) {
+    const value = headers.get(header)?.trim().slice(0, max);
+    if (value && ok.test(value)) out[psu] = value;
+  }
+  return out as PsuHeaders;
+}
+
+type CallOptions = {
+  query?: Record<string, string | undefined>;
+  body?: unknown;
+  timeoutMs?: number;
+  psu?: PsuHeaders | null;
+};
+
 /** One call. The path is built by this file from fixed parts and encoded ids, and must stay on the API's host. */
 async function call(
   config: BankingConfig,
   method: "GET" | "POST" | "DELETE",
   path: string,
-  opts: { query?: Record<string, string | undefined>; body?: unknown; timeoutMs?: number } = {},
+  opts: CallOptions = {},
 ): Promise<unknown> {
+  return (await request(config, method, path, opts)).body;
+}
+
+/** A call, and how many bytes its answer had (the sync keeps a budget). */
+async function request(
+  config: BankingConfig,
+  method: "GET" | "POST" | "DELETE",
+  path: string,
+  opts: CallOptions = {},
+): Promise<{ body: unknown; bytes: number }> {
   const url = new URL(path, config.baseUrl);
   if (url.origin !== config.baseUrl.origin) throw new EnableBankingError(0, "INVALID_HOST");
   for (const [k, v] of Object.entries(opts.query ?? {}))
@@ -150,11 +215,12 @@ async function call(
       method,
       redirect: "error",
       cache: "no-store",
-      signal: AbortSignal.timeout(opts.timeoutMs ?? TIMEOUT_MS),
+      signal: AbortSignal.timeout(Math.max(1, opts.timeoutMs ?? TIMEOUT_MS)),
       headers: {
         accept: "application/json",
         authorization: `Bearer ${signToken(config)}`,
         ...(opts.body === undefined ? {} : { "content-type": "application/json" }),
+        ...(opts.psu ?? {}),
       },
       body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
     });
@@ -177,7 +243,7 @@ async function call(
     if (res.ok) throw new EnableBankingError(502, "INVALID_RESPONSE");
   }
   if (!res.ok) throw new EnableBankingError(res.status, errorCode(body));
-  return body;
+  return { body, bytes: Buffer.byteLength(text) };
 }
 
 // ---- parsing what comes back (untrusted) ----
@@ -198,10 +264,25 @@ export function isoInstant(v: unknown): string | null {
   return year >= 2000 && year <= 2100 ? new Date(t).toISOString() : null;
 }
 
+/** The IBAN check (ISO 13616, mod 97): letters become numbers, the first four characters go to the end. */
+export function ibanChecksumOk(iban: string): boolean {
+  const moved = iban.slice(4) + iban.slice(0, 4);
+  let rest = 0;
+  for (const ch of moved) {
+    const digits = /[A-Z]/.test(ch) ? String(ch.charCodeAt(0) - 55) : ch;
+    for (const d of digits) rest = (rest * 10 + Number(d)) % 97;
+  }
+  return rest === 1;
+}
+
+/** An IBAN without spaces, upper case, with a valid check digit; null otherwise. */
 export const normaliseIban = (v: unknown): string | null => {
   const s = typeof v === "string" ? v.replace(/\s+/g, "").toUpperCase() : "";
-  return /^[A-Z]{2}\d{2}[A-Z0-9]{8,30}$/.test(s) ? s : null;
+  return /^[A-Z]{2}\d{2}[A-Z0-9]{8,30}$/.test(s) && ibanChecksumOk(s) ? s : null;
 };
+
+/** How an account number is shown: the last four characters only ("••1234"). */
+export const maskIban = (iban: string): string => `••${iban.slice(-4)}`;
 
 export interface Aspsp {
   name: string;
@@ -256,10 +337,67 @@ export async function getAspsps(
   return list;
 }
 
+export type BankingEnvironment = "PRODUCTION" | "SANDBOX";
+
+/** GET /application: the environment of this application (Enable Banking tells them apart by application). */
+export async function getApplicationEnvironment(
+  config: BankingConfig,
+): Promise<BankingEnvironment> {
+  const environment = obj(await call(config, "GET", "/application"))?.environment;
+  if (environment !== "PRODUCTION" && environment !== "SANDBOX") throw invalid();
+  return environment;
+}
+
+/** A known environment is kept for the process (it never changes for an application); a failure for a minute. */
+const APPLICATION_RETRY_MS = 60_000;
+const environmentCache = new Map<
+  string,
+  { environment: BankingEnvironment } | { failedAt: number }
+>();
+
+export type BankingStatus =
+  | { state: "off" }
+  | { state: "sandbox" }
+  | { state: "unreachable" }
+  | { state: "on"; config: BankingConfig; environment: BankingEnvironment };
+
+/**
+ * Whether linking banks works here. Off without the variables. A sandbox (test) application is refused in production
+ * unless ENABLE_BANKING_ALLOW_SANDBOX=1, so test data never lands in a real database. When Enable Banking cannot say
+ * which application this is, the feature is unavailable (fail closed), and it asks again after a minute.
+ */
+export async function bankingStatus(
+  env: NodeJS.ProcessEnv = process.env,
+  now: number = Date.now(),
+): Promise<BankingStatus> {
+  const config = bankingConfig(env);
+  if (!config) return { state: "off" };
+  const key = `${config.baseUrl.origin}|${config.applicationId}`;
+  let hit = environmentCache.get(key);
+  if (!hit || ("failedAt" in hit && now - hit.failedAt >= APPLICATION_RETRY_MS)) {
+    try {
+      hit = { environment: await getApplicationEnvironment(config) };
+    } catch {
+      hit = { failedAt: now };
+    }
+    environmentCache.set(key, hit);
+  }
+  if ("failedAt" in hit) return { state: "unreachable" };
+  if (
+    hit.environment === "SANDBOX" &&
+    env.NODE_ENV === "production" &&
+    env.ENABLE_BANKING_ALLOW_SANDBOX !== "1"
+  )
+    return { state: "sandbox" };
+  return { state: "on", config, environment: hit.environment };
+}
+
 /** For tests. */
 export function clearBankingCaches(): void {
   aspspCache.clear();
   configCache.clear();
+  environmentCache.clear();
+  warnedUrl = false;
 }
 
 export interface StartAuthorization {
@@ -386,10 +524,16 @@ export function parseBalances(raw: unknown): Balance[] {
   return out;
 }
 
-export async function getBalances(config: BankingConfig, accountUid: string): Promise<Balance[]> {
+export async function getBalances(
+  config: BankingConfig,
+  accountUid: string,
+  timeoutMs: number = DATA_TIMEOUT_MS,
+  psu: PsuHeaders | null = null,
+): Promise<Balance[]> {
   return parseBalances(
     await call(config, "GET", `/accounts/${encodeURIComponent(accountUid)}/balances`, {
-      timeoutMs: DATA_TIMEOUT_MS,
+      timeoutMs: Math.min(DATA_TIMEOUT_MS, timeoutMs),
+      psu,
     }),
   );
 }
@@ -398,26 +542,38 @@ export interface TransactionPage {
   /** Raw transactions: turned into rows by src/lib/banking/convert.ts, which checks every field. */
   transactions: unknown[];
   continuationKey: string | null;
+  /** Size of the answer in bytes, for the sync's budget. */
+  bytes: number;
 }
 
-export function parseTransactionPage(raw: unknown): TransactionPage {
+export function parseTransactionPage(raw: unknown, bytes = 0): TransactionPage {
   const body = obj(raw);
   if (!body || !Array.isArray(body.transactions)) throw invalid();
   if (body.transactions.length > MAX_PAGE_TRANSACTIONS) throw invalid();
   return {
     transactions: body.transactions,
     continuationKey: str(body.continuation_key, 2000),
+    bytes,
   };
 }
 
-/** One page of booked transactions. */
+/** One page of booked transactions. `timeoutMs` shortens the usual timeout (a sync near its deadline). */
 export async function getTransactions(
   config: BankingConfig,
   accountUid: string,
-  query: { dateFrom: string; dateTo: string; continuationKey?: string | null },
+  query: {
+    dateFrom: string;
+    dateTo: string;
+    continuationKey?: string | null;
+    timeoutMs?: number;
+    psu?: PsuHeaders | null;
+  },
 ): Promise<TransactionPage> {
-  return parseTransactionPage(
-    await call(config, "GET", `/accounts/${encodeURIComponent(accountUid)}/transactions`, {
+  const { body, bytes } = await request(
+    config,
+    "GET",
+    `/accounts/${encodeURIComponent(accountUid)}/transactions`,
+    {
       query: {
         date_from: query.dateFrom,
         date_to: query.dateTo,
@@ -425,7 +581,9 @@ export async function getTransactions(
         strategy: "default",
         continuation_key: query.continuationKey ?? undefined,
       },
-      timeoutMs: DATA_TIMEOUT_MS,
-    }),
+      timeoutMs: Math.min(DATA_TIMEOUT_MS, query.timeoutMs ?? DATA_TIMEOUT_MS),
+      psu: query.psu ?? null,
+    },
   );
+  return parseTransactionPage(body, bytes);
 }

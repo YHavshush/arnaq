@@ -1,8 +1,8 @@
+import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { and, eq, gt, inArray, isNotNull, lt, ne, notInArray, or, sql } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { bankName } from "@/lib/import/banks";
-import { cleanText } from "@/lib/import/clean";
 import type { Bank } from "@/lib/import/types";
 import { clearSample } from "@/lib/sample/sample";
 import { aspspBank } from "./banks";
@@ -12,9 +12,10 @@ import {
   createSession,
   deleteSession,
   getAspsps,
-  normaliseIban,
+  maskIban,
   startAuthorization,
   type BankingConfig,
+  type BankingEnvironment,
   type Session,
 } from "./enable-banking";
 import type { AspspOption, BankConnectionView, CallbackResult, ConnectionStatus } from "./types";
@@ -35,6 +36,13 @@ const DAY_MS = 86_400_000;
 export const hashState = (state: string): string =>
   createHash("sha256").update(state, "utf8").digest("hex");
 const newState = (): string => randomBytes(32).toString("base64url");
+/** What newState makes: 32 random bytes, base64url, 43 characters. Anything else is not ours. */
+export const isWellFormedState = (v: unknown): v is string =>
+  typeof v === "string" && /^[A-Za-z0-9_-]{43}$/.test(v);
+
+/** An account number as stored, compared loosely (an uploaded file may have spaces or lower case). */
+const looseIban = (v: string | null): string | null =>
+  v === null ? null : v.replace(/\s+/g, "").toUpperCase();
 
 /** A timestamptz as Postgres hands it over ("2026-11-18 10:00:00+00") in milliseconds, or null. */
 export function instantMs(value: string | null): number | null {
@@ -91,6 +99,8 @@ export async function beginConnect(
     aspsp: { name: string; country: string };
     language: "en" | "nl";
     appUrl: URL;
+    /** The kind of application this server uses (from bankingStatus): recorded on the connection. */
+    environment: BankingEnvironment;
     now?: number;
   },
 ): Promise<{ url: string }> {
@@ -132,6 +142,7 @@ export async function beginConnect(
       .values({
         aspspName: aspsp.name,
         aspspCountry: aspsp.country,
+        environment: input.environment,
         status: "pending",
         stateHash: hashState(state),
         createdAt: new Date(now).toISOString(),
@@ -171,11 +182,10 @@ async function accountFor(
 ): Promise<number> {
   const all = await db.select().from(schema.accounts);
   const byIban = account.iban
-    ? all.find((a) => normaliseIban(a.iban) === account.iban && !taken.has(a.id))
+    ? all.find((a) => looseIban(a.iban) === account.iban && !taken.has(a.id))
     : undefined;
   if (byIban) return byIban.id;
-  const ibanFree =
-    account.iban !== null && !all.some((a) => normaliseIban(a.iban) === account.iban);
+  const ibanFree = account.iban !== null && !all.some((a) => looseIban(a.iban) === account.iban);
   // A Revolut export names no account, so an uploaded Revolut account has no IBAN: when there is exactly one, it is
   // this one (otherwise the bank's rows would land next to the uploaded ones, twice). Other banks' files name the IBAN.
   if (bank === "revolut") {
@@ -189,10 +199,12 @@ async function accountFor(
       return open[0].id;
     }
   }
+  // The name shows only the last four characters of the account number ("Rabobank ••1234"); the full IBAN is kept
+  // where accounts keep it, for matching.
   const [created] = await db
     .insert(schema.accounts)
     .values({
-      name: ibanFree ? `${bankName(bank)} ${account.iban}` : bankName(bank),
+      name: account.iban ? `${bankName(bank)} ${maskIban(account.iban)}` : bankName(bank),
       bank,
       iban: ibanFree ? account.iban : null,
       currency: account.currency,
@@ -214,7 +226,8 @@ export async function completeCallback(
   now: number = Date.now(),
 ): Promise<CallbackResult> {
   const { state, code, error } = params;
-  if (!state || state.length > 200) return "expired";
+  // A state arnaq could not have made is not even looked up.
+  if (!isWellFormedState(state)) return "expired";
   const consumed = await run(async (db) => {
     const [row] = await db
       .update(schema.bankConnections)
@@ -321,11 +334,7 @@ export async function completeCallback(
         await db.insert(schema.bankLinks).values({
           connectionId: connection.id,
           accountUid: account.uid,
-          iban: account.iban,
           currency: account.currency,
-          name:
-            (account.name && cleanText(account.name, 100)) ||
-            (account.iban ? `${bankName(bank)} ${account.iban}` : bankName(bank)),
           accountId,
           lastSyncedAt: previous ?? null,
         });
@@ -337,9 +346,10 @@ export async function completeCallback(
           .set({ status: "closed", sessionId: null, stateHash: null })
           .where(inArray(schema.bankConnections.id, olderIds));
       }
-      // The consent's end as the bank gave it; without one, the longest it could last.
-      const validUntil =
-        session.validUntil ?? new Date(now + MAX_CONSENT_SECONDS * 1000).toISOString();
+      // The consent's end as the bank gave it, but never later than PSD2 allows (180 days from now); without one, that.
+      const latest = now + MAX_CONSENT_SECONDS * 1000;
+      const given = session.validUntil ? Date.parse(session.validUntil) : latest;
+      const validUntil = new Date(Math.min(given, latest)).toISOString();
       await db
         .update(schema.bankConnections)
         .set({ status: "active", sessionId: session.sessionId, validUntil })
@@ -358,12 +368,21 @@ export async function completeCallback(
   return "linked";
 }
 
-/** End sessions at Enable Banking, as well as possible: one that cannot be reached runs out on its own. */
+/**
+ * End sessions at Enable Banking, as well as possible: one that cannot be reached runs out on its own. Without a
+ * configuration nothing can be called; only how many were skipped is logged (never an id).
+ */
 export async function revokeSessions(
   config: BankingConfig | null,
   sessionIds: string[],
 ): Promise<void> {
-  if (!config) return;
+  if (!config) {
+    if (sessionIds.length > 0)
+      console.warn(
+        `Enable Banking is not configured: ${sessionIds.length} bank session(s) were not ended remotely; they run out by themselves.`,
+      );
+    return;
+  }
   for (const id of sessionIds) await deleteSession(config, id).catch(() => undefined);
 }
 
@@ -380,14 +399,15 @@ export class ConnectionNotFound extends Error {}
 
 /**
  * Disconnect: end the consent at Enable Banking (one that is already gone is fine), then mark the connection closed and
- * remove its links. The transactions it brought in stay. Throws ConnectionNotFound for a connection the person does
- * not have (another person's included).
+ * remove its links. The transactions it brought in stay. Without a configuration (the feature switched off) the
+ * connection is closed here only and `revoked` is false: the consent then runs out at the bank by itself. Throws
+ * ConnectionNotFound for a connection the person does not have (another person's included).
  */
 export async function disconnect(
   config: BankingConfig | null,
   run: RunAsUser,
   id: number,
-): Promise<void> {
+): Promise<{ revoked: boolean }> {
   const row = await run(async (db) =>
     (
       await db
@@ -411,9 +431,13 @@ export async function disconnect(
       .set({ status: "closed", sessionId: null, stateHash: null })
       .where(eq(schema.bankConnections.id, id));
   });
+  return { revoked: row.sessionId === null || config !== null };
 }
 
-/** The connections for Settings: no session ids, no account numbers. */
+/**
+ * The connections for Settings: no session id, state or token. The linked accounts show by their arnaq name, as on the
+ * rest of the screens; an account an uploaded file created can carry its account number in that name.
+ */
 export async function listConnections(
   db: Db,
   now: number = Date.now(),

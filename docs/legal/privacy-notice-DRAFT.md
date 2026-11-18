@@ -33,7 +33,9 @@ We do not use advertising or analytics trackers. We do not sell data.
 - **Enable Banking** (Enable Banking Oy, Finland, a licensed account-information service provider), **only if you
   link a bank** in Settings. It reads the accounts you allow at your bank (account details, balances and
   transactions) and passes them to arnaq; arnaq can only read, never move money. You give the consent at your bank;
-  it ends after at most 180 days, and "Disconnect" or "Delete my data" ends it at once. [Link Enable Banking's terms
+  it ends after at most 180 days, and "Disconnect" or "Delete my data" ends it at once. When you press "Refresh
+  now", your IP address and browser details are passed to your bank through Enable Banking, so the bank knows you
+  are the one asking. [Link Enable Banking's terms
   and privacy notice, and check whether a data processing agreement or its own controller role applies.]
 - **Anthropic** (the company behind Claude), **only if you switch on "arnaq AI"** after reading the
   consent text. We then send the name of a shop and a short description with numbers, account numbers and

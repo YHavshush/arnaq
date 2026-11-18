@@ -549,6 +549,8 @@ export const BANK_CONNECTION_STATUSES = [
   "closed",
   "failed",
 ] as const;
+/** Enable Banking's two kinds of application: test data (SANDBOX) or real banks (PRODUCTION). */
+export const BANKING_ENVIRONMENTS = ["PRODUCTION", "SANDBOX"] as const;
 
 /**
  * A link to a bank through Enable Banking (src/lib/banking): one consent at one bank (an "ASPSP"). `pending` while the
@@ -556,7 +558,8 @@ export const BANK_CONNECTION_STATUSES = [
  * it is good for 15 minutes from `createdAt`. `active` once the bank said yes: `sessionId` is Enable Banking's session
  * and `validUntil` when the consent ends. The session id is no credential on its own (every call also needs the
  * application's signed token) but it is treated as one: it never leaves the server and is not in the backup. The
- * private key and the tokens are never stored.
+ * private key and the tokens are never stored. `environment` is the kind of application that made it, so a sandbox
+ * link (test data) is always recognisable and never read with a production application.
  */
 export const bankConnections = pgTable(
   "bank_connections",
@@ -565,6 +568,7 @@ export const bankConnections = pgTable(
     userId: owner(),
     aspspName: text("aspsp_name").notNull(),
     aspspCountry: text("aspsp_country").notNull(),
+    environment: text("environment", { enum: BANKING_ENVIRONMENTS }).notNull(),
     status: text("status", { enum: BANK_CONNECTION_STATUSES }).notNull().default("pending"),
     sessionId: text("session_id"),
     validUntil: timestamp("valid_until", { withTimezone: true, mode: "string" }),
@@ -586,6 +590,7 @@ export const bankConnections = pgTable(
       "bank_connections_aspsp_check",
       sql`char_length(${t.aspspName}) between 1 and 100 and ${t.aspspCountry} ~ '^[A-Z]{2}$'`,
     ),
+    check("bank_connections_environment_check", sql`${t.environment} in ('PRODUCTION','SANDBOX')`),
     check(
       "bank_connections_secret_check",
       sql`(${t.sessionId} is null or char_length(${t.sessionId}) between 1 and 100) and (${t.stateHash} is null or ${t.stateHash} ~ '^[0-9a-f]{64}$')`,
@@ -595,7 +600,8 @@ export const bankConnections = pgTable(
 
 /**
  * One bank account a connection gives access to, and the arnaq account its transactions go into. `accountUid` is Enable
- * Banking's id for the account within the session. Removing the connection or the arnaq account removes the link; the
+ * Banking's id for the account within the session. No name or account number here: the arnaq account holds those, as
+ * it does for an uploaded file. Removing the connection or the arnaq account removes the link; the
  * transactions it brought in stay.
  */
 export const bankLinks = pgTable(
@@ -605,9 +611,7 @@ export const bankLinks = pgTable(
     userId: owner(),
     connectionId: integer("connection_id").notNull(),
     accountUid: text("account_uid").notNull(),
-    iban: text("iban"),
     currency: text("currency").notNull(),
-    name: text("name").notNull(),
     accountId: integer("account_id").notNull(),
     lastSyncedAt: timestamp("last_synced_at", { withTimezone: true, mode: "string" }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
@@ -619,7 +623,7 @@ export const bankLinks = pgTable(
     unique("bank_links_connection_uid_unique").on(t.userId, t.connectionId, t.accountUid),
     check(
       "bank_links_fields_check",
-      sql`char_length(${t.accountUid}) between 1 and 100 and (${t.iban} is null or char_length(${t.iban}) between 5 and 34) and ${t.currency} ~ '^[A-Z]{3}$' and char_length(${t.name}) between 1 and 100`,
+      sql`char_length(${t.accountUid}) between 1 and 100 and ${t.currency} ~ '^[A-Z]{3}$'`,
     ),
     foreignKey({
       name: "bank_links_connection_fk",

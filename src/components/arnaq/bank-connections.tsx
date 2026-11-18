@@ -27,10 +27,11 @@ const COUNTRY = "NL";
  * disconnect (asks first). The result of a trip to the bank arrives as `?bank=<result>`; only known words are shown.
  */
 export function BankConnections({
-  configured,
+  availability,
   connections,
 }: {
-  configured: boolean;
+  /** "on", or why linking is not available here: not set up, a test (sandbox) application, or unreachable. */
+  availability: "on" | "off" | "sandbox" | "unreachable";
   connections: BankConnectionView[];
 }) {
   const { t, locale } = useI18n();
@@ -47,7 +48,8 @@ export function BankConnections({
   const remove = useAction();
   const autoSynced = useRef(false);
 
-  const active = connections.some((c) => c.status === "active");
+  const on = availability === "on";
+  const active = on && connections.some((c) => c.status === "active");
 
   async function refresh() {
     if (syncing) return;
@@ -63,7 +65,7 @@ export function BankConnections({
       links.flatMap((l) =>
         l.status === "expired"
           ? [s.refreshExpired(l.accountName)]
-          : l.status === "failed"
+          : l.status === "failed" || l.status === "stopped"
             ? [s.refreshProblem(l.accountName, l.error ?? "")]
             : [],
       ),
@@ -94,25 +96,30 @@ export function BankConnections({
       setConfirming(null);
   }
 
-  if (!configured)
+  if (!on && connections.length === 0)
     return (
       <div className="glass grid gap-3 p-4">
-        <p className="text-ink-muted max-w-[56ch] text-[15px]">{s.notConfigured}</p>
+        <p className="text-ink-muted max-w-[56ch] text-[15px]">{offText(availability, s)}</p>
         <p className="text-ink-muted max-w-[56ch] text-[14px]">{s.promise}</p>
       </div>
     );
 
   return (
     <div className="glass grid gap-4 p-4">
-      <p className="max-w-[56ch] text-[15px]">{s.intro}</p>
+      {/* Not available here, but links remain: they can still be disconnected. */}
+      <p className="max-w-[56ch] text-[15px]">{on ? s.intro : offText(availability, s)}</p>
       <p className="text-ink-muted max-w-[56ch] text-[14px]">{s.promise}</p>
       {result && (
         <p role="status" className="text-[15px] font-semibold">
           {s.result[result]}
         </p>
       )}
+      {on && <p className="text-ink-muted max-w-[56ch] text-[14px]">{s.psuNote}</p>}
       {connections.length === 0 ? (
-        <p className="text-ink-muted text-[15px]">{s.none}</p>
+        <div className="grid gap-2">
+          <p className="text-ink-muted text-[15px]">{s.none}</p>
+          {on && <p className="max-w-[56ch] text-[14px] font-semibold">{s.backupTip}</p>}
+        </div>
       ) : (
         <ul className="divide-hair -mx-4 divide-y">
           {connections.map((c) => {
@@ -169,7 +176,7 @@ export function BankConnections({
                   </div>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {(endsSoon || c.status !== "active") && (
+                    {on && (endsSoon || c.status !== "active") && (
                       <ConnectButton
                         aspsp={{ name: c.bankName, country: COUNTRY }}
                         label={s.reconnect}
@@ -207,15 +214,25 @@ export function BankConnections({
             {syncing ? s.refreshing : s.refresh}
           </PrimaryButton>
         )}
-        {!picking && (
+        {on && !picking && (
           <GhostButton type="button" onClick={() => setPicking(true)}>
             {s.link}
           </GhostButton>
         )}
       </div>
-      {picking && <BankPicker onCancel={() => setPicking(false)} />}
+      {on && picking && <BankPicker onCancel={() => setPicking(false)} />}
     </div>
   );
+}
+
+/** Why linking is not available here, in plain words. */
+function offText(
+  availability: "on" | "off" | "sandbox" | "unreachable",
+  s: { notConfigured: string; sandbox: string; unreachable: string },
+): string {
+  if (availability === "sandbox") return s.sandbox;
+  if (availability === "unreachable") return s.unreachable;
+  return s.notConfigured;
 }
 
 /** Start the link and send the browser to the bank. */

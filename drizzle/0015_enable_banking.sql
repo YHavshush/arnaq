@@ -3,6 +3,7 @@ CREATE TABLE "bank_connections" (
 	"user_id" uuid DEFAULT app.uid() NOT NULL,
 	"aspsp_name" text NOT NULL,
 	"aspsp_country" text NOT NULL,
+	"environment" text NOT NULL,
 	"status" text DEFAULT 'pending' NOT NULL,
 	"session_id" text,
 	"valid_until" timestamp with time zone,
@@ -11,6 +12,7 @@ CREATE TABLE "bank_connections" (
 	CONSTRAINT "bank_connections_user_id_id_unique" UNIQUE("user_id","id"),
 	CONSTRAINT "bank_connections_status_check" CHECK ("bank_connections"."status" in ('pending','active','expired','closed','failed')),
 	CONSTRAINT "bank_connections_aspsp_check" CHECK (char_length("bank_connections"."aspsp_name") between 1 and 100 and "bank_connections"."aspsp_country" ~ '^[A-Z]{2}$'),
+	CONSTRAINT "bank_connections_environment_check" CHECK ("bank_connections"."environment" in ('PRODUCTION','SANDBOX')),
 	CONSTRAINT "bank_connections_secret_check" CHECK (("bank_connections"."session_id" is null or char_length("bank_connections"."session_id") between 1 and 100) and ("bank_connections"."state_hash" is null or "bank_connections"."state_hash" ~ '^[0-9a-f]{64}$'))
 );
 --> statement-breakpoint
@@ -20,15 +22,13 @@ CREATE TABLE "bank_links" (
 	"user_id" uuid DEFAULT app.uid() NOT NULL,
 	"connection_id" integer NOT NULL,
 	"account_uid" text NOT NULL,
-	"iban" text,
 	"currency" text NOT NULL,
-	"name" text NOT NULL,
 	"account_id" integer NOT NULL,
 	"last_synced_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "bank_links_user_id_id_unique" UNIQUE("user_id","id"),
 	CONSTRAINT "bank_links_connection_uid_unique" UNIQUE("user_id","connection_id","account_uid"),
-	CONSTRAINT "bank_links_fields_check" CHECK (char_length("bank_links"."account_uid") between 1 and 100 and ("bank_links"."iban" is null or char_length("bank_links"."iban") between 5 and 34) and "bank_links"."currency" ~ '^[A-Z]{3}$' and char_length("bank_links"."name") between 1 and 100)
+	CONSTRAINT "bank_links_fields_check" CHECK (char_length("bank_links"."account_uid") between 1 and 100 and "bank_links"."currency" ~ '^[A-Z]{3}$')
 );
 --> statement-breakpoint
 ALTER TABLE "bank_links" ENABLE ROW LEVEL SECURITY;--> statement-breakpoint

@@ -1,6 +1,8 @@
 /**
- * What the Settings screen gets to see of the bank links. Safe for the browser: no session id, no state, no token,
- * no account number. (Everything else in src/lib/banking is server-only.)
+ * What the Settings screen gets to see of the bank links. Safe for the browser: no session id, no state, no token.
+ * Accounts show by their arnaq name (a bank link names new ones with the last four characters only, "Rabobank ••1234";
+ * one an uploaded file created may carry the full account number, as everywhere else in arnaq). (Everything else in
+ * src/lib/banking is server-only.)
  */
 import type { Bank } from "@/lib/import/types";
 
@@ -36,7 +38,8 @@ export interface AspspOption {
 export interface SyncLinkReport {
   linkId: number;
   accountName: string;
-  status: "ok" | "expired" | "failed";
+  /** "stopped": the refresh ran out of time or bytes before this account; refreshing again continues. */
+  status: "ok" | "expired" | "failed" | "stopped";
   imported: number;
   duplicate: number;
   /** For a failure: a short English message (translated at the API edge). */

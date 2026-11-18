@@ -45,12 +45,13 @@ account-information service, instead of uploading files. It only reads (transact
 move money. It is off until the variables below are set; without them Settings explains that linking is not set
 up and the banking routes answer 503.
 
-| Variable                        | What                                                                                                      |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `ENABLE_BANKING_APPLICATION_ID` | the application id (a UUID) the Enable Banking control panel shows after you upload the certificate       |
-| `ENABLE_BANKING_PRIVATE_KEY`    | the application's RSA private key, PEM; one line with literal `\n` for the line breaks is fine. A secret. |
-| `ENABLE_BANKING_API_URL`        | optional; default `https://api.enablebanking.com`. Only for a test server (https, or http on localhost).  |
-| `APP_URL`                       | required for linking: the bank sends the person back to `${APP_URL}/api/banking/callback`                 |
+| Variable                        | What                                                                                                                          |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `ENABLE_BANKING_APPLICATION_ID` | the application id (a UUID) the Enable Banking control panel shows after you upload the certificate                           |
+| `ENABLE_BANKING_PRIVATE_KEY`    | the application's RSA private key, PEM; one line with literal `\n` for the line breaks is fine. A secret.                     |
+| `ENABLE_BANKING_API_URL`        | optional; default `https://api.enablebanking.com`. Only for a test server (https; http on localhost only outside production). |
+| `ENABLE_BANKING_ALLOW_SANDBOX`  | optional; `1` lets a sandbox (test) application run on a production server. Leave unset for real data.                        |
+| `APP_URL`                       | required for linking: the bank sends the person back to `${APP_URL}/api/banking/callback`                                     |
 
 Never commit the key or put it in a `NEXT_PUBLIC_` variable. It stays on the server: `src/lib/banking/enable-banking.ts`
 signs a short-lived token (RS256, one hour) for every call, never stores or logs the key or the token, and refuses to
@@ -70,7 +71,7 @@ Steps for the owner, in order:
    your own accounts (Rabobank, Revolut, ...). Until then linking in arnaq says no accounts are linked.
 5. Set `ENABLE_BANKING_APPLICATION_ID` and `ENABLE_BANKING_PRIVATE_KEY` in the host's environment (Production only)
    and redeploy. Then in arnaq: Settings > Bank connections > Link a bank, agree at the bank, and you are back in
-   Settings; the first refresh fetches the last 90 days.
+   Settings; the first refresh fetches the last 30 days. Make a full backup before the first link.
 
 How it behaves:
 
@@ -80,6 +81,18 @@ How it behaves:
   account is used), otherwise into a new one. Rows the account already holds from an uploaded file are not stored
   twice.
 - "Refresh now" fetches booked transactions since a week before the last refresh. There is no background sync.
+  Pressing it passes the person's IP address and browser (checked, length-capped) to the bank through Enable Banking
+  as PSU headers, which tells the bank the person is present.
+- A refresh stops after 45 seconds or 20 MB; each account is saved as soon as it is read, and the rest report
+  "stopped early" (refresh again). An account that sends more than 10 MB in one refresh is refused.
+- A month counts as complete ("actual") only from the earliest transaction the bank actually sent, never from the
+  date range asked for.
+- Enable Banking tells sandbox and production apart by the application. On a production server
+  (`NODE_ENV=production`) a sandbox application switches linking off unless `ENABLE_BANKING_ALLOW_SANDBOX=1`, so
+  invented data never lands in real accounts; sandbox imports are named "... (Enable Banking sandbox)". If Enable
+  Banking cannot say which application it is, linking is unavailable and it asks again after a minute.
+- New accounts are named with the last four characters of the IBAN only ("Rabobank ••1234"); IBANs with a wrong
+  check digit are not trusted.
 - The consent lasts the bank's maximum, at most 180 days; Settings offers "Reconnect" from 14 days before it ends.
 - "Disconnect", "Delete my data" and restoring a backup end the consent at Enable Banking. A backup holds no bank
   links: after a restore, link again.
