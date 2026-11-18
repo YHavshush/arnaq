@@ -232,6 +232,11 @@ export const transactions = pgTable(
     merchantKey: text("merchant_key"),
     /** The account balance after this transaction as the bank states it (cents); null when unknown. */
     balanceAfter: cents("balance_after"),
+    /**
+     * The tax year a payment to the tax office was for, when the person picked it as income tax on the year card
+     * (src/lib/income-tax/payments.ts); null otherwise. Such a payment is never read as the quarterly BTW.
+     */
+    incomeTaxYear: integer("income_tax_year"),
   },
   (t): PgTableExtraConfigValue[] => [
     unique("transactions_user_id_id_unique").on(t.userId, t.id),
@@ -239,6 +244,10 @@ export const transactions = pgTable(
     check(
       "transactions_category_source_check",
       sql`${t.categorySource} is null or ${t.categorySource} in ('user','learned','rule','recurring','catalog','history','model','confirmed','undone')`,
+    ),
+    check(
+      "transactions_income_tax_year_check",
+      sql`${t.incomeTaxYear} is null or ${t.incomeTaxYear} between 2000 and 2100`,
     ),
     foreignKey({
       name: "transactions_suggested_category_fk",
@@ -384,6 +393,15 @@ export const userSettings = pgTable(
     btwPotInSavings: boolean("btw_pot_in_savings").notNull().default(false),
     /** What the person expects to spend each month on everyday things (cents); the "my own" basis of the forecast. */
     forecastOwnSpending: cents("forecast_own_spending"),
+    /**
+     * The income tax reserve (src/lib/income-tax) is on unless the person turns it off. It does nothing until a tax year
+     * is typed (income_tax_years), so a new account has it effectively off.
+     */
+    incomeTaxOn: boolean("income_tax_on").notNull().default(true),
+    /** The word on a move to savings that makes it income tax money; null = the default. */
+    incomeTaxPocket: text("income_tax_pocket"),
+    /** The income tax pot is a part of the savings account: after the BTW pot, the savings count toward it. */
+    incomeTaxPotInSavings: boolean("income_tax_pot_in_savings").notNull().default(false),
   },
   () => [
     check("user_settings_provider_check", sql`smart_provider in ('off','claude','chatgpt')`),
@@ -404,6 +422,10 @@ export const userSettings = pgTable(
       sql`(btw_client is null or char_length(btw_client) between 1 and 60) and (btw_pocket is null or char_length(btw_pocket) between 1 and 60)`,
     ),
     check("user_settings_btw_payment_lag_check", sql`btw_payment_lag between 0 and 2`),
+    check(
+      "user_settings_income_tax_pocket_check",
+      sql`income_tax_pocket is null or char_length(income_tax_pocket) between 1 and 60`,
+    ),
   ],
 ).enableRLS();
 
@@ -474,6 +496,35 @@ export const btwClients = pgTable(
     check("btw_clients_name_check", sql`char_length(${t.name}) between 1 and 60`),
     check("btw_clients_payment_lag_check", sql`${t.paymentLag} between 0 and 2`),
     check("btw_clients_vat_percent_check", sql`${t.vatPercent} in (0, 21)`),
+  ],
+).enableRLS();
+
+/**
+ * The income tax reserve per tax year (src/lib/income-tax): the rate the person's adviser gave (basis points, 490 =
+ * 4.9%) that arnaq applies to client income without BTW, and later the real amount from the aanslag (cents). arnaq does
+ * no tax maths of its own.
+ */
+export const incomeTaxYears = pgTable(
+  "income_tax_years",
+  {
+    id: integer("id").primaryKey().generatedByDefaultAsIdentity(),
+    userId: owner(),
+    year: integer("year").notNull(),
+    rate: integer("rate").notNull(),
+    knownAmount: cents("known_amount"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    unique("income_tax_years_user_id_id_unique").on(t.userId, t.id),
+    unique("income_tax_years_user_year_unique").on(t.userId, t.year),
+    check("income_tax_years_year_check", sql`${t.year} between 2000 and 2100`),
+    check("income_tax_years_rate_check", sql`${t.rate} between 0 and 6000`),
+    check(
+      "income_tax_years_known_amount_check",
+      sql`${t.knownAmount} is null or ${t.knownAmount} between 0 and 1000000000000`,
+    ),
   ],
 ).enableRLS();
 

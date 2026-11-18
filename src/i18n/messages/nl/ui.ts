@@ -61,6 +61,11 @@ export const ui: typeof en = {
     ringLabel: (total: string, parts: string) => `Vermogen nu ${total}: ${parts}`,
     btwOwed: "Btw die je nog moet betalen",
     btwSpare: "Btw opzij gezet, over",
+    afterIncomeTax: (amount: string) => `na ${amount} inkomstenbelasting`,
+    afterBtwAndIncomeTax: (btw: string, incomeTax: string) =>
+      `na ${btw} btw en ${incomeTax} inkomstenbelasting`,
+    incomeTaxOwed: "Inkomstenbelasting die je nog moet betalen",
+    incomeTaxSpare: "Inkomstenbelasting opzij gezet, over",
   },
   category: {
     back: "Vandaag",
@@ -168,6 +173,80 @@ export const ui: typeof en = {
         "Mijn BTW-geld is een pot in mijn spaarrekening. arnaq telt mijn spaargeld eerst voor de BTW, zodat je ziet dat die gedekt is.",
       save: "Opslaan",
       saved: "BTW-instellingen opgeslagen",
+    },
+  },
+  incomeTax: {
+    title: (year: number) => `Inkomstenbelasting ${year}`,
+    aside: "apart gehouden van wat klanten betalen",
+    soFarOf: (soFar: string, expected: string, year: number) =>
+      `Tot nu toe opzij gezet ${soFar} van ${expected} verwacht voor ${year}`,
+    bill: (amount: string, year: number) => `Aanslag over ${year}: ${amount}`,
+    sentenceMissing: (amount: string) => `Zet nog ${amount} opzij om bij te blijven.`,
+    sentenceCovered: "De pot dekt wat je tot nu toe verschuldigd bent.",
+    sentenceBillMissing: (amount: string) => `Zet nog ${amount} opzij voor de aanslag.`,
+    sentenceBillCovered: "De pot dekt de rest van de aanslag.",
+    rate: (rate: string) => `${rate}% van wat klanten betalen, zonder BTW`,
+    pocket: "In de pot voor inkomstenbelasting",
+    fromSavings: "Waarvan in je spaargeld",
+    missing: "Nog opzij te zetten",
+    paid: "Betaald aan de Belastingdienst",
+    toPay: "Nog te betalen",
+    paymentsTitle: "Betalingen aan de Belastingdienst",
+    paymentsHint: (year: number) =>
+      `Een betaling aan de Belastingdienst telt als BTW, tenzij je hem hier kiest als inkomstenbelasting over ${year}.`,
+    noPayments: "Dit jaar geen betalingen aan de Belastingdienst.",
+    pick: (year: number) => `Inkomstenbelasting ${year}`,
+    pickLabel: (date: string, amount: string, year: number) =>
+      `Tel ${amount} betaald op ${date} als inkomstenbelasting over ${year}`,
+    unpick: "Geen inkomstenbelasting",
+    unpickLabel: (date: string, amount: string) =>
+      `${amount} betaald op ${date} is geen inkomstenbelasting`,
+    pickedOther: (year: number) => `Inkomstenbelasting ${year}`,
+    picked: "Geteld als inkomstenbelasting",
+    unpicked: "Telt niet meer als inkomstenbelasting",
+    settings: {
+      title: "Inkomstenbelasting",
+      intro:
+        "arnaq rekent zelf geen belasting uit. Typ per belastingjaar het percentage dat je adviseur je geeft, en later het bedrag van de aanslag. arnaq past het percentage toe op wat je BTW-klanten je betalen, zonder de BTW, en houdt dat apart zoals de BTW, zodat het nooit lijkt op geld om uit te geven.",
+      rule: "Een betaling aan de Belastingdienst telt als BTW, tenzij je hem op de jaarkaart bij Vooruit kiest als inkomstenbelasting. Een bankafschrift zegt niet voor welke belasting een betaling is, dus arnaq gokt nooit.",
+      yearsTitle: "Belastingjaren",
+      noYears: "Nog geen belastingjaren, dus arnaq houdt geen inkomstenbelasting apart.",
+      addYear: "Belastingjaar toevoegen",
+      editYear: "Wijzigen",
+      editYearLabel: (year: number) => `${year} wijzigen`,
+      removeYear: "Verwijderen",
+      removeYearLabel: (year: number) => `${year} verwijderen`,
+      confirmRemoveYear: "Belastingjaar verwijderen",
+      removeQuestion: (year: number) =>
+        `${year} verwijderen? arnaq houdt er dan geen inkomstenbelasting meer voor apart.`,
+      yearAdded: "Belastingjaar toegevoegd",
+      yearSaved: "Belastingjaar opgeslagen",
+      yearRemoved: "Belastingjaar verwijderd",
+      yearLimit: (max: number) => `Je hebt ${max} belastingjaren, het maximum dat arnaq bewaart.`,
+      yearLabel: "Belastingjaar",
+      rateLabel: "Percentage",
+      rateHint:
+        "Het percentage dat je adviseur je geeft, bijvoorbeeld 4,9. arnaq stelt er zelf geen voor.",
+      badRate: "Typ het percentage als getal, bijvoorbeeld 4,9.",
+      knownLabel: "Bedrag van de aanslag (niet verplicht)",
+      knownHint: "Typ het bedrag zodra de aanslag binnen is: dat vervangt de schatting.",
+      badAmount: "Typ het bedrag als getal, bijvoorbeeld 840.",
+      rateSummary: (rate: string) => `${rate}% van wat klanten betalen, zonder BTW`,
+      knownSummary: (amount: string) => `Aanslag: ${amount}`,
+      estimateSummary: "Nog geen aanslag: een schatting",
+      saveYear: "Belastingjaar opslaan",
+      settingsTitle: "Geld voor inkomstenbelasting",
+      onLabel: "Inkomstenbelasting apart houden",
+      onHint:
+        "Uit: geen bedragen per maand en geen jaarkaarten. Je belastingjaren blijven bewaard.",
+      pocketLabel: "Woord dat geld voor inkomstenbelasting aanwijst",
+      pocketHint:
+        "Zet het in de naam van de overboeking naar sparen, bijvoorbeeld Naar Inkomstenbelasting. Laat leeg voor Inkomstenbelasting.",
+      potLabel: "Mijn pot voor inkomstenbelasting zit in mijn spaargeld",
+      potHint:
+        "Mijn geld voor inkomstenbelasting is een pot in mijn spaarrekening. arnaq telt mijn spaargeld eerst voor de BTW, daarna voor de inkomstenbelasting.",
+      save: "Opslaan",
+      saved: "Instellingen voor inkomstenbelasting opgeslagen",
     },
   },
   overview: {
@@ -718,6 +797,8 @@ export const ui: typeof en = {
         `Je spaarsaldo komt uit je laatste afschrift: ${amount} op ${day}. Nieuwe spaarbewegingen komen erbij.`,
       potNote:
         "Je BTW-pot zit in je spaargeld (zie BTW hieronder), dus je doel telt alleen het spaargeld dat na de BTW overblijft.",
+      incomeTaxPotNote:
+        "Je pot voor inkomstenbelasting zit in je spaargeld (zie Inkomstenbelasting hieronder), dus je doel telt alleen het spaargeld dat daarna overblijft.",
       save: "Opslaan",
       saved: "Opgeslagen",
       errAmount: "Vul een bedrag in, bijvoorbeeld 1250 of 1250,50.",

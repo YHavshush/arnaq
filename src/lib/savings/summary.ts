@@ -1,8 +1,10 @@
 import { and, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { getBtwSettings } from "@/lib/btw/settings";
-import { btwPot } from "@/lib/btw/pot";
 import { getBtwSummary, mentions } from "@/lib/btw/summary";
+import { taxPots } from "@/lib/income-tax/pot";
+import { isIncomeTaxPocketMove, loadIncomeTax } from "@/lib/income-tax/state";
+import { getIncomeTaxSummary } from "@/lib/income-tax/summary";
 import { getSavingsSettings } from "./settings";
 
 export interface SavingsSummary {
@@ -27,6 +29,11 @@ export interface SavingsSummary {
    * out otherwise. `saved` still holds it (net worth counts the savings once); the goal does not (goalSaved).
    */
   btwPot?: number;
+  /**
+   * With "My income tax pot is part of my savings" on: the part of `saved` counted as income tax money, from what the
+   * BTW pot leaves (cents, see taxPots); 0 or left out otherwise. Like the BTW pot, still inside `saved`.
+   */
+  incomeTaxPot?: number;
 }
 
 const monthRange = (today: string) => {
@@ -49,6 +56,7 @@ export async function getSavingsSummary(
   const { from, to } = monthRange(opts.month ? `${opts.month}-01` : opts.today);
   const settings = await getSavingsSettings(db);
   const { pocket, potInSavings } = await getBtwSettings(db);
+  const incomeTax = await loadIncomeTax(db);
   const moves = (
     await db
       .select({
@@ -66,19 +74,34 @@ export async function getSavingsSummary(
           eq(schema.transactions.currency, schema.accounts.currency),
         ),
       )
-  ).filter((r) => !mentions([r.counterparty, r.description], pocket));
+  ).filter(
+    (r) =>
+      !mentions([r.counterparty, r.description], pocket) && !isIncomeTaxPocketMove(r, incomeTax),
+  );
   // With a statement's savings balance, only the moves after its date add to it.
   const counted = moves.filter((r) => settings.anchorDate === null || r.date > settings.anchorDate);
   const deposited = (rows: typeof moves) => rows.reduce((s, r) => s - r.amount, 0);
   const saved = (settings.anchor ?? settings.start) + deposited(counted);
-  // The pot is what the savings hold for the BTW now (today), whatever month is shown.
-  const pot = potInSavings
-    ? btwPot({
-        on: true,
-        saved,
-        toSetAside: (await getBtwSummary(db, { today: opts.today })).toSetAside,
-      }).pot
-    : 0;
+  // The pots are what the savings hold for the BTW and then the income tax now (today), whatever month is shown.
+  const pots =
+    potInSavings || incomeTax.potInSavings
+      ? taxPots({
+          saved,
+          btw: {
+            on: potInSavings,
+            toSetAside: potInSavings
+              ? (await getBtwSummary(db, { today: opts.today })).toSetAside
+              : 0,
+          },
+          incomeTax: {
+            on: incomeTax.potInSavings,
+            toSetAside: incomeTax.potInSavings
+              ? (await getIncomeTaxSummary(db, { today: opts.today, state: incomeTax })).toSetAside
+              : 0,
+          },
+        })
+      : null;
+  const pot = pots?.btw.pot ?? 0;
   return {
     goal: settings.goal,
     start: settings.start,
@@ -88,5 +111,6 @@ export async function getSavingsSummary(
     thisMonth: deposited(moves.filter((r) => r.date >= from && r.date <= to)),
     lines: counted.length,
     btwPot: pot,
+    incomeTaxPot: pots?.incomeTax.pot ?? 0,
   };
 }

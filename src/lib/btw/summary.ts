@@ -13,6 +13,8 @@ import { btwOfIncome } from "./rate";
 import { getBtwSettings } from "./settings";
 import { mentions } from "./words";
 import { addDays } from "@/lib/recurring/dates";
+import { incomeTaxPaymentYear, isTaxOffice } from "@/lib/income-tax/payments";
+import { getIncomeTaxSettings } from "@/lib/income-tax/settings";
 
 /** The rate math lives in ./rate; re-exported for the places that always imported it from here. */
 export { BTW_RATE_PERCENT, btwInside } from "./rate";
@@ -20,8 +22,6 @@ export { BTW_RATE_PERCENT, btwInside } from "./rate";
 export { mentions } from "./words";
 /** The default client name and pocket word, until the person changes them. */
 export { DEFAULT_BTW_INCOME_MATCH, DEFAULT_BTW_POCKET_MATCH };
-/** Where the person pays the quarterly BTW. */
-const TAX_OFFICE_MATCH = "Belastingdienst";
 /** A payment to the tax office counts for a quarter up to this many days after its due date. */
 const PAYMENT_GRACE_DAYS = 31;
 
@@ -33,16 +33,18 @@ interface Outflow {
   date: string;
   counterparty: string | null;
   description: string | null;
+  /** transactions.income_tax_year (see incomeTaxPaymentYear). */
+  incomeTaxYear?: number | null;
 }
 
 /**
  * Tells the quarterly BTW payment to the tax office apart from what the tax office takes every month, from all the
  * person's outflows (own currency, not internal transfers): an amount paid to the tax office (TAX_OFFICE_MATCH, whole
- * words) in three or more different months is something monthly (an allowance paid back, an instalment); anything else
- * paid to the tax office is the quarterly BTW. getBtwSummary and the forecast's averages share this one rule.
+ * words) in three or more different months is something monthly (an allowance paid back, an instalment); a payment the
+ * person picked as income tax (incomeTaxPaymentYear, with the reserve on) is income tax; anything else paid to the tax
+ * office is the quarterly BTW. getBtwSummary and the forecast's averages share this one rule.
  */
-export function taxOfficeClassifier(outflows: Outflow[]) {
-  const isTaxOffice = (r: Outflow) => mentions([r.counterparty, r.description], TAX_OFFICE_MATCH);
+export function taxOfficeClassifier(outflows: Outflow[], opts: { incomeTaxOn?: boolean } = {}) {
   const monthsByAmount = new Map<number, Set<string>>();
   for (const r of outflows.filter(isTaxOffice)) {
     const months = monthsByAmount.get(r.amount) ?? new Set<string>();
@@ -50,9 +52,11 @@ export function taxOfficeClassifier(outflows: Outflow[]) {
     monthsByAmount.set(r.amount, months);
   }
   const monthly = (amount: number) => (monthsByAmount.get(amount)?.size ?? 0) >= 3;
+  const incomeTax = (r: Outflow) => incomeTaxPaymentYear(r, opts.incomeTaxOn === true) !== null;
   return {
     monthly,
-    isQuarterlyBtw: (r: Outflow) => r.amount < 0 && isTaxOffice(r) && !monthly(r.amount),
+    isQuarterlyBtw: (r: Outflow) =>
+      r.amount < 0 && isTaxOffice(r) && !monthly(r.amount) && !incomeTax(r),
   };
 }
 
@@ -80,6 +84,7 @@ export async function quarterlyBtwPaymentIds(db: Db): Promise<Set<number>> {
       amount: t.amount,
       counterparty: t.counterparty,
       description: t.description,
+      incomeTaxYear: t.incomeTaxYear,
     })
     .from(t)
     .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
@@ -90,7 +95,9 @@ export async function quarterlyBtwPaymentIds(db: Db): Promise<Set<number>> {
         lt(t.amount, 0),
       ),
     );
-  const { isQuarterlyBtw } = taxOfficeClassifier(outflows);
+  const { isQuarterlyBtw } = taxOfficeClassifier(outflows, {
+    incomeTaxOn: (await getIncomeTaxSettings(db)).on,
+  });
   return new Set(
     outflows.filter((r) => isQuarterlyBtw(r) && inBtwPaymentWindow(r.date)).map((r) => r.id),
   );
@@ -172,9 +179,10 @@ export async function getBtwSummary(
     amount: t.amount,
     counterparty: t.counterparty,
     description: t.description,
+    incomeTaxYear: t.incomeTaxYear,
   };
 
-  const [incoming, pocketMoves, payments, allOutflows] = await Promise.all([
+  const [incoming, pocketMoves, payments, allOutflows, incomeTaxSettings] = await Promise.all([
     db
       .select(columns)
       .from(t)
@@ -213,6 +221,7 @@ export async function getBtwSummary(
       .from(t)
       .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
       .where(and(ownCurrency, eq(t.isInternalTransfer, false), lt(t.amount, 0))),
+    getIncomeTaxSettings(db),
   ]);
 
   const text = (r: { counterparty: string | null; description: string | null }) => [
@@ -231,7 +240,10 @@ export async function getBtwSummary(
   const mine = pocketMoves.filter((r) => mentions(text(r), pocketMatch));
   const pocket = mine.reduce((s, r) => s - r.amount, 0);
 
-  const { isQuarterlyBtw } = taxOfficeClassifier(allOutflows);
+  // A payment picked as income tax is never this quarter's BTW (incomeTaxPaymentYear).
+  const { isQuarterlyBtw } = taxOfficeClassifier(allOutflows, {
+    incomeTaxOn: incomeTaxSettings.on,
+  });
   const paidRows = payments.filter(isQuarterlyBtw);
   const paidAmount = paidRows.reduce((s, r) => s - r.amount, 0);
   const paid =

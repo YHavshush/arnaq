@@ -42,6 +42,10 @@ const ROUTES: Record<string, string[]> = {
   "btw/settings": ["GET", "PUT"],
   "btw/clients": ["GET", "POST"],
   "btw/clients/[id]": ["PATCH", "DELETE"],
+  "income-tax/settings": ["GET", "PUT"],
+  "income-tax/years": ["GET", "POST"],
+  "income-tax/years/[id]": ["PATCH", "DELETE"],
+  "income-tax/payments/[id]": ["PUT"],
   "forecast/own": ["GET", "PUT"],
   plan: ["GET", "PUT"],
   sample: ["GET", "POST", "DELETE"],
@@ -86,6 +90,7 @@ interface A {
   accountId: number;
   transactionId: number;
   btwClientId: number;
+  incomeTaxYearId: number;
 }
 let a: A;
 let exportOfA: string;
@@ -167,6 +172,21 @@ beforeAll(async () => {
     ),
     201,
   );
+  const incomeTaxYear = await ok(
+    await call(
+      "income-tax/years",
+      "POST",
+      json("POST", "/api/income-tax/years", { year: 2026, rate: 490, knownAmount: 424242 }),
+    ),
+    201,
+  );
+  await ok(
+    await call(
+      "income-tax/settings",
+      "PUT",
+      json("PUT", "/api/income-tax/settings", { pocket: MARK, potInSavings: true }),
+    ),
+  );
   const form = new FormData();
   form.set(
     "file",
@@ -189,6 +209,7 @@ beforeAll(async () => {
     accountId: account.id as number,
     transactionId: review[0].id,
     btwClientId: btwClient.id as number,
+    incomeTaxYearId: incomeTaxYear.id as number,
   };
   exportOfA = JSON.stringify((await asTestUser((db) => buildExport(db, new Date(0)))).tables);
 });
@@ -307,6 +328,49 @@ describe("user B cannot change A's data, even knowing its ids", () => {
       await call("btw/clients", "GET", new Request(url("/api/btw/clients")))
     ).json()) as { name: string; paymentLag: number; vatPercent: number }[];
     expect(list).toEqual([]);
+  });
+
+  it("income tax: A's tax year is not found, A's payment cannot be picked, B's list and settings are B's own", async () => {
+    const id = a.incomeTaxYearId;
+    for (const body of [{ rate: 0 }, { knownAmount: null }, {}])
+      expect(
+        (await call("income-tax/years/[id]", "PATCH", json("PATCH", "/x", body), id)).status,
+      ).toBe(404);
+    expect(
+      (
+        await call(
+          "income-tax/years/[id]",
+          "DELETE",
+          new Request(url("/x"), { method: "DELETE" }),
+          id,
+        )
+      ).status,
+    ).toBe(404);
+    const pick = await call(
+      "income-tax/payments/[id]",
+      "PUT",
+      json("PUT", "/x", { year: 2026 }),
+      a.transactionId,
+    );
+    expect(pick.status).toBe(404);
+    expect(
+      await (
+        await call("income-tax/years", "GET", new Request(url("/api/income-tax/years")))
+      ).json(),
+    ).toEqual([]);
+    expect(
+      await (
+        await call("income-tax/settings", "GET", new Request(url("/api/income-tax/settings")))
+      ).json(),
+    ).toEqual({ on: true, pocket: "Inkomstenbelasting", potInSavings: false });
+    // A's year is untouched.
+    setTestUser(TEST_USER_A);
+    expect(
+      await (
+        await call("income-tax/years", "GET", new Request(url("/api/income-tax/years")))
+      ).json(),
+    ).toEqual([{ id, year: 2026, rate: 490, knownAmount: 424242 }]);
+    setTestUser(TEST_USER_B);
   });
 
   it("A's transaction cannot be categorised, A's category cannot be used", async () => {
@@ -746,5 +810,115 @@ describe("sample data is per person", () => {
     setTestUser(TEST_USER_A);
     const exportNow = await (await call("export", "GET", new Request(url("/api/export")))).text();
     expect(exportNow).toContain(MARK);
+  });
+});
+
+describe("the income tax years and settings", () => {
+  type Year = { id: number; year: number; rate: number; knownAmount: number | null };
+  const list = async () =>
+    (await (
+      await call("income-tax/years", "GET", new Request(url("/api/income-tax/years")))
+    ).json()) as Year[];
+  const add = async (body: unknown) =>
+    await call("income-tax/years", "POST", json("POST", "/api/income-tax/years", body));
+  const edit = async (id: number, body: unknown) =>
+    await call("income-tax/years/[id]", "PATCH", json("PATCH", "/x", body), id);
+  const remove = async (id: number) =>
+    await call("income-tax/years/[id]", "DELETE", new Request(url("/x"), { method: "DELETE" }), id);
+  const settings = async (body: unknown) =>
+    await call("income-tax/settings", "PUT", json("PUT", "/api/income-tax/settings", body));
+
+  it("adds, edits and removes a tax year, per person", async () => {
+    setTestUser(TEST_USER_C);
+    const res = await add({ year: 2027, rate: 650 });
+    expect(res.status).toBe(201);
+    const y = (await res.json()) as Year;
+    expect(y).toMatchObject({ year: 2027, rate: 650, knownAmount: null });
+    const edited = await edit(y.id, { knownAmount: 84000 });
+    expect(edited.status).toBe(200);
+    expect(await edited.json()).toEqual({ ...y, knownAmount: 84000 });
+    expect(await (await edit(y.id, { knownAmount: null })).json()).toEqual(y);
+    setTestUser(TEST_USER_A);
+    expect((await list()).map((r) => r.id)).not.toContain(y.id);
+    expect((await remove(y.id)).status).toBe(404);
+    setTestUser(TEST_USER_C);
+    expect((await remove(y.id)).status).toBe(204);
+    expect((await remove(y.id)).status).toBe(404);
+    expect(await list()).toEqual([]);
+  });
+
+  it("refuses bad input with a 422 and a message, translated for a Dutch reader", async () => {
+    setTestUser(TEST_USER_C);
+    expect((await add({ year: 2026, rate: 490 })).status).toBe(201);
+    const cases: [unknown, string][] = [
+      [{ rate: 490 }, "The tax year must be a year from 2000 to 2100."],
+      [{ year: 1999, rate: 490 }, "The tax year must be a year from 2000 to 2100."],
+      [{ year: "2027", rate: 490 }, "The tax year must be a year from 2000 to 2100."],
+      [{ year: 2027 }, "The rate must be from 0% to 60%."],
+      [{ year: 2027, rate: 6001 }, "The rate must be from 0% to 60%."],
+      [{ year: 2027, rate: 4.9 }, "The rate must be from 0% to 60%."],
+      [{ year: 2027, rate: "490" }, "The rate must be from 0% to 60%."],
+      [
+        { year: 2027, rate: 490, knownAmount: -1 },
+        "The amount of the tax bill must be zero or more.",
+      ],
+      [
+        { year: 2027, rate: 490, knownAmount: 8.4 },
+        "The amount of the tax bill must be zero or more.",
+      ],
+      [{ year: 2026, rate: 650 }, "You already have this tax year."],
+    ];
+    for (const [body, error] of cases) {
+      const res = await add(body);
+      expect(res.status, JSON.stringify(body)).toBe(422);
+      expect((await res.json()).error).toBe(error);
+    }
+    expect((await add([])).status).toBe(400);
+    const [y] = await list();
+    expect((await edit(y.id, { rate: -5 })).status).toBe(422);
+    expect((await edit(y.id, [])).status).toBe(400);
+    expect(
+      (await call("income-tax/years/[id]", "PATCH", json("PATCH", "/x", {}), "abc" as never))
+        .status,
+    ).toBe(400);
+
+    const bad: [unknown, string][] = [
+      [{ on: "yes" }, "The income tax setting must be on or off."],
+      [{ potInSavings: 1 }, "The income tax pot setting must be on or off."],
+      [{ pocket: 5 }, "Use letters or numbers in the name."],
+      [{ pocket: "x".repeat(61) }, "The name is too long (max 60)."],
+      [{ pocket: "BTW" }, "Use a different word than the BTW pocket's."],
+    ];
+    for (const [body, error] of bad) {
+      const res = await settings(body);
+      expect(res.status, JSON.stringify(body)).toBe(422);
+      expect((await res.json()).error).toBe(error);
+    }
+
+    expect(localizeMessage("The rate must be from 0% to 60%.", "nl")).toBe(
+      "Het percentage moet tussen 0% en 60% liggen.",
+    );
+    expect(localizeMessage("You already have this tax year.", "nl")).toBe(
+      "Dit belastingjaar heb je al.",
+    );
+    expect(localizeMessage("The tax year must be a year from 2000 to 2100.", "nl")).toBe(
+      "Het belastingjaar moet een jaar van 2000 tot en met 2100 zijn.",
+    );
+    expect(localizeMessage("Only a payment to the tax office can be income tax.", "nl")).toBe(
+      "Alleen een betaling aan de Belastingdienst kan inkomstenbelasting zijn.",
+    );
+    expect((await remove(y.id)).status).toBe(204);
+  });
+
+  it("picks only a payment to the tax office as income tax", async () => {
+    setTestUser(TEST_USER_A);
+    const pick = async (id: number, body: unknown) =>
+      await call("income-tax/payments/[id]", "PUT", json("PUT", "/x", body), id);
+    // A's payments come from the fixture: none is to the tax office.
+    const res = await pick(a.transactionId, { year: 2026 });
+    expect(res.status).toBe(422);
+    expect((await res.json()).error).toBe("Only a payment to the tax office can be income tax.");
+    expect((await pick(a.transactionId, {})).status).toBe(400);
+    expect((await pick(999999, { year: null })).status).toBe(404);
   });
 });

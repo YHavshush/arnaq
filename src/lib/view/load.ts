@@ -14,9 +14,11 @@ import { listLinkableTransactions } from "@/lib/recurring/linkable";
 import { detectSuggestions } from "@/lib/recurring/suggestions";
 import type { Locale } from "@/i18n/config";
 import { getAccountBalances, getOpeningBalance } from "@/lib/forecast/balance";
-import { btwPot } from "@/lib/btw/pot";
 import { getBtwSettings } from "@/lib/btw/settings";
 import { btwNetWorth, getBtwSummary } from "@/lib/btw/summary";
+import { taxPots } from "@/lib/income-tax/pot";
+import { loadIncomeTax } from "@/lib/income-tax/state";
+import { getIncomeTaxSummary, incomeTaxNetWorth } from "@/lib/income-tax/summary";
 import { getSavingsSettings } from "@/lib/savings/settings";
 import { savingsCategoryIds } from "@/lib/recurring/matching";
 import { buildOverzicht } from "./overzicht";
@@ -229,15 +231,23 @@ export async function loadUpload(db: Db) {
 
 /** What net worth is made of: the balance of each account, the savings and how they add up. */
 export async function loadNetWorth(db: Db, today: string) {
-  const [accounts, savings, settings, btw, btwSettings] = await Promise.all([
+  const [accounts, savings, settings, btw, btwSettings, incomeTaxState] = await Promise.all([
     getAccountBalances(db),
     getSavingsSummary(db, { today }),
     getSavingsSettings(db),
     getBtwSummary(db, { today }),
     getBtwSettings(db),
+    loadIncomeTax(db),
   ]);
+  const incomeTax = await getIncomeTaxSummary(db, { today, state: incomeTaxState });
   const accountsTotal = accounts.reduce((s, a) => s + a.balance, 0);
   const net = btwNetWorth(btw);
+  const incomeTaxNet = incomeTaxNetWorth(incomeTax);
+  const pots = taxPots({
+    saved: savings.saved,
+    btw: { on: btwSettings.potInSavings, toSetAside: btw.toSetAside },
+    incomeTax: { on: incomeTaxState.potInSavings, toSetAside: incomeTax.toSetAside },
+  });
   const base = settings.anchor ?? settings.start;
   return {
     accounts,
@@ -264,12 +274,25 @@ export async function loadNetWorth(db: Db, today: string) {
      * "My BTW pot is part of my savings" (see btwPot): the part of the savings counted as BTW money, the savings left
      * after it, and what the pot does not cover yet. Presentation only: `total` is the same with the setting on or off.
      */
-    btwPot: btwPot({
-      on: btwSettings.potInSavings,
-      saved: savings.saved,
-      toSetAside: btw.toSetAside,
-    }),
-    total: accountsTotal + savings.saved + net,
+    btwPot: pots.btw,
+    /**
+     * The income tax in net worth, like the BTW: the pocket (left out of savings) minus what is owed for the open tax
+     * years (see incomeTaxNetWorth). All 0 while the reserve is not active.
+     */
+    incomeTax: {
+      owed: incomeTax.owed,
+      pocket: incomeTax.pocket,
+      net: incomeTaxNet,
+    },
+    /**
+     * "My income tax pot is part of my savings": from the savings the BTW pot leaves (see taxPots). Presentation only,
+     * like btwPot. What is left of the savings after both pots is btwPot.savingsLeft - incomeTaxPot.pot (kept out of here,
+     * so this does not change with the BTW pot setting).
+     */
+    incomeTaxPot: { pot: pots.incomeTax.pot, short: pots.incomeTax.short },
+    /** The open tax years, for the year cards on Ahead (empty while the reserve is not active). */
+    incomeTaxYears: incomeTax.years,
+    total: accountsTotal + savings.saved + net + incomeTaxNet,
     hasAny: accounts.length > 0 || savings.anchored || savings.lines > 0 || savings.saved > 0,
   };
 }

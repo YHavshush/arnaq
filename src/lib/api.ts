@@ -13,6 +13,7 @@ import { UnauthenticatedError, currentUserId } from "@/lib/auth/session";
 import { RecurringError } from "@/lib/recurring/errors";
 import { SampleError } from "@/lib/sample/sample";
 import { SavingsError } from "@/lib/savings/settings";
+import { IncomeTaxError } from "@/lib/income-tax/settings";
 
 const DOMAIN_ERRORS = [
   BtwError,
@@ -20,6 +21,7 @@ const DOMAIN_ERRORS = [
   CategoriseError,
   ForecastError,
   ImportError,
+  IncomeTaxError,
   PlanError,
   RecurringError,
   SampleError,

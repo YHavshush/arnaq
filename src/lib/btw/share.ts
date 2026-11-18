@@ -67,17 +67,69 @@ export async function btwShareForMonth(
   db: Db,
   opts: { month: string; today: string },
 ): Promise<BtwShare> {
+  const income = await clientIncomeByMonth(db, {
+    from: opts.month,
+    to: opts.month,
+    today: opts.today,
+  });
+  return shareOf(income.get(opts.month) ?? { received: [], expected: [] });
+}
+
+/** One payment or expected item of a client, with that client's rate. */
+export interface ClientIncomePart {
+  amount: number;
+  vatPercent: BtwVatPercent;
+}
+
+/** A month's client income: what the clients really paid, and their fixed income items still expected in it. */
+export interface ClientIncomeMonth {
+  received: ClientIncomePart[];
+  expected: ClientIncomePart[];
+}
+
+/** A month's client income as the BTW share (btwShareForMonth). */
+export function shareOf(m: ClientIncomeMonth): BtwShare {
+  const sum = (xs: ClientIncomePart[]) => xs.reduce((s, p) => s + p.amount, 0);
+  const received = sum(m.received);
+  const expected = sum(m.expected);
+  return {
+    received,
+    expected,
+    income: received + expected,
+    share: btwOfIncome([...m.received, ...m.expected]),
+  };
+}
+
+/**
+ * The clients' income per month from `from` to `to` (YYYY-MM, both included), split into what was received and what is
+ * still expected, by the rules of btwShareForMonth (a month before today's: only what came in; today's month: what came
+ * in plus the fixed income items still expected; a later month: only what is expected). One query for the payments and
+ * one projection for the items, so a whole year costs no more than a month. The BTW share and the income tax reserve
+ * (src/lib/income-tax) both read the clients' money here, so they cannot drift apart. Every month in the range is in the
+ * map, empty or not.
+ */
+export async function clientIncomeByMonth(
+  db: Db,
+  opts: { from: string; to: string; today: string },
+): Promise<Map<string, ClientIncomeMonth>> {
   const loaded = await loadBtwMatcher(db);
   const { match } = loaded;
   const current = monthOf(opts.today);
-  const { month } = opts;
-  const parts: { amount: number; vatPercent: BtwVatPercent }[] = [];
+  const { from, to } = opts;
+  const out = new Map<string, ClientIncomeMonth>();
+  for (let m = from; m <= to; m = addMonths(m, 1)) out.set(m, { received: [], expected: [] });
+  if (loaded.clients.length === 0 || from > to) return out;
 
-  let received = 0;
-  if (month <= current) {
+  const lastReceived = to < current ? to : current;
+  if (from <= lastReceived) {
     const t = schema.transactions;
     const rows = await db
-      .select({ amount: t.amount, counterparty: t.counterparty, description: t.description })
+      .select({
+        date: t.date,
+        amount: t.amount,
+        counterparty: t.counterparty,
+        description: t.description,
+      })
       .from(t)
       .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
       .where(
@@ -85,35 +137,34 @@ export async function btwShareForMonth(
           eq(t.currency, schema.accounts.currency),
           eq(t.isInternalTransfer, false),
           gte(t.amount, 1),
-          gte(t.date, `${month}-01`),
-          lt(t.date, `${addMonths(month, 1)}-01`),
+          gte(t.date, `${from}-01`),
+          lt(t.date, `${addMonths(lastReceived, 1)}-01`),
         ),
       );
     for (const r of rows) {
       const client = match(r);
       if (!client) continue;
-      received += r.amount;
-      parts.push({ amount: r.amount, vatPercent: client.vatPercent });
+      out.get(monthOf(r.date))?.received.push({ amount: r.amount, vatPercent: client.vatPercent });
     }
   }
 
-  let expected = 0;
-  if (month >= current) {
+  const firstExpected = from > current ? from : current;
+  if (firstExpected <= to) {
     const rates = await clientItemRates(db, loaded);
     if (rates.size > 0) {
-      const { byMonth } = await projectRecurring(db, { first: month, current, last: month });
-      const kind = month === current ? "mixed" : "forecast";
-      for (const o of byMonth.get(month) ?? []) {
-        const vatPercent = rates.get(o.recurringItemId);
-        if (o.type !== "income" || vatPercent === undefined) continue;
-        if (countedAs(o, month, kind) !== "projected") continue;
-        expected += o.amount;
-        parts.push({ amount: o.amount, vatPercent });
+      const { byMonth } = await projectRecurring(db, { first: firstExpected, current, last: to });
+      for (let m = firstExpected; m <= to; m = addMonths(m, 1)) {
+        const kind = m === current ? "mixed" : "forecast";
+        for (const o of byMonth.get(m) ?? []) {
+          const vatPercent = rates.get(o.recurringItemId);
+          if (o.type !== "income" || vatPercent === undefined) continue;
+          if (countedAs(o, m, kind) !== "projected") continue;
+          out.get(m)?.expected.push({ amount: o.amount, vatPercent });
+        }
       }
     }
   }
-
-  return { received, expected, income: received + expected, share: btwOfIncome(parts) };
+  return out;
 }
 
 /**

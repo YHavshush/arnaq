@@ -326,7 +326,11 @@ export function buildOverzicht({
   const expenseOcc = occurrences.filter((o) => o.type === "expense");
   // The BTW share of the taxes budget is planned until it is moved into the pocket (then it is spent): either way it
   // is not free to spend. The move itself is counted in the taxes row's actual (see getMonthOverview).
-  const unsetBtw = overview.expenses.reduce((s, l) => s + Math.max(l.btw - l.btwMoved, 0), 0);
+  // The income tax share next to it works the same way.
+  const unsetBtw = overview.expenses.reduce(
+    (s, l) => s + Math.max(l.btw - l.btwMoved, 0) + Math.max(l.incomeTax - l.incomeTaxMoved, 0),
+    0,
+  );
   const planned =
     expenseOcc.filter((o) => o.status === "expected").reduce((s, o) => s + o.expectedAmount, 0) +
     unsetBtw;

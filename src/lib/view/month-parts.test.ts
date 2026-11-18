@@ -40,6 +40,8 @@ function month(over: Partial<ForecastMonth>): ForecastMonth {
     expenseSources: { fixed: 0, budgets: 0, averages: 0, typed: 0, fellBack: [] },
     btwAccrued: 0,
     btwWorth: 0,
+    incomeTaxAccrued: 0,
+    incomeTaxWorth: 0,
     low: null,
     ...over,
   };

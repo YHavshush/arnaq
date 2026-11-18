@@ -2,7 +2,7 @@ import { asc, desc, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 
 /** Bump when the shape of the export changes, so a future restore knows what it is reading. */
-export const EXPORT_VERSION = 11; // 2: category slugs and sources, merchantLabels, userSettings; 3: transactions.balanceAfter; 4: userSettings.savingsGoal and savingsStart, category type "savings"; 5: userSettings.savingsAnchor and savingsAnchorDate; 6: userSettings.btwClient and btwPocket; 7: userSettings.forecastOwnSpending; 8: planOverrides; 9: userSettings.btwPaymentLag; 10: userSettings.btwPotInSavings; 11: btwClients (the list replaces userSettings.btwClient and btwPaymentLag, which are still exported but no longer read)
+export const EXPORT_VERSION = 12; // 2: category slugs and sources, merchantLabels, userSettings; 3: transactions.balanceAfter; 4: userSettings.savingsGoal and savingsStart, category type "savings"; 5: userSettings.savingsAnchor and savingsAnchorDate; 6: userSettings.btwClient and btwPocket; 7: userSettings.forecastOwnSpending; 8: planOverrides; 9: userSettings.btwPaymentLag; 10: userSettings.btwPotInSavings; 11: btwClients (the list replaces userSettings.btwClient and btwPaymentLag, which are still exported but no longer read); 12: incomeTaxYears, userSettings.incomeTaxOn, incomeTaxPocket and incomeTaxPotInSavings, transactions.incomeTaxYear
 
 const TABLES = {
   accounts: schema.accounts,
@@ -19,6 +19,7 @@ const TABLES = {
   userSettings: schema.userSettings,
   planOverrides: schema.planOverrides,
   btwClients: schema.btwClients,
+  incomeTaxYears: schema.incomeTaxYears,
   // ai_usage is bookkeeping for the caps, not the person's data: it stays out.
 } as const;
 

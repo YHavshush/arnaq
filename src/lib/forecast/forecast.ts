@@ -10,6 +10,15 @@ import { getBtwSettings } from "@/lib/btw/settings";
 import { btwOfIncome, type BtwVatPercent } from "@/lib/btw/rate";
 import { clientItemRates } from "@/lib/btw/share";
 import { btwNetWorth, getBtwSummary, mentions } from "@/lib/btw/summary";
+import { incomeTaxOf } from "@/lib/income-tax/rate";
+import { incomeTaxBase } from "@/lib/income-tax/share";
+import {
+  isIncomeTaxPocketMove,
+  loadIncomeTax,
+  rateFor,
+  type IncomeTaxState,
+} from "@/lib/income-tax/state";
+import { getIncomeTaxSummary, incomeTaxNetWorth } from "@/lib/income-tax/summary";
 import { getPlanOverrides, indexOverrides, overrideKey } from "@/lib/plan/overrides";
 import { getSavingsSummary } from "@/lib/savings/summary";
 import { ForecastError } from "./errors";
@@ -163,6 +172,18 @@ export interface ForecastMonth {
    */
   btwWorth: number;
   /**
+   * The income tax reserve that builds up on the clients' income without BTW expected in this month (cents): the rate of
+   * the month's tax year on that base (incomeTaxBase). 0 for real months, without a rate, and while the reserve is not
+   * active. Like `btwAccrued`, not in `expenses` or `net`; it only lowers the net worth line.
+   */
+  incomeTaxAccrued: number;
+  /**
+   * The income tax part of net worth at the end of this month (cents): the income tax now (`Forecast.incomeTaxNow`),
+   * plus what fixed items still move into the income tax pocket up to this month, minus the reserve accrued up to this
+   * month. Real months carry the income tax now unchanged.
+   */
+  incomeTaxWorth: number;
+  /**
    * The lowest end-of-day balance of the checking accounts (all accounts together; savings are not an account) in
    * this month, and the day. Real days come from the bank's stated balances; the days from today on are simulated
    * (see monthDays). Null when no balance is known, or for a past month without data.
@@ -196,6 +217,11 @@ export interface Forecast {
    * card (btwNetWorth). 0 without BTW data.
    */
   btwNow: number;
+  /**
+   * The income tax in net worth now (cents): the income tax pocket minus what is owed for the open tax years, as on the
+   * net worth card (incomeTaxNetWorth). 0 while the reserve is not active.
+   */
+  incomeTaxNow: number;
   months: ForecastMonth[];
 }
 
@@ -230,6 +256,8 @@ interface Context {
   basis: "averages" | "budget";
   /** The BTW clients' fixed income items, with their client's rate: what they bring in carries that BTW. */
   clientItems: Map<number, BtwVatPercent>;
+  /** The income tax reserve: its rates per tax year and its pocket word (nothing while it is not active). */
+  incomeTax: IncomeTaxState;
   /** Everyday spending typed in the plan per category and month (overrideKey -> cents), from the current month on. */
   typedCategories: Map<string, number>;
 }
@@ -258,6 +286,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     ignorePlan: opts.ignorePlan,
   });
   const { pocket } = await getBtwSettings(db);
+  const incomeTax = await loadIncomeTax(db);
   const basis = opts.basis === "budget" ? "budget" : "averages";
   const ctx: Context = {
     current,
@@ -283,7 +312,8 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     pocket,
     basis,
     clientItems: await clientItemRates(db),
-    movedToSavings: await getMovedToSavings(db, first, last, pocket),
+    incomeTax,
+    movedToSavings: await getMovedToSavings(db, first, last, pocket, incomeTax),
     typedCategories: opts.ignorePlan
       ? new Map()
       : indexOverrides(await getPlanOverrides(db, { from: current, to: last })).categories,
@@ -297,14 +327,21 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
   let end: number | null = null;
   const btwNow = btwNetWorth(await getBtwSummary(db, { today: opts.today }));
   let btwWorth = btwNow;
+  const incomeTaxNow = incomeTaxNetWorth(
+    await getIncomeTaxSummary(db, { today: opts.today, state: incomeTax }),
+  );
+  let incomeTaxWorth = incomeTaxNow;
   const months: ForecastMonth[] = [];
   for (let m = first; m <= last; m = addMonths(m, 1)) {
-    const { plannedReserve, ...month } = await buildMonth(db, ctx, m);
+    const { plannedReserve, plannedIncomeTaxReserve, ...month } = await buildMonth(db, ctx, m);
     cumulativeNet += month.net;
     cumulativeSetAside += month.setAside.total;
     cumulativeReserve += month.setAside.reserve;
     // A planned move into the pocket leaves the accounts but stays the person's money; the BTW accrued is owed.
     btwWorth += plannedReserve - month.btwAccrued;
+    // The same for the income tax: what it takes on as the client income comes in is owed, once. A payment of the
+    // aanslag later only turns that debt into money gone (the averages leave such payments out: incomeTaxPaymentIds).
+    incomeTaxWorth += plannedIncomeTaxReserve - month.incomeTaxAccrued;
     const days = monthDays(month, real, opts.today, end);
     end = days?.at(-1) ?? null;
     const low = days ? lowestDay(m, 1, days) : null;
@@ -314,6 +351,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
       cumulativeSetAside,
       cumulativeReserve,
       btwWorth,
+      incomeTaxWorth,
       low,
       days,
     });
@@ -344,6 +382,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
     openingBalance: await getOpeningBalance(db, first),
     openingSavings: savingsKnown ? savingsNow.saved - movedSince : null,
     btwNow,
+    incomeTaxNow,
   };
 }
 
@@ -428,7 +467,13 @@ function kindOf(ctx: Context, month: string): MonthKind {
 }
 
 /** Per month (YYYY-MM): deposits minus withdrawals on the savings category, in each account's own currency. */
-async function getMovedToSavings(db: Db, first: string, last: string, pocket: string) {
+async function getMovedToSavings(
+  db: Db,
+  first: string,
+  last: string,
+  pocket: string,
+  incomeTax: IncomeTaxState,
+) {
   const rows = await db
     .select({
       date: schema.transactions.date,
@@ -451,7 +496,9 @@ async function getMovedToSavings(db: Db, first: string, last: string, pocket: st
   for (const r of rows) {
     const entry = byMonth.get(r.date.slice(0, 7)) ?? { total: 0, reserve: 0 };
     entry.total -= r.amount;
-    if (mentions([r.counterparty, r.description], pocket)) entry.reserve -= r.amount;
+    // The income tax pocket is owed money too (nothing while that reserve is not active).
+    if (mentions([r.counterparty, r.description], pocket) || isIncomeTaxPocketMove(r, incomeTax))
+      entry.reserve -= r.amount;
     byMonth.set(r.date.slice(0, 7), entry);
   }
   return byMonth;
@@ -464,8 +511,14 @@ async function buildMonth(
 ): Promise<
   Omit<
     ForecastMonth,
-    "cumulativeNet" | "cumulativeSetAside" | "cumulativeReserve" | "btwWorth" | "low" | "days"
-  > & { plannedReserve: number }
+    | "cumulativeNet"
+    | "cumulativeSetAside"
+    | "cumulativeReserve"
+    | "btwWorth"
+    | "incomeTaxWorth"
+    | "low"
+    | "days"
+  > & { plannedReserve: number; plannedIncomeTaxReserve: number }
 > {
   const kind = kindOf(ctx, month);
   const occurrences: ForecastOccurrence[] = (ctx.occurrences.get(month) ?? []).map((o) => ({
@@ -511,6 +564,12 @@ async function buildMonth(
   const setAsidePlanned = sum(projectedDeposits);
   // A planned deposit named for the BTW is the reserve: owed money, not savings.
   const plannedReserve = sum(projectedDeposits.filter((o) => mentions([o.name], ctx.pocket)));
+  // One named for the income tax pocket (and not the BTW one) is that reserve.
+  const plannedIncomeTaxReserve = sum(
+    projectedDeposits.filter((o) =>
+      isIncomeTaxPocketMove({ counterparty: o.name, description: null }, ctx.incomeTax),
+    ),
+  );
 
   const known = new Set(ctx.categories.map((c) => c.id));
   const part = (o: ForecastOccurrence): ForecastPart => ({
@@ -538,7 +597,7 @@ async function buildMonth(
       actual: setAsideActual,
       planned: setAsidePlanned,
       total: setAsideActual + setAsidePlanned,
-      reserve: (moved?.reserve ?? 0) + plannedReserve,
+      reserve: (moved?.reserve ?? 0) + plannedReserve + plannedIncomeTaxReserve,
     },
     actual,
     recurring: {
@@ -557,7 +616,16 @@ async function buildMonth(
       ? expenseSources(ctx, month, categories, sum(projectedExpenses))
       : { fixed: 0, budgets: 0, averages: 0, typed: 0, fellBack: [] },
     btwAccrued: projecting ? btwOfIncome(clientIncome) : 0,
+    // The income tax reserve on the same expected client income, without the BTW inside it, at the year's rate.
+    incomeTaxAccrued:
+      projecting && ctx.incomeTax.active
+        ? incomeTaxOf(
+            incomeTaxBase(clientIncome),
+            rateFor(ctx.incomeTax, Number(month.slice(0, 4))),
+          )
+        : 0,
     plannedReserve,
+    plannedIncomeTaxReserve,
     budget: {
       total: totalBudget,
       isExplicit: (b?.total ?? null) !== null,

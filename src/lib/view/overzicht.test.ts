@@ -14,6 +14,8 @@ const line = (categoryId: number, name: string, actual: number, budget: number |
   extra: budget,
   btw: 0,
   btwMoved: 0,
+  incomeTax: 0,
+  incomeTaxMoved: 0,
   actual,
   remaining: budget === null ? null : budget - actual,
 });

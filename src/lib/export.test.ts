@@ -26,6 +26,7 @@ describe("buildExport", () => {
         "categories",
         "categorisationRules",
         "imports",
+        "incomeTaxYears",
         "merchantLabels",
         "monthlyTotalBudget",
         "planOverrides",

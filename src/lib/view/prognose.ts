@@ -31,6 +31,14 @@ export interface PrognosePoint {
   btw: number;
   /** The BTW that builds up on the client's income expected this month (cents); 0 for real months. */
   btwAccrued: number;
+  /**
+   * The income tax part of `cumulative` (cents), like `btw`: the income tax pocket minus what is owed for the open tax
+   * years, lowered each month ahead by `incomeTaxAccrued`. 0 while the reserve is not active. With balances:
+   * `accounts + savings + btw + incomeTax === cumulative`.
+   */
+  incomeTax: number;
+  /** The income tax reserve that builds up on the client income without BTW expected this month (cents). */
+  incomeTaxAccrued: number;
   /** What the month's still expected expenses are made of (see ForecastMonth.expenseSources); zeros for real months. */
   expenseSources: ForecastMonth["expenseSources"];
   /** Money moved into savings this month (cents): not spending, but no longer in the current account. */
@@ -80,8 +88,16 @@ export interface Prognose {
   lowConfidence: string | null;
 }
 
-/** The BTW to set aside as the last line of a month's expenses; every share is worked out again on the new total. */
-function withBtwLine(parts: MonthParts, accrued: number, label: string): MonthParts {
+/**
+ * The BTW (or the income tax, `key`) to set aside as the last line of a month's expenses; every share is worked out
+ * again on the new total.
+ */
+function withBtwLine(
+  parts: MonthParts,
+  accrued: number,
+  label: string,
+  key: "btw" | "incomeTax" = "btw",
+): MonthParts {
   if (accrued <= 0) return parts;
   const total = parts.total + accrued;
   const of = (amount: number) => (total > 0 ? Math.min(Math.max(amount / total, 0), 1) : 0);
@@ -91,7 +107,7 @@ function withBtwLine(parts: MonthParts, accrued: number, label: string): MonthPa
     lines: [
       ...parts.lines.map((l) => ({ ...l, share: of(l.amount) })),
       {
-        key: "btw",
+        key,
         label,
         count: null,
         amount: accrued,
@@ -120,8 +136,9 @@ export function buildPrognose(
     income: m.income,
     // The BTW on the client's income is not yours: it is set aside, so it counts as an expense and takes off the
     // month's growth. Then growth, expenses and the net worth line (which takes it off too) all say the same.
-    expenses: m.expenses + (m.btwAccrued ?? 0),
-    net: m.net - (m.btwAccrued ?? 0),
+    // The income tax reserve on that income is the same: set aside, so an expense of the month.
+    expenses: m.expenses + (m.btwAccrued ?? 0) + (m.incomeTaxAccrued ?? 0),
+    net: m.net - (m.btwAccrued ?? 0) - (m.incomeTaxAccrued ?? 0),
     // Money moved into savings leaves the accounts and arrives in savings, so net worth only follows income and
     // spending. The BTW pocket is not savings: real moves into it leave accounts plus savings, and the pocket comes
     // back in whole through the BTW part (the BTW now: pocket minus owed, as on the net worth card). Ahead, a planned
@@ -131,11 +148,14 @@ export function buildPrognose(
       m.cumulativeReserve +
       (f.openingBalance ?? 0) +
       (f.openingSavings ?? 0) +
-      (m.btwWorth ?? 0),
+      (m.btwWorth ?? 0) +
+      (m.incomeTaxWorth ?? 0),
     accounts: hasBalance ? m.cumulativeNet - m.cumulativeSetAside + (f.openingBalance ?? 0) : 0,
     savings: hasBalance ? m.cumulativeSetAside - m.cumulativeReserve + (f.openingSavings ?? 0) : 0,
     btw: m.btwWorth ?? 0,
     btwAccrued: m.btwAccrued ?? 0,
+    incomeTax: m.incomeTaxWorth ?? 0,
+    incomeTaxAccrued: m.incomeTaxAccrued ?? 0,
     expenseSources: m.expenseSources ?? {
       fixed: 0,
       budgets: 0,
@@ -145,7 +165,12 @@ export function buildPrognose(
     },
     setAside: m.setAside.total,
     incomeParts: incomeParts(m, locale),
-    expenseParts: withBtwLine(expenseParts(m, locale, basis), m.btwAccrued ?? 0, t.parts.btw),
+    expenseParts: withBtwLine(
+      withBtwLine(expenseParts(m, locale, basis), m.btwAccrued ?? 0, t.parts.btw),
+      m.incomeTaxAccrued ?? 0,
+      t.parts.incomeTax,
+      "incomeTax",
+    ),
     projected: m.kind === "forecast" || m.kind === "mixed",
     low: null,
   }));

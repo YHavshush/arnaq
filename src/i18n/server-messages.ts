@@ -188,6 +188,46 @@ const NL: Rule[] = [
   [/^You already have a client with this name\.$/, () => "Je hebt al een klant met deze naam."],
   [/^You can have up to (\d+) clients\.$/, (m) => `Je kunt maximaal ${m[1]} klanten hebben.`],
   [/^BTW client not found\.$/, () => "Deze klant bestaat niet."],
+  // income tax reserve
+  [
+    /^The income tax setting must be on or off\.$/,
+    () => "De instelling voor de inkomstenbelasting moet aan of uit staan.",
+  ],
+  [
+    /^The income tax pot setting must be on or off\.$/,
+    () => "De instelling voor de pot voor inkomstenbelasting moet aan of uit staan.",
+  ],
+  [
+    /^Use a different word than the BTW pocket's\.$/,
+    () => "Gebruik een ander woord dan dat van de BTW-pot.",
+  ],
+  [
+    /^The tax year must be a year from (\d+) to (\d+)\.$/,
+    (m) => `Het belastingjaar moet een jaar van ${m[1]} tot en met ${m[2]} zijn.`,
+  ],
+  [
+    /^The rate must be from 0% to (\d+)%\.$/,
+    (m) => `Het percentage moet tussen 0% en ${m[1]}% liggen.`,
+  ],
+  [
+    /^The amount of the tax bill must be zero or more\.$/,
+    () => "Het bedrag van de aanslag moet nul of meer zijn.",
+  ],
+  [/^You already have this tax year\.$/, () => "Dit belastingjaar heb je al."],
+  [
+    /^You can have up to (\d+) tax years\.$/,
+    (m) => `Je kunt maximaal ${m[1]} belastingjaren hebben.`,
+  ],
+  [/^Tax year not found\.$/, () => "Dit belastingjaar bestaat niet."],
+  [
+    /^Pick one of your tax years for this payment\.$/,
+    () => "Kies een van je belastingjaren voor deze betaling.",
+  ],
+  [
+    /^Only a payment to the tax office can be income tax\.$/,
+    () => "Alleen een betaling aan de Belastingdienst kan inkomstenbelasting zijn.",
+  ],
+  [/^Payment not found\.$/, () => "Deze betaling bestaat niet."],
   // sample data
   [
     /^Sample data can only be added to an empty account\.$/,

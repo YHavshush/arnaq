@@ -204,6 +204,7 @@ describe("getBudgetsByMonth", () => {
       fixed: new Map(),
       carriedFrom: new Map(),
       btw: new Map(),
+      incomeTax: new Map(),
       total: null,
     });
     expect(b.get("2026-10")).toEqual({
@@ -212,6 +213,7 @@ describe("getBudgetsByMonth", () => {
       fixed: new Map(),
       carriedFrom: new Map(),
       btw: new Map(),
+      incomeTax: new Map(),
       total: 90000,
     });
     expect(b.get("2026-11")!.byCategory.get(await cat("Huur"))).toBe(66000);

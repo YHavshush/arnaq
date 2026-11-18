@@ -13,6 +13,9 @@ import {
 import { BTW_RATE_PERCENT } from "@/lib/btw/rate";
 import { BtwError, cleanBtwName, setBtwSettings } from "@/lib/btw/settings";
 import { ForecastError } from "@/lib/forecast/errors";
+import { isTaxYear } from "@/lib/income-tax/rate";
+import { IncomeTaxError, setIncomeTaxSettings } from "@/lib/income-tax/settings";
+import { replaceIncomeTaxYears } from "@/lib/income-tax/years";
 import { setOwnSpending } from "@/lib/forecast/own";
 import { SavingsError, setSavingsAnchor, setSavingsSettings } from "@/lib/savings/settings";
 
@@ -236,12 +239,15 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
       "suggestedCategoryId",
       "merchantKey",
       "balanceAfter",
+      "incomeTaxYear",
     ],
     (r) => {
       const acct = mapped(account, r.accountId);
       if (acct === undefined) return null;
       return {
         ...r,
+        // A damaged tax year on a payment is dropped (the payment stays, not picked as income tax).
+        incomeTaxYear: isTaxYear(r.incomeTaxYear) ? r.incomeTaxYear : undefined,
         accountId: acct,
         importId: mapped(imports, r.importId),
         categoryId: mapped(category, r.categoryId),
@@ -348,7 +354,24 @@ export async function restoreFromBackup(db: Db, backup: unknown): Promise<Record
     // skipped: off stays).
     if (typeof settings.btwPotInSavings === "boolean")
       await setBtwSettings(db, { potInSavings: settings.btwPotInSavings });
+    // The income tax settings (before version 12 there are none: the defaults stay; a damaged value is skipped).
+    for (const change of [
+      { on: settings.incomeTaxOn },
+      { pocket: settings.incomeTaxPocket },
+      { potInSavings: settings.incomeTaxPotInSavings },
+    ]) {
+      if (Object.values(change)[0] === undefined || Object.values(change)[0] === null) continue;
+      try {
+        await setIncomeTaxSettings(db, change);
+      } catch (e) {
+        if (!(e instanceof IncomeTaxError)) throw e;
+      }
+    }
   }
+  // The tax years (from version 12; older backups have none, so the income tax reserve stays off). Damaged entries are
+  // skipped; anything but a list is no list.
+  const taxYears = t.incomeTaxYears;
+  await replaceIncomeTaxYears(db, b.version >= 12 && Array.isArray(taxYears) ? taxYears : []);
   // The BTW clients. From version 11 the backup has the list (damaged entries are skipped; an empty list stays empty).
   // An older backup has one client in userSettings, and it becomes the list exactly as migration 0013 did it; so does a
   // newer one whose list is missing or is not a list at all (hand-edited), rather than failing the whole restore.

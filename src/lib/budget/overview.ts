@@ -3,6 +3,7 @@ import { daysInMonth } from "@/lib/recurring/dates";
 import { schema, type Db } from "@/db";
 import { addMonths } from "@/lib/recurring/dates";
 import { btwMovedIn } from "@/lib/btw/share";
+import { incomeTaxMovedIn } from "@/lib/income-tax/state";
 import {
   assertMonth,
   getBudgetsByMonth,
@@ -32,6 +33,13 @@ export interface CategoryLine {
    * of the taxes row (never more than `btw`). 0 otherwise.
    */
   btwMoved: number;
+  /**
+   * The income tax to set aside this month inside `budget`, next to `btw` (taxes category only, with the `btw` option,
+   * while the income tax reserve is active), cents. 0 otherwise.
+   */
+  incomeTax: number;
+  /** The part of `incomeTax` already moved into the income tax pocket this month, counted in `actual` like btwMoved. */
+  incomeTaxMoved: number;
   actual: number; // cents, positive: money spent (expense) or received (income)
   remaining: number | null; // budget - actual for expenses, actual - budget for income
 }
@@ -154,13 +162,16 @@ export async function getMonthOverview(
   // part of that row's budget, and a transfer is not spending, so without this the row would never look used.
   const taxesId = opts.btw ? await taxesCategoryId(db) : null;
   const movedIn = opts.btw && taxesId !== null ? await btwMovedIn(db, { month }) : 0;
+  const incomeTaxIn = opts.btw && taxesId !== null ? await incomeTaxMovedIn(db, { month }) : 0;
 
   const line = (c: (typeof categories)[number], type: "expense" | "income"): CategoryLine => {
     const raw = sums?.byCategory.get(c.id) ?? 0;
     const base = type === "expense" ? 0 - raw : raw; // 0 - x avoids -0
     const share = budget?.btw.get(c.id) ?? 0;
     const btwMoved = c.id === taxesId ? Math.min(Math.max(movedIn, 0), share) : 0;
-    const actual = base + btwMoved;
+    const incomeTax = budget?.incomeTax.get(c.id) ?? 0;
+    const incomeTaxMoved = c.id === taxesId ? Math.min(Math.max(incomeTaxIn, 0), incomeTax) : 0;
+    const actual = base + btwMoved + incomeTaxMoved;
     const b = budget?.byCategory.get(c.id) ?? null;
     return {
       categoryId: c.id,
@@ -172,6 +183,8 @@ export async function getMonthOverview(
       extra: budget?.explicit.get(c.id) ?? null,
       btw: share,
       btwMoved,
+      incomeTax,
+      incomeTaxMoved,
       actual,
       remaining: b === null ? null : type === "expense" ? b - actual : actual - b,
     };

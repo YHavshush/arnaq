@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { sumTransactions } from "@/lib/budget/overview";
 import { quarterlyBtwPaymentIds } from "@/lib/btw/summary";
+import { incomeTaxPaymentIds } from "@/lib/income-tax/payments";
 import { coveredMonths } from "@/lib/recurring/occurrences";
 
 /**
@@ -70,7 +71,11 @@ export async function getVariableAverages(
       fromMonth: months[0],
       toMonth: months[months.length - 1],
       excludeMatched: true,
-      excludeIds: await quarterlyBtwPaymentIds(db),
+      // The income tax paid (incomeTaxPaymentYear) is left out the same way: the reserve is taken off as it builds.
+      excludeIds: new Set([
+        ...(await quarterlyBtwPaymentIds(db)),
+        ...(await incomeTaxPaymentIds(db)),
+      ]),
     });
     for (const month of months) {
       const s = sums.get(month);

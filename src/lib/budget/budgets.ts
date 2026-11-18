@@ -5,6 +5,8 @@ import { addMonths } from "@/lib/recurring/dates";
 import { isScheduled } from "@/lib/recurring/occurrences";
 import { btwShareForMonth, btwTrueUp } from "@/lib/btw/share";
 import { TAXES_CATEGORY } from "@/lib/categories/defaults";
+import { incomeTaxShareForMonth } from "@/lib/income-tax/share";
+import { loadIncomeTax } from "@/lib/income-tax/state";
 
 export class BudgetError extends Error {}
 
@@ -91,6 +93,11 @@ export interface MonthBudgets {
   carriedFrom: Map<number, string>;
   /** With `btw`: the taxes category's BTW share for the month (see btwShareForMonth), cents; empty otherwise. */
   btw: Map<number, number>;
+  /**
+   * With `btw`: the taxes category's income tax share for the month (see incomeTaxShareForMonth), cents; empty otherwise
+   * and while the income tax reserve is not active. It sits next to the BTW share: the floor is fixed + BTW + income tax.
+   */
+  incomeTax: Map<number, number>;
   /** The explicit monthly total, or null when none is set. */
   total: number | null;
 }
@@ -132,6 +139,7 @@ export async function getBudgetsByMonth(
           explicit: new Map(),
           carriedFrom: new Map(),
           btw: new Map(),
+          incomeTax: new Map(),
           total: null,
         }),
       );
@@ -212,6 +220,17 @@ export async function getBudgetsByMonth(
         const adjusted = Math.max(share - (await btwTrueUp(db, { month: m })), 0);
         if (adjusted > 0) at(m).btw.set(taxes, adjusted);
       }
+    // The income tax reserve works the same way, next to the BTW (nothing while it is not active).
+    const state = await loadIncomeTax(db);
+    if (taxes !== null && state.active)
+      for (let m = fromMonth; m <= toMonth; m = addMonths(m, 1)) {
+        const { share } = await incomeTaxShareForMonth(db, {
+          month: m,
+          today: opts.btw.today,
+          state,
+        });
+        if (share > 0) at(m).incomeTax.set(taxes, share);
+      }
   }
 
   for (const b of out.values()) {
@@ -219,8 +238,14 @@ export async function getBudgetsByMonth(
     // The fixed items are the floor: a typed rent budget that already includes the rent is not counted twice.
     for (const [id, amount] of b.fixed)
       b.byCategory.set(id, Math.max(b.byCategory.get(id) ?? 0, amount));
-    for (const [id, share] of b.btw)
-      b.byCategory.set(id, Math.max(b.byCategory.get(id) ?? 0, (b.fixed.get(id) ?? 0) + share));
+    for (const id of new Set([...b.btw.keys(), ...b.incomeTax.keys()]))
+      b.byCategory.set(
+        id,
+        Math.max(
+          b.byCategory.get(id) ?? 0,
+          (b.fixed.get(id) ?? 0) + (b.btw.get(id) ?? 0) + (b.incomeTax.get(id) ?? 0),
+        ),
+      );
   }
   return out;
 }

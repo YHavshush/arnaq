@@ -34,7 +34,10 @@ export function btwPot({
   return { pot, savingsLeft: saved - pot, short: missing - pot };
 }
 
-/** What counts toward the savings goal: the savings without the BTW pot (that money is owed, not the person's goal). */
-export function goalSaved(s: { saved: number; btwPot?: number }): number {
-  return s.saved - (s.btwPot ?? 0);
+/**
+ * What counts toward the savings goal: the savings without the BTW pot and the income tax pot (that money is owed, not
+ * the person's goal; see taxPots in src/lib/income-tax/pot.ts).
+ */
+export function goalSaved(s: { saved: number; btwPot?: number; incomeTaxPot?: number }): number {
+  return s.saved - (s.btwPot ?? 0) - (s.incomeTaxPot ?? 0);
 }

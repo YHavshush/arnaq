@@ -243,7 +243,7 @@ describe("restoreFromBackup", () => {
 
     it("a version 11 backup brings back the whole list, in order", async () => {
       const { db, backup } = await seeded();
-      expect(backup.version).toBe(11);
+      expect(backup.version).toBeGreaterThanOrEqual(11);
       expect(backup.tables.btwClients.map((c: { name: string }) => c.name)).toEqual([
         "Featurn",
         "Globex GmbH",
@@ -323,7 +323,7 @@ describe("restoreFromBackup", () => {
 
   it("brings back whether the BTW pot is part of the savings; an older backup without it, or a damaged one, restores as off", async () => {
     const { db, backup } = await seeded();
-    expect(backup.version).toBe(11);
+    expect(backup.version).toBeGreaterThanOrEqual(10);
     const pot = async () =>
       (await withUser(db, TEST_USER_B, (tx) => tx.select().from(schema.userSettings)))[0]
         ?.btwPotInSavings;
