@@ -46,6 +46,8 @@ describe("proxy: signed out", () => {
     setClaims(null);
     for (const p of [
       "/welcome",
+      "/privacy",
+      "/terms",
       "/login",
       "/register",
       "/forgot-password",

@@ -13,6 +13,8 @@ const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 /** Reachable without signing in. Everything else, pages and API alike, needs a session. */
 const PUBLIC = [
   /^\/welcome$/,
+  /^\/privacy$/,
+  /^\/terms$/,
   /^\/login$/,
   /^\/register$/,
   /^\/forgot-password$/,

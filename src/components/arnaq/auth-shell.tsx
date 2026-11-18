@@ -21,9 +21,15 @@ export async function AuthShell({ children }: { children: ReactNode }) {
         <p className="text-ink-muted mb-4 px-1 text-[15px]">{t.auth.brandLine}</p>
         {children}
       </main>
-      <footer className="pt-6 text-center">
-        <Link href="/welcome" className="text-ink-muted text-[13px] underline underline-offset-4">
+      <footer className="text-ink-muted flex flex-wrap items-center justify-center gap-x-4 gap-y-1 pt-6 text-[13px]">
+        <Link href="/welcome" className="underline underline-offset-4">
           {t.ui.welcome.again}
+        </Link>
+        <Link href="/privacy" className="underline underline-offset-4">
+          {t.legal.privacyLink}
+        </Link>
+        <Link href="/terms" className="underline underline-offset-4">
+          {t.legal.termsLink}
         </Link>
       </footer>
     </div>
