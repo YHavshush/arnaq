@@ -39,10 +39,13 @@ export interface Identity {
  */
 export function identityMatches(
   item: Identity,
-  t: { counterparty: string | null; counterpartyIban: string | null },
+  t: { counterparty: string | null; counterpartyIban: string | null; description?: string | null },
 ): boolean {
   const itemIban = normaliseIban(item.matchIban);
   const txIban = normaliseIban(t.counterpartyIban);
   if (itemIban && txIban) return itemIban === txIban;
-  return counterpartyMatches(item.matchCounterparty, t.counterparty);
+  // Some rows (a Revolut payment received) carry the name only in the description, with no counterparty at all.
+  // Only then is the description read as the name, so a long description never matches by accident.
+  const name = normaliseCounterparty(t.counterparty) ? t.counterparty : (t.description ?? null);
+  return counterpartyMatches(item.matchCounterparty, name);
 }

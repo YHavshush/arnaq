@@ -33,6 +33,23 @@ describe("matchOccurrences", () => {
     });
   });
 
+  it("reads the description as the name when the row has no counterparty, and only then", async () => {
+    const { db, tx, march } = await spotify();
+    const t = await tx("2026-03-10", -999, {
+      counterparty: null,
+      description: "Payment from Spotify AB",
+    });
+    expect(await matchOccurrences(db)).toEqual({ matched: 1, unlinked: 0 });
+    expect((await march()).transactionId).toBe(t.id);
+  });
+
+  it("does not read the description when the row names another counterparty", async () => {
+    const { db, tx, march } = await spotify();
+    await tx("2026-03-10", -999, { counterparty: "Someone Else", description: "Spotify AB gift" });
+    expect(await matchOccurrences(db)).toEqual({ matched: 0, unlinked: 0 });
+    expect((await march()).status).toBe("expected");
+  });
+
   it("never overwrites a category the transaction already has", async () => {
     const { db, tx, getTx, cat, item } = await spotify();
     await db
