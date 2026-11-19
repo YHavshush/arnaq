@@ -48,6 +48,29 @@ export function parseHorizon(raw: string | string[] | undefined): number {
   return (HORIZONS as readonly number[]).includes(n) ? n : 6;
 }
 
+async function taxStillToSetAside(
+  db: Db,
+  month: string,
+  today: string,
+  savings: Awaited<ReturnType<typeof getSavingsSummary>>,
+): Promise<{ btw: number | null; incomeTax: number | null }> {
+  // The pots are worked out for today, so only the current month is corrected.
+  if (month !== today.slice(0, 7)) return { btw: null, incomeTax: null };
+  const { potInSavings } = await getBtwSettings(db);
+  const incomeTax = await loadIncomeTax(db);
+  const btw = potInSavings
+    ? Math.max((await getBtwSummary(db, { today })).toSetAside - (savings.btwPot ?? 0), 0)
+    : null;
+  const tax = incomeTax.potInSavings
+    ? Math.max(
+        (await getIncomeTaxSummary(db, { today, state: incomeTax })).toSetAside -
+          (savings.incomeTaxPot ?? 0),
+        0,
+      )
+    : null;
+  return { btw, incomeTax: tax };
+}
+
 export async function loadOverzicht(db: Db, month: string, today: string, locale: Locale) {
   const [overview, allOccurrences, daily, otherIncome, savings, savingsIds, accountsBalance] =
     await Promise.all([
@@ -65,6 +88,9 @@ export async function loadOverzicht(db: Db, month: string, today: string, locale
   const occurrences = allOccurrences.filter(
     (o) => o.categoryId === null || !savingsIds.has(o.categoryId),
   );
+  // With a pot inside the savings nothing is ever "moved" this month, so the budget's share would stay unpaid for good.
+  // The still-to-pay then follows the tax cards: what is to be set aside, less what the pot already holds.
+  const taxLeft = await taxStillToSetAside(db, month, today, savings);
   return {
     ...buildOverzicht({
       overview,
@@ -75,6 +101,7 @@ export async function loadOverzicht(db: Db, month: string, today: string, locale
       otherIncome,
       savings,
       accountsBalance,
+      taxLeft,
     }),
     prev: addMonths(month, -1),
     next: addMonths(month, 1),

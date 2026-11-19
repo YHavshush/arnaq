@@ -468,6 +468,31 @@ describe("buildOverzicht: the parts the design adds", () => {
         expect(o.facts.join(" ")).not.toMatch(/fixed costs? still to pay/);
       }
     });
+    it("says what the still-to-pay amount is made of when BTW and income tax are still to be set aside", () => {
+      const taxed = { ...line(1, "Boodschappen", 20000, 40000), btw: 15000, incomeTax: 5700 };
+      const withFixed = run(sumOf([taxed], 2100), {
+        occurrences: [occ(1, "expected", 6300)],
+        today: "2026-10-05",
+      });
+      expect(withFixed.detail).toBe(
+        "Of your €400 budget, €200 is spent and €270 still has to be paid: €63 of fixed costs and €207 to set aside for BTW and income tax. €21 came in.",
+      );
+      const onlyTax = run(sumOf([taxed], 2100), { today: "2026-10-05" });
+      expect(onlyTax.detail).toBe(
+        "Of your €400 budget, €200 is spent and €207 still has to be paid: BTW and income tax to set aside. €21 came in.",
+      );
+    });
+    it("counts the tax still to be put aside from the tax cards when the pot sits in the savings, not the budget share", () => {
+      const taxed = { ...line(1, "Boodschappen", 20000, 40000), btw: 15000, incomeTax: 5700 };
+      const o = run(sumOf([taxed], 2100), {
+        occurrences: [occ(1, "expected", 6300)],
+        today: "2026-10-05",
+        taxLeft: { btw: 0, incomeTax: 1400 },
+      });
+      expect(o.detail).toBe(
+        "Of your €400 budget, €200 is spent and €77 still has to be paid: €63 of fixed costs and €14 to set aside for BTW and income tax. €21 came in.",
+      );
+    });
     it("is over budget only when the budgeted categories together are over the sum", () => {
       const o = run(sumOf([line(1, "Boodschappen", 45000, 40000), line(2, "Overig", 1000, null)]));
       expect(o.free).toBe(-5000);
