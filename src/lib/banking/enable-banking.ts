@@ -50,6 +50,19 @@ export const SESSION_OVER = new Set(["EXPIRED_SESSION", "CLOSED_SESSION", "REVOK
 export const isSessionOver = (e: unknown): boolean =>
   e instanceof EnableBankingError && e.code !== null && SESSION_OVER.has(e.code);
 
+/**
+ * A pasted key, made readable: literal `\n` escapes become line breaks; a file that holds a certificate next to the
+ * key keeps only the private key block; and a block whose line breaks were lost (flattened to spaces) is re-wrapped.
+ */
+export function normalisePem(raw: string): string {
+  const text = raw.replace(/\\n/g, "\n").trim();
+  const block = /-----BEGIN ((?:RSA |EC )?PRIVATE KEY)-----([\s\S]*?)-----END \1-----/.exec(text);
+  if (!block) return text;
+  const body = block[2].replace(/\s+/g, "");
+  const lines = body.match(/.{1,64}/g) ?? [];
+  return `-----BEGIN ${block[1]}-----\n${lines.join("\n")}\n-----END ${block[1]}-----`;
+}
+
 const configCache = new Map<string, BankingConfig | null>();
 let warnedUrl = false;
 
@@ -92,13 +105,18 @@ export function bankingConfig(env: NodeJS.ProcessEnv = process.env): BankingConf
   if (configCache.has(cacheKey)) return configCache.get(cacheKey)!;
   let config: BankingConfig | null = null;
   try {
-    const key = createPrivateKey({ key: pem.replace(/\\n/g, "\n").trim(), format: "pem" });
+    const key = createPrivateKey({ key: normalisePem(pem), format: "pem" });
     if (key.asymmetricKeyType === "rsa") config = { applicationId, key, baseUrl };
   } catch {
     // Deliberately silent about the content: whatever was in the variable stays out of the logs.
   }
-  if (!config)
-    console.warn("Enable Banking is off: ENABLE_BANKING_PRIVATE_KEY is not an RSA private key.");
+  if (!config) {
+    // Only the block labels (BEGIN lines) are named, never any content, to tell a wrong paste from a broken one.
+    const labels = [...pem.matchAll(/-----BEGIN ([A-Z ]+)-----/g)].map((m) => m[1]);
+    console.warn(
+      `Enable Banking is off: ENABLE_BANKING_PRIVATE_KEY is not an RSA private key (blocks found: ${labels.join(", ") || "none"}).`,
+    );
+  }
   configCache.set(cacheKey, config);
   return config;
 }
