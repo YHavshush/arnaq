@@ -41,6 +41,17 @@ export const view = {
     headerTotals: (spent: string, income: string) => `You spent ${spent}; ${income} came in.`,
     headerTotalsPlanned: (spent: string, planned: string, budget: string, income: string) =>
       `Of your ${budget} budget, ${spent} is spent and ${planned} still has to be paid. ${income} came in.`,
+    headerTotalsPlannedTax: (
+      spent: string,
+      planned: string,
+      budget: string,
+      income: string,
+      fixed: string | null,
+      tax: string,
+    ) =>
+      fixed === null
+        ? `Of your ${budget} budget, ${spent} is spent and ${planned} still has to be paid: BTW and income tax to set aside. ${income} came in.`
+        : `Of your ${budget} budget, ${spent} is spent and ${planned} still has to be paid: ${fixed} of fixed costs and ${tax} to set aside for BTW and income tax. ${income} came in.`,
     headerTotalsBudget: (spent: string, budget: string, income: string) =>
       `Of your ${budget} budget, ${spent} is spent. ${income} came in.`,
     facts: {

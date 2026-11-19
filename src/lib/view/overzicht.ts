@@ -625,18 +625,27 @@ export function buildOverzicht({
       : sentenceFor({ month, today, budget, spent: budgetSpent, fixedTotal, paidFixed, locale }),
     detail: compact
       ? budget !== null
-        ? planned > 0
-          ? messages[locale].view.overzicht.headerTotalsPlanned(
+        ? planned > 0 && unsetBtw > 0
+          ? messages[locale].view.overzicht.headerTotalsPlannedTax(
               euro(budgetSpent),
               euro(planned),
               euro(budget),
               euro(totals.incomeActual),
+              planned - unsetBtw > 0 ? euro(planned - unsetBtw) : null,
+              euro(unsetBtw),
             )
-          : messages[locale].view.overzicht.headerTotalsBudget(
-              euro(budgetSpent),
-              euro(budget),
-              euro(totals.incomeActual),
-            )
+          : planned > 0
+            ? messages[locale].view.overzicht.headerTotalsPlanned(
+                euro(budgetSpent),
+                euro(planned),
+                euro(budget),
+                euro(totals.incomeActual),
+              )
+            : messages[locale].view.overzicht.headerTotalsBudget(
+                euro(budgetSpent),
+                euro(budget),
+                euro(totals.incomeActual),
+              )
         : messages[locale].view.overzicht.headerTotals(euro(spent), euro(totals.incomeActual))
       : detail,
     attention,

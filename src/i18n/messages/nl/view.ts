@@ -42,6 +42,17 @@ export const view: typeof en = {
       `Je gaf ${spent} uit; er kwam ${income} binnen.`,
     headerTotalsPlanned: (spent: string, planned: string, budget: string, income: string) =>
       `Van je budget van ${budget} is ${spent} uitgegeven en moet ${planned} nog betaald worden. Er kwam ${income} binnen.`,
+    headerTotalsPlannedTax: (
+      spent: string,
+      planned: string,
+      budget: string,
+      income: string,
+      fixed: string | null,
+      tax: string,
+    ) =>
+      fixed === null
+        ? `Van je budget van ${budget} is ${spent} uitgegeven en moet ${planned} nog betaald worden: btw en inkomstenbelasting om apart te zetten. Er kwam ${income} binnen.`
+        : `Van je budget van ${budget} is ${spent} uitgegeven en moet ${planned} nog betaald worden: ${fixed} aan vaste lasten en ${tax} om apart te zetten voor btw en inkomstenbelasting. Er kwam ${income} binnen.`,
     headerTotalsBudget: (spent: string, budget: string, income: string) =>
       `Van je budget van ${budget} is ${spent} uitgegeven. Er kwam ${income} binnen.`,
     facts: {
