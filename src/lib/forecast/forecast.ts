@@ -379,7 +379,7 @@ export async function getForecast(db: Db, opts: ForecastOptions): Promise<Foreca
       m.recurring.occurrences.filter((o) => o.status === "missed" && o.month === m.month),
     ),
     months,
-    openingBalance: await getOpeningBalance(db, first),
+    openingBalance: await anchoredOpeningBalance(db, first, months, real, current),
     openingSavings: savingsKnown ? savingsNow.saved - movedSince : null,
     btwNow,
     incomeTaxNow,
@@ -464,6 +464,34 @@ function kindOf(ctx: Context, month: string): MonthKind {
   if (month === ctx.current) return "mixed";
   if (month > ctx.current) return "forecast";
   return ctx.uploaded.has(month) || ctx.withData.has(month) ? "actual" : "no-data";
+}
+
+/**
+ * The money in the accounts when the chart starts, tied to what the bank really stated.
+ *
+ * The line chains month by month: opening balance, plus what came in and went out, with moves into and out of
+ * savings counted as neutral. That only holds when every move is imported and the opening balance is current. A month
+ * without stated balances (it falls back to an older one), or a transfer to somewhere that is not imported, makes the
+ * whole line sit too high or too low. So the opening balance is corrected, once, so that the line passes through the
+ * balance the bank stated at the end of the last completed month with data; later months chain from there.
+ * Without such a month (or without stated balances) the plain opening balance is kept.
+ */
+async function anchoredOpeningBalance(
+  db: Db,
+  first: string,
+  months: ForecastMonth[],
+  real: Map<string, number> | null,
+  current: string,
+): Promise<number | null> {
+  const opening = await getOpeningBalance(db, first);
+  if (opening === null || real === null) return opening;
+  const anchor = [...months].reverse().find((m) => m.month < current && m.kind === "actual");
+  if (!anchor) return opening;
+  const stated = real.get(`${anchor.month}-${String(daysInMonth(anchor.month)).padStart(2, "0")}`);
+  if (stated === undefined) return opening;
+  // What the chain says the accounts held at that month end: opening, the month's net, less what went to savings.
+  const chained = opening + anchor.cumulativeNet - anchor.cumulativeSetAside;
+  return opening + (stated - chained);
 }
 
 /** Per month (YYYY-MM): deposits minus withdrawals on the savings category, in each account's own currency. */
