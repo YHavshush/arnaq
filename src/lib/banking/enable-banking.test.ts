@@ -37,6 +37,26 @@ afterEach(() => {
 });
 
 describe("configuration", () => {
+  it("reads a key pasted with its line breaks flattened, or after a certificate block", () => {
+    const pem = testKeys().pem;
+    process.env.ENABLE_BANKING_PRIVATE_KEY = pem.trim().replace(/\n/g, " ");
+    expect(bankingConfig()?.key.asymmetricKeyType).toBe("rsa");
+    process.env.ENABLE_BANKING_PRIVATE_KEY =
+      "-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n" + pem;
+    expect(bankingConfig()?.key.asymmetricKeyType).toBe("rsa");
+  });
+
+  it("names only the kind of block when the key is wrong, never its content", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    process.env.ENABLE_BANKING_PRIVATE_KEY =
+      "-----BEGIN CERTIFICATE-----\nsecretcontent\n-----END CERTIFICATE-----";
+    expect(bankingConfig()).toBeNull();
+    const logged = JSON.stringify(warn.mock.calls);
+    expect(logged).toContain("CERTIFICATE");
+    expect(logged).not.toContain("secretcontent");
+    warn.mockRestore();
+  });
+
   it("is off without the application id, the key or APP_URL", () => {
     for (const name of [
       "ENABLE_BANKING_APPLICATION_ID",
