@@ -67,6 +67,11 @@ async function Content({ params, searchParams }: Props) {
           )}
           {c.count(d.count)}
         </p>
+        {d.fixedTotal !== 0 && d.otherTotal !== 0 && (
+          <p className="text-ink-muted text-sm">
+            {c.split(f.euro(d.fixedTotal), f.euro(d.otherTotal))}
+          </p>
+        )}
       </div>
       {d.rows.length === 0 ? (
         <EmptyState title={categoryLabel(d.category.name, locale)}>{c.empty}</EmptyState>

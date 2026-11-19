@@ -92,7 +92,9 @@ export function CategoryTransactions({
                             ? c.moving
                             : hint
                               ? c.probably(categoryLabel(hint.name, locale))
-                              : (c.source[r.source ?? ""] ?? "")}
+                              : r.fixed
+                                ? c.fixedRow
+                                : (c.source[r.source ?? ""] ?? "")}
                         </span>
                       </span>
                       <span className="num font-semibold">{euroExact(r.amount)}</span>
