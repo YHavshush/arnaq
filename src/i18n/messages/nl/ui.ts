@@ -72,6 +72,8 @@ export const ui: typeof en = {
     ofBudget: (budget: string) => `van ${budget} budget`,
     over: (amount: string) => `${amount} over`,
     count: (n: number) => `${n} ${n === 1 ? "transactie" : "transacties"}`,
+    fixedRow: "Vaste last, betaald",
+    split: (fixed: string, other: string) => `${fixed} vaste lasten, ${other} niet vast`,
     empty: "Deze maand staat hier niets in.",
     hint: "Tik op een rij om hem naar een andere categorie te verplaatsen.",
     moving: "Verplaatsen…",

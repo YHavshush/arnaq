@@ -69,6 +69,8 @@ export const ui = {
     over: (amount: string) => `${amount} over`,
     count: (n: number) => `${n} ${n === 1 ? "transaction" : "transactions"}`,
     empty: "Nothing in this category this month.",
+    fixedRow: "Fixed cost, paid",
+    split: (fixed: string, other: string) => `${fixed} fixed costs, ${other} not fixed`,
     hint: "Tap a row to move it to another category.",
     moving: "Moving…",
     moved: "Moved",

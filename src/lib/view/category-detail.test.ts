@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { setBudget } from "@/lib/budget/budgets";
+import { matchOccurrences } from "@/lib/recurring/matching";
+import { generateOccurrences } from "@/lib/recurring/occurrences";
 import { setup } from "@/lib/recurring/test-utils";
 import { loadCategoryDetail } from "./category-detail";
 
@@ -29,6 +31,22 @@ describe("loadCategoryDetail (every transaction behind one category and month)",
     expect(d.budget).toBe(4000);
     expect(d.over).toBe(700);
     expect(d.category).toMatchObject({ id: food, type: "expense" });
+  });
+
+  it("marks the rows paid as a fixed item, and splits the total into fixed and not fixed", async () => {
+    const { db, tx, cat, addItem } = await setup();
+    const subs = await cat("Abonnementen");
+    await addItem({ startDate: "2026-03-01", categoryId: subs });
+    await generateOccurrences(db, { throughMonth: "2026-03" });
+    await tx("2026-03-10", -999, { counterparty: "Spotify AB", categoryId: subs });
+    await tx("2026-03-15", -299, { counterparty: "Some app", categoryId: subs });
+    await matchOccurrences(db);
+    const d = (await loadCategoryDetail(db, subs, "2026-03"))!;
+    expect(d.rows.map((r) => [r.counterparty, r.fixed])).toEqual([
+      ["Some app", false],
+      ["Spotify AB", true],
+    ]);
+    expect([d.total, d.fixedTotal, d.otherTotal]).toEqual([1298, 999, 299]);
   });
 
   it("leaves out rows in another currency than the account (they are not in the totals either)", async () => {

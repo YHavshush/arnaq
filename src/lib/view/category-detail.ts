@@ -12,6 +12,8 @@ export interface CategoryDetailRow {
   description: string | null;
   source: string | null;
   suggestedCategoryId: number | null;
+  /** Paid as a fixed item: matched to one of its occurrences (see matchOccurrences). */
+  fixed: boolean;
 }
 
 export interface CategoryDetail {
@@ -23,6 +25,9 @@ export interface CategoryDetail {
   /** What the category came to in the month, positive cents, in the direction of its type (spent, received, saved). */
   total: number;
   count: number;
+  /** The part of `total` that is fixed items and the part that is not (positive cents, same direction as `total`). */
+  fixedTotal: number;
+  otherTotal: number;
   budget: number | null;
   /** How far over the budget (cents), 0 when not over or without a budget. */
   over: number;
@@ -56,6 +61,7 @@ export async function loadCategoryDetail(
       description: t.description,
       source: t.categorySource,
       suggestedCategoryId: t.suggestedCategoryId,
+      matched: t.matchedOccurrenceId,
     })
     .from(t)
     .innerJoin(schema.accounts, eq(schema.accounts.id, t.accountId))
@@ -72,6 +78,7 @@ export async function loadCategoryDetail(
   // Spent for an expense category, received for income, saved (moved out of the account) for savings and transfers.
   const sign = category.type === "income" ? 1 : -1;
   const total = rows.reduce((s, r) => s + sign * r.amount, 0);
+  const fixedTotal = rows.reduce((s, r) => s + (r.matched !== null ? sign * r.amount : 0), 0);
   const overview = await getMonthOverview(
     db,
     month,
@@ -84,9 +91,11 @@ export async function loadCategoryDetail(
     month,
     prev: addMonths(month, -1),
     next: addMonths(month, 1),
-    rows,
+    rows: rows.map(({ matched, ...r }) => ({ ...r, fixed: matched !== null })),
     total,
     count: rows.length,
+    fixedTotal,
+    otherTotal: total - fixedTotal,
     budget,
     over: budget !== null && category.type === "expense" ? Math.max(total - budget, 0) : 0,
     categories: categories
