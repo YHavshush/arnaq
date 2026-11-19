@@ -226,3 +226,28 @@ describe("net worth over time with money set aside", () => {
     expect(sep.cumulativeReserve).toBe(42000);
   });
 });
+
+describe("getForecast: the opening balance is tied to the bank's stated balance", () => {
+  it("passes through the balance stated at the end of the last month with data, whatever went missing before", async () => {
+    const { db, tx, cover } = await setup();
+    await cover("2026-09", "2026-10");
+    // September states no balance at all, so the opening balance falls back to the one before it.
+    await tx("2026-08-20", -1000, { balanceAfter: 100000, counterparty: "Shop" });
+    await tx("2026-09-05", -1000, { counterparty: "Shop" });
+    // A transfer to an account that is not imported: money leaves, and nothing else records it.
+    await tx("2026-10-05", -40000, {
+      balanceAfter: 58000,
+      counterparty: "Own account",
+      isInternalTransfer: true,
+    });
+    await tx("2026-10-06", -2000, { balanceAfter: 56000, counterparty: "Shop" });
+    await tx("2026-11-03", -500, { balanceAfter: 55500, counterparty: "Shop" });
+    const f = await getForecast(db, { today: "2026-11-11", months: 2, pastMonths: 2 });
+    const oct = f.months.find((m) => m.month === "2026-10")!;
+    // The accounts at the end of October, as the chart chains them, are what the bank stated.
+    expect(f.openingBalance! + oct.cumulativeNet - oct.cumulativeSetAside).toBe(56000);
+    // November then chains from there.
+    const nov = f.months.find((m) => m.month === "2026-11")!;
+    expect(f.openingBalance! + nov.cumulativeNet - nov.cumulativeSetAside).toBe(56000 + nov.net);
+  });
+});
