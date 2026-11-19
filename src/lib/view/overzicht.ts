@@ -147,6 +147,12 @@ interface Input {
   savings?: SavingsSummary | null;
   /** What the accounts hold now (cents) from the bank's own balances, see getOpeningBalance; null when unknown. */
   accountsBalance?: number | null;
+  /**
+   * What is still to be put aside for the BTW and the income tax (cents), when the pot sits inside the savings: the
+   * tax cards' own figure (to set aside minus what the pot already holds). A null part is counted from the budget
+   * share instead (that share less what was moved into a pocket this month).
+   */
+  taxLeft?: { btw: number | null; incomeTax: number | null };
 }
 
 /**
@@ -302,6 +308,7 @@ export function buildOverzicht({
   otherIncome = [],
   savings = null,
   accountsBalance = null,
+  taxLeft,
 }: Input): Overzicht {
   const t = messages[locale].view.overzicht;
   const { euro, dayLabel } = formatter(locale);
@@ -327,10 +334,10 @@ export function buildOverzicht({
   // The BTW share of the taxes budget is planned until it is moved into the pocket (then it is spent): either way it
   // is not free to spend. The move itself is counted in the taxes row's actual (see getMonthOverview).
   // The income tax share next to it works the same way.
-  const unsetBtw = overview.expenses.reduce(
-    (s, l) => s + Math.max(l.btw - l.btwMoved, 0) + Math.max(l.incomeTax - l.incomeTaxMoved, 0),
-    0,
-  );
+  const unsetBtw =
+    (taxLeft?.btw ?? overview.expenses.reduce((s, l) => s + Math.max(l.btw - l.btwMoved, 0), 0)) +
+    (taxLeft?.incomeTax ??
+      overview.expenses.reduce((s, l) => s + Math.max(l.incomeTax - l.incomeTaxMoved, 0), 0));
   const planned =
     expenseOcc.filter((o) => o.status === "expected").reduce((s, o) => s + o.expectedAmount, 0) +
     unsetBtw;
