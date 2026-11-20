@@ -49,7 +49,14 @@ async function SampleNotice() {
 }
 
 /** One adaptive layout: sidebar and two columns when the app is 900px wide, pill nav below that. */
-export async function AppShell({ children }: { children: ReactNode }) {
+export async function AppShell({
+  children,
+  pullSync = null,
+}: {
+  children: ReactNode;
+  /** The pull down to fetch the banks, when one is linked (a server decision, see PullSync). */
+  pullSync?: ReactNode;
+}) {
   const { t } = await getI18n();
   return (
     <div className="@container/app min-h-dvh">
@@ -90,6 +97,7 @@ export async function AppShell({ children }: { children: ReactNode }) {
             <main id="main">
               <PageMotion>{children}</PageMotion>
             </main>
+            {pullSync}
           </ToastProvider>
         </div>
       </div>
