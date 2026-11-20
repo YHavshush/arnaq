@@ -2,13 +2,22 @@ import { Suspense, type ReactNode } from "react";
 import { AppShell } from "@/components/arnaq/shell";
 import { I18nProvider } from "@/i18n/client";
 import { getLocale } from "@/i18n/server";
+import { PullSync } from "./pull-sync";
 
 /** The language comes from a cookie (request time), so it is read inside Suspense. */
 async function Scoped({ children }: { children: ReactNode }) {
   const locale = await getLocale();
   return (
     <I18nProvider locale={locale}>
-      <AppShell>{children}</AppShell>
+      <AppShell
+        pullSync={
+          <Suspense fallback={null}>
+            <PullSync />
+          </Suspense>
+        }
+      >
+        {children}
+      </AppShell>
     </I18nProvider>
   );
 }

@@ -901,7 +901,7 @@ export const ui = {
     backupTip:
       "Tip: make a full backup first (Backup, in Settings), so you can go back if the bank's transactions are not what you expect.",
     psuNote:
-      "When you press Refresh now, your IP address and browser are passed to your bank through Enable Banking, so the bank knows it is you asking.",
+      "When arnaq fetches your transactions, your IP address and browser details go to your bank through Enable Banking, so the bank knows it is you asking.",
     link: "Link a bank",
     chooseBank: "Choose your bank",
     loadingBanks: "Loading the banks…",
@@ -910,6 +910,9 @@ export const ui = {
     opening: "Opening your bank…",
     refresh: "Refresh now",
     refreshing: "Refreshing…",
+    pullHint: "Pull to fetch your banks",
+    pullRelease: "Let go to fetch",
+    fetching: "Fetching…",
     reconnect: "Reconnect",
     reconnectLabel: (bank: string) => `Reconnect ${bank}`,
     disconnect: "Disconnect",

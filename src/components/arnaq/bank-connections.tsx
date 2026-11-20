@@ -4,13 +4,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useI18n } from "@/i18n/client";
 import { api } from "@/lib/client/api";
+import { syncBanks } from "@/lib/client/bank-sync";
 import {
   RECONNECT_DAYS,
   isCallbackResult,
   type AspspOption,
   type BankConnectionView,
   type CallbackResult,
-  type SyncLinkReport,
 } from "@/lib/banking/types";
 import { formatter } from "@/lib/view/format";
 import { ErrorLine, GhostButton, PrimaryButton } from "./form";
@@ -55,21 +55,11 @@ export function BankConnections({
     if (syncing) return;
     setSyncing(true);
     setProblems([]);
-    const res = await api<{ links: SyncLinkReport[] }>("POST", "/api/banking/sync");
+    const outcome = await syncBanks(s);
     setSyncing(false);
-    if (!res.ok) return setProblems([res.error]);
-    const links = res.data.links;
-    const imported = links.reduce((n, l) => n + (l.status === "ok" ? l.imported : 0), 0);
-    if (links.some((l) => l.status === "ok")) toast(s.refreshed(imported));
-    setProblems(
-      links.flatMap((l) =>
-        l.status === "expired"
-          ? [s.refreshExpired(l.accountName)]
-          : l.status === "failed" || l.status === "stopped"
-            ? [s.refreshProblem(l.accountName, l.error ?? "")]
-            : [],
-      ),
-    );
+    if (outcome.error) return setProblems([outcome.error]);
+    if (outcome.message) toast(outcome.message);
+    setProblems(outcome.problems);
     startTransition(() => router.refresh());
   }
 
@@ -114,7 +104,6 @@ export function BankConnections({
           {s.result[result]}
         </p>
       )}
-      {on && <p className="text-ink-muted max-w-[56ch] text-[14px]">{s.psuNote}</p>}
       {connections.length === 0 ? (
         <div className="grid gap-2">
           <p className="text-ink-muted text-[15px]">{s.none}</p>
@@ -220,7 +209,12 @@ export function BankConnections({
           </GhostButton>
         )}
       </div>
-      {on && picking && <BankPicker onCancel={() => setPicking(false)} />}
+      {on && picking && (
+        <>
+          <p className="text-ink-muted max-w-[56ch] text-[14px]">{s.psuNote}</p>
+          <BankPicker onCancel={() => setPicking(false)} />
+        </>
+      )}
     </div>
   );
 }
