@@ -188,6 +188,47 @@ describe("applyReportedBalance", () => {
     expect(rows.map((r) => r.balanceAfter)).toEqual([null, 18076]);
   });
 
+  it("puts the booked balance on the newest transaction when the bank names none", () => {
+    const { rows } = convertTransactions([
+      tx({ entry_reference: "a", booking_date: "2026-11-02", value_date: "2026-11-02" }),
+      tx({ entry_reference: "b", booking_date: "2026-11-05", value_date: "2026-11-05" }),
+      tx({ entry_reference: "c", booking_date: "2026-11-05", value_date: "2026-11-05" }),
+    ]);
+    applyReportedBalance(rows, [
+      {
+        type: "CLAV",
+        amount: "9999.00",
+        currency: "EUR",
+        referenceDate: null,
+        lastCommittedTransaction: null,
+      },
+      {
+        type: "CLBD",
+        amount: "491.20",
+        currency: "EUR",
+        referenceDate: "2026-11-21",
+        lastCommittedTransaction: null,
+      },
+    ]);
+    expect(rows.map((r) => r.balanceAfter ?? null)).toEqual([null, null, 49120]);
+  });
+
+  it("leaves it out when the balance is older than the newest transaction", () => {
+    const { rows } = convertTransactions([
+      tx({ booking_date: "2026-11-05", value_date: "2026-11-05" }),
+    ]);
+    applyReportedBalance(rows, [
+      {
+        type: "CLBD",
+        amount: "1.00",
+        currency: "EUR",
+        referenceDate: "2026-11-01",
+        lastCommittedTransaction: null,
+      },
+    ]);
+    expect(rows[0].balanceAfter ?? null).toBeNull();
+  });
+
   it("does nothing without a reference it can find", () => {
     const { rows } = convertTransactions([tx()]);
     applyReportedBalance(rows, [
