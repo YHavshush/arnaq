@@ -1,8 +1,13 @@
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { schema, type Db } from "@/db";
 import { addDays } from "@/lib/recurring/dates";
 
-/** Every transaction that states a balance, in the account's own currency, per account in order (date, then id). */
+/**
+ * Every transaction of an account from the first one that states a balance on, in the account's own currency, per
+ * account in order (date, then id), each with its balance after. A transaction that states none (a bank that only
+ * sends a balance now and then, or one the bank link fetched) carries the balance before it plus its own amount, so the
+ * newest balance is current and not the last one a statement stated.
+ */
 async function balanceRows(db: Db) {
   const rows = await db
     .select({
@@ -13,12 +18,7 @@ async function balanceRows(db: Db) {
     })
     .from(schema.transactions)
     .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
-    .where(
-      and(
-        isNotNull(schema.transactions.balanceAfter),
-        eq(schema.transactions.currency, schema.accounts.currency),
-      ),
-    )
+    .where(eq(schema.transactions.currency, schema.accounts.currency))
     .orderBy(
       asc(schema.transactions.accountId),
       asc(schema.transactions.date),
@@ -26,8 +26,12 @@ async function balanceRows(db: Db) {
     );
   const byAccount = new Map<number, { date: string; amount: number; balance: number }[]>();
   for (const r of rows) {
-    const row = { date: r.date, amount: r.amount, balance: r.balanceAfter! };
     const list = byAccount.get(r.accountId);
+    const previous = list?.at(-1);
+    // Nothing is known before the first stated balance.
+    const balance = r.balanceAfter ?? (previous ? previous.balance + r.amount : null);
+    if (balance === null) continue;
+    const row = { date: r.date, amount: r.amount, balance };
     if (list) list.push(row);
     else byAccount.set(r.accountId, [row]);
   }
@@ -106,29 +110,30 @@ export async function getAccountBalances(db: Db): Promise<AccountBalance[]> {
       name: schema.accounts.name,
       bank: schema.accounts.bank,
       date: schema.transactions.date,
+      amount: schema.transactions.amount,
       balanceAfter: schema.transactions.balanceAfter,
     })
     .from(schema.transactions)
     .innerJoin(schema.accounts, eq(schema.accounts.id, schema.transactions.accountId))
-    .where(
-      and(
-        isNotNull(schema.transactions.balanceAfter),
-        eq(schema.transactions.currency, schema.accounts.currency),
-      ),
-    )
+    .where(eq(schema.transactions.currency, schema.accounts.currency))
     .orderBy(
       asc(schema.transactions.accountId),
       asc(schema.transactions.date),
       asc(schema.transactions.id),
     );
   const last = new Map<number, AccountBalance>();
-  for (const r of rows)
+  for (const r of rows) {
+    const before = last.get(r.accountId)?.balance;
+    // The stated balance, else the one before plus this amount; nothing before the first stated balance.
+    const balance = r.balanceAfter ?? (before !== undefined ? before + r.amount : null);
+    if (balance === null) continue;
     last.set(r.accountId, {
       accountId: r.accountId,
       name: r.name,
       bank: r.bank,
-      balance: r.balanceAfter!,
+      balance,
       asOf: r.date,
     });
+  }
   return [...last.values()];
 }

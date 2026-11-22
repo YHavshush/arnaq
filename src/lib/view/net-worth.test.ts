@@ -11,7 +11,7 @@ describe("loadNetWorth", () => {
       .insert(schema.accounts)
       .values({ name: "Revolut", bank: "revolut" })
       .returning();
-    // Rabobank (the account setup made): two transactions, the newest leaves 1,000.00.
+    // Rabobank (the account setup made): two transactions, the newest leaves 1,000.00 (a later one states none).
     await tx("2026-10-20", -5000, { balanceAfter: 110000 });
     await tx("2026-10-27", -10000, { balanceAfter: 100000 });
     // Revolut: the newest transaction leaves 205.13.
@@ -31,10 +31,11 @@ describe("loadNetWorth", () => {
 
     const w = await loadNetWorth(db, "2026-10-31");
     expect(w.accounts.map((a) => [a.name, a.balance, a.asOf])).toEqual([
-      ["Rabo", 100000, "2026-10-27"],
+      // The 100 euro that came back from savings on the 30th has no stated balance: it rolls on from the 27th.
+      ["Rabo", 110000, "2026-10-30"],
       ["Revolut", 20513, "2026-10-28"],
     ]);
-    expect(w.accountsTotal).toBe(120513);
+    expect(w.accountsTotal).toBe(130513);
     expect(w.savings).toMatchObject({
       base: 20085,
       baseDate: "2026-10-29",
@@ -43,7 +44,7 @@ describe("loadNetWorth", () => {
       saved: 10085,
       moves: 1,
     });
-    expect(w.total).toBe(120513 + 10085);
+    expect(w.total).toBe(130513 + 10085);
   });
 
   it("is empty for a person without balances or savings", async () => {

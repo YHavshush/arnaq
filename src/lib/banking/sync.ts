@@ -222,8 +222,13 @@ export async function syncBankLinks(
           balances = await getBalances(config, link.accountUid, left, psu);
         } catch (e) {
           if (isSessionOver(e)) throw e;
-          // A balance is a bonus: the transactions still count without it.
+          // A balance is a bonus: the transactions still count without it. Only the answer's status and code are
+          // logged (never an account id or amount), so a bank that gives no balance can be told from one that fails.
+          console.warn(
+            `Bank balance not fetched (${e instanceof EnableBankingError ? `${e.status} ${e.code ?? ""}`.trim() : "error"}).`,
+          );
         }
+      if (balances.length === 0) console.warn("The bank reported no balances for an account.");
       applyReportedBalance(rows, balances);
 
       // Stored now, in a transaction of its own: what was read is kept even if a later account is slow or fails.

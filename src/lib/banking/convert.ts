@@ -138,6 +138,9 @@ const BOOKED = ["CLBD", "ITBD"];
  * The bank's booked balance names the transaction it ends with (last_committed_transaction): that transaction's balance
  * after is then known exactly, without guessing an order. Fills it in on that one row when the row has none, which
  * gives the forecast a real balance for accounts whose bank gives no balance per transaction.
+ *
+ * Some banks (Rabobank and Revolut through Enable Banking) name no transaction. Then the booked balance, which is the
+ * balance now, goes on the newest transaction fetched, when it carries none and the balance is not older than it.
  */
 export function applyReportedBalance(rows: ParsedRow[], balances: Balance[]): void {
   for (const type of BOOKED) {
@@ -152,6 +155,19 @@ export function applyReportedBalance(rows: ParsedRow[], balances: Balance[]): vo
         r.currency === b.currency,
     );
     if (row && row.balanceAfter == null) row.balanceAfter = cents;
+    return;
+  }
+  for (const type of BOOKED) {
+    const b = balances.find((x) => x.type === type);
+    const cents = b ? decimalToCents(b.amount) : null;
+    if (!b || cents === null) continue;
+    const same = rows.filter((r) => r.currency === b.currency);
+    // The newest day, and the last row of it in the order the bank sent them (the importer stores them in that order).
+    const newest = same.reduce((max, r) => (r.date > max ? r.date : max), "");
+    const row = same.filter((r) => r.date === newest).at(-1);
+    const reference = b.referenceDate?.slice(0, 10) ?? null;
+    if (row && row.balanceAfter == null && (reference === null || reference >= row.date))
+      row.balanceAfter = cents;
     return;
   }
 }
